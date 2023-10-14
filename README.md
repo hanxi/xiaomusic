@@ -39,4 +39,5 @@ pdm run xiaomusic.py
 - [xiaomi](https://www.mi.com/)
 - [PDM](https://pdm.fming.dev/latest/)
 - [xiaogpt](https://github.com/yihong0618/xiaogpt)
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 
