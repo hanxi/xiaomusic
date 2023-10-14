@@ -1,4 +1,4 @@
-name: Release and Build Docker Image
+name: Release
 
 permissions:
   contents: write
