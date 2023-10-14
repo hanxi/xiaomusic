@@ -4,7 +4,9 @@
 
 ## 运行
 
-先参考 [xiaogpt](https://github.com/yihong0618/xiaogpt) 设置好环境变量。
+- 使用 install_dependencies.sh 下载依赖
+- 使用 pdm 安装环境
+- 参考 [xiaogpt](https://github.com/yihong0618/xiaogpt) 设置好环境变量
 
 ```shell
 export MI_USER="xxxxx"
