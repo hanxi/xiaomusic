@@ -1,0 +1,22 @@
+[project]
+name = "xiaomusic"
+version = "0.1.0"
+description = "Play Music with xiaomi AI speaker"
+authors = [
+    {name = "涵曦", email = "im.hanxi@gmail.com"},
+]
+dependencies = [
+    "rich>=13.6.0",
+    "requests>=2.31.0",
+    "aiohttp>=3.8.6",
+    "miservice-fork>=2.2.1",
+    "mutagen>=1.47.0",
+    "yt-dlp>=2023.10.13",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

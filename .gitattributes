@@ -1,0 +1,4 @@
+ffmpeg/bin/ffmpeg filter=lfs diff=lfs merge=lfs -text
+ffmpeg/bin/ffplay filter=lfs diff=lfs merge=lfs -text
+ffmpeg/bin/ffprobe filter=lfs diff=lfs merge=lfs -text
+3rd/ffmpeg-master-latest-linux64-gpl.tar.xz filter=lfs diff=lfs merge=lfs -text

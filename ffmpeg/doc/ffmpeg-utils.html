@@ -1,0 +1,1500 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
+  <head>
+    <meta charset="utf-8">
+    <title>
+      FFmpeg Utilities Documentation
+    </title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="style.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>
+      FFmpeg Utilities Documentation
+      </h1>
+<div align="center">
+</div>
+
+
+<a name="SEC_Top"></a>
+
+<div class="Contents_element" id="SEC_Contents">
+<h2 class="contents-heading">Table of Contents</h2>
+
+<div class="contents">
+
+<ul class="no-bullet">
+  <li><a id="toc-Description" href="#Description">1 Description</a></li>
+  <li><a id="toc-Syntax" href="#Syntax">2 Syntax</a>
+  <ul class="no-bullet">
+    <li><a id="toc-Quoting-and-escaping" href="#Quoting-and-escaping">2.1 Quoting and escaping</a>
+    <ul class="no-bullet">
+      <li><a id="toc-Examples" href="#Examples">2.1.1 Examples</a></li>
+    </ul></li>
+    <li><a id="toc-Date" href="#Date">2.2 Date</a></li>
+    <li><a id="toc-Time-duration" href="#Time-duration">2.3 Time duration</a>
+    <ul class="no-bullet">
+      <li><a id="toc-Examples-1" href="#Examples-1">2.3.1 Examples</a></li>
+    </ul></li>
+    <li><a id="toc-Video-size" href="#Video-size">2.4 Video size</a></li>
+    <li><a id="toc-Video-rate" href="#Video-rate">2.5 Video rate</a></li>
+    <li><a id="toc-Ratio" href="#Ratio">2.6 Ratio</a></li>
+    <li><a id="toc-Color" href="#Color">2.7 Color</a></li>
+    <li><a id="toc-Channel-Layout" href="#Channel-Layout">2.8 Channel Layout</a></li>
+  </ul></li>
+  <li><a id="toc-Expression-Evaluation" href="#Expression-Evaluation">3 Expression Evaluation</a></li>
+  <li><a id="toc-See-Also" href="#See-Also">4 See Also</a></li>
+  <li><a id="toc-Authors" href="#Authors">5 Authors</a></li>
+</ul>
+</div>
+</div>
+
+<a name="Description"></a>
+<h2 class="chapter">1 Description<span class="pull-right"><a class="anchor hidden-xs" href="#Description" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Description" aria-hidden="true">TOC</a></span></h2>
+
+<p>This document describes some generic features and utilities provided
+by the libavutil library.
+</p>
+
+<a name="Syntax"></a>
+<h2 class="chapter">2 Syntax<span class="pull-right"><a class="anchor hidden-xs" href="#Syntax" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Syntax" aria-hidden="true">TOC</a></span></h2>
+
+<p>This section documents the syntax and formats employed by the FFmpeg
+libraries and tools.
+</p>
+<span id="quoting_005fand_005fescaping"></span><a name="Quoting-and-escaping"></a>
+<h3 class="section">2.1 Quoting and escaping<span class="pull-right"><a class="anchor hidden-xs" href="#Quoting-and-escaping" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Quoting-and-escaping" aria-hidden="true">TOC</a></span></h3>
+
+<p>FFmpeg adopts the following quoting and escaping mechanism, unless
+explicitly specified. The following rules are applied:
+</p>
+<ul>
+<li> &lsquo;<samp>'</samp>&rsquo; and &lsquo;<samp>\</samp>&rsquo; are special characters (respectively used for
+quoting and escaping). In addition to them, there might be other
+special characters depending on the specific syntax where the escaping
+and quoting are employed.
+
+</li><li> A special character is escaped by prefixing it with a &lsquo;<samp>\</samp>&rsquo;.
+
+</li><li> All characters enclosed between &lsquo;<samp>''</samp>&rsquo; are included literally in the
+parsed string. The quote character &lsquo;<samp>'</samp>&rsquo; itself cannot be quoted,
+so you may need to close the quote and escape it.
+
+</li><li> Leading and trailing whitespaces, unless escaped or quoted, are
+removed from the parsed string.
+</li></ul>
+
+<p>Note that you may need to add a second level of escaping when using
+the command line or a script, which depends on the syntax of the
+adopted shell language.
+</p>
+<p>The function <code>av_get_token</code> defined in
+<samp>libavutil/avstring.h</samp> can be used to parse a token quoted or
+escaped according to the rules defined above.
+</p>
+<p>The tool <samp>tools/ffescape</samp> in the FFmpeg source tree can be used
+to automatically quote or escape a string in a script.
+</p>
+<a name="Examples"></a>
+<h4 class="subsection">2.1.1 Examples<span class="pull-right"><a class="anchor hidden-xs" href="#Examples" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Examples" aria-hidden="true">TOC</a></span></h4>
+
+<ul>
+<li> Escape the string <code>Crime d'Amour</code> containing the <code>'</code> special
+character:
+<div class="example">
+<pre class="example">Crime d\'Amour
+</pre></div>
+
+</li><li> The string above contains a quote, so the <code>'</code> needs to be escaped
+when quoting it:
+<div class="example">
+<pre class="example">'Crime d'\''Amour'
+</pre></div>
+
+</li><li> Include leading or trailing whitespaces using quoting:
+<div class="example">
+<pre class="example">'  this string starts and ends with whitespaces  '
+</pre></div>
+
+</li><li> Escaping and quoting can be mixed together:
+<div class="example">
+<pre class="example">' The string '\'string\'' is a string '
+</pre></div>
+
+</li><li> To include a literal &lsquo;<samp>\</samp>&rsquo; you can use either escaping or quoting:
+<div class="example">
+<pre class="example">'c:\foo' can be written as c:\\foo
+</pre></div>
+</li></ul>
+
+<span id="date-syntax"></span><a name="Date"></a>
+<h3 class="section">2.2 Date<span class="pull-right"><a class="anchor hidden-xs" href="#Date" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Date" aria-hidden="true">TOC</a></span></h3>
+
+<p>The accepted syntax is:
+</p><div class="example">
+<pre class="example">[(YYYY-MM-DD|YYYYMMDD)[T|t| ]]((HH:MM:SS[.m...]]])|(HHMMSS[.m...]]]))[Z]
+now
+</pre></div>
+
+<p>If the value is &quot;now&quot; it takes the current time.
+</p>
+<p>Time is local time unless Z is appended, in which case it is
+interpreted as UTC.
+If the year-month-day part is not specified it takes the current
+year-month-day.
+</p>
+<span id="time-duration-syntax"></span><a name="Time-duration"></a>
+<h3 class="section">2.3 Time duration<span class="pull-right"><a class="anchor hidden-xs" href="#Time-duration" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Time-duration" aria-hidden="true">TOC</a></span></h3>
+
+<p>There are two accepted syntaxes for expressing time duration.
+</p>
+<div class="example">
+<pre class="example">[-][<var>HH</var>:]<var>MM</var>:<var>SS</var>[.<var>m</var>...]
+</pre></div>
+
+<p><var>HH</var> expresses the number of hours, <var>MM</var> the number of minutes
+for a maximum of 2 digits, and <var>SS</var> the number of seconds for a
+maximum of 2 digits. The <var>m</var> at the end expresses decimal value for
+<var>SS</var>.
+</p>
+<p><em>or</em>
+</p>
+<div class="example">
+<pre class="example">[-]<var>S</var>+[.<var>m</var>...][s|ms|us]
+</pre></div>
+
+<p><var>S</var> expresses the number of seconds, with the optional decimal part
+<var>m</var>.  The optional literal suffixes &lsquo;<samp>s</samp>&rsquo;, &lsquo;<samp>ms</samp>&rsquo; or &lsquo;<samp>us</samp>&rsquo;
+indicate to interpret the value as seconds, milliseconds or microseconds,
+respectively.
+</p>
+<p>In both expressions, the optional &lsquo;<samp>-</samp>&rsquo; indicates negative duration.
+</p>
+<a name="Examples-1"></a>
+<h4 class="subsection">2.3.1 Examples<span class="pull-right"><a class="anchor hidden-xs" href="#Examples-1" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Examples-1" aria-hidden="true">TOC</a></span></h4>
+
+<p>The following examples are all valid time duration:
+</p>
+<dl compact="compact">
+<dt><span>&lsquo;<samp>55</samp>&rsquo;</span></dt>
+<dd><p>55 seconds
+</p>
+</dd>
+<dt><span>&lsquo;<samp>0.2</samp>&rsquo;</span></dt>
+<dd><p>0.2 seconds
+</p>
+</dd>
+<dt><span>&lsquo;<samp>200ms</samp>&rsquo;</span></dt>
+<dd><p>200 milliseconds, that&rsquo;s 0.2s
+</p>
+</dd>
+<dt><span>&lsquo;<samp>200000us</samp>&rsquo;</span></dt>
+<dd><p>200000 microseconds, that&rsquo;s 0.2s
+</p>
+</dd>
+<dt><span>&lsquo;<samp>12:03:45</samp>&rsquo;</span></dt>
+<dd><p>12 hours, 03 minutes and 45 seconds
+</p>
+</dd>
+<dt><span>&lsquo;<samp>23.189</samp>&rsquo;</span></dt>
+<dd><p>23.189 seconds
+</p></dd>
+</dl>
+
+<span id="video-size-syntax"></span><a name="Video-size"></a>
+<h3 class="section">2.4 Video size<span class="pull-right"><a class="anchor hidden-xs" href="#Video-size" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Video-size" aria-hidden="true">TOC</a></span></h3>
+<p>Specify the size of the sourced video, it may be a string of the form
+<var>width</var>x<var>height</var>, or the name of a size abbreviation.
+</p>
+<p>The following abbreviations are recognized:
+</p><dl compact="compact">
+<dt><span>&lsquo;<samp>ntsc</samp>&rsquo;</span></dt>
+<dd><p>720x480
+</p></dd>
+<dt><span>&lsquo;<samp>pal</samp>&rsquo;</span></dt>
+<dd><p>720x576
+</p></dd>
+<dt><span>&lsquo;<samp>qntsc</samp>&rsquo;</span></dt>
+<dd><p>352x240
+</p></dd>
+<dt><span>&lsquo;<samp>qpal</samp>&rsquo;</span></dt>
+<dd><p>352x288
+</p></dd>
+<dt><span>&lsquo;<samp>sntsc</samp>&rsquo;</span></dt>
+<dd><p>640x480
+</p></dd>
+<dt><span>&lsquo;<samp>spal</samp>&rsquo;</span></dt>
+<dd><p>768x576
+</p></dd>
+<dt><span>&lsquo;<samp>film</samp>&rsquo;</span></dt>
+<dd><p>352x240
+</p></dd>
+<dt><span>&lsquo;<samp>ntsc-film</samp>&rsquo;</span></dt>
+<dd><p>352x240
+</p></dd>
+<dt><span>&lsquo;<samp>sqcif</samp>&rsquo;</span></dt>
+<dd><p>128x96
+</p></dd>
+<dt><span>&lsquo;<samp>qcif</samp>&rsquo;</span></dt>
+<dd><p>176x144
+</p></dd>
+<dt><span>&lsquo;<samp>cif</samp>&rsquo;</span></dt>
+<dd><p>352x288
+</p></dd>
+<dt><span>&lsquo;<samp>4cif</samp>&rsquo;</span></dt>
+<dd><p>704x576
+</p></dd>
+<dt><span>&lsquo;<samp>16cif</samp>&rsquo;</span></dt>
+<dd><p>1408x1152
+</p></dd>
+<dt><span>&lsquo;<samp>qqvga</samp>&rsquo;</span></dt>
+<dd><p>160x120
+</p></dd>
+<dt><span>&lsquo;<samp>qvga</samp>&rsquo;</span></dt>
+<dd><p>320x240
+</p></dd>
+<dt><span>&lsquo;<samp>vga</samp>&rsquo;</span></dt>
+<dd><p>640x480
+</p></dd>
+<dt><span>&lsquo;<samp>svga</samp>&rsquo;</span></dt>
+<dd><p>800x600
+</p></dd>
+<dt><span>&lsquo;<samp>xga</samp>&rsquo;</span></dt>
+<dd><p>1024x768
+</p></dd>
+<dt><span>&lsquo;<samp>uxga</samp>&rsquo;</span></dt>
+<dd><p>1600x1200
+</p></dd>
+<dt><span>&lsquo;<samp>qxga</samp>&rsquo;</span></dt>
+<dd><p>2048x1536
+</p></dd>
+<dt><span>&lsquo;<samp>sxga</samp>&rsquo;</span></dt>
+<dd><p>1280x1024
+</p></dd>
+<dt><span>&lsquo;<samp>qsxga</samp>&rsquo;</span></dt>
+<dd><p>2560x2048
+</p></dd>
+<dt><span>&lsquo;<samp>hsxga</samp>&rsquo;</span></dt>
+<dd><p>5120x4096
+</p></dd>
+<dt><span>&lsquo;<samp>wvga</samp>&rsquo;</span></dt>
+<dd><p>852x480
+</p></dd>
+<dt><span>&lsquo;<samp>wxga</samp>&rsquo;</span></dt>
+<dd><p>1366x768
+</p></dd>
+<dt><span>&lsquo;<samp>wsxga</samp>&rsquo;</span></dt>
+<dd><p>1600x1024
+</p></dd>
+<dt><span>&lsquo;<samp>wuxga</samp>&rsquo;</span></dt>
+<dd><p>1920x1200
+</p></dd>
+<dt><span>&lsquo;<samp>woxga</samp>&rsquo;</span></dt>
+<dd><p>2560x1600
+</p></dd>
+<dt><span>&lsquo;<samp>wqsxga</samp>&rsquo;</span></dt>
+<dd><p>3200x2048
+</p></dd>
+<dt><span>&lsquo;<samp>wquxga</samp>&rsquo;</span></dt>
+<dd><p>3840x2400
+</p></dd>
+<dt><span>&lsquo;<samp>whsxga</samp>&rsquo;</span></dt>
+<dd><p>6400x4096
+</p></dd>
+<dt><span>&lsquo;<samp>whuxga</samp>&rsquo;</span></dt>
+<dd><p>7680x4800
+</p></dd>
+<dt><span>&lsquo;<samp>cga</samp>&rsquo;</span></dt>
+<dd><p>320x200
+</p></dd>
+<dt><span>&lsquo;<samp>ega</samp>&rsquo;</span></dt>
+<dd><p>640x350
+</p></dd>
+<dt><span>&lsquo;<samp>hd480</samp>&rsquo;</span></dt>
+<dd><p>852x480
+</p></dd>
+<dt><span>&lsquo;<samp>hd720</samp>&rsquo;</span></dt>
+<dd><p>1280x720
+</p></dd>
+<dt><span>&lsquo;<samp>hd1080</samp>&rsquo;</span></dt>
+<dd><p>1920x1080
+</p></dd>
+<dt><span>&lsquo;<samp>2k</samp>&rsquo;</span></dt>
+<dd><p>2048x1080
+</p></dd>
+<dt><span>&lsquo;<samp>2kflat</samp>&rsquo;</span></dt>
+<dd><p>1998x1080
+</p></dd>
+<dt><span>&lsquo;<samp>2kscope</samp>&rsquo;</span></dt>
+<dd><p>2048x858
+</p></dd>
+<dt><span>&lsquo;<samp>4k</samp>&rsquo;</span></dt>
+<dd><p>4096x2160
+</p></dd>
+<dt><span>&lsquo;<samp>4kflat</samp>&rsquo;</span></dt>
+<dd><p>3996x2160
+</p></dd>
+<dt><span>&lsquo;<samp>4kscope</samp>&rsquo;</span></dt>
+<dd><p>4096x1716
+</p></dd>
+<dt><span>&lsquo;<samp>nhd</samp>&rsquo;</span></dt>
+<dd><p>640x360
+</p></dd>
+<dt><span>&lsquo;<samp>hqvga</samp>&rsquo;</span></dt>
+<dd><p>240x160
+</p></dd>
+<dt><span>&lsquo;<samp>wqvga</samp>&rsquo;</span></dt>
+<dd><p>400x240
+</p></dd>
+<dt><span>&lsquo;<samp>fwqvga</samp>&rsquo;</span></dt>
+<dd><p>432x240
+</p></dd>
+<dt><span>&lsquo;<samp>hvga</samp>&rsquo;</span></dt>
+<dd><p>480x320
+</p></dd>
+<dt><span>&lsquo;<samp>qhd</samp>&rsquo;</span></dt>
+<dd><p>960x540
+</p></dd>
+<dt><span>&lsquo;<samp>2kdci</samp>&rsquo;</span></dt>
+<dd><p>2048x1080
+</p></dd>
+<dt><span>&lsquo;<samp>4kdci</samp>&rsquo;</span></dt>
+<dd><p>4096x2160
+</p></dd>
+<dt><span>&lsquo;<samp>uhd2160</samp>&rsquo;</span></dt>
+<dd><p>3840x2160
+</p></dd>
+<dt><span>&lsquo;<samp>uhd4320</samp>&rsquo;</span></dt>
+<dd><p>7680x4320
+</p></dd>
+</dl>
+
+<span id="video-rate-syntax"></span><a name="Video-rate"></a>
+<h3 class="section">2.5 Video rate<span class="pull-right"><a class="anchor hidden-xs" href="#Video-rate" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Video-rate" aria-hidden="true">TOC</a></span></h3>
+
+<p>Specify the frame rate of a video, expressed as the number of frames
+generated per second. It has to be a string in the format
+<var>frame_rate_num</var>/<var>frame_rate_den</var>, an integer number, a float
+number or a valid video frame rate abbreviation.
+</p>
+<p>The following abbreviations are recognized:
+</p><dl compact="compact">
+<dt><span>&lsquo;<samp>ntsc</samp>&rsquo;</span></dt>
+<dd><p>30000/1001
+</p></dd>
+<dt><span>&lsquo;<samp>pal</samp>&rsquo;</span></dt>
+<dd><p>25/1
+</p></dd>
+<dt><span>&lsquo;<samp>qntsc</samp>&rsquo;</span></dt>
+<dd><p>30000/1001
+</p></dd>
+<dt><span>&lsquo;<samp>qpal</samp>&rsquo;</span></dt>
+<dd><p>25/1
+</p></dd>
+<dt><span>&lsquo;<samp>sntsc</samp>&rsquo;</span></dt>
+<dd><p>30000/1001
+</p></dd>
+<dt><span>&lsquo;<samp>spal</samp>&rsquo;</span></dt>
+<dd><p>25/1
+</p></dd>
+<dt><span>&lsquo;<samp>film</samp>&rsquo;</span></dt>
+<dd><p>24/1
+</p></dd>
+<dt><span>&lsquo;<samp>ntsc-film</samp>&rsquo;</span></dt>
+<dd><p>24000/1001
+</p></dd>
+</dl>
+
+<span id="ratio-syntax"></span><a name="Ratio"></a>
+<h3 class="section">2.6 Ratio<span class="pull-right"><a class="anchor hidden-xs" href="#Ratio" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Ratio" aria-hidden="true">TOC</a></span></h3>
+
+<p>A ratio can be expressed as an expression, or in the form
+<var>numerator</var>:<var>denominator</var>.
+</p>
+<p>Note that a ratio with infinite (1/0) or negative value is
+considered valid, so you should check on the returned value if you
+want to exclude those values.
+</p>
+<p>The undefined value can be expressed using the &quot;0:0&quot; string.
+</p>
+<span id="color-syntax"></span><a name="Color"></a>
+<h3 class="section">2.7 Color<span class="pull-right"><a class="anchor hidden-xs" href="#Color" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Color" aria-hidden="true">TOC</a></span></h3>
+
+<p>It can be the name of a color as defined below (case insensitive match) or a
+<code>[0x|#]RRGGBB[AA]</code> sequence, possibly followed by @ and a string
+representing the alpha component.
+</p>
+<p>The alpha component may be a string composed by &quot;0x&quot; followed by an
+hexadecimal number or a decimal number between 0.0 and 1.0, which
+represents the opacity value (&lsquo;<samp>0x00</samp>&rsquo; or &lsquo;<samp>0.0</samp>&rsquo; means completely
+transparent, &lsquo;<samp>0xff</samp>&rsquo; or &lsquo;<samp>1.0</samp>&rsquo; completely opaque). If the alpha
+component is not specified then &lsquo;<samp>0xff</samp>&rsquo; is assumed.
+</p>
+<p>The string &lsquo;<samp>random</samp>&rsquo; will result in a random color.
+</p>
+<p>The following names of colors are recognized:
+</p><dl compact="compact">
+<dt><span>&lsquo;<samp>AliceBlue</samp>&rsquo;</span></dt>
+<dd><p>0xF0F8FF
+</p></dd>
+<dt><span>&lsquo;<samp>AntiqueWhite</samp>&rsquo;</span></dt>
+<dd><p>0xFAEBD7
+</p></dd>
+<dt><span>&lsquo;<samp>Aqua</samp>&rsquo;</span></dt>
+<dd><p>0x00FFFF
+</p></dd>
+<dt><span>&lsquo;<samp>Aquamarine</samp>&rsquo;</span></dt>
+<dd><p>0x7FFFD4
+</p></dd>
+<dt><span>&lsquo;<samp>Azure</samp>&rsquo;</span></dt>
+<dd><p>0xF0FFFF
+</p></dd>
+<dt><span>&lsquo;<samp>Beige</samp>&rsquo;</span></dt>
+<dd><p>0xF5F5DC
+</p></dd>
+<dt><span>&lsquo;<samp>Bisque</samp>&rsquo;</span></dt>
+<dd><p>0xFFE4C4
+</p></dd>
+<dt><span>&lsquo;<samp>Black</samp>&rsquo;</span></dt>
+<dd><p>0x000000
+</p></dd>
+<dt><span>&lsquo;<samp>BlanchedAlmond</samp>&rsquo;</span></dt>
+<dd><p>0xFFEBCD
+</p></dd>
+<dt><span>&lsquo;<samp>Blue</samp>&rsquo;</span></dt>
+<dd><p>0x0000FF
+</p></dd>
+<dt><span>&lsquo;<samp>BlueViolet</samp>&rsquo;</span></dt>
+<dd><p>0x8A2BE2
+</p></dd>
+<dt><span>&lsquo;<samp>Brown</samp>&rsquo;</span></dt>
+<dd><p>0xA52A2A
+</p></dd>
+<dt><span>&lsquo;<samp>BurlyWood</samp>&rsquo;</span></dt>
+<dd><p>0xDEB887
+</p></dd>
+<dt><span>&lsquo;<samp>CadetBlue</samp>&rsquo;</span></dt>
+<dd><p>0x5F9EA0
+</p></dd>
+<dt><span>&lsquo;<samp>Chartreuse</samp>&rsquo;</span></dt>
+<dd><p>0x7FFF00
+</p></dd>
+<dt><span>&lsquo;<samp>Chocolate</samp>&rsquo;</span></dt>
+<dd><p>0xD2691E
+</p></dd>
+<dt><span>&lsquo;<samp>Coral</samp>&rsquo;</span></dt>
+<dd><p>0xFF7F50
+</p></dd>
+<dt><span>&lsquo;<samp>CornflowerBlue</samp>&rsquo;</span></dt>
+<dd><p>0x6495ED
+</p></dd>
+<dt><span>&lsquo;<samp>Cornsilk</samp>&rsquo;</span></dt>
+<dd><p>0xFFF8DC
+</p></dd>
+<dt><span>&lsquo;<samp>Crimson</samp>&rsquo;</span></dt>
+<dd><p>0xDC143C
+</p></dd>
+<dt><span>&lsquo;<samp>Cyan</samp>&rsquo;</span></dt>
+<dd><p>0x00FFFF
+</p></dd>
+<dt><span>&lsquo;<samp>DarkBlue</samp>&rsquo;</span></dt>
+<dd><p>0x00008B
+</p></dd>
+<dt><span>&lsquo;<samp>DarkCyan</samp>&rsquo;</span></dt>
+<dd><p>0x008B8B
+</p></dd>
+<dt><span>&lsquo;<samp>DarkGoldenRod</samp>&rsquo;</span></dt>
+<dd><p>0xB8860B
+</p></dd>
+<dt><span>&lsquo;<samp>DarkGray</samp>&rsquo;</span></dt>
+<dd><p>0xA9A9A9
+</p></dd>
+<dt><span>&lsquo;<samp>DarkGreen</samp>&rsquo;</span></dt>
+<dd><p>0x006400
+</p></dd>
+<dt><span>&lsquo;<samp>DarkKhaki</samp>&rsquo;</span></dt>
+<dd><p>0xBDB76B
+</p></dd>
+<dt><span>&lsquo;<samp>DarkMagenta</samp>&rsquo;</span></dt>
+<dd><p>0x8B008B
+</p></dd>
+<dt><span>&lsquo;<samp>DarkOliveGreen</samp>&rsquo;</span></dt>
+<dd><p>0x556B2F
+</p></dd>
+<dt><span>&lsquo;<samp>Darkorange</samp>&rsquo;</span></dt>
+<dd><p>0xFF8C00
+</p></dd>
+<dt><span>&lsquo;<samp>DarkOrchid</samp>&rsquo;</span></dt>
+<dd><p>0x9932CC
+</p></dd>
+<dt><span>&lsquo;<samp>DarkRed</samp>&rsquo;</span></dt>
+<dd><p>0x8B0000
+</p></dd>
+<dt><span>&lsquo;<samp>DarkSalmon</samp>&rsquo;</span></dt>
+<dd><p>0xE9967A
+</p></dd>
+<dt><span>&lsquo;<samp>DarkSeaGreen</samp>&rsquo;</span></dt>
+<dd><p>0x8FBC8F
+</p></dd>
+<dt><span>&lsquo;<samp>DarkSlateBlue</samp>&rsquo;</span></dt>
+<dd><p>0x483D8B
+</p></dd>
+<dt><span>&lsquo;<samp>DarkSlateGray</samp>&rsquo;</span></dt>
+<dd><p>0x2F4F4F
+</p></dd>
+<dt><span>&lsquo;<samp>DarkTurquoise</samp>&rsquo;</span></dt>
+<dd><p>0x00CED1
+</p></dd>
+<dt><span>&lsquo;<samp>DarkViolet</samp>&rsquo;</span></dt>
+<dd><p>0x9400D3
+</p></dd>
+<dt><span>&lsquo;<samp>DeepPink</samp>&rsquo;</span></dt>
+<dd><p>0xFF1493
+</p></dd>
+<dt><span>&lsquo;<samp>DeepSkyBlue</samp>&rsquo;</span></dt>
+<dd><p>0x00BFFF
+</p></dd>
+<dt><span>&lsquo;<samp>DimGray</samp>&rsquo;</span></dt>
+<dd><p>0x696969
+</p></dd>
+<dt><span>&lsquo;<samp>DodgerBlue</samp>&rsquo;</span></dt>
+<dd><p>0x1E90FF
+</p></dd>
+<dt><span>&lsquo;<samp>FireBrick</samp>&rsquo;</span></dt>
+<dd><p>0xB22222
+</p></dd>
+<dt><span>&lsquo;<samp>FloralWhite</samp>&rsquo;</span></dt>
+<dd><p>0xFFFAF0
+</p></dd>
+<dt><span>&lsquo;<samp>ForestGreen</samp>&rsquo;</span></dt>
+<dd><p>0x228B22
+</p></dd>
+<dt><span>&lsquo;<samp>Fuchsia</samp>&rsquo;</span></dt>
+<dd><p>0xFF00FF
+</p></dd>
+<dt><span>&lsquo;<samp>Gainsboro</samp>&rsquo;</span></dt>
+<dd><p>0xDCDCDC
+</p></dd>
+<dt><span>&lsquo;<samp>GhostWhite</samp>&rsquo;</span></dt>
+<dd><p>0xF8F8FF
+</p></dd>
+<dt><span>&lsquo;<samp>Gold</samp>&rsquo;</span></dt>
+<dd><p>0xFFD700
+</p></dd>
+<dt><span>&lsquo;<samp>GoldenRod</samp>&rsquo;</span></dt>
+<dd><p>0xDAA520
+</p></dd>
+<dt><span>&lsquo;<samp>Gray</samp>&rsquo;</span></dt>
+<dd><p>0x808080
+</p></dd>
+<dt><span>&lsquo;<samp>Green</samp>&rsquo;</span></dt>
+<dd><p>0x008000
+</p></dd>
+<dt><span>&lsquo;<samp>GreenYellow</samp>&rsquo;</span></dt>
+<dd><p>0xADFF2F
+</p></dd>
+<dt><span>&lsquo;<samp>HoneyDew</samp>&rsquo;</span></dt>
+<dd><p>0xF0FFF0
+</p></dd>
+<dt><span>&lsquo;<samp>HotPink</samp>&rsquo;</span></dt>
+<dd><p>0xFF69B4
+</p></dd>
+<dt><span>&lsquo;<samp>IndianRed</samp>&rsquo;</span></dt>
+<dd><p>0xCD5C5C
+</p></dd>
+<dt><span>&lsquo;<samp>Indigo</samp>&rsquo;</span></dt>
+<dd><p>0x4B0082
+</p></dd>
+<dt><span>&lsquo;<samp>Ivory</samp>&rsquo;</span></dt>
+<dd><p>0xFFFFF0
+</p></dd>
+<dt><span>&lsquo;<samp>Khaki</samp>&rsquo;</span></dt>
+<dd><p>0xF0E68C
+</p></dd>
+<dt><span>&lsquo;<samp>Lavender</samp>&rsquo;</span></dt>
+<dd><p>0xE6E6FA
+</p></dd>
+<dt><span>&lsquo;<samp>LavenderBlush</samp>&rsquo;</span></dt>
+<dd><p>0xFFF0F5
+</p></dd>
+<dt><span>&lsquo;<samp>LawnGreen</samp>&rsquo;</span></dt>
+<dd><p>0x7CFC00
+</p></dd>
+<dt><span>&lsquo;<samp>LemonChiffon</samp>&rsquo;</span></dt>
+<dd><p>0xFFFACD
+</p></dd>
+<dt><span>&lsquo;<samp>LightBlue</samp>&rsquo;</span></dt>
+<dd><p>0xADD8E6
+</p></dd>
+<dt><span>&lsquo;<samp>LightCoral</samp>&rsquo;</span></dt>
+<dd><p>0xF08080
+</p></dd>
+<dt><span>&lsquo;<samp>LightCyan</samp>&rsquo;</span></dt>
+<dd><p>0xE0FFFF
+</p></dd>
+<dt><span>&lsquo;<samp>LightGoldenRodYellow</samp>&rsquo;</span></dt>
+<dd><p>0xFAFAD2
+</p></dd>
+<dt><span>&lsquo;<samp>LightGreen</samp>&rsquo;</span></dt>
+<dd><p>0x90EE90
+</p></dd>
+<dt><span>&lsquo;<samp>LightGrey</samp>&rsquo;</span></dt>
+<dd><p>0xD3D3D3
+</p></dd>
+<dt><span>&lsquo;<samp>LightPink</samp>&rsquo;</span></dt>
+<dd><p>0xFFB6C1
+</p></dd>
+<dt><span>&lsquo;<samp>LightSalmon</samp>&rsquo;</span></dt>
+<dd><p>0xFFA07A
+</p></dd>
+<dt><span>&lsquo;<samp>LightSeaGreen</samp>&rsquo;</span></dt>
+<dd><p>0x20B2AA
+</p></dd>
+<dt><span>&lsquo;<samp>LightSkyBlue</samp>&rsquo;</span></dt>
+<dd><p>0x87CEFA
+</p></dd>
+<dt><span>&lsquo;<samp>LightSlateGray</samp>&rsquo;</span></dt>
+<dd><p>0x778899
+</p></dd>
+<dt><span>&lsquo;<samp>LightSteelBlue</samp>&rsquo;</span></dt>
+<dd><p>0xB0C4DE
+</p></dd>
+<dt><span>&lsquo;<samp>LightYellow</samp>&rsquo;</span></dt>
+<dd><p>0xFFFFE0
+</p></dd>
+<dt><span>&lsquo;<samp>Lime</samp>&rsquo;</span></dt>
+<dd><p>0x00FF00
+</p></dd>
+<dt><span>&lsquo;<samp>LimeGreen</samp>&rsquo;</span></dt>
+<dd><p>0x32CD32
+</p></dd>
+<dt><span>&lsquo;<samp>Linen</samp>&rsquo;</span></dt>
+<dd><p>0xFAF0E6
+</p></dd>
+<dt><span>&lsquo;<samp>Magenta</samp>&rsquo;</span></dt>
+<dd><p>0xFF00FF
+</p></dd>
+<dt><span>&lsquo;<samp>Maroon</samp>&rsquo;</span></dt>
+<dd><p>0x800000
+</p></dd>
+<dt><span>&lsquo;<samp>MediumAquaMarine</samp>&rsquo;</span></dt>
+<dd><p>0x66CDAA
+</p></dd>
+<dt><span>&lsquo;<samp>MediumBlue</samp>&rsquo;</span></dt>
+<dd><p>0x0000CD
+</p></dd>
+<dt><span>&lsquo;<samp>MediumOrchid</samp>&rsquo;</span></dt>
+<dd><p>0xBA55D3
+</p></dd>
+<dt><span>&lsquo;<samp>MediumPurple</samp>&rsquo;</span></dt>
+<dd><p>0x9370D8
+</p></dd>
+<dt><span>&lsquo;<samp>MediumSeaGreen</samp>&rsquo;</span></dt>
+<dd><p>0x3CB371
+</p></dd>
+<dt><span>&lsquo;<samp>MediumSlateBlue</samp>&rsquo;</span></dt>
+<dd><p>0x7B68EE
+</p></dd>
+<dt><span>&lsquo;<samp>MediumSpringGreen</samp>&rsquo;</span></dt>
+<dd><p>0x00FA9A
+</p></dd>
+<dt><span>&lsquo;<samp>MediumTurquoise</samp>&rsquo;</span></dt>
+<dd><p>0x48D1CC
+</p></dd>
+<dt><span>&lsquo;<samp>MediumVioletRed</samp>&rsquo;</span></dt>
+<dd><p>0xC71585
+</p></dd>
+<dt><span>&lsquo;<samp>MidnightBlue</samp>&rsquo;</span></dt>
+<dd><p>0x191970
+</p></dd>
+<dt><span>&lsquo;<samp>MintCream</samp>&rsquo;</span></dt>
+<dd><p>0xF5FFFA
+</p></dd>
+<dt><span>&lsquo;<samp>MistyRose</samp>&rsquo;</span></dt>
+<dd><p>0xFFE4E1
+</p></dd>
+<dt><span>&lsquo;<samp>Moccasin</samp>&rsquo;</span></dt>
+<dd><p>0xFFE4B5
+</p></dd>
+<dt><span>&lsquo;<samp>NavajoWhite</samp>&rsquo;</span></dt>
+<dd><p>0xFFDEAD
+</p></dd>
+<dt><span>&lsquo;<samp>Navy</samp>&rsquo;</span></dt>
+<dd><p>0x000080
+</p></dd>
+<dt><span>&lsquo;<samp>OldLace</samp>&rsquo;</span></dt>
+<dd><p>0xFDF5E6
+</p></dd>
+<dt><span>&lsquo;<samp>Olive</samp>&rsquo;</span></dt>
+<dd><p>0x808000
+</p></dd>
+<dt><span>&lsquo;<samp>OliveDrab</samp>&rsquo;</span></dt>
+<dd><p>0x6B8E23
+</p></dd>
+<dt><span>&lsquo;<samp>Orange</samp>&rsquo;</span></dt>
+<dd><p>0xFFA500
+</p></dd>
+<dt><span>&lsquo;<samp>OrangeRed</samp>&rsquo;</span></dt>
+<dd><p>0xFF4500
+</p></dd>
+<dt><span>&lsquo;<samp>Orchid</samp>&rsquo;</span></dt>
+<dd><p>0xDA70D6
+</p></dd>
+<dt><span>&lsquo;<samp>PaleGoldenRod</samp>&rsquo;</span></dt>
+<dd><p>0xEEE8AA
+</p></dd>
+<dt><span>&lsquo;<samp>PaleGreen</samp>&rsquo;</span></dt>
+<dd><p>0x98FB98
+</p></dd>
+<dt><span>&lsquo;<samp>PaleTurquoise</samp>&rsquo;</span></dt>
+<dd><p>0xAFEEEE
+</p></dd>
+<dt><span>&lsquo;<samp>PaleVioletRed</samp>&rsquo;</span></dt>
+<dd><p>0xD87093
+</p></dd>
+<dt><span>&lsquo;<samp>PapayaWhip</samp>&rsquo;</span></dt>
+<dd><p>0xFFEFD5
+</p></dd>
+<dt><span>&lsquo;<samp>PeachPuff</samp>&rsquo;</span></dt>
+<dd><p>0xFFDAB9
+</p></dd>
+<dt><span>&lsquo;<samp>Peru</samp>&rsquo;</span></dt>
+<dd><p>0xCD853F
+</p></dd>
+<dt><span>&lsquo;<samp>Pink</samp>&rsquo;</span></dt>
+<dd><p>0xFFC0CB
+</p></dd>
+<dt><span>&lsquo;<samp>Plum</samp>&rsquo;</span></dt>
+<dd><p>0xDDA0DD
+</p></dd>
+<dt><span>&lsquo;<samp>PowderBlue</samp>&rsquo;</span></dt>
+<dd><p>0xB0E0E6
+</p></dd>
+<dt><span>&lsquo;<samp>Purple</samp>&rsquo;</span></dt>
+<dd><p>0x800080
+</p></dd>
+<dt><span>&lsquo;<samp>Red</samp>&rsquo;</span></dt>
+<dd><p>0xFF0000
+</p></dd>
+<dt><span>&lsquo;<samp>RosyBrown</samp>&rsquo;</span></dt>
+<dd><p>0xBC8F8F
+</p></dd>
+<dt><span>&lsquo;<samp>RoyalBlue</samp>&rsquo;</span></dt>
+<dd><p>0x4169E1
+</p></dd>
+<dt><span>&lsquo;<samp>SaddleBrown</samp>&rsquo;</span></dt>
+<dd><p>0x8B4513
+</p></dd>
+<dt><span>&lsquo;<samp>Salmon</samp>&rsquo;</span></dt>
+<dd><p>0xFA8072
+</p></dd>
+<dt><span>&lsquo;<samp>SandyBrown</samp>&rsquo;</span></dt>
+<dd><p>0xF4A460
+</p></dd>
+<dt><span>&lsquo;<samp>SeaGreen</samp>&rsquo;</span></dt>
+<dd><p>0x2E8B57
+</p></dd>
+<dt><span>&lsquo;<samp>SeaShell</samp>&rsquo;</span></dt>
+<dd><p>0xFFF5EE
+</p></dd>
+<dt><span>&lsquo;<samp>Sienna</samp>&rsquo;</span></dt>
+<dd><p>0xA0522D
+</p></dd>
+<dt><span>&lsquo;<samp>Silver</samp>&rsquo;</span></dt>
+<dd><p>0xC0C0C0
+</p></dd>
+<dt><span>&lsquo;<samp>SkyBlue</samp>&rsquo;</span></dt>
+<dd><p>0x87CEEB
+</p></dd>
+<dt><span>&lsquo;<samp>SlateBlue</samp>&rsquo;</span></dt>
+<dd><p>0x6A5ACD
+</p></dd>
+<dt><span>&lsquo;<samp>SlateGray</samp>&rsquo;</span></dt>
+<dd><p>0x708090
+</p></dd>
+<dt><span>&lsquo;<samp>Snow</samp>&rsquo;</span></dt>
+<dd><p>0xFFFAFA
+</p></dd>
+<dt><span>&lsquo;<samp>SpringGreen</samp>&rsquo;</span></dt>
+<dd><p>0x00FF7F
+</p></dd>
+<dt><span>&lsquo;<samp>SteelBlue</samp>&rsquo;</span></dt>
+<dd><p>0x4682B4
+</p></dd>
+<dt><span>&lsquo;<samp>Tan</samp>&rsquo;</span></dt>
+<dd><p>0xD2B48C
+</p></dd>
+<dt><span>&lsquo;<samp>Teal</samp>&rsquo;</span></dt>
+<dd><p>0x008080
+</p></dd>
+<dt><span>&lsquo;<samp>Thistle</samp>&rsquo;</span></dt>
+<dd><p>0xD8BFD8
+</p></dd>
+<dt><span>&lsquo;<samp>Tomato</samp>&rsquo;</span></dt>
+<dd><p>0xFF6347
+</p></dd>
+<dt><span>&lsquo;<samp>Turquoise</samp>&rsquo;</span></dt>
+<dd><p>0x40E0D0
+</p></dd>
+<dt><span>&lsquo;<samp>Violet</samp>&rsquo;</span></dt>
+<dd><p>0xEE82EE
+</p></dd>
+<dt><span>&lsquo;<samp>Wheat</samp>&rsquo;</span></dt>
+<dd><p>0xF5DEB3
+</p></dd>
+<dt><span>&lsquo;<samp>White</samp>&rsquo;</span></dt>
+<dd><p>0xFFFFFF
+</p></dd>
+<dt><span>&lsquo;<samp>WhiteSmoke</samp>&rsquo;</span></dt>
+<dd><p>0xF5F5F5
+</p></dd>
+<dt><span>&lsquo;<samp>Yellow</samp>&rsquo;</span></dt>
+<dd><p>0xFFFF00
+</p></dd>
+<dt><span>&lsquo;<samp>YellowGreen</samp>&rsquo;</span></dt>
+<dd><p>0x9ACD32
+</p></dd>
+</dl>
+
+<span id="channel-layout-syntax"></span><a name="Channel-Layout"></a>
+<h3 class="section">2.8 Channel Layout<span class="pull-right"><a class="anchor hidden-xs" href="#Channel-Layout" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Channel-Layout" aria-hidden="true">TOC</a></span></h3>
+
+<p>A channel layout specifies the spatial disposition of the channels in
+a multi-channel audio stream. To specify a channel layout, FFmpeg
+makes use of a special syntax.
+</p>
+<p>Individual channels are identified by an id, as given by the table
+below:
+</p><dl compact="compact">
+<dt><span>&lsquo;<samp>FL</samp>&rsquo;</span></dt>
+<dd><p>front left
+</p></dd>
+<dt><span>&lsquo;<samp>FR</samp>&rsquo;</span></dt>
+<dd><p>front right
+</p></dd>
+<dt><span>&lsquo;<samp>FC</samp>&rsquo;</span></dt>
+<dd><p>front center
+</p></dd>
+<dt><span>&lsquo;<samp>LFE</samp>&rsquo;</span></dt>
+<dd><p>low frequency
+</p></dd>
+<dt><span>&lsquo;<samp>BL</samp>&rsquo;</span></dt>
+<dd><p>back left
+</p></dd>
+<dt><span>&lsquo;<samp>BR</samp>&rsquo;</span></dt>
+<dd><p>back right
+</p></dd>
+<dt><span>&lsquo;<samp>FLC</samp>&rsquo;</span></dt>
+<dd><p>front left-of-center
+</p></dd>
+<dt><span>&lsquo;<samp>FRC</samp>&rsquo;</span></dt>
+<dd><p>front right-of-center
+</p></dd>
+<dt><span>&lsquo;<samp>BC</samp>&rsquo;</span></dt>
+<dd><p>back center
+</p></dd>
+<dt><span>&lsquo;<samp>SL</samp>&rsquo;</span></dt>
+<dd><p>side left
+</p></dd>
+<dt><span>&lsquo;<samp>SR</samp>&rsquo;</span></dt>
+<dd><p>side right
+</p></dd>
+<dt><span>&lsquo;<samp>TC</samp>&rsquo;</span></dt>
+<dd><p>top center
+</p></dd>
+<dt><span>&lsquo;<samp>TFL</samp>&rsquo;</span></dt>
+<dd><p>top front left
+</p></dd>
+<dt><span>&lsquo;<samp>TFC</samp>&rsquo;</span></dt>
+<dd><p>top front center
+</p></dd>
+<dt><span>&lsquo;<samp>TFR</samp>&rsquo;</span></dt>
+<dd><p>top front right
+</p></dd>
+<dt><span>&lsquo;<samp>TBL</samp>&rsquo;</span></dt>
+<dd><p>top back left
+</p></dd>
+<dt><span>&lsquo;<samp>TBC</samp>&rsquo;</span></dt>
+<dd><p>top back center
+</p></dd>
+<dt><span>&lsquo;<samp>TBR</samp>&rsquo;</span></dt>
+<dd><p>top back right
+</p></dd>
+<dt><span>&lsquo;<samp>DL</samp>&rsquo;</span></dt>
+<dd><p>downmix left
+</p></dd>
+<dt><span>&lsquo;<samp>DR</samp>&rsquo;</span></dt>
+<dd><p>downmix right
+</p></dd>
+<dt><span>&lsquo;<samp>WL</samp>&rsquo;</span></dt>
+<dd><p>wide left
+</p></dd>
+<dt><span>&lsquo;<samp>WR</samp>&rsquo;</span></dt>
+<dd><p>wide right
+</p></dd>
+<dt><span>&lsquo;<samp>SDL</samp>&rsquo;</span></dt>
+<dd><p>surround direct left
+</p></dd>
+<dt><span>&lsquo;<samp>SDR</samp>&rsquo;</span></dt>
+<dd><p>surround direct right
+</p></dd>
+<dt><span>&lsquo;<samp>LFE2</samp>&rsquo;</span></dt>
+<dd><p>low frequency 2
+</p></dd>
+</dl>
+
+<p>Standard channel layout compositions can be specified by using the
+following identifiers:
+</p><dl compact="compact">
+<dt><span>&lsquo;<samp>mono</samp>&rsquo;</span></dt>
+<dd><p>FC
+</p></dd>
+<dt><span>&lsquo;<samp>stereo</samp>&rsquo;</span></dt>
+<dd><p>FL+FR
+</p></dd>
+<dt><span>&lsquo;<samp>2.1</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+LFE
+</p></dd>
+<dt><span>&lsquo;<samp>3.0</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC
+</p></dd>
+<dt><span>&lsquo;<samp>3.0(back)</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+BC
+</p></dd>
+<dt><span>&lsquo;<samp>4.0</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+BC
+</p></dd>
+<dt><span>&lsquo;<samp>quad</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+BL+BR
+</p></dd>
+<dt><span>&lsquo;<samp>quad(side)</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>3.1</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+LFE
+</p></dd>
+<dt><span>&lsquo;<samp>5.0</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+BL+BR
+</p></dd>
+<dt><span>&lsquo;<samp>5.0(side)</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>4.1</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+LFE+BC
+</p></dd>
+<dt><span>&lsquo;<samp>5.1</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+LFE+BL+BR
+</p></dd>
+<dt><span>&lsquo;<samp>5.1(side)</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+LFE+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>6.0</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+BC+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>6.0(front)</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FLC+FRC+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>hexagonal</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+BL+BR+BC
+</p></dd>
+<dt><span>&lsquo;<samp>6.1</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+LFE+BC+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>6.1</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+LFE+BL+BR+BC
+</p></dd>
+<dt><span>&lsquo;<samp>6.1(front)</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+LFE+FLC+FRC+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>7.0</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+BL+BR+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>7.0(front)</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+FLC+FRC+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>7.1</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+LFE+BL+BR+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>7.1(wide)</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+LFE+BL+BR+FLC+FRC
+</p></dd>
+<dt><span>&lsquo;<samp>7.1(wide-side)</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+LFE+FLC+FRC+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>7.1(top)</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+LFE+BL+BR+TFL+TFR
+</p></dd>
+<dt><span>&lsquo;<samp>octagonal</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+BL+BR+BC+SL+SR
+</p></dd>
+<dt><span>&lsquo;<samp>cube</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+BL+BR+TFL+TFR+TBL+TBR
+</p></dd>
+<dt><span>&lsquo;<samp>hexadecagonal</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+BL+BR+BC+SL+SR+WL+WR+TBL+TBR+TBC+TFC+TFL+TFR
+</p></dd>
+<dt><span>&lsquo;<samp>downmix</samp>&rsquo;</span></dt>
+<dd><p>DL+DR
+</p></dd>
+<dt><span>&lsquo;<samp>22.2</samp>&rsquo;</span></dt>
+<dd><p>FL+FR+FC+LFE+BL+BR+FLC+FRC+BC+SL+SR+TC+TFL+TFC+TFR+TBL+TBC+TBR+LFE2+TSL+TSR+BFC+BFL+BFR
+</p></dd>
+</dl>
+
+<p>A custom channel layout can be specified as a sequence of terms, separated by &rsquo;+&rsquo;.
+Each term can be:
+</p><ul>
+<li> the name of a single channel (e.g. &lsquo;<samp>FL</samp>&rsquo;, &lsquo;<samp>FR</samp>&rsquo;, &lsquo;<samp>FC</samp>&rsquo;, &lsquo;<samp>LFE</samp>&rsquo;, etc.),
+each optionally containing a custom name after a &rsquo;@&rsquo;, (e.g. &lsquo;<samp>FL@Left</samp>&rsquo;,
+&lsquo;<samp>FR@Right</samp>&rsquo;, &lsquo;<samp>FC@Center</samp>&rsquo;, &lsquo;<samp>LFE@Low_Frequency</samp>&rsquo;, etc.)
+</li></ul>
+
+<p>A standard channel layout can be specified by the following:
+</p><ul>
+<li> the name of a single channel (e.g. &lsquo;<samp>FL</samp>&rsquo;, &lsquo;<samp>FR</samp>&rsquo;, &lsquo;<samp>FC</samp>&rsquo;, &lsquo;<samp>LFE</samp>&rsquo;, etc.)
+
+</li><li> the name of a standard channel layout (e.g. &lsquo;<samp>mono</samp>&rsquo;,
+&lsquo;<samp>stereo</samp>&rsquo;, &lsquo;<samp>4.0</samp>&rsquo;, &lsquo;<samp>quad</samp>&rsquo;, &lsquo;<samp>5.0</samp>&rsquo;, etc.)
+
+</li><li> a number of channels, in decimal, followed by &rsquo;c&rsquo;, yielding the default channel
+layout for that number of channels (see the function
+<code>av_channel_layout_default</code>). Note that not all channel counts have a
+default layout.
+
+</li><li> a number of channels, in decimal, followed by &rsquo;C&rsquo;, yielding an unknown channel
+layout with the specified number of channels. Note that not all channel layout
+specification strings support unknown channel layouts.
+
+</li><li> a channel layout mask, in hexadecimal starting with &quot;0x&quot; (see the
+<code>AV_CH_*</code> macros in <samp>libavutil/channel_layout.h</samp>.
+</li></ul>
+
+<p>Before libavutil version 53 the trailing character &quot;c&quot; to specify a number of
+channels was optional, but now it is required, while a channel layout mask can
+also be specified as a decimal number (if and only if not followed by &quot;c&quot; or &quot;C&quot;).
+</p>
+<p>See also the function <code>av_channel_layout_from_string</code> defined in
+<samp>libavutil/channel_layout.h</samp>.
+</p>
+<a name="Expression-Evaluation"></a>
+<h2 class="chapter">3 Expression Evaluation<span class="pull-right"><a class="anchor hidden-xs" href="#Expression-Evaluation" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Expression-Evaluation" aria-hidden="true">TOC</a></span></h2>
+
+<p>When evaluating an arithmetic expression, FFmpeg uses an internal
+formula evaluator, implemented through the <samp>libavutil/eval.h</samp>
+interface.
+</p>
+<p>An expression may contain unary, binary operators, constants, and
+functions.
+</p>
+<p>Two expressions <var>expr1</var> and <var>expr2</var> can be combined to form
+another expression &quot;<var>expr1</var>;<var>expr2</var>&quot;.
+<var>expr1</var> and <var>expr2</var> are evaluated in turn, and the new
+expression evaluates to the value of <var>expr2</var>.
+</p>
+<p>The following binary operators are available: <code>+</code>, <code>-</code>,
+<code>*</code>, <code>/</code>, <code>^</code>.
+</p>
+<p>The following unary operators are available: <code>+</code>, <code>-</code>.
+</p>
+<p>The following functions are available:
+</p><dl compact="compact">
+<dt><span><samp>abs(x)</samp></span></dt>
+<dd><p>Compute absolute value of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>acos(x)</samp></span></dt>
+<dd><p>Compute arccosine of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>asin(x)</samp></span></dt>
+<dd><p>Compute arcsine of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>atan(x)</samp></span></dt>
+<dd><p>Compute arctangent of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>atan2(x, y)</samp></span></dt>
+<dd><p>Compute principal value of the arc tangent of <var>y</var>/<var>x</var>.
+</p>
+</dd>
+<dt><span><samp>between(x, min, max)</samp></span></dt>
+<dd><p>Return 1 if <var>x</var> is greater than or equal to <var>min</var> and lesser than or
+equal to <var>max</var>, 0 otherwise.
+</p>
+</dd>
+<dt><span><samp>bitand(x, y)</samp></span></dt>
+<dt><span><samp>bitor(x, y)</samp></span></dt>
+<dd><p>Compute bitwise and/or operation on <var>x</var> and <var>y</var>.
+</p>
+<p>The results of the evaluation of <var>x</var> and <var>y</var> are converted to
+integers before executing the bitwise operation.
+</p>
+<p>Note that both the conversion to integer and the conversion back to
+floating point can lose precision. Beware of unexpected results for
+large numbers (usually 2^53 and larger).
+</p>
+</dd>
+<dt><span><samp>ceil(expr)</samp></span></dt>
+<dd><p>Round the value of expression <var>expr</var> upwards to the nearest
+integer. For example, &quot;ceil(1.5)&quot; is &quot;2.0&quot;.
+</p>
+</dd>
+<dt><span><samp>clip(x, min, max)</samp></span></dt>
+<dd><p>Return the value of <var>x</var> clipped between <var>min</var> and <var>max</var>.
+</p>
+</dd>
+<dt><span><samp>cos(x)</samp></span></dt>
+<dd><p>Compute cosine of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>cosh(x)</samp></span></dt>
+<dd><p>Compute hyperbolic cosine of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>eq(x, y)</samp></span></dt>
+<dd><p>Return 1 if <var>x</var> and <var>y</var> are equivalent, 0 otherwise.
+</p>
+</dd>
+<dt><span><samp>exp(x)</samp></span></dt>
+<dd><p>Compute exponential of <var>x</var> (with base <code>e</code>, the Euler&rsquo;s number).
+</p>
+</dd>
+<dt><span><samp>floor(expr)</samp></span></dt>
+<dd><p>Round the value of expression <var>expr</var> downwards to the nearest
+integer. For example, &quot;floor(-1.5)&quot; is &quot;-2.0&quot;.
+</p>
+</dd>
+<dt><span><samp>gauss(x)</samp></span></dt>
+<dd><p>Compute Gauss function of <var>x</var>, corresponding to
+<code>exp(-x*x/2) / sqrt(2*PI)</code>.
+</p>
+</dd>
+<dt><span><samp>gcd(x, y)</samp></span></dt>
+<dd><p>Return the greatest common divisor of <var>x</var> and <var>y</var>. If both <var>x</var> and
+<var>y</var> are 0 or either or both are less than zero then behavior is undefined.
+</p>
+</dd>
+<dt><span><samp>gt(x, y)</samp></span></dt>
+<dd><p>Return 1 if <var>x</var> is greater than <var>y</var>, 0 otherwise.
+</p>
+</dd>
+<dt><span><samp>gte(x, y)</samp></span></dt>
+<dd><p>Return 1 if <var>x</var> is greater than or equal to <var>y</var>, 0 otherwise.
+</p>
+</dd>
+<dt><span><samp>hypot(x, y)</samp></span></dt>
+<dd><p>This function is similar to the C function with the same name; it returns
+&quot;sqrt(<var>x</var>*<var>x</var> + <var>y</var>*<var>y</var>)&quot;, the length of the hypotenuse of a
+right triangle with sides of length <var>x</var> and <var>y</var>, or the distance of the
+point (<var>x</var>, <var>y</var>) from the origin.
+</p>
+</dd>
+<dt><span><samp>if(x, y)</samp></span></dt>
+<dd><p>Evaluate <var>x</var>, and if the result is non-zero return the result of
+the evaluation of <var>y</var>, return 0 otherwise.
+</p>
+</dd>
+<dt><span><samp>if(x, y, z)</samp></span></dt>
+<dd><p>Evaluate <var>x</var>, and if the result is non-zero return the evaluation
+result of <var>y</var>, otherwise the evaluation result of <var>z</var>.
+</p>
+</dd>
+<dt><span><samp>ifnot(x, y)</samp></span></dt>
+<dd><p>Evaluate <var>x</var>, and if the result is zero return the result of the
+evaluation of <var>y</var>, return 0 otherwise.
+</p>
+</dd>
+<dt><span><samp>ifnot(x, y, z)</samp></span></dt>
+<dd><p>Evaluate <var>x</var>, and if the result is zero return the evaluation
+result of <var>y</var>, otherwise the evaluation result of <var>z</var>.
+</p>
+</dd>
+<dt><span><samp>isinf(x)</samp></span></dt>
+<dd><p>Return 1.0 if <var>x</var> is +/-INFINITY, 0.0 otherwise.
+</p>
+</dd>
+<dt><span><samp>isnan(x)</samp></span></dt>
+<dd><p>Return 1.0 if <var>x</var> is NAN, 0.0 otherwise.
+</p>
+</dd>
+<dt><span><samp>ld(var)</samp></span></dt>
+<dd><p>Load the value of the internal variable with number
+<var>var</var>, which was previously stored with st(<var>var</var>, <var>expr</var>).
+The function returns the loaded value.
+</p>
+</dd>
+<dt><span><samp>lerp(x, y, z)</samp></span></dt>
+<dd><p>Return linear interpolation between <var>x</var> and <var>y</var> by amount of <var>z</var>.
+</p>
+</dd>
+<dt><span><samp>log(x)</samp></span></dt>
+<dd><p>Compute natural logarithm of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>lt(x, y)</samp></span></dt>
+<dd><p>Return 1 if <var>x</var> is lesser than <var>y</var>, 0 otherwise.
+</p>
+</dd>
+<dt><span><samp>lte(x, y)</samp></span></dt>
+<dd><p>Return 1 if <var>x</var> is lesser than or equal to <var>y</var>, 0 otherwise.
+</p>
+</dd>
+<dt><span><samp>max(x, y)</samp></span></dt>
+<dd><p>Return the maximum between <var>x</var> and <var>y</var>.
+</p>
+</dd>
+<dt><span><samp>min(x, y)</samp></span></dt>
+<dd><p>Return the minimum between <var>x</var> and <var>y</var>.
+</p>
+</dd>
+<dt><span><samp>mod(x, y)</samp></span></dt>
+<dd><p>Compute the remainder of division of <var>x</var> by <var>y</var>.
+</p>
+</dd>
+<dt><span><samp>not(expr)</samp></span></dt>
+<dd><p>Return 1.0 if <var>expr</var> is zero, 0.0 otherwise.
+</p>
+</dd>
+<dt><span><samp>pow(x, y)</samp></span></dt>
+<dd><p>Compute the power of <var>x</var> elevated <var>y</var>, it is equivalent to
+&quot;(<var>x</var>)^(<var>y</var>)&quot;.
+</p>
+</dd>
+<dt><span><samp>print(t)</samp></span></dt>
+<dt><span><samp>print(t, l)</samp></span></dt>
+<dd><p>Print the value of expression <var>t</var> with loglevel <var>l</var>. If
+<var>l</var> is not specified then a default log level is used.
+Returns the value of the expression printed.
+</p>
+<p>Prints t with loglevel l
+</p>
+</dd>
+<dt><span><samp>random(x)</samp></span></dt>
+<dd><p>Return a pseudo random value between 0.0 and 1.0. <var>x</var> is the index of the
+internal variable which will be used to save the seed/state.
+</p>
+</dd>
+<dt><span><samp>root(expr, max)</samp></span></dt>
+<dd><p>Find an input value for which the function represented by <var>expr</var>
+with argument <var>ld(0)</var> is 0 in the interval 0..<var>max</var>.
+</p>
+<p>The expression in <var>expr</var> must denote a continuous function or the
+result is undefined.
+</p>
+<p><var>ld(0)</var> is used to represent the function input value, which means
+that the given expression will be evaluated multiple times with
+various input values that the expression can access through
+<code>ld(0)</code>. When the expression evaluates to 0 then the
+corresponding input value will be returned.
+</p>
+</dd>
+<dt><span><samp>round(expr)</samp></span></dt>
+<dd><p>Round the value of expression <var>expr</var> to the nearest integer. For example, &quot;round(1.5)&quot; is &quot;2.0&quot;.
+</p>
+</dd>
+<dt><span><samp>sgn(x)</samp></span></dt>
+<dd><p>Compute sign of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>sin(x)</samp></span></dt>
+<dd><p>Compute sine of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>sinh(x)</samp></span></dt>
+<dd><p>Compute hyperbolic sine of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>sqrt(expr)</samp></span></dt>
+<dd><p>Compute the square root of <var>expr</var>. This is equivalent to
+&quot;(<var>expr</var>)^.5&quot;.
+</p>
+</dd>
+<dt><span><samp>squish(x)</samp></span></dt>
+<dd><p>Compute expression <code>1/(1 + exp(4*x))</code>.
+</p>
+</dd>
+<dt><span><samp>st(var, expr)</samp></span></dt>
+<dd><p>Store the value of the expression <var>expr</var> in an internal
+variable. <var>var</var> specifies the number of the variable where to
+store the value, and it is a value ranging from 0 to 9. The function
+returns the value stored in the internal variable.
+Note, Variables are currently not shared between expressions.
+</p>
+</dd>
+<dt><span><samp>tan(x)</samp></span></dt>
+<dd><p>Compute tangent of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>tanh(x)</samp></span></dt>
+<dd><p>Compute hyperbolic tangent of <var>x</var>.
+</p>
+</dd>
+<dt><span><samp>taylor(expr, x)</samp></span></dt>
+<dt><span><samp>taylor(expr, x, id)</samp></span></dt>
+<dd><p>Evaluate a Taylor series at <var>x</var>, given an expression representing
+the <code>ld(id)</code>-th derivative of a function at 0.
+</p>
+<p>When the series does not converge the result is undefined.
+</p>
+<p><var>ld(id)</var> is used to represent the derivative order in <var>expr</var>,
+which means that the given expression will be evaluated multiple times
+with various input values that the expression can access through
+<code>ld(id)</code>. If <var>id</var> is not specified then 0 is assumed.
+</p>
+<p>Note, when you have the derivatives at y instead of 0,
+<code>taylor(expr, x-y)</code> can be used.
+</p>
+</dd>
+<dt><span><samp>time(0)</samp></span></dt>
+<dd><p>Return the current (wallclock) time in seconds.
+</p>
+</dd>
+<dt><span><samp>trunc(expr)</samp></span></dt>
+<dd><p>Round the value of expression <var>expr</var> towards zero to the nearest
+integer. For example, &quot;trunc(-1.5)&quot; is &quot;-1.0&quot;.
+</p>
+</dd>
+<dt><span><samp>while(cond, expr)</samp></span></dt>
+<dd><p>Evaluate expression <var>expr</var> while the expression <var>cond</var> is
+non-zero, and returns the value of the last <var>expr</var> evaluation, or
+NAN if <var>cond</var> was always false.
+</p></dd>
+</dl>
+
+<p>The following constants are available:
+</p><dl compact="compact">
+<dt><span><samp>PI</samp></span></dt>
+<dd><p>area of the unit disc, approximately 3.14
+</p></dd>
+<dt><span><samp>E</samp></span></dt>
+<dd><p>exp(1) (Euler&rsquo;s number), approximately 2.718
+</p></dd>
+<dt><span><samp>PHI</samp></span></dt>
+<dd><p>golden ratio (1+sqrt(5))/2, approximately 1.618
+</p></dd>
+</dl>
+
+<p>Assuming that an expression is considered &quot;true&quot; if it has a non-zero
+value, note that:
+</p>
+<p><code>*</code> works like AND
+</p>
+<p><code>+</code> works like OR
+</p>
+<p>For example the construct:
+</p><div class="example">
+<pre class="example">if (A AND B) then C
+</pre></div>
+<p>is equivalent to:
+</p><div class="example">
+<pre class="example">if(A*B, C)
+</pre></div>
+
+<p>In your C code, you can extend the list of unary and binary functions,
+and define recognized constants, so that they are available for your
+expressions.
+</p>
+<p>The evaluator also recognizes the International System unit prefixes.
+If &rsquo;i&rsquo; is appended after the prefix, binary prefixes are used, which
+are based on powers of 1024 instead of powers of 1000.
+The &rsquo;B&rsquo; postfix multiplies the value by 8, and can be appended after a
+unit prefix or used alone. This allows using for example &rsquo;KB&rsquo;, &rsquo;MiB&rsquo;,
+&rsquo;G&rsquo; and &rsquo;B&rsquo; as number postfix.
+</p>
+<p>The list of available International System prefixes follows, with
+indication of the corresponding powers of 10 and of 2.
+</p><dl compact="compact">
+<dt><span><samp>y</samp></span></dt>
+<dd><p>10^-24 / 2^-80
+</p></dd>
+<dt><span><samp>z</samp></span></dt>
+<dd><p>10^-21 / 2^-70
+</p></dd>
+<dt><span><samp>a</samp></span></dt>
+<dd><p>10^-18 / 2^-60
+</p></dd>
+<dt><span><samp>f</samp></span></dt>
+<dd><p>10^-15 / 2^-50
+</p></dd>
+<dt><span><samp>p</samp></span></dt>
+<dd><p>10^-12 / 2^-40
+</p></dd>
+<dt><span><samp>n</samp></span></dt>
+<dd><p>10^-9 / 2^-30
+</p></dd>
+<dt><span><samp>u</samp></span></dt>
+<dd><p>10^-6 / 2^-20
+</p></dd>
+<dt><span><samp>m</samp></span></dt>
+<dd><p>10^-3 / 2^-10
+</p></dd>
+<dt><span><samp>c</samp></span></dt>
+<dd><p>10^-2
+</p></dd>
+<dt><span><samp>d</samp></span></dt>
+<dd><p>10^-1
+</p></dd>
+<dt><span><samp>h</samp></span></dt>
+<dd><p>10^2
+</p></dd>
+<dt><span><samp>k</samp></span></dt>
+<dd><p>10^3 / 2^10
+</p></dd>
+<dt><span><samp>K</samp></span></dt>
+<dd><p>10^3 / 2^10
+</p></dd>
+<dt><span><samp>M</samp></span></dt>
+<dd><p>10^6 / 2^20
+</p></dd>
+<dt><span><samp>G</samp></span></dt>
+<dd><p>10^9 / 2^30
+</p></dd>
+<dt><span><samp>T</samp></span></dt>
+<dd><p>10^12 / 2^40
+</p></dd>
+<dt><span><samp>P</samp></span></dt>
+<dd><p>10^15 / 2^50
+</p></dd>
+<dt><span><samp>E</samp></span></dt>
+<dd><p>10^18 / 2^60
+</p></dd>
+<dt><span><samp>Z</samp></span></dt>
+<dd><p>10^21 / 2^70
+</p></dd>
+<dt><span><samp>Y</samp></span></dt>
+<dd><p>10^24 / 2^80
+</p></dd>
+</dl>
+
+
+<a name="See-Also"></a>
+<h2 class="chapter">4 See Also<span class="pull-right"><a class="anchor hidden-xs" href="#See-Also" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-See-Also" aria-hidden="true">TOC</a></span></h2>
+
+<p><a href="ffmpeg.html">ffmpeg</a>, <a href="ffplay.html">ffplay</a>, <a href="ffprobe.html">ffprobe</a>,
+<a href="libavutil.html">libavutil</a>
+</p>
+
+<a name="Authors"></a>
+<h2 class="chapter">5 Authors<span class="pull-right"><a class="anchor hidden-xs" href="#Authors" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Authors" aria-hidden="true">TOC</a></span></h2>
+
+<p>The FFmpeg developers.
+</p>
+<p>For details about the authorship, see the Git history of the project
+(https://git.ffmpeg.org/ffmpeg), e.g. by typing the command
+<code>git log</code> in the FFmpeg source directory, or browsing the
+online repository at <a href="https://git.ffmpeg.org/ffmpeg">https://git.ffmpeg.org/ffmpeg</a>.
+</p>
+<p>Maintainers for the specific components are listed in the file
+<samp>MAINTAINERS</samp> in the source code tree.
+</p>
+
+      <p style="font-size: small;">
+        This document was generated using <a href="https://www.gnu.org/software/texinfo/"><em>makeinfo</em></a>.
+      </p>
+    </div>
+  </body>
+</html>

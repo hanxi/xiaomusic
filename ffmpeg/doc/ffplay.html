@@ -1,0 +1,866 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
+  <head>
+    <meta charset="utf-8">
+    <title>
+      ffplay Documentation
+    </title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="style.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>
+      ffplay Documentation
+      </h1>
+<div align="center">
+</div>
+
+
+<a name="SEC_Top"></a>
+
+<div class="Contents_element" id="SEC_Contents">
+<h2 class="contents-heading">Table of Contents</h2>
+
+<div class="contents">
+
+<ul class="no-bullet">
+  <li><a id="toc-Synopsis" href="#Synopsis">1 Synopsis</a></li>
+  <li><a id="toc-Description" href="#Description">2 Description</a></li>
+  <li><a id="toc-Options" href="#Options">3 Options</a>
+  <ul class="no-bullet">
+    <li><a id="toc-Stream-specifiers-1" href="#Stream-specifiers-1">3.1 Stream specifiers</a></li>
+    <li><a id="toc-Generic-options" href="#Generic-options">3.2 Generic options</a></li>
+    <li><a id="toc-AVOptions" href="#AVOptions">3.3 AVOptions</a></li>
+    <li><a id="toc-Main-options" href="#Main-options">3.4 Main options</a></li>
+    <li><a id="toc-Advanced-options" href="#Advanced-options">3.5 Advanced options</a></li>
+    <li><a id="toc-While-playing" href="#While-playing">3.6 While playing</a></li>
+  </ul></li>
+  <li><a id="toc-See-Also" href="#See-Also">4 See Also</a></li>
+  <li><a id="toc-Authors" href="#Authors">5 Authors</a></li>
+</ul>
+</div>
+</div>
+
+<a name="Synopsis"></a>
+<h2 class="chapter">1 Synopsis<span class="pull-right"><a class="anchor hidden-xs" href="#Synopsis" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Synopsis" aria-hidden="true">TOC</a></span></h2>
+
+<p>ffplay [<var>options</var>] [<samp>input_url</samp>]
+</p>
+<a name="Description"></a>
+<h2 class="chapter">2 Description<span class="pull-right"><a class="anchor hidden-xs" href="#Description" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Description" aria-hidden="true">TOC</a></span></h2>
+
+<p>FFplay is a very simple and portable media player using the FFmpeg
+libraries and the SDL library. It is mostly used as a testbed for the
+various FFmpeg APIs.
+</p>
+<a name="Options"></a>
+<h2 class="chapter">3 Options<span class="pull-right"><a class="anchor hidden-xs" href="#Options" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Options" aria-hidden="true">TOC</a></span></h2>
+
+<p>All the numerical options, if not specified otherwise, accept a string
+representing a number as input, which may be followed by one of the SI
+unit prefixes, for example: &rsquo;K&rsquo;, &rsquo;M&rsquo;, or &rsquo;G&rsquo;.
+</p>
+<p>If &rsquo;i&rsquo; is appended to the SI unit prefix, the complete prefix will be
+interpreted as a unit prefix for binary multiples, which are based on
+powers of 1024 instead of powers of 1000. Appending &rsquo;B&rsquo; to the SI unit
+prefix multiplies the value by 8. This allows using, for example:
+&rsquo;KB&rsquo;, &rsquo;MiB&rsquo;, &rsquo;G&rsquo; and &rsquo;B&rsquo; as number suffixes.
+</p>
+<p>Options which do not take arguments are boolean options, and set the
+corresponding value to true. They can be set to false by prefixing
+the option name with &quot;no&quot;. For example using &quot;-nofoo&quot;
+will set the boolean option with name &quot;foo&quot; to false.
+</p>
+<span id="Stream-specifiers"></span><a name="Stream-specifiers-1"></a>
+<h3 class="section">3.1 Stream specifiers<span class="pull-right"><a class="anchor hidden-xs" href="#Stream-specifiers-1" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Stream-specifiers-1" aria-hidden="true">TOC</a></span></h3>
+<p>Some options are applied per-stream, e.g. bitrate or codec. Stream specifiers
+are used to precisely specify which stream(s) a given option belongs to.
+</p>
+<p>A stream specifier is a string generally appended to the option name and
+separated from it by a colon. E.g. <code>-codec:a:1 ac3</code> contains the
+<code>a:1</code> stream specifier, which matches the second audio stream. Therefore, it
+would select the ac3 codec for the second audio stream.
+</p>
+<p>A stream specifier can match several streams, so that the option is applied to all
+of them. E.g. the stream specifier in <code>-b:a 128k</code> matches all audio
+streams.
+</p>
+<p>An empty stream specifier matches all streams. For example, <code>-codec copy</code>
+or <code>-codec: copy</code> would copy all the streams without reencoding.
+</p>
+<p>Possible forms of stream specifiers are:
+</p><dl compact="compact">
+<dt><span><samp><var>stream_index</var></samp></span></dt>
+<dd><p>Matches the stream with this index. E.g. <code>-threads:1 4</code> would set the
+thread count for the second stream to 4. If <var>stream_index</var> is used as an
+additional stream specifier (see below), then it selects stream number
+<var>stream_index</var> from the matching streams. Stream numbering is based on the
+order of the streams as detected by libavformat except when a program ID is
+also specified. In this case it is based on the ordering of the streams in the
+program.
+</p></dd>
+<dt><span><samp><var>stream_type</var>[:<var>additional_stream_specifier</var>]</samp></span></dt>
+<dd><p><var>stream_type</var> is one of following: &rsquo;v&rsquo; or &rsquo;V&rsquo; for video, &rsquo;a&rsquo; for audio, &rsquo;s&rsquo;
+for subtitle, &rsquo;d&rsquo; for data, and &rsquo;t&rsquo; for attachments. &rsquo;v&rsquo; matches all video
+streams, &rsquo;V&rsquo; only matches video streams which are not attached pictures, video
+thumbnails or cover arts. If <var>additional_stream_specifier</var> is used, then
+it matches streams which both have this type and match the
+<var>additional_stream_specifier</var>. Otherwise, it matches all streams of the
+specified type.
+</p></dd>
+<dt><span><samp>p:<var>program_id</var>[:<var>additional_stream_specifier</var>]</samp></span></dt>
+<dd><p>Matches streams which are in the program with the id <var>program_id</var>. If
+<var>additional_stream_specifier</var> is used, then it matches streams which both
+are part of the program and match the <var>additional_stream_specifier</var>.
+</p>
+</dd>
+<dt><span><samp>#<var>stream_id</var> or i:<var>stream_id</var></samp></span></dt>
+<dd><p>Match the stream by stream id (e.g. PID in MPEG-TS container).
+</p></dd>
+<dt><span><samp>m:<var>key</var>[:<var>value</var>]</samp></span></dt>
+<dd><p>Matches streams with the metadata tag <var>key</var> having the specified value. If
+<var>value</var> is not given, matches streams that contain the given tag with any
+value.
+</p></dd>
+<dt><span><samp>u</samp></span></dt>
+<dd><p>Matches streams with usable configuration, the codec must be defined and the
+essential information such as video dimension or audio sample rate must be present.
+</p>
+<p>Note that in <code>ffmpeg</code>, matching by metadata will only work properly for
+input files.
+</p></dd>
+</dl>
+
+<a name="Generic-options"></a>
+<h3 class="section">3.2 Generic options<span class="pull-right"><a class="anchor hidden-xs" href="#Generic-options" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Generic-options" aria-hidden="true">TOC</a></span></h3>
+
+<p>These options are shared amongst the ff* tools.
+</p>
+<dl compact="compact">
+<dt><span><samp>-L</samp></span></dt>
+<dd><p>Show license.
+</p>
+</dd>
+<dt><span><samp>-h, -?, -help, --help [<var>arg</var>]</samp></span></dt>
+<dd><p>Show help. An optional parameter may be specified to print help about a specific
+item. If no argument is specified, only basic (non advanced) tool
+options are shown.
+</p>
+<p>Possible values of <var>arg</var> are:
+</p><dl compact="compact">
+<dt><span><samp>long</samp></span></dt>
+<dd><p>Print advanced tool options in addition to the basic tool options.
+</p>
+</dd>
+<dt><span><samp>full</samp></span></dt>
+<dd><p>Print complete list of options, including shared and private options
+for encoders, decoders, demuxers, muxers, filters, etc.
+</p>
+</dd>
+<dt><span><samp>decoder=<var>decoder_name</var></samp></span></dt>
+<dd><p>Print detailed information about the decoder named <var>decoder_name</var>. Use the
+<samp>-decoders</samp> option to get a list of all decoders.
+</p>
+</dd>
+<dt><span><samp>encoder=<var>encoder_name</var></samp></span></dt>
+<dd><p>Print detailed information about the encoder named <var>encoder_name</var>. Use the
+<samp>-encoders</samp> option to get a list of all encoders.
+</p>
+</dd>
+<dt><span><samp>demuxer=<var>demuxer_name</var></samp></span></dt>
+<dd><p>Print detailed information about the demuxer named <var>demuxer_name</var>. Use the
+<samp>-formats</samp> option to get a list of all demuxers and muxers.
+</p>
+</dd>
+<dt><span><samp>muxer=<var>muxer_name</var></samp></span></dt>
+<dd><p>Print detailed information about the muxer named <var>muxer_name</var>. Use the
+<samp>-formats</samp> option to get a list of all muxers and demuxers.
+</p>
+</dd>
+<dt><span><samp>filter=<var>filter_name</var></samp></span></dt>
+<dd><p>Print detailed information about the filter named <var>filter_name</var>. Use the
+<samp>-filters</samp> option to get a list of all filters.
+</p>
+</dd>
+<dt><span><samp>bsf=<var>bitstream_filter_name</var></samp></span></dt>
+<dd><p>Print detailed information about the bitstream filter named <var>bitstream_filter_name</var>.
+Use the <samp>-bsfs</samp> option to get a list of all bitstream filters.
+</p>
+</dd>
+<dt><span><samp>protocol=<var>protocol_name</var></samp></span></dt>
+<dd><p>Print detailed information about the protocol named <var>protocol_name</var>.
+Use the <samp>-protocols</samp> option to get a list of all protocols.
+</p></dd>
+</dl>
+
+</dd>
+<dt><span><samp>-version</samp></span></dt>
+<dd><p>Show version.
+</p>
+</dd>
+<dt><span><samp>-buildconf</samp></span></dt>
+<dd><p>Show the build configuration, one option per line.
+</p>
+</dd>
+<dt><span><samp>-formats</samp></span></dt>
+<dd><p>Show available formats (including devices).
+</p>
+</dd>
+<dt><span><samp>-demuxers</samp></span></dt>
+<dd><p>Show available demuxers.
+</p>
+</dd>
+<dt><span><samp>-muxers</samp></span></dt>
+<dd><p>Show available muxers.
+</p>
+</dd>
+<dt><span><samp>-devices</samp></span></dt>
+<dd><p>Show available devices.
+</p>
+</dd>
+<dt><span><samp>-codecs</samp></span></dt>
+<dd><p>Show all codecs known to libavcodec.
+</p>
+<p>Note that the term &rsquo;codec&rsquo; is used throughout this documentation as a shortcut
+for what is more correctly called a media bitstream format.
+</p>
+</dd>
+<dt><span><samp>-decoders</samp></span></dt>
+<dd><p>Show available decoders.
+</p>
+</dd>
+<dt><span><samp>-encoders</samp></span></dt>
+<dd><p>Show all available encoders.
+</p>
+</dd>
+<dt><span><samp>-bsfs</samp></span></dt>
+<dd><p>Show available bitstream filters.
+</p>
+</dd>
+<dt><span><samp>-protocols</samp></span></dt>
+<dd><p>Show available protocols.
+</p>
+</dd>
+<dt><span><samp>-filters</samp></span></dt>
+<dd><p>Show available libavfilter filters.
+</p>
+</dd>
+<dt><span><samp>-pix_fmts</samp></span></dt>
+<dd><p>Show available pixel formats.
+</p>
+</dd>
+<dt><span><samp>-sample_fmts</samp></span></dt>
+<dd><p>Show available sample formats.
+</p>
+</dd>
+<dt><span><samp>-layouts</samp></span></dt>
+<dd><p>Show channel names and standard channel layouts.
+</p>
+</dd>
+<dt><span><samp>-dispositions</samp></span></dt>
+<dd><p>Show stream dispositions.
+</p>
+</dd>
+<dt><span><samp>-colors</samp></span></dt>
+<dd><p>Show recognized color names.
+</p>
+</dd>
+<dt><span><samp>-sources <var>device</var>[,<var>opt1</var>=<var>val1</var>[,<var>opt2</var>=<var>val2</var>]...]</samp></span></dt>
+<dd><p>Show autodetected sources of the input device.
+Some devices may provide system-dependent source names that cannot be autodetected.
+The returned list cannot be assumed to be always complete.
+</p><div class="example">
+<pre class="example">ffmpeg -sources pulse,server=192.168.0.4
+</pre></div>
+
+</dd>
+<dt><span><samp>-sinks <var>device</var>[,<var>opt1</var>=<var>val1</var>[,<var>opt2</var>=<var>val2</var>]...]</samp></span></dt>
+<dd><p>Show autodetected sinks of the output device.
+Some devices may provide system-dependent sink names that cannot be autodetected.
+The returned list cannot be assumed to be always complete.
+</p><div class="example">
+<pre class="example">ffmpeg -sinks pulse,server=192.168.0.4
+</pre></div>
+
+</dd>
+<dt><span><samp>-loglevel [<var>flags</var>+]<var>loglevel</var> | -v [<var>flags</var>+]<var>loglevel</var></samp></span></dt>
+<dd><p>Set logging level and flags used by the library.
+</p>
+<p>The optional <var>flags</var> prefix can consist of the following values:
+</p><dl compact="compact">
+<dt><span>&lsquo;<samp>repeat</samp>&rsquo;</span></dt>
+<dd><p>Indicates that repeated log output should not be compressed to the first line
+and the &quot;Last message repeated n times&quot; line will be omitted.
+</p></dd>
+<dt><span>&lsquo;<samp>level</samp>&rsquo;</span></dt>
+<dd><p>Indicates that log output should add a <code>[level]</code> prefix to each message
+line. This can be used as an alternative to log coloring, e.g. when dumping the
+log to file.
+</p></dd>
+</dl>
+<p>Flags can also be used alone by adding a &rsquo;+&rsquo;/&rsquo;-&rsquo; prefix to set/reset a single
+flag without affecting other <var>flags</var> or changing <var>loglevel</var>. When
+setting both <var>flags</var> and <var>loglevel</var>, a &rsquo;+&rsquo; separator is expected
+between the last <var>flags</var> value and before <var>loglevel</var>.
+</p>
+<p><var>loglevel</var> is a string or a number containing one of the following values:
+</p><dl compact="compact">
+<dt><span>&lsquo;<samp>quiet, -8</samp>&rsquo;</span></dt>
+<dd><p>Show nothing at all; be silent.
+</p></dd>
+<dt><span>&lsquo;<samp>panic, 0</samp>&rsquo;</span></dt>
+<dd><p>Only show fatal errors which could lead the process to crash, such as
+an assertion failure. This is not currently used for anything.
+</p></dd>
+<dt><span>&lsquo;<samp>fatal, 8</samp>&rsquo;</span></dt>
+<dd><p>Only show fatal errors. These are errors after which the process absolutely
+cannot continue.
+</p></dd>
+<dt><span>&lsquo;<samp>error, 16</samp>&rsquo;</span></dt>
+<dd><p>Show all errors, including ones which can be recovered from.
+</p></dd>
+<dt><span>&lsquo;<samp>warning, 24</samp>&rsquo;</span></dt>
+<dd><p>Show all warnings and errors. Any message related to possibly
+incorrect or unexpected events will be shown.
+</p></dd>
+<dt><span>&lsquo;<samp>info, 32</samp>&rsquo;</span></dt>
+<dd><p>Show informative messages during processing. This is in addition to
+warnings and errors. This is the default value.
+</p></dd>
+<dt><span>&lsquo;<samp>verbose, 40</samp>&rsquo;</span></dt>
+<dd><p>Same as <code>info</code>, except more verbose.
+</p></dd>
+<dt><span>&lsquo;<samp>debug, 48</samp>&rsquo;</span></dt>
+<dd><p>Show everything, including debugging information.
+</p></dd>
+<dt><span>&lsquo;<samp>trace, 56</samp>&rsquo;</span></dt>
+</dl>
+
+<p>For example to enable repeated log output, add the <code>level</code> prefix, and set
+<var>loglevel</var> to <code>verbose</code>:
+</p><div class="example">
+<pre class="example">ffmpeg -loglevel repeat+level+verbose -i input output
+</pre></div>
+<p>Another example that enables repeated log output without affecting current
+state of <code>level</code> prefix flag or <var>loglevel</var>:
+</p><div class="example">
+<pre class="example">ffmpeg [...] -loglevel +repeat
+</pre></div>
+
+<p>By default the program logs to stderr. If coloring is supported by the
+terminal, colors are used to mark errors and warnings. Log coloring
+can be disabled setting the environment variable
+<code>AV_LOG_FORCE_NOCOLOR</code>, or can be forced setting
+the environment variable <code>AV_LOG_FORCE_COLOR</code>.
+</p>
+</dd>
+<dt><span><samp>-report</samp></span></dt>
+<dd><p>Dump full command line and log output to a file named
+<code><var>program</var>-<var>YYYYMMDD</var>-<var>HHMMSS</var>.log</code> in the current
+directory.
+This file can be useful for bug reports.
+It also implies <code>-loglevel debug</code>.
+</p>
+<p>Setting the environment variable <code>FFREPORT</code> to any value has the
+same effect. If the value is a &rsquo;:&rsquo;-separated key=value sequence, these
+options will affect the report; option values must be escaped if they
+contain special characters or the options delimiter &rsquo;:&rsquo; (see the
+&ldquo;Quoting and escaping&rdquo; section in the ffmpeg-utils manual).
+</p>
+<p>The following options are recognized:
+</p><dl compact="compact">
+<dt><span><samp>file</samp></span></dt>
+<dd><p>set the file name to use for the report; <code>%p</code> is expanded to the name
+of the program, <code>%t</code> is expanded to a timestamp, <code>%%</code> is expanded
+to a plain <code>%</code>
+</p></dd>
+<dt><span><samp>level</samp></span></dt>
+<dd><p>set the log verbosity level using a numerical value (see <code>-loglevel</code>).
+</p></dd>
+</dl>
+
+<p>For example, to output a report to a file named <samp>ffreport.log</samp>
+using a log level of <code>32</code> (alias for log level <code>info</code>):
+</p>
+<div class="example">
+<pre class="example">FFREPORT=file=ffreport.log:level=32 ffmpeg -i input output
+</pre></div>
+
+<p>Errors in parsing the environment variable are not fatal, and will not
+appear in the report.
+</p>
+</dd>
+<dt><span><samp>-hide_banner</samp></span></dt>
+<dd><p>Suppress printing banner.
+</p>
+<p>All FFmpeg tools will normally show a copyright notice, build options
+and library versions. This option can be used to suppress printing
+this information.
+</p>
+</dd>
+<dt><span><samp>-cpuflags flags (<em>global</em>)</samp></span></dt>
+<dd><p>Allows setting and clearing cpu flags. This option is intended
+for testing. Do not use it unless you know what you&rsquo;re doing.
+</p><div class="example">
+<pre class="example">ffmpeg -cpuflags -sse+mmx ...
+ffmpeg -cpuflags mmx ...
+ffmpeg -cpuflags 0 ...
+</pre></div>
+<p>Possible flags for this option are:
+</p><dl compact="compact">
+<dt><span>&lsquo;<samp>x86</samp>&rsquo;</span></dt>
+<dd><dl compact="compact">
+<dt><span>&lsquo;<samp>mmx</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>mmxext</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>sse</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>sse2</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>sse2slow</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>sse3</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>sse3slow</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>ssse3</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>atom</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>sse4.1</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>sse4.2</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>avx</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>avx2</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>xop</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>fma3</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>fma4</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>3dnow</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>3dnowext</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>bmi1</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>bmi2</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>cmov</samp>&rsquo;</span></dt>
+</dl>
+</dd>
+<dt><span>&lsquo;<samp>ARM</samp>&rsquo;</span></dt>
+<dd><dl compact="compact">
+<dt><span>&lsquo;<samp>armv5te</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>armv6</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>armv6t2</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>vfp</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>vfpv3</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>neon</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>setend</samp>&rsquo;</span></dt>
+</dl>
+</dd>
+<dt><span>&lsquo;<samp>AArch64</samp>&rsquo;</span></dt>
+<dd><dl compact="compact">
+<dt><span>&lsquo;<samp>armv8</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>vfp</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>neon</samp>&rsquo;</span></dt>
+</dl>
+</dd>
+<dt><span>&lsquo;<samp>PowerPC</samp>&rsquo;</span></dt>
+<dd><dl compact="compact">
+<dt><span>&lsquo;<samp>altivec</samp>&rsquo;</span></dt>
+</dl>
+</dd>
+<dt><span>&lsquo;<samp>Specific Processors</samp>&rsquo;</span></dt>
+<dd><dl compact="compact">
+<dt><span>&lsquo;<samp>pentium2</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>pentium3</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>pentium4</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>k6</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>k62</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>athlon</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>athlonxp</samp>&rsquo;</span></dt>
+<dt><span>&lsquo;<samp>k8</samp>&rsquo;</span></dt>
+</dl>
+</dd>
+</dl>
+
+</dd>
+<dt><span><samp>-cpucount <var>count</var> (<em>global</em>)</samp></span></dt>
+<dd><p>Override detection of CPU count. This option is intended
+for testing. Do not use it unless you know what you&rsquo;re doing.
+</p><div class="example">
+<pre class="example">ffmpeg -cpucount 2
+</pre></div>
+
+</dd>
+<dt><span><samp>-max_alloc <var>bytes</var></samp></span></dt>
+<dd><p>Set the maximum size limit for allocating a block on the heap by ffmpeg&rsquo;s
+family of malloc functions. Exercise <strong>extreme caution</strong> when using
+this option. Don&rsquo;t use if you do not understand the full consequence of doing so.
+Default is INT_MAX.
+</p></dd>
+</dl>
+
+<a name="AVOptions"></a>
+<h3 class="section">3.3 AVOptions<span class="pull-right"><a class="anchor hidden-xs" href="#AVOptions" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-AVOptions" aria-hidden="true">TOC</a></span></h3>
+
+<p>These options are provided directly by the libavformat, libavdevice and
+libavcodec libraries. To see the list of available AVOptions, use the
+<samp>-help</samp> option. They are separated into two categories:
+</p><dl compact="compact">
+<dt><span><samp>generic</samp></span></dt>
+<dd><p>These options can be set for any container, codec or device. Generic options
+are listed under AVFormatContext options for containers/devices and under
+AVCodecContext options for codecs.
+</p></dd>
+<dt><span><samp>private</samp></span></dt>
+<dd><p>These options are specific to the given container, device or codec. Private
+options are listed under their corresponding containers/devices/codecs.
+</p></dd>
+</dl>
+
+<p>For example to write an ID3v2.3 header instead of a default ID3v2.4 to
+an MP3 file, use the <samp>id3v2_version</samp> private option of the MP3
+muxer:
+</p><div class="example">
+<pre class="example">ffmpeg -i input.flac -id3v2_version 3 out.mp3
+</pre></div>
+
+<p>All codec AVOptions are per-stream, and thus a stream specifier
+should be attached to them:
+</p><div class="example">
+<pre class="example">ffmpeg -i multichannel.mxf -map 0:v:0 -map 0:a:0 -map 0:a:0 -c:a:0 ac3 -b:a:0 640k -ac:a:1 2 -c:a:1 aac -b:2 128k out.mp4
+</pre></div>
+
+<p>In the above example, a multichannel audio stream is mapped twice for output.
+The first instance is encoded with codec ac3 and bitrate 640k.
+The second instance is downmixed to 2 channels and encoded with codec aac. A bitrate of 128k is specified for it using
+absolute index of the output stream.
+</p>
+<p>Note: the <samp>-nooption</samp> syntax cannot be used for boolean
+AVOptions, use <samp>-option 0</samp>/<samp>-option 1</samp>.
+</p>
+<p>Note: the old undocumented way of specifying per-stream AVOptions by
+prepending v/a/s to the options name is now obsolete and will be
+removed soon.
+</p>
+<a name="Main-options"></a>
+<h3 class="section">3.4 Main options<span class="pull-right"><a class="anchor hidden-xs" href="#Main-options" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Main-options" aria-hidden="true">TOC</a></span></h3>
+
+<dl compact="compact">
+<dt><span><samp>-x <var>width</var></samp></span></dt>
+<dd><p>Force displayed width.
+</p></dd>
+<dt><span><samp>-y <var>height</var></samp></span></dt>
+<dd><p>Force displayed height.
+</p></dd>
+<dt><span><samp>-fs</samp></span></dt>
+<dd><p>Start in fullscreen mode.
+</p></dd>
+<dt><span><samp>-an</samp></span></dt>
+<dd><p>Disable audio.
+</p></dd>
+<dt><span><samp>-vn</samp></span></dt>
+<dd><p>Disable video.
+</p></dd>
+<dt><span><samp>-sn</samp></span></dt>
+<dd><p>Disable subtitles.
+</p></dd>
+<dt><span><samp>-ss <var>pos</var></samp></span></dt>
+<dd><p>Seek to <var>pos</var>. Note that in most formats it is not possible to seek
+exactly, so <code>ffplay</code> will seek to the nearest seek point to
+<var>pos</var>.
+</p>
+<p><var>pos</var> must be a time duration specification,
+see <a data-manual="ffmpeg-utils" href="ffmpeg-utils.html#time-duration-syntax">(ffmpeg-utils)the Time duration section in the ffmpeg-utils(1) manual</a>.
+</p></dd>
+<dt><span><samp>-t <var>duration</var></samp></span></dt>
+<dd><p>Play <var>duration</var> seconds of audio/video.
+</p>
+<p><var>duration</var> must be a time duration specification,
+see <a data-manual="ffmpeg-utils" href="ffmpeg-utils.html#time-duration-syntax">(ffmpeg-utils)the Time duration section in the ffmpeg-utils(1) manual</a>.
+</p></dd>
+<dt><span><samp>-bytes</samp></span></dt>
+<dd><p>Seek by bytes.
+</p></dd>
+<dt><span><samp>-seek_interval</samp></span></dt>
+<dd><p>Set custom interval, in seconds, for seeking using left/right keys. Default is 10 seconds.
+</p></dd>
+<dt><span><samp>-nodisp</samp></span></dt>
+<dd><p>Disable graphical display.
+</p></dd>
+<dt><span><samp>-noborder</samp></span></dt>
+<dd><p>Borderless window.
+</p></dd>
+<dt><span><samp>-alwaysontop</samp></span></dt>
+<dd><p>Window always on top. Available on: X11 with SDL &gt;= 2.0.5, Windows SDL &gt;= 2.0.6.
+</p></dd>
+<dt><span><samp>-volume</samp></span></dt>
+<dd><p>Set the startup volume. 0 means silence, 100 means no volume reduction or
+amplification. Negative values are treated as 0, values above 100 are treated
+as 100.
+</p></dd>
+<dt><span><samp>-f <var>fmt</var></samp></span></dt>
+<dd><p>Force format.
+</p></dd>
+<dt><span><samp>-window_title <var>title</var></samp></span></dt>
+<dd><p>Set window title (default is the input filename).
+</p></dd>
+<dt><span><samp>-left <var>title</var></samp></span></dt>
+<dd><p>Set the x position for the left of the window (default is a centered window).
+</p></dd>
+<dt><span><samp>-top <var>title</var></samp></span></dt>
+<dd><p>Set the y position for the top of the window (default is a centered window).
+</p></dd>
+<dt><span><samp>-loop <var>number</var></samp></span></dt>
+<dd><p>Loops movie playback &lt;number&gt; times. 0 means forever.
+</p></dd>
+<dt><span><samp>-showmode <var>mode</var></samp></span></dt>
+<dd><p>Set the show mode to use.
+Available values for <var>mode</var> are:
+</p><dl compact="compact">
+<dt><span>&lsquo;<samp>0, video</samp>&rsquo;</span></dt>
+<dd><p>show video
+</p></dd>
+<dt><span>&lsquo;<samp>1, waves</samp>&rsquo;</span></dt>
+<dd><p>show audio waves
+</p></dd>
+<dt><span>&lsquo;<samp>2, rdft</samp>&rsquo;</span></dt>
+<dd><p>show audio frequency band using RDFT ((Inverse) Real Discrete Fourier Transform)
+</p></dd>
+</dl>
+
+<p>Default value is &quot;video&quot;, if video is not present or cannot be played
+&quot;rdft&quot; is automatically selected.
+</p>
+<p>You can interactively cycle through the available show modes by
+pressing the key <tt class="key">w</tt>.
+</p>
+</dd>
+<dt><span><samp>-vf <var>filtergraph</var></samp></span></dt>
+<dd><p>Create the filtergraph specified by <var>filtergraph</var> and use it to
+filter the video stream.
+</p>
+<p><var>filtergraph</var> is a description of the filtergraph to apply to
+the stream, and must have a single video input and a single video
+output. In the filtergraph, the input is associated to the label
+<code>in</code>, and the output to the label <code>out</code>. See the
+ffmpeg-filters manual for more information about the filtergraph
+syntax.
+</p>
+<p>You can specify this parameter multiple times and cycle through the specified
+filtergraphs along with the show modes by pressing the key <tt class="key">w</tt>.
+</p>
+</dd>
+<dt><span><samp>-af <var>filtergraph</var></samp></span></dt>
+<dd><p><var>filtergraph</var> is a description of the filtergraph to apply to
+the input audio.
+Use the option &quot;-filters&quot; to show all the available filters (including
+sources and sinks).
+</p>
+</dd>
+<dt><span><samp>-i <var>input_url</var></samp></span></dt>
+<dd><p>Read <var>input_url</var>.
+</p></dd>
+</dl>
+
+<a name="Advanced-options"></a>
+<h3 class="section">3.5 Advanced options<span class="pull-right"><a class="anchor hidden-xs" href="#Advanced-options" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Advanced-options" aria-hidden="true">TOC</a></span></h3>
+<dl compact="compact">
+<dt><span><samp>-stats</samp></span></dt>
+<dd><p>Print several playback statistics, in particular show the stream
+duration, the codec parameters, the current position in the stream and
+the audio/video synchronisation drift. It is shown by default, unless the
+log level is lower than <code>info</code>. Its display can be forced by manually
+specifying this option. To disable it, you need to specify <code>-nostats</code>.
+</p>
+</dd>
+<dt><span><samp>-fast</samp></span></dt>
+<dd><p>Non-spec-compliant optimizations.
+</p></dd>
+<dt><span><samp>-genpts</samp></span></dt>
+<dd><p>Generate pts.
+</p></dd>
+<dt><span><samp>-sync <var>type</var></samp></span></dt>
+<dd><p>Set the master clock to audio (<code>type=audio</code>), video
+(<code>type=video</code>) or external (<code>type=ext</code>). Default is audio. The
+master clock is used to control audio-video synchronization. Most media
+players use audio as master clock, but in some cases (streaming or high
+quality broadcast) it is necessary to change that. This option is mainly
+used for debugging purposes.
+</p></dd>
+<dt><span><samp>-ast <var>audio_stream_specifier</var></samp></span></dt>
+<dd><p>Select the desired audio stream using the given stream specifier. The stream
+specifiers are described in the <a href="#Stream-specifiers">Stream specifiers</a> chapter. If this option
+is not specified, the &quot;best&quot; audio stream is selected in the program of the
+already selected video stream.
+</p></dd>
+<dt><span><samp>-vst <var>video_stream_specifier</var></samp></span></dt>
+<dd><p>Select the desired video stream using the given stream specifier. The stream
+specifiers are described in the <a href="#Stream-specifiers">Stream specifiers</a> chapter. If this option
+is not specified, the &quot;best&quot; video stream is selected.
+</p></dd>
+<dt><span><samp>-sst <var>subtitle_stream_specifier</var></samp></span></dt>
+<dd><p>Select the desired subtitle stream using the given stream specifier. The stream
+specifiers are described in the <a href="#Stream-specifiers">Stream specifiers</a> chapter. If this option
+is not specified, the &quot;best&quot; subtitle stream is selected in the program of the
+already selected video or audio stream.
+</p></dd>
+<dt><span><samp>-autoexit</samp></span></dt>
+<dd><p>Exit when video is done playing.
+</p></dd>
+<dt><span><samp>-exitonkeydown</samp></span></dt>
+<dd><p>Exit if any key is pressed.
+</p></dd>
+<dt><span><samp>-exitonmousedown</samp></span></dt>
+<dd><p>Exit if any mouse button is pressed.
+</p>
+</dd>
+<dt><span><samp>-codec:<var>media_specifier</var> <var>codec_name</var></samp></span></dt>
+<dd><p>Force a specific decoder implementation for the stream identified by
+<var>media_specifier</var>, which can assume the values <code>a</code> (audio),
+<code>v</code> (video), and <code>s</code> subtitle.
+</p>
+</dd>
+<dt><span><samp>-acodec <var>codec_name</var></samp></span></dt>
+<dd><p>Force a specific audio decoder.
+</p>
+</dd>
+<dt><span><samp>-vcodec <var>codec_name</var></samp></span></dt>
+<dd><p>Force a specific video decoder.
+</p>
+</dd>
+<dt><span><samp>-scodec <var>codec_name</var></samp></span></dt>
+<dd><p>Force a specific subtitle decoder.
+</p>
+</dd>
+<dt><span><samp>-autorotate</samp></span></dt>
+<dd><p>Automatically rotate the video according to file metadata. Enabled by
+default, use <samp>-noautorotate</samp> to disable it.
+</p>
+</dd>
+<dt><span><samp>-framedrop</samp></span></dt>
+<dd><p>Drop video frames if video is out of sync. Enabled by default if the master
+clock is not set to video. Use this option to enable frame dropping for all
+master clock sources, use <samp>-noframedrop</samp> to disable it.
+</p>
+</dd>
+<dt><span><samp>-infbuf</samp></span></dt>
+<dd><p>Do not limit the input buffer size, read as much data as possible from the
+input as soon as possible. Enabled by default for realtime streams, where data
+may be dropped if not read in time. Use this option to enable infinite buffers
+for all inputs, use <samp>-noinfbuf</samp> to disable it.
+</p>
+</dd>
+<dt><span><samp>-filter_threads <var>nb_threads</var></samp></span></dt>
+<dd><p>Defines how many threads are used to process a filter pipeline. Each pipeline
+will produce a thread pool with this many threads available for parallel
+processing. The default is 0 which means that the thread count will be
+determined by the number of available CPUs.
+</p>
+</dd>
+</dl>
+
+<a name="While-playing"></a>
+<h3 class="section">3.6 While playing<span class="pull-right"><a class="anchor hidden-xs" href="#While-playing" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-While-playing" aria-hidden="true">TOC</a></span></h3>
+
+<dl compact="compact">
+<dt><span><tt class="key">q, ESC</tt></span></dt>
+<dd><p>Quit.
+</p>
+</dd>
+<dt><span><tt class="key">f</tt></span></dt>
+<dd><p>Toggle full screen.
+</p>
+</dd>
+<dt><span><tt class="key">p, SPC</tt></span></dt>
+<dd><p>Pause.
+</p>
+</dd>
+<dt><span><tt class="key">m</tt></span></dt>
+<dd><p>Toggle mute.
+</p>
+</dd>
+<dt><span><tt class="key">9, 0</tt></span></dt>
+<dt><span><tt class="key">/, *</tt></span></dt>
+<dd><p>Decrease and increase volume respectively.
+</p>
+</dd>
+<dt><span><tt class="key">a</tt></span></dt>
+<dd><p>Cycle audio channel in the current program.
+</p>
+</dd>
+<dt><span><tt class="key">v</tt></span></dt>
+<dd><p>Cycle video channel.
+</p>
+</dd>
+<dt><span><tt class="key">t</tt></span></dt>
+<dd><p>Cycle subtitle channel in the current program.
+</p>
+</dd>
+<dt><span><tt class="key">c</tt></span></dt>
+<dd><p>Cycle program.
+</p>
+</dd>
+<dt><span><tt class="key">w</tt></span></dt>
+<dd><p>Cycle video filters or show modes.
+</p>
+</dd>
+<dt><span><tt class="key">s</tt></span></dt>
+<dd><p>Step to the next frame.
+</p>
+<p>Pause if the stream is not already paused, step to the next video
+frame, and pause.
+</p>
+</dd>
+<dt><span><tt class="key">left/right</tt></span></dt>
+<dd><p>Seek backward/forward 10 seconds.
+</p>
+</dd>
+<dt><span><tt class="key">down/up</tt></span></dt>
+<dd><p>Seek backward/forward 1 minute.
+</p>
+</dd>
+<dt><span><tt class="key">page down/page up</tt></span></dt>
+<dd><p>Seek to the previous/next chapter.
+or if there are no chapters
+Seek backward/forward 10 minutes.
+</p>
+</dd>
+<dt><span><tt class="key">right mouse click</tt></span></dt>
+<dd><p>Seek to percentage in file corresponding to fraction of width.
+</p>
+</dd>
+<dt><span><tt class="key">left mouse double-click</tt></span></dt>
+<dd><p>Toggle full screen.
+</p>
+</dd>
+</dl>
+
+
+
+<a name="See-Also"></a>
+<h2 class="chapter">4 See Also<span class="pull-right"><a class="anchor hidden-xs" href="#See-Also" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-See-Also" aria-hidden="true">TOC</a></span></h2>
+
+<p><a href="ffplay-all.html">ffmpeg-all</a>,
+<a href="ffmpeg.html">ffmpeg</a>, <a href="ffprobe.html">ffprobe</a>,
+<a href="ffmpeg-utils.html">ffmpeg-utils</a>,
+<a href="ffmpeg-scaler.html">ffmpeg-scaler</a>,
+<a href="ffmpeg-resampler.html">ffmpeg-resampler</a>,
+<a href="ffmpeg-codecs.html">ffmpeg-codecs</a>,
+<a href="ffmpeg-bitstream-filters.html">ffmpeg-bitstream-filters</a>,
+<a href="ffmpeg-formats.html">ffmpeg-formats</a>,
+<a href="ffmpeg-devices.html">ffmpeg-devices</a>,
+<a href="ffmpeg-protocols.html">ffmpeg-protocols</a>,
+<a href="ffmpeg-filters.html">ffmpeg-filters</a>
+</p>
+
+<a name="Authors"></a>
+<h2 class="chapter">5 Authors<span class="pull-right"><a class="anchor hidden-xs" href="#Authors" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Authors" aria-hidden="true">TOC</a></span></h2>
+
+<p>The FFmpeg developers.
+</p>
+<p>For details about the authorship, see the Git history of the project
+(https://git.ffmpeg.org/ffmpeg), e.g. by typing the command
+<code>git log</code> in the FFmpeg source directory, or browsing the
+online repository at <a href="https://git.ffmpeg.org/ffmpeg">https://git.ffmpeg.org/ffmpeg</a>.
+</p>
+<p>Maintainers for the specific components are listed in the file
+<samp>MAINTAINERS</samp> in the source code tree.
+</p>
+
+      <p style="font-size: small;">
+        This document was generated using <a href="https://www.gnu.org/software/texinfo/"><em>makeinfo</em></a>.
+      </p>
+    </div>
+  </body>
+</html>
