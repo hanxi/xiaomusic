@@ -37,7 +37,7 @@ pdm run xiaomusic.py
 ## 在 Docker 里使用
 
 ```shell
-docker run -e MI_USER=<your-xiaomi-account> -e MI_PASS=<your-xiaomi-password> -e MI_DID=<your-xiaomi-speaker-mid> -e XIAOMUSIC_PROXY=<proxy-for-yt-dlp> -e XIAOMUSIC_HOSTNAME=192.168.2.5 -p 8090:8090 -v ./music:/app/music hanxi/xiaomusic --hardware=<L07A> -
+docker run -e MI_USER=<your-xiaomi-account> -e MI_PASS=<your-xiaomi-password> -e MI_DID=<your-xiaomi-speaker-mid> -e XIAOMUSIC_PROXY=<proxy-for-yt-dlp> -e XIAOMUSIC_HOSTNAME=192.168.2.5 -p 8090:8090 -v ./music:/app/music hanxi/xiaomusic --hardware=<L07A>
 ```
 
 - XIAOMUSIC_PROXY 用于配置代理，yt-dlp 工具下载歌曲会用到。
