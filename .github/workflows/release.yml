@@ -63,4 +63,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: yihong0618/xiaogpt:${{ github.ref_name }}
+          tags: hanxi/xiaomusic:${{ github.ref_name }}
