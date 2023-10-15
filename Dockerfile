@@ -9,9 +9,9 @@ FROM python:3.10-slim
 
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/ffmpeg /app/ffmpeg
 COPY xiaomusic/ ./xiaomusic/
 COPY xiaomusic.py .
-COPY ffmpeg/ ./ffmpeg/
 ENV XDG_CONFIG_HOME=/config
 ENV XIAOMUSIC_HOSTNAME=192.168.2.5
 ENV XIAOMUSIC_PORT=8090
