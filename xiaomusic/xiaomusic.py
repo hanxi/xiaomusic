@@ -78,6 +78,7 @@ class XiaoMusic:
         self.music_path = config.music_path
         self.hostname = config.hostname
         self.port = config.port
+        self.proxy = config.proxy
 
         # 下载对象
         self.download_proc = None
@@ -300,6 +301,7 @@ class XiaoMusic:
             "-x", "--audio-format", "mp3",
             "--paths", self.music_path,
             "-o", f"{name}.mp3",
+            "--proxy", f"{self.proxy}",
             "--ffmpeg-location", "./ffmpeg/bin")
         await self.do_tts(f"正在下载歌曲{name}")
 

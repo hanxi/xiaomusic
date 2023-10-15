@@ -34,6 +34,22 @@ pdm run xiaomusic.py
 "L07A": ("5-1", "5-5"),  # Redmi小爱音箱Play(l7a)
 ````
 
+## 在 Docker 里使用
+
+```shell
+docker run -e MI_USER=<your-xiaomi-account> -e MI_PASS=<your-xiaomi-password> -e MI_DID=<your-xiaomi-speaker-mid> -e XIAOMUSIC_PROXY=<proxy-for-yt-dlp> -e XIAOMUSIC_HOSTNAME=192.168.2.5 -p 8090:8090 -v ./music:/app/music xiaomusic --hardware=<L07A> -
+```
+
+- XIAOMUSIC_PROXY 用于配置代理，yt-dlp 工具下载歌曲会用到。
+- 注意端口必须映射为与容器内一致，XIAOMUSIC_HOSTNAME 需要设置为宿主机的 IP 地址，否则小爱无法正常播放。
+- 可以把 /app/music 目录映射到本地，用于保存下载的歌曲。
+
+### 本地编译Docker Image
+
+```shell
+docker build -t xiaomusic .
+```
+
 ## 感谢
 
 - [xiaomi](https://www.mi.com/)

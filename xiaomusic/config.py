@@ -53,9 +53,14 @@ class Config:
     cookie: str = ""
     use_command: bool = True
     verbose: bool = False
-    music_path: str = "music"
-    hostname: str | None = "192.168.2.5"
-    port: int | None = 8090
+    music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")
+    hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
+    port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))
+    proxy: str = os.getenv("XIAOMUSIC_PROXY", "http://192.168.2.5:8080")
+
+    def __post_init__(self) -> None:
+        if self.proxy:
+            validate_proxy(self.proxy)
 
     @property
     def tts_command(self) -> str:
