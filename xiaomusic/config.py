@@ -45,7 +45,7 @@ KEY_WORD_DICT = {
 
 @dataclass
 class Config:
-    hardware: str = "L07A"
+    hardware: str = os.getenv("MI_HARDWARE", "L07A")
     account: str = os.getenv("MI_USER", "")
     password: str = os.getenv("MI_PASS", "")
     mi_did: str = os.getenv("MI_DID", "")

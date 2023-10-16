@@ -37,10 +37,11 @@ pdm run xiaomusic.py
 ## 在 Docker 里使用
 
 ```shell
-docker run -e MI_USER=<your-xiaomi-account> -e MI_PASS=<your-xiaomi-password> -e MI_DID=<your-xiaomi-speaker-mid> -e XIAOMUSIC_PROXY=<proxy-for-yt-dlp> -e XIAOMUSIC_HOSTNAME=192.168.2.5 -p 8090:8090 -v ./music:/app/music hanxi/xiaomusic --hardware='L07A'
+docker run -e MI_USER=<your-xiaomi-account> -e MI_PASS=<your-xiaomi-password> -e MI_DID=<your-xiaomi-speaker-mid> -e MI_HARDWARE='L07A' -e XIAOMUSIC_PROXY=<proxy-for-yt-dlp> -e XIAOMUSIC_HOSTNAME=192.168.2.5 -p 8090:8090 -v ./music:/app/music hanxi/xiaomusic
 ```
 
 - XIAOMUSIC_PROXY 用于配置代理，默认为空，yt-dlp 工具下载歌曲会用到。
+- MI_HARDWARE 是小米音箱的型号，默认为'L07A'
 - 注意端口必须映射为与容器内一致，XIAOMUSIC_HOSTNAME 需要设置为宿主机的 IP 地址，否则小爱无法正常播放。
 - 可以把 /app/music 目录映射到本地，用于保存下载的歌曲。
 
