@@ -56,7 +56,7 @@ class Config:
     music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))
-    proxy: str = os.getenv("XIAOMUSIC_PROXY", "http://192.168.2.5:8080")
+    proxy: str = os.getenv("XIAOMUSIC_PROXY", None)
 
     def __post_init__(self) -> None:
         if self.proxy:
