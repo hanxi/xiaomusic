@@ -355,7 +355,10 @@ class XiaoMusic:
 
         async def _do_next():
             await asyncio.sleep(self._timeout)
-            await self.play_next()
+            try:
+                await self.play_next()
+            except Exception as e:
+                self.log.warning(f"执行出错 {str(e)}\n{traceback.format_exc()}")
 
         self._next_timer = asyncio.ensure_future(_do_next())
         self.log.info(f"{sec}秒后将会播放下一首")
