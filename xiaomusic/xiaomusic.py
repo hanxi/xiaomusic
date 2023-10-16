@@ -294,7 +294,10 @@ class XiaoMusic:
     # 下载歌曲
     async def download(self, name):
         if self.download_proc:
-            self.download_proc.kill()
+            try:
+                self.download_proc.kill()
+            except ProcessLookupError:
+                pass
 
         sbp_args = (
             "yt-dlp", f"ytsearch:{name}",
