@@ -296,13 +296,17 @@ class XiaoMusic:
         if self.download_proc:
             self.download_proc.kill()
 
-        self.download_proc = await asyncio.create_subprocess_exec(
+        sbp_args = (
             "yt-dlp", f"ytsearch:{name}",
             "-x", "--audio-format", "mp3",
             "--paths", self.music_path,
             "-o", f"{name}.mp3",
-            "--proxy", f"{self.proxy}",
             "--ffmpeg-location", "./ffmpeg/bin")
+
+        if self.proxy:
+            sbp_args += ("--proxy", f"{self.proxy}")
+
+        self.download_proc = await asyncio.create_subprocess_exec(*sbp_args)
         await self.do_tts(f"正在下载歌曲{name}")
 
     def get_filename(self, name):
