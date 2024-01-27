@@ -86,7 +86,7 @@ class XiaoMusic:
         # 下载对象
         self.download_proc = None
         # 单曲循环，全部循环
-        self.play_type = PLAY_TYPE_ONE
+        self.play_type = PLAY_TYPE_ALL
         self.cur_music = ""
         self._next_timer = None
         self._timeout = 0
@@ -355,7 +355,7 @@ class XiaoMusic:
         # 随机选择一个文件
         music_file = random.choice(music_files)
         (filename, extension) = os.path.splitext(music_file)
-        self.log.info(f"随机到歌曲{filename}.{extension}")
+        self.log.info(f"随机到歌曲{filename}{extension}")
         return filename
 
     # 获取文件播放时长
@@ -454,6 +454,7 @@ class XiaoMusic:
     async def play_next(self, **kwargs):
         self.log.info("下一首")
         (name, _) = os.path.splitext(os.path.basename(self.cur_music))
+        self.log.debug("play_next. name:%s, cur_music:%s", name, self.cur_music)
         if self.play_type == PLAY_TYPE_ALL or name == "":
             name = self.random_music()
         if name == "":
@@ -470,6 +471,12 @@ class XiaoMusic:
     async def set_play_type_all(self, **kwargs):
         self.play_type = PLAY_TYPE_ALL
         await self.do_tts(f"已经设置为全部循环")
+
+    # 随机播放
+    async def random_play(self, **kwargs):
+        self.play_type = PLAY_TYPE_ALL
+        await self.do_tts(f"已经设置为全部循环并随机播放")
+        await self.play_next()
 
     async def stop(self, **kwargs):
         if self._next_timer:

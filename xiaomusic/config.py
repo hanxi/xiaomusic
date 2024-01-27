@@ -39,6 +39,7 @@ KEY_WORD_DICT = {
     "下一首": "play_next",
     "单曲循环": "set_play_type_one",
     "全部循环": "set_play_type_all",
+    "随机播放": "random_play",
     "关机": "stop",
     "停止播放": "stop",
 }
