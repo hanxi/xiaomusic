@@ -33,6 +33,12 @@ pdm run xiaomusic.py
 ```txt
 "L07A": ("5-1", "5-5"),  # Redmi小爱音箱Play(l7a)
 ````
+## 支持音乐格式
+
+- mp3
+- flac
+
+> 本地音乐会搜索 mp3 和 flac 格式的文件，下载的歌曲是 mp3 格式的。
 
 ## 在 Docker 里使用
 
