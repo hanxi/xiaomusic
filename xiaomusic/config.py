@@ -37,11 +37,17 @@ KEY_WORD_DICT = {
     "播放歌曲": "play",
     "放歌曲": "play",
     "下一首": "play_next",
-    "单曲循环":"set_play_type_one",
-    "全部循环":"set_play_type_all",
-    "关机":"stop",
-    "停止播放":"stop",
+    "单曲循环": "set_play_type_one",
+    "全部循环": "set_play_type_all",
+    "关机": "stop",
+    "停止播放": "stop",
 }
+
+SUPPORT_MUSIC_TYPE = [
+    "mp3",
+    "flac",
+]
+
 
 @dataclass
 class Config:

@@ -29,6 +29,7 @@ from xiaomusic.config import (
     COOKIE_TEMPLATE,
     LATEST_ASK_API,
     KEY_WORD_DICT,
+    SUPPORT_MUSIC_TYPE,
     Config,
 )
 from xiaomusic.utils import (
@@ -38,8 +39,9 @@ from xiaomusic.utils import (
 
 EOF = object()
 
-PLAY_TYPE_ONE = 0 # 单曲循环
-PLAY_TYPE_ALL = 1 # 全部循环
+PLAY_TYPE_ONE = 0  # 单曲循环
+PLAY_TYPE_ALL = 1  # 全部循环
+
 
 class ThreadedHTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
@@ -60,6 +62,7 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except (socket.error, ConnectionResetError, BrokenPipeError):
             # ignore this or TODO find out why the error later
             pass
+
 
 class XiaoMusic:
     def __init__(self, config: Config):
@@ -286,8 +289,7 @@ class XiaoMusic:
     def is_downloading(self):
         if not self.download_proc:
             return False
-        if self.download_proc.returncode != None \
-            and self.download_proc.returncode < 0:
+        if self.download_proc.returncode != None and self.download_proc.returncode < 0:
             return False
         return True
 
@@ -300,11 +302,18 @@ class XiaoMusic:
                 pass
 
         sbp_args = (
-            "yt-dlp", f"ytsearch:{name}",
-            "-x", "--audio-format", "mp3",
-            "--paths", self.music_path,
-            "-o", f"{name}.mp3",
-            "--ffmpeg-location", "./ffmpeg/bin")
+            "yt-dlp",
+            f"ytsearch:{name}",
+            "-x",
+            "--audio-format",
+            "mp3",
+            "--paths",
+            self.music_path,
+            "-o",
+            f"{name}.mp3",
+            "--ffmpeg-location",
+            "./ffmpeg/bin",
+        )
 
         if self.proxy:
             sbp_args += ("--proxy", f"{self.proxy}")
@@ -313,43 +322,53 @@ class XiaoMusic:
         await self.do_tts(f"正在下载歌曲{name}")
 
     def get_filename(self, name):
-        filename = os.path.join(self.music_path, f"{name}.mp3")
+        filename = os.path.join(self.music_path, name)
         return filename
 
     # 本地是否存在歌曲
     def local_exist(self, name):
-        filename = self.get_filename(name)
-        self.log.debug("local_exist. filename:%s", filename)
-        return os.path.exists(filename)
+        for tp in SUPPORT_MUSIC_TYPE:
+            filename = self.get_filename(f"{name}.{tp}")
+            self.log.debug("try local_exist. filename:%s", filename)
+            if os.path.exists(filename):
+                return filename
+        return ""
 
     # 获取歌曲播放地址
-    def get_file_url(self, name):
-        encoded_name = urllib.parse.quote(os.path.basename(name))
-        return f"http://{self.hostname}:{self.port}/{encoded_name}.mp3"
+    def get_file_url(self, filename):
+        encoded_name = urllib.parse.quote(os.path.basename(filename))
+        return f"http://{self.hostname}:{self.port}/{encoded_name}"
 
     # 随机获取一首音乐
     def random_music(self):
         files = os.listdir(self.music_path)
-        # 过滤 mp3 文件
-        mp3_files = [file for file in files if file.endswith(".mp3")]
-        if len(mp3_files) == 0:
+        # 过滤音乐文件
+        music_files = []
+        for file in files:
+            for tp in SUPPORT_MUSIC_TYPE:
+                if file.endswith(f".{tp}"):
+                    music_files.append(file)
+
+        if len(music_files) == 0:
             self.log.warning(f"没有随机到歌曲")
             return ""
         # 随机选择一个文件
-        mp3_file = random.choice(mp3_files)
-        name = mp3_file[:-4]
-        self.log.info(f"随机到歌曲{name}")
-        return name
+        music_file = random.choice(music_files)
+        (filename, extension) = os.path.splitext(music_file)
+        self.log.info(f"随机到歌曲{filename}.{extension}")
+        return filename
 
-    # 获取mp3文件播放时长
-    def get_mp3_duration(self, name):
-        filename = self.get_filename(name)
-        audio = mutagen.mp3.MP3(filename)
-        return audio.info.length
+    # 获取文件播放时长
+    def get_file_duration(self, filename):
+        # 获取音频文件对象
+        audio = mutagen.File(filename)
+        # 获取播放时长
+        duration = audio.info.length
+        return duration
 
     # 设置下一首歌曲的播放定时器
     def set_next_music_timeout(self):
-        sec = int(self.get_mp3_duration(self.cur_music))
+        sec = int(self.get_file_duration(self.cur_music))
         self.log.info(f"歌曲{self.cur_music}的时长{sec}秒")
         if self._next_timer:
             self._next_timer.cancel()
@@ -372,7 +391,9 @@ class XiaoMusic:
             await self.init_all_data(session)
             task = asyncio.create_task(self.poll_latest_ask())
             assert task is not None  # to keep the reference to task, do not remove this
-            self.log.info(f"Running xiaomusic now, 用`{'/'.join(KEY_WORD_DICT.keys())}`开头来控制")
+            self.log.info(
+                f"Running xiaomusic now, 用`{'/'.join(KEY_WORD_DICT.keys())}`开头来控制"
+            )
             while True:
                 self.polling_event.set()
                 await self.new_record_event.wait()
@@ -396,12 +417,12 @@ class XiaoMusic:
 
                 opkey = match.groups()[0]
                 opvalue = KEY_WORD_DICT[opkey]
-                oparg = query[len(opkey):]
+                oparg = query[len(opkey) :]
                 self.log.info("收到指令:%s %s", opkey, oparg)
 
                 try:
                     func = getattr(self, opvalue)
-                    await func(name = oparg)
+                    await func(name=oparg)
                 except Exception as e:
                     self.log.warning(f"执行出错 {str(e)}\n{traceback.format_exc()}")
 
@@ -413,13 +434,15 @@ class XiaoMusic:
             return
 
         await self.do_tts(f"即将播放{name}")
-        if not self.local_exist(name):
+        filename = self.local_exist(name)
+        if len(filename) <= 0:
             await self.download(name)
             self.log.info("正在下载中 %s", name)
+            filename = self.get_filename(f"{name}.mp3")
             await self.download_proc.wait()
 
-        self.cur_music = name
-        url = self.get_file_url(name)
+        self.cur_music = filename
+        url = self.get_file_url(filename)
         self.log.info("播放 %s", url)
         await self.stop_if_xiaoai_is_playing()
         await self.mina_service.play_by_url(self.device_id, url)
