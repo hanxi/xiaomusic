@@ -57,6 +57,13 @@ docker run -e MI_USER=<your-xiaomi-account> -e MI_PASS=<your-xiaomi-password> -e
 docker build -t xiaomusic .
 ```
 
+## 简易的控制面板
+
+浏览器进入 <http://192.168.2.5:8090>
+
+- ip 是 XIAOMUSIC_HOSTNAME 设置的
+- 8090 是默认端口
+
 ## 感谢
 
 - [xiaomi](https://www.mi.com/)
