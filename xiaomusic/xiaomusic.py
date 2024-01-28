@@ -95,7 +95,7 @@ class XiaoMusic:
         await self._init_data_hardware()
         session.cookie_jar.update_cookies(self.get_cookie())
         self.cookie_jar = session.cookie_jar
-        StartHTTPServer(self.hostname, self.port, self.music_path, self)
+        StartHTTPServer(self.port, self.music_path, self)
 
     async def login_miboy(self, session):
         account = MiAccount(

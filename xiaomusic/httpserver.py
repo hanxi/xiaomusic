@@ -50,9 +50,8 @@ def run_app():
     app.run(host=host, port=port)
 
 
-def StartHTTPServer(_host, _port, _static_path, _xiaomusic):
-    global host, port, static_path, xiaomusic, log
-    host = _host
+def StartHTTPServer(_port, _static_path, _xiaomusic):
+    global port, static_path, xiaomusic, log
     port = _port
     static_path = _static_path
     xiaomusic = _xiaomusic
