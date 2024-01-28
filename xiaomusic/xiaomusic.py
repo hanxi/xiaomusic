@@ -454,7 +454,7 @@ class XiaoMusic:
         if name == "":
             await self.do_tts(f"本地没有歌曲")
             return
-        await self.play(name=name)
+        await self.play(arg1=name)
 
     # 单曲循环
     async def set_play_type_one(self, **kwargs):
