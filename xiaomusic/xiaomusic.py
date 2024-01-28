@@ -1,22 +1,15 @@
 #!/usr/bin/env python3
 import asyncio
-import functools
-import http.server
-import io
 import json
 import logging
 import os
 import random
 import re
-import shutil
-import socket
-import socketserver
-import tempfile
-import threading
 import time
 import urllib.parse
 import traceback
-import mutagen.mp3
+import mutagen
+from xiaomusic.httpserver import StartHTTPServer
 
 from pathlib import Path
 
@@ -29,6 +22,8 @@ from xiaomusic.config import (
     COOKIE_TEMPLATE,
     LATEST_ASK_API,
     KEY_WORD_DICT,
+    KEY_WORD_ARG_BEFORE_DICT,
+    KEY_MATCH_ORDER,
     SUPPORT_MUSIC_TYPE,
     Config,
 )
@@ -41,27 +36,6 @@ EOF = object()
 
 PLAY_TYPE_ONE = 0  # 单曲循环
 PLAY_TYPE_ALL = 1  # 全部循环
-
-
-class ThreadedHTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-    pass
-
-
-class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    logger = logging.getLogger("xiaomusic")
-
-    def log_message(self, format, *args):
-        self.logger.debug(f"{self.address_string()} - {format}", *args)
-
-    def log_error(self, format, *args):
-        self.logger.error(f"{self.address_string()} - {format}", *args)
-
-    def copyfile(self, source, outputfile):
-        try:
-            super().copyfile(source, outputfile)
-        except (socket.error, ConnectionResetError, BrokenPipeError):
-            # ignore this or TODO find out why the error later
-            pass
 
 
 class XiaoMusic:
@@ -91,6 +65,9 @@ class XiaoMusic:
         self._next_timer = None
         self._timeout = 0
 
+        # 关机定时器
+        self._stop_timer = None
+
         # setup logger
         self.log = logging.getLogger("xiaomusic")
         self.log.setLevel(logging.DEBUG if config.verbose else logging.INFO)
@@ -118,7 +95,7 @@ class XiaoMusic:
         await self._init_data_hardware()
         session.cookie_jar.update_cookies(self.get_cookie())
         self.cookie_jar = session.cookie_jar
-        self.start_http_server()
+        StartHTTPServer(self.hostname, self.port, self.music_path, self)
 
     async def login_miboy(self, session):
         account = MiAccount(
@@ -228,6 +205,13 @@ class XiaoMusic:
                 self.last_record = last_record
                 self.new_record_event.set()
 
+    # 手动发消息
+    def set_last_record(self, query):
+        self.last_record = {
+            "query": query,
+        }
+        self.new_record_event.set()
+
     async def do_tts(self, value, wait_for_finish=False):
         self.log.info("do_tts: %s", value)
         if not self.config.use_command:
@@ -251,17 +235,6 @@ class XiaoMusic:
             if not await self.get_if_xiaoai_is_playing():
                 break
             await asyncio.sleep(1)
-
-    def start_http_server(self):
-        # create the server
-        handler = functools.partial(HTTPRequestHandler, directory=self.music_path)
-        httpd = ThreadedHTTPServer(("", self.port), handler)
-        # start the server in a new thread
-        server_thread = threading.Thread(target=httpd.serve_forever)
-        server_thread.daemon = True
-        server_thread.start()
-
-        self.log.info(f"Serving on {self.hostname}:{self.port}")
 
     async def get_if_xiaoai_is_playing(self):
         playing_info = await self.mina_service.player_get_status(self.device_id)
@@ -336,7 +309,8 @@ class XiaoMusic:
 
     # 获取歌曲播放地址
     def get_file_url(self, filename):
-        encoded_name = urllib.parse.quote(os.path.basename(filename))
+        self.log.debug("get_file_url. filename:%s", filename)
+        encoded_name = urllib.parse.quote(filename)
         return f"http://{self.hostname}:{self.port}/{encoded_name}"
 
     # 随机获取一首音乐
@@ -394,6 +368,7 @@ class XiaoMusic:
             self.log.info(
                 f"Running xiaomusic now, 用`{'/'.join(KEY_WORD_DICT.keys())}`开头来控制"
             )
+
             while True:
                 self.polling_event.set()
                 await self.new_record_event.wait()
@@ -404,8 +379,8 @@ class XiaoMusic:
                 self.log.debug("收到消息:%s", query)
 
                 # 匹配命令
-                match = re.match(rf"^({'|'.join(KEY_WORD_DICT.keys())})", query)
-                if not match:
+                opvalue, oparg = self.match_cmd(query)
+                if not opvalue:
                     await asyncio.sleep(1)
                     continue
 
@@ -415,25 +390,44 @@ class XiaoMusic:
                     # waiting for xiaoai speaker done
                     await asyncio.sleep(8)
 
-                opkey = match.groups()[0]
-                opvalue = KEY_WORD_DICT[opkey]
-                oparg = query[len(opkey) :]
-                self.log.info("收到指令:%s %s", opkey, oparg)
-
                 try:
                     func = getattr(self, opvalue)
-                    await func(name=oparg)
+                    await func(arg1=oparg)
                 except Exception as e:
                     self.log.warning(f"执行出错 {str(e)}\n{traceback.format_exc()}")
 
+    # 匹配命令
+    def match_cmd(self, query):
+        for opkey in KEY_MATCH_ORDER:
+            patternarg = rf"(.*){opkey}(.*)"
+            # 匹配参数
+            matcharg = re.match(patternarg, query)
+            if not matcharg:
+                continue
+
+            argpre = matcharg.groups()[0]
+            argafter = matcharg.groups()[1]
+            self.log.debug(
+                "matcharg. opkey:%s, argpre:%s, argafter:%s",
+                opkey,
+                argpre,
+                argafter,
+            )
+            oparg = argafter
+            opvalue = KEY_WORD_DICT[opkey]
+            if opkey in KEY_WORD_ARG_BEFORE_DICT:
+                oparg = argpre
+            self.log.info("匹配到指令. opkey:%s opvalue:%s oparg:%s", opkey, opvalue, oparg)
+            return (opvalue, oparg)
+        return (None, None)
+
     # 播放歌曲
     async def play(self, **kwargs):
-        name = kwargs["name"]
+        name = kwargs["arg1"]
         if name == "":
             await self.play_next()
             return
 
-        await self.do_tts(f"即将播放{name}")
         filename = self.local_exist(name)
         if len(filename) <= 0:
             await self.download(name)
@@ -483,3 +477,19 @@ class XiaoMusic:
             self._next_timer.cancel()
             self.log.info(f"定时器已取消")
         await self.stop_if_xiaoai_is_playing()
+
+    async def stop_after_minute(self, **kwargs):
+        if self._stop_timer:
+            self._stop_timer.cancel()
+            self.log.info(f"关机定时器已取消")
+        minute = int(kwargs["arg1"])
+
+        async def _do_stop():
+            await asyncio.sleep(minute * 60)
+            try:
+                await self.stop()
+            except Exception as e:
+                self.log.warning(f"执行出错 {str(e)}\n{traceback.format_exc()}")
+
+        self._stop_timer = asyncio.ensure_future(_do_stop())
+        self.log.info(f"{minute}分钟后将关机")

@@ -12,6 +12,7 @@ dependencies = [
     "miservice-fork>=2.2.1",
     "mutagen>=1.47.0",
     "yt-dlp>=2023.10.13",
+    "flask[async]>=3.0.1",
 ]
 requires-python = ">=3.10"
 readme = "README.md"

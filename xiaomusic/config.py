@@ -42,7 +42,26 @@ KEY_WORD_DICT = {
     "随机播放": "random_play",
     "关机": "stop",
     "停止播放": "stop",
+    "分钟后关机": "stop_after_minute",
 }
+
+# 命令参数在前面
+KEY_WORD_ARG_BEFORE_DICT = {
+    "分钟后关机": True,
+}
+
+# 匹配优先级
+KEY_MATCH_ORDER = [
+    "分钟后关机",
+    "播放歌曲",
+    "放歌曲",
+    "下一首",
+    "单曲循环",
+    "全部循环",
+    "随机播放",
+    "关机",
+    "停止播放",
+]
 
 SUPPORT_MUSIC_TYPE = [
     "mp3",
