@@ -6,7 +6,9 @@ $(function(){
     $container=$("#cmds");
     // 遍历数据
     for (const [key, value] of Object.entries(data)) {
-      append_op_button(key);
+      if (key != "分钟后关机" && key != "放歌曲") {
+        append_op_button(key);
+      }
     }
 
     append_op_button("5分钟后关机");
@@ -41,4 +43,21 @@ $(function(){
       // 添加按钮到容器
       $container.append($button);
   }
+
+  $("#play").on("click", () => {
+    name = $("#music-name").val();
+    let cmd = "播放歌曲"+name;
+    $.ajax({
+      type: "POST",
+      url: "/cmd",
+      contentType: "application/json",
+      data: JSON.stringify({cmd: cmd}),
+      success: () => {
+        // 请求成功时执行的操作
+      },
+      error: () => {
+        // 请求失败时执行的操作
+      }
+    });
+  });
 });
