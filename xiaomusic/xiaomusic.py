@@ -95,7 +95,6 @@ class XiaoMusic:
         await self._init_data_hardware()
         session.cookie_jar.update_cookies(self.get_cookie())
         self.cookie_jar = session.cookie_jar
-        StartHTTPServer(self.port, self.music_path, self)
 
     async def login_miboy(self, session):
         account = MiAccount(
@@ -214,6 +213,13 @@ class XiaoMusic:
 
     async def do_tts(self, value, wait_for_finish=False):
         self.log.info("do_tts: %s", value)
+
+        if self.config.mute_xiaoai:
+            await self.stop_if_xiaoai_is_playing()
+        else:
+            # waiting for xiaoai speaker done
+            await asyncio.sleep(8)
+
         if not self.config.use_command:
             try:
                 await self.mina_service.text_to_speech(self.device_id, value)
@@ -229,6 +235,19 @@ class XiaoMusic:
             elapse = calculate_tts_elapse(value)
             await asyncio.sleep(elapse)
             await self.wait_for_tts_finish()
+
+    async def do_set_volume(self, value):
+        if not self.config.use_command:
+            try:
+                await self.mina_service.player_set_volume(self.device_id, value)
+            except Exception:
+                pass
+        else:
+            await miio_command(
+                self.miio_service,
+                self.config.mi_did,
+                f"{self.config.volume_command} {value}",
+            )
 
     async def wait_for_tts_finish(self):
         while True:
@@ -363,6 +382,7 @@ class XiaoMusic:
         async with ClientSession() as session:
             self.session = session
             await self.init_all_data(session)
+            StartHTTPServer(self.port, self.music_path, self)
             task = asyncio.create_task(self.poll_latest_ask())
             assert task is not None  # to keep the reference to task, do not remove this
             self.log.info(
@@ -384,12 +404,6 @@ class XiaoMusic:
                     await asyncio.sleep(1)
                     continue
 
-                if self.config.mute_xiaoai:
-                    await self.stop_if_xiaoai_is_playing()
-                else:
-                    # waiting for xiaoai speaker done
-                    await asyncio.sleep(8)
-
                 try:
                     func = getattr(self, opvalue)
                     await func(arg1=oparg)
@@ -403,6 +417,7 @@ class XiaoMusic:
             # 匹配参数
             matcharg = re.match(patternarg, query)
             if not matcharg:
+                # self.log.debug(patternarg)
                 continue
 
             argpre = matcharg.groups()[0]
@@ -493,3 +508,8 @@ class XiaoMusic:
 
         self._stop_timer = asyncio.ensure_future(_do_stop())
         self.log.info(f"{minute}分钟后将关机")
+
+    async def set_volume(self, **kwargs):
+        value = kwargs["arg1"]
+        await self.do_set_volume(value)
+        self.log.info(f"声音设置为{value}")
