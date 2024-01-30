@@ -31,7 +31,7 @@ HARDWARE_COMMAND_DICT = {
     # add more here
 }
 
-DEFAULT_COMMAND = ("5-1", "5-5")
+DEFAULT_COMMAND = ("5-1", "5-5", "2-1")
 
 KEY_WORD_DICT = {
     "播放歌曲": "play",
@@ -79,7 +79,7 @@ class Config:
     mi_did: str = os.getenv("MI_DID", "")
     mute_xiaoai: bool = True
     cookie: str = ""
-    use_command: bool = True
+    use_command: bool = False
     verbose: bool = False
     music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")

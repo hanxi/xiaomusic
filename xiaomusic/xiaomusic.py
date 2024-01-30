@@ -237,16 +237,19 @@ class XiaoMusic:
             await self.wait_for_tts_finish()
 
     async def do_set_volume(self, value):
+        value = int(value)
         if not self.config.use_command:
             try:
+                self.log.debug("do_set_volume not use_command value:%d", value)
                 await self.mina_service.player_set_volume(self.device_id, value)
             except Exception:
                 pass
         else:
+            self.log.debug("do_set_volume use_command value:%d", value)
             await miio_command(
                 self.miio_service,
                 self.config.mi_did,
-                f"{self.config.volume_command} {value}",
+                f"{self.config.volume_command}=#{value}",
             )
 
     async def wait_for_tts_finish(self):
