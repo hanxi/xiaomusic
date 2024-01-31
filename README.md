@@ -51,6 +51,15 @@ docker run -e MI_USER=<your-xiaomi-account> -e MI_PASS=<your-xiaomi-password> -e
 - 注意端口必须映射为与容器内一致，XIAOMUSIC_HOSTNAME 需要设置为宿主机的 IP 地址，否则小爱无法正常播放。
 - 可以把 /app/music 目录映射到本地，用于保存下载的歌曲。
 
+XIAOMUSIC_PROXY参数格式参考 yt-dlp 文档说明:
+```
+Use the specified HTTP/HTTPS/SOCKS proxy. To
+enable SOCKS proxy, specify a proper scheme,
+e.g. socks5://user:pass@127.0.0.1:1080/.
+Pass in an empty string (--proxy "") for
+direct connection
+```
+
 ### 本地编译Docker Image
 
 ```shell
