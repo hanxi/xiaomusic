@@ -66,6 +66,29 @@ direct connection
 docker build -t xiaomusic .
 ```
 
+### docker compose 示例
+```yaml
+version: '3'
+
+services:
+  xiaomusic:
+    image: hanxi/xiaomusic
+    container_name: xiaomusic
+    restart: unless-stopped
+    ports:
+      - 8090:8090
+    volumes:
+      - ./music:/app/music
+    environment:
+      - MI_USER: '小米账号'
+      - MI_PASS: '小米密码'
+      - MI_DID: 00000
+      - MI_HARDWARE: 'L07A'
+      - XIAOMUSIC_PROXY: 'http://192.168.2.5:8080'
+      - XIAOMUSIC_HOSTNAME: '192.168.2.5'
+```
+
+
 ## 简易的控制面板
 
 浏览器进入 <http://192.168.2.5:8090>
