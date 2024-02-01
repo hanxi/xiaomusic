@@ -103,3 +103,7 @@ services:
 - [xiaogpt](https://github.com/yihong0618/xiaogpt)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=hanxi/xiaomusic&type=Date)](https://star-history.com/#hanxi/xiaomusic&Date)
