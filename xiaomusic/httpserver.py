@@ -22,6 +22,13 @@ def allcmds():
     return KEY_WORD_DICT
 
 
+@app.route("/getvolume")
+def getvolume():
+    return {
+        "volume": xiaomusic.get_volume(),
+    }
+
+
 @app.route("/", methods=["GET"])
 def redirect_to_index():
     return send_from_directory("static", "index.html")

@@ -10,13 +10,18 @@
           margin: 10px;
           width: 100px;
           height: 50px;
-          border: none; /* 无边框 */
-          color: white; /* 白色文字 */
-          text-align: center; /* 文字居中 */
-          text-decoration: none; /* 无下划线 */
-          display: inline-block; /* 行内块元素 */
-          border-radius: 10px; /* 圆角 */
-          background-color: #008CBA; /* 蓝色 */
+          border: none;
+          color: white;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          border-radius: 10px;
+          background-color: #008CBA;
+      }
+      button:active {
+          font-weight:bold;
+          background-color: #007CBA;
+          transform: translateY(2px);
       }
       input {
           margin: 10px;
@@ -29,6 +34,13 @@
     <h2>小爱音箱操控面板</h2>
     <hr>
     <div id="cmds">
+    </div>
+    <hr>
+    <div style="margin-left: 20px;">
+      <div style="display: flex; align-items: center;">
+        <svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#8e43e7" style="height: 48px; width: 48px;"><path d="M550.826667 154.666667a47.786667 47.786667 0 0 0-19.84 4.48L298.666667 298.666667H186.453333A80 80 0 0 0 106.666667 378.453333v267.093334A80 80 0 0 0 186.453333 725.333333H298.666667l232.32 139.52a47.786667 47.786667 0 0 0 19.84 4.48A46.506667 46.506667 0 0 0 597.333333 822.826667V201.173333a46.506667 46.506667 0 0 0-46.506666-46.506666zM554.666667 822.826667c0 3.413333-3.84 3.84-3.84 3.84L320 688.853333l-9.6-6.186666H186.453333A37.12 37.12 0 0 1 149.333333 645.546667V378.453333A37.12 37.12 0 0 1 186.453333 341.333333h123.946667l10.24-6.186666 229.546667-137.6s3.84 0 3.84 3.84zM667.52 346.026667a21.333333 21.333333 0 0 0 0 30.293333 192 192 0 0 1 0 271.36 21.333333 21.333333 0 0 0 0 30.293333 21.333333 21.333333 0 0 0 30.293333 0 234.666667 234.666667 0 0 0 0-331.946666 21.333333 21.333333 0 0 0-30.293333 0z"></path><path d="M804.48 219.52a21.333333 21.333333 0 0 0-30.293333 30.293333 370.986667 370.986667 0 0 1 0 524.373334 21.333333 21.333333 0 0 0 0 30.293333 21.333333 21.333333 0 0 0 30.293333 0 414.08 414.08 0 0 0 0-584.96z"></path></svg>
+        <input id="volume" type="range"></input>
+      </div>
     </div>
     <hr>
     <div>

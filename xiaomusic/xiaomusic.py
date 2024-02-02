@@ -65,6 +65,7 @@ class XiaoMusic:
         self.cur_music = ""
         self._next_timer = None
         self._timeout = 0
+        self._volume = 50
 
         # 关机定时器
         self._stop_timer = None
@@ -516,4 +517,8 @@ class XiaoMusic:
     async def set_volume(self, **kwargs):
         value = kwargs["arg1"]
         await self.do_set_volume(value)
+        self._volume = int(value)
         self.log.info(f"声音设置为{value}")
+
+    def get_volume(self):
+        return self._volume
