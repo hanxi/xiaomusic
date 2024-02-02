@@ -85,6 +85,9 @@ class Config:
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))
     proxy: str | None = os.getenv("XIAOMUSIC_PROXY", None)
+    search_prefix: str = os.getenv(
+        "XIAOMUSIC_SEARCH", "ytsearch:"
+    )  # "bilisearch:" or "ytsearch:"
 
     def __post_init__(self) -> None:
         if self.proxy:

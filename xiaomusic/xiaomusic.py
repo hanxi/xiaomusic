@@ -56,6 +56,7 @@ class XiaoMusic:
         self.hostname = config.hostname
         self.port = config.port
         self.proxy = config.proxy
+        self.search_prefix = config.search_prefix
 
         # 下载对象
         self.download_proc = None
@@ -298,7 +299,7 @@ class XiaoMusic:
 
         sbp_args = (
             "yt-dlp",
-            f"ytsearch:{name}",
+            f"{self.search_prefix}{name}",
             "-x",
             "--audio-format",
             "mp3",
