@@ -91,12 +91,12 @@ services:
     volumes:
       - ./music:/app/music
     environment:
-      - MI_USER: '小米账号'
-      - MI_PASS: '小米密码'
-      - MI_DID: 00000
-      - MI_HARDWARE: 'L07A'
-      - XIAOMUSIC_SEARCH: 'bilisearch:'
-      - XIAOMUSIC_HOSTNAME: '192.168.2.5'
+      MI_USER: '小米账号'
+      MI_PASS: '小米密码'
+      MI_DID: 00000
+      MI_HARDWARE: 'L07A'
+      XIAOMUSIC_SEARCH: 'bilisearch:'
+      XIAOMUSIC_HOSTNAME: '192.168.2.5'
 ```
 
 
@@ -115,13 +115,13 @@ services:
     volumes:
       - ./music:/app/music
     environment:
-      - MI_USER: '小米账号'
-      - MI_PASS: '小米密码'
-      - MI_DID: 00000
-      - MI_HARDWARE: 'L07A'
-      - XIAOMUSIC_SEARCH: 'ytsearch:'
-      - XIAOMUSIC_PROXY: 'http://192.168.2.5:8080'
-      - XIAOMUSIC_HOSTNAME: '192.168.2.5'
+      MI_USER: '小米账号'
+      MI_PASS: '小米密码'
+      MI_DID: 00000
+      MI_HARDWARE: 'L07A'
+      XIAOMUSIC_SEARCH: 'ytsearch:'
+      XIAOMUSIC_PROXY: 'http://192.168.2.5:8080'
+      XIAOMUSIC_HOSTNAME: '192.168.2.5'
 ```
 
 
