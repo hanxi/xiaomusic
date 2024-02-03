@@ -12,6 +12,7 @@
 export MI_USER="xxxxx"
 export MI_PASS="xxxx"
 export MI_DID=00000
+export XIAOMUSIC_SEARCH='bilisearch:'
 ```
 
 然后启动即可。默认监听了端口 8090 , 使用其他端口自行修改。
@@ -45,15 +46,17 @@ pdm run xiaomusic.py
 ## 在 Docker 里使用
 
 ```shell
-docker run -e MI_USER=<your-xiaomi-account> -e MI_PASS=<your-xiaomi-password> -e MI_DID=<your-xiaomi-speaker-mid> -e MI_HARDWARE='L07A' -e XIAOMUSIC_PROXY=<proxy-for-yt-dlp> -e XIAOMUSIC_HOSTNAME=192.168.2.5 -p 8090:8090 -v ./music:/app/music hanxi/xiaomusic
+docker run -e MI_USER=<your-xiaomi-account> -e MI_PASS=<your-xiaomi-password> -e MI_DID=<your-xiaomi-speaker-mid> -e MI_HARDWARE='L07A' -e XIAOMUSIC_PROXY=<proxy-for-yt-dlp> -e XIAOMUSIC_HOSTNAME=192.168.2.5 -e XIAOMUSIC_SEARCH='bilisearch:' -p 8090:8090 -v ./music:/app/music hanxi/xiaomusic
 ```
-
-- XIAOMUSIC_PROXY 用于配置代理，默认为空，yt-dlp 工具下载歌曲会用到。
+- XIAOMUSIC_SEARCH 可以配置为 'bilisearch:' 表示歌曲从哔哩哔哩下载;
+    - 配置为 'ytsearch:' 表示歌曲从 youtube 下载。
+- XIAOMUSIC_PROXY 用于配置代理，默认为空;
+    - 当 XIAOMUSIC_SEARCH 配置为 'ytsearch:' 时在国内需要用到。
 - MI_HARDWARE 是小米音箱的型号，默认为'L07A'
-- 注意端口必须映射为与容器内一致，XIAOMUSIC_HOSTNAME 需要设置为宿主机的 IP 地址，否则小爱无法正常播放。
+- 注意端口必须映射为与容器内一致， XIAOMUSIC_HOSTNAME 需要设置为宿主机的 IP 地址，否则小爱无法正常播放。
 - 可以把 /app/music 目录映射到本地，用于保存下载的歌曲。
 
-XIAOMUSIC_PROXY参数格式参考 yt-dlp 文档说明:
+XIAOMUSIC_PROXY 参数格式参考 yt-dlp 文档说明:
 ```
 Use the specified HTTP/HTTPS/SOCKS proxy. To
 enable SOCKS proxy, specify a proper scheme,
@@ -62,6 +65,9 @@ Pass in an empty string (--proxy "") for
 direct connection
 ```
 
+见 <https://github.com/hanxi/xiaomusic/issues/2> 和 <https://github.com/hanxi/xiaomusic/issues/11>
+
+
 ### 本地编译Docker Image
 
 ```shell
@@ -69,6 +75,9 @@ docker build -t xiaomusic .
 ```
 
 ### docker compose 示例
+
+使用哔哩哔哩下载歌曲:
+
 ```yaml
 version: '3'
 
@@ -86,6 +95,31 @@ services:
       - MI_PASS: '小米密码'
       - MI_DID: 00000
       - MI_HARDWARE: 'L07A'
+      - XIAOMUSIC_SEARCH: 'bilisearch:'
+      - XIAOMUSIC_HOSTNAME: '192.168.2.5'
+```
+
+
+使用 youtobe 下载歌曲:
+
+```yaml
+version: '3'
+
+services:
+  xiaomusic:
+    image: hanxi/xiaomusic
+    container_name: xiaomusic
+    restart: unless-stopped
+    ports:
+      - 8090:8090
+    volumes:
+      - ./music:/app/music
+    environment:
+      - MI_USER: '小米账号'
+      - MI_PASS: '小米密码'
+      - MI_DID: 00000
+      - MI_HARDWARE: 'L07A'
+      - XIAOMUSIC_SEARCH: 'ytsearch:'
       - XIAOMUSIC_PROXY: 'http://192.168.2.5:8080'
       - XIAOMUSIC_HOSTNAME: '192.168.2.5'
 ```
@@ -98,11 +132,13 @@ services:
 - ip 是 XIAOMUSIC_HOSTNAME 设置的
 - 8090 是默认端口
 
+
 ## 感谢
 
 - [xiaomi](https://www.mi.com/)
 - [PDM](https://pdm.fming.dev/latest/)
 - [xiaogpt](https://github.com/yihong0618/xiaogpt)
+- [MiService](https://github.com/yihong0618/MiService)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 
 

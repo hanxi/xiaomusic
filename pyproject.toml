@@ -11,7 +11,7 @@ dependencies = [
     "aiohttp>=3.8.6",
     "miservice-fork>=2.2.1",
     "mutagen>=1.47.0",
-    "yt-dlp>=2023.10.13",
+    "yt-dlp>=2024.2.2.232707.dev0",
     "flask[async]>=3.0.1",
 ]
 requires-python = ">=3.10"

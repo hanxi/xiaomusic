@@ -310,6 +310,7 @@ class XiaoMusic:
             f"{name}.mp3",
             "--ffmpeg-location",
             "./ffmpeg/bin",
+            "--no-playlist",
         )
 
         if self.proxy:
