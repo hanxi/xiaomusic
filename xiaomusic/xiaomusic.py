@@ -80,16 +80,16 @@ class XiaoMusic:
         async with ClientSession() as session:
             session._cookie_jar = self.cookie_jar
             while True:
-                # self.log.debug(
-                #     "Listening new message, timestamp: %s", self.last_timestamp
-                # )
+                self.log.debug(
+                    "Listening new message, timestamp: %s", self.last_timestamp
+                )
                 await self.get_latest_ask_from_xiaoai(session)
                 start = time.perf_counter()
-                # self.log.debug("Polling_event, timestamp: %s", self.last_timestamp)
+                self.log.debug("Polling_event, timestamp: %s", self.last_timestamp)
                 await self.polling_event.wait()
                 if (d := time.perf_counter() - start) < 1:
                     # sleep to avoid too many request
-                    # self.log.debug("Sleep %f, timestamp: %s", d, self.last_timestamp)
+                    self.log.debug("Sleep %f, timestamp: %s", d, self.last_timestamp)
                     await asyncio.sleep(1 - d)
 
     async def init_all_data(self, session):
