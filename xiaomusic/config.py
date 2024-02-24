@@ -88,6 +88,7 @@ class Config:
     search_prefix: str = os.getenv(
         "XIAOMUSIC_SEARCH", "ytsearch:"
     )  # "bilisearch:" or "ytsearch:"
+    ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
 
     def __post_init__(self) -> None:
         if self.proxy:

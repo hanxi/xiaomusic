@@ -57,6 +57,7 @@ class XiaoMusic:
         self.port = config.port
         self.proxy = config.proxy
         self.search_prefix = config.search_prefix
+        self.ffmpeg_location = config.ffmpeg_location
 
         # 下载对象
         self.download_proc = None
@@ -311,7 +312,7 @@ class XiaoMusic:
             "-o",
             f"{name}.mp3",
             "--ffmpeg-location",
-            "./ffmpeg/bin",
+            f"{self.ffmpeg_location}",
             "--no-playlist",
         )
 
