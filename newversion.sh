@@ -28,7 +28,7 @@ sed -i "s/version.*/version = \"$new_version\"/g" $version_file
 echo "新版本号：$new_version"
 
 git diff
-git add version_file
+git add $version_file
 git commit -m "new version v$version"
 git tag v$version
 git push -u origin main --tags
