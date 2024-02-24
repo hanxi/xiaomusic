@@ -29,6 +29,6 @@ echo "新版本号：$new_version"
 
 git diff
 git add $version_file
-git commit -m "new version v$version"
-git tag v$version
+git commit -m "new version v$new_version"
+git tag v$new_version
 git push -u origin main --tags
