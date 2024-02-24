@@ -82,6 +82,8 @@ class XiaoMusic:
         # 启动时重新生成一次播放列表
         self.gen_all_music_list()
 
+        self.log.debug("ffmpeg_location: %s", self.ffmpeg_location)
+
     async def poll_latest_ask(self):
         async with ClientSession() as session:
             session._cookie_jar = self.cookie_jar

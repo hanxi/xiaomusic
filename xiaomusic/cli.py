@@ -53,6 +53,11 @@ def main():
         dest="config",
         help="config file path",
     )
+    parser.add_argument(
+        "--ffmpeg_location",
+        dest="ffmpeg_location",
+        help="ffmpeg bin path",
+    )
 
     options = parser.parse_args()
     config = Config.from_options(options)
