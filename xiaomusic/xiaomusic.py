@@ -79,6 +79,9 @@ class XiaoMusic:
         self.log.addHandler(RichHandler())
         self.log.debug(config)
 
+        # 启动时重新生成一次播放列表
+        self.gen_all_music_list()
+
     async def poll_latest_ask(self):
         async with ClientSession() as session:
             session._cookie_jar = self.cookie_jar
@@ -324,6 +327,8 @@ class XiaoMusic:
 
     # 本地是否存在歌曲
     def get_filename(self, name):
+        if name not in self._all_music:
+            return ""
         filename = self._all_music[name]
         self.log.debug("try get_filename. filename:%s", filename)
         if os.path.exists(filename):
@@ -375,10 +380,6 @@ class XiaoMusic:
     def get_next_music(self):
         play_list_len = len(self._play_list)
         if play_list_len == 0:
-            # 尝试重新生成一次播放列表
-            self.gen_all_music_list()
-        play_list_len = len(self._play_list)
-        if play_list_len == 0:
             self.log.warning(f"没有随机到歌曲")
             return ""
         # 随机选择一个文件
@@ -388,7 +389,7 @@ class XiaoMusic:
         except ValueError:
             pass
         next_index = index + 1
-        if next_index > play_list_len:
+        if next_index >= play_list_len:
             next_index = 0
         filename = self._play_list[next_index]
         return filename
