@@ -66,6 +66,8 @@ class XiaoMusic:
         self._next_timer = None
         self._timeout = 0
         self._volume = 50
+        self._all_music = {}
+        self._play_list = []
 
         # 关机定时器
         self._stop_timer = None
@@ -319,42 +321,75 @@ class XiaoMusic:
         self.download_proc = await asyncio.create_subprocess_exec(*sbp_args)
         await self.do_tts(f"正在下载歌曲{name}")
 
-    def get_filename(self, name):
-        filename = os.path.join(self.music_path, name)
-        return filename
-
     # 本地是否存在歌曲
-    def local_exist(self, name):
-        for tp in SUPPORT_MUSIC_TYPE:
-            filename = self.get_filename(f"{name}.{tp}")
-            self.log.debug("try local_exist. filename:%s", filename)
-            if os.path.exists(filename):
-                return filename
+    def get_filename(self, name):
+        filename = self._all_music[name]
+        self.log.debug("try get_filename. filename:%s", filename)
+        if os.path.exists(filename):
+            return filename
         return ""
 
     # 获取歌曲播放地址
-    def get_file_url(self, filename):
-        self.log.debug("get_file_url. filename:%s", filename)
+    def get_file_url(self, name):
+        filename = self.get_filename(name)
+        self.log.debug("get_file_url. name:%s, filename:%s", name, filename)
         encoded_name = urllib.parse.quote(filename)
         return f"http://{self.hostname}:{self.port}/{encoded_name}"
 
-    # 随机获取一首音乐
-    def random_music(self):
-        files = os.listdir(self.music_path)
-        # 过滤音乐文件
-        music_files = []
-        for file in files:
-            for tp in SUPPORT_MUSIC_TYPE:
-                if file.endswith(f".{tp}"):
-                    music_files.append(file)
+    # 递归获取目录下所有歌曲,生成随机播放列表
+    def gen_all_music_list(self):
+        self._all_music = {}
+        for root, dirs, filenames in os.walk(self.music_path):
+            for filename in filenames:
+                self.log.debug("gen_all_music_list. filename:%s", filename)
+                # 过滤隐藏文件
+                if filename.startswith("."):
+                    continue
+                # 过滤非音乐文件
+                (name, extension) = os.path.splitext(filename)
+                self.log.debug(
+                    "gen_all_music_list. filename:%s, name:%s, extension:%s",
+                    filename,
+                    name,
+                    extension,
+                )
+                if extension not in SUPPORT_MUSIC_TYPE:
+                    continue
 
-        if len(music_files) == 0:
+                # 歌曲名字相同会覆盖
+                self._all_music[name] = os.path.join(root, filename)
+        self._play_list = list(self._all_music.keys())
+        random.shuffle(self._play_list)
+        self.log.debug(self._all_music)
+
+    # 把下载的音乐加入播放列表
+    def add_download_music(self, name):
+        self._all_music[name] = os.path.join(self.music_path, f"{name}.mp3")
+        if name not in self._play_list:
+            self._play_list.append(name)
+            self.log.debug("add_music %s", name)
+            self.log.debug(self._play_list)
+
+    # 获取下一首
+    def get_next_music(self):
+        play_list_len = len(self._play_list)
+        if play_list_len == 0:
+            # 尝试重新生成一次播放列表
+            self.gen_all_music_list()
+        play_list_len = len(self._play_list)
+        if play_list_len == 0:
             self.log.warning(f"没有随机到歌曲")
             return ""
         # 随机选择一个文件
-        music_file = random.choice(music_files)
-        (filename, extension) = os.path.splitext(music_file)
-        self.log.info(f"随机到歌曲{filename}{extension}")
+        index = 0
+        try:
+            index = self._play_list.index(self.cur_music)
+        except ValueError:
+            pass
+        next_index = index + 1
+        if next_index > play_list_len:
+            next_index = 0
+        filename = self._play_list[next_index]
         return filename
 
     # 获取文件播放时长
@@ -367,8 +402,9 @@ class XiaoMusic:
 
     # 设置下一首歌曲的播放定时器
     def set_next_music_timeout(self):
-        sec = int(self.get_file_duration(self.cur_music))
-        self.log.info(f"歌曲{self.cur_music}的时长{sec}秒")
+        filename = self.get_filename(self.cur_music)
+        sec = int(self.get_file_duration(filename))
+        self.log.info(f"歌曲 {self.cur_music} : {filename} 的时长 {sec} 秒")
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info(f"定时器已取消")
@@ -449,15 +485,17 @@ class XiaoMusic:
             await self.play_next()
             return
 
-        filename = self.local_exist(name)
+        filename = self.get_filename(name)
         if len(filename) <= 0:
             await self.download(name)
             self.log.info("正在下载中 %s", name)
-            filename = self.get_filename(f"{name}.mp3")
             await self.download_proc.wait()
+            # 把文件插入到播放列表里
+            self.add_download_music(name)
 
-        self.cur_music = filename
-        url = self.get_file_url(filename)
+        self.cur_music = name
+        self.log.info("cur_music %s", self.cur_music)
+        url = self.get_file_url(name)
         self.log.info("播放 %s", url)
         await self.stop_if_xiaoai_is_playing()
         await self.mina_service.play_by_url(self.device_id, url)
@@ -468,10 +506,10 @@ class XiaoMusic:
     # 下一首
     async def play_next(self, **kwargs):
         self.log.info("下一首")
-        (name, _) = os.path.splitext(os.path.basename(self.cur_music))
+        name = self.cur_music
         self.log.debug("play_next. name:%s, cur_music:%s", name, self.cur_music)
         if self.play_type == PLAY_TYPE_ALL or name == "":
-            name = self.random_music()
+            name = self.get_next_music()
         if name == "":
             await self.do_tts(f"本地没有歌曲")
             return
@@ -491,6 +529,8 @@ class XiaoMusic:
     async def random_play(self, **kwargs):
         self.play_type = PLAY_TYPE_ALL
         await self.do_tts(f"已经设置为全部循环并随机播放")
+        # 重新生成随机播放列表
+        self.gen_all_music_list()
         await self.play_next()
 
     async def stop(self, **kwargs):
