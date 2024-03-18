@@ -140,7 +140,7 @@ services:
 - [xiaogpt](https://github.com/yihong0618/xiaogpt)
 - [MiService](https://github.com/yihong0618/MiService)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
-
+- [NAS部署教程](https://post.m.smzdm.com/p/avpe7n99/)
 
 ## Star History
 
