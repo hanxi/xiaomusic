@@ -299,7 +299,7 @@ class XiaoMusic:
         return True
 
     # 下载歌曲
-    async def download(self, name):
+    async def download(self, search_key,name):
         if self.download_proc:
             try:
                 self.download_proc.kill()
@@ -308,7 +308,7 @@ class XiaoMusic:
 
         sbp_args = (
             "yt-dlp",
-            f"{self.search_prefix}{name}",
+            f"{self.search_prefix}{search_key}",
             "-x",
             "--audio-format",
             "mp3",
@@ -325,7 +325,7 @@ class XiaoMusic:
             sbp_args += ("--proxy", f"{self.proxy}")
 
         self.download_proc = await asyncio.create_subprocess_exec(*sbp_args)
-        await self.do_tts(f"正在下载歌曲{name}")
+        await self.do_tts(f"正在下载歌曲{search_key}")
 
     # 本地是否存在歌曲
     def get_filename(self, name):
@@ -484,15 +484,18 @@ class XiaoMusic:
 
     # 播放歌曲
     async def play(self, **kwargs):
-        name = kwargs["arg1"]
-        if name == "":
+        search_key,name = kwargs["arg1"].split('|')
+        #空值填充:
+        search_key = search_key if search_key else name
+        name = name if name else search_key
+        if search_key == "" and name == "":
             await self.play_next()
-            return
-
+            return 
         filename = self.get_filename(name)
+
         if len(filename) <= 0:
-            await self.download(name)
-            self.log.info("正在下载中 %s", name)
+            await self.download(search_key,name)
+            self.log.info("正在下载中 %s", search_key+":"+name)
             await self.download_proc.wait()
             # 把文件插入到播放列表里
             self.add_download_music(name)

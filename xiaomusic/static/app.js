@@ -39,8 +39,9 @@ $(function(){
   }
 
   $("#play").on("click", () => {
-    name = $("#music-name").val();
-    let cmd = "播放歌曲"+name;
+    var search_key = $("#music-name").val();
+    var filename=$("#music-filename").val();
+    let cmd = "播放歌曲"+search_key+"|"+filename;
     sendcmd(cmd);
   });
 
