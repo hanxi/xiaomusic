@@ -299,7 +299,7 @@ class XiaoMusic:
         return True
 
     # 下载歌曲
-    async def download(self, search_key,name):
+    async def download(self, search_key, name):
         if self.download_proc:
             try:
                 self.download_proc.kill()
@@ -484,18 +484,17 @@ class XiaoMusic:
 
     # 播放歌曲
     async def play(self, **kwargs):
-        search_key,name = kwargs["arg1"].split('|')
-        #空值填充:
-        search_key = search_key if search_key else name
-        name = name if name else search_key
+        parts = kwargs["arg1"].split("|")
+        search_key = parts[0]
+        name = parts[1] if len(parts) > 1 else search_key
         if search_key == "" and name == "":
             await self.play_next()
-            return 
+            return
         filename = self.get_filename(name)
 
         if len(filename) <= 0:
-            await self.download(search_key,name)
-            self.log.info("正在下载中 %s", search_key+":"+name)
+            await self.download(search_key, name)
+            self.log.info("正在下载中 %s", search_key + ":" + name)
             await self.download_proc.wait()
             # 把文件插入到播放列表里
             self.add_download_music(name)
