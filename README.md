@@ -141,6 +141,7 @@ services:
 - [MiService](https://github.com/yihong0618/MiService)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [NAS部署教程](https://post.m.smzdm.com/p/avpe7n99/)
+- [群晖部署教程](https://post.m.smzdm.com/p/a7px7dol/)
 
 ## Star History
 
