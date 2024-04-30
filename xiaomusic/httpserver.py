@@ -28,6 +28,10 @@ def getvolume():
         "volume": xiaomusic.get_volume(),
     }
 
+@app.route("/searchmusic")
+def searchmusic():
+    name = request.args.get('name')
+    return xiaomusic.searchmusic(name)
 
 @app.route("/", methods=["GET"])
 def redirect_to_index():

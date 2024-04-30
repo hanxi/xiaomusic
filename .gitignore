@@ -163,3 +163,4 @@ cython_debug/
 
 ffmpeg
 music
+test.sh

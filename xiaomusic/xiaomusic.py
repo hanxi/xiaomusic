@@ -30,6 +30,7 @@ from xiaomusic.config import (
 from xiaomusic.utils import (
     calculate_tts_elapse,
     parse_cookie_string,
+    fuzzyfinder,
 )
 
 EOF = object()
@@ -330,6 +331,7 @@ class XiaoMusic:
     # 本地是否存在歌曲
     def get_filename(self, name):
         if name not in self._all_music:
+            self.log.debug("get_filename not in. name:%s", name)
             return ""
         filename = self._all_music[name]
         self.log.debug("try get_filename. filename:%s", filename)
@@ -490,6 +492,9 @@ class XiaoMusic:
         if search_key == "" and name == "":
             await self.play_next()
             return
+        if name == "":
+            name = search_key
+        self.log.debug("play. search_key:%s name:%s", search_key, name)
         filename = self.get_filename(name)
 
         if len(filename) <= 0:
@@ -569,3 +574,9 @@ class XiaoMusic:
 
     def get_volume(self):
         return self._volume
+
+    # 搜索音乐
+    def searchmusic(self, name):
+        search_list = fuzzyfinder(name, self._play_list)
+        self.log.debug("searchmusic. name:%s search_list:%s", name, search_list)
+        return search_list

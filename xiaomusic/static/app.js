@@ -64,4 +64,26 @@ $(function(){
       }
     });
   }
+
+  // 监听输入框的输入事件
+  $("#music-name").on('input', function() {
+    var inputValue = $(this).val();
+    // 发送Ajax请求
+    $.ajax({
+      url: "searchmusic", // 服务器端处理脚本
+      type: "GET",
+      dataType: "json",
+      data: {
+        name: inputValue
+      },
+      success: function(data) {
+        // 清空datalist
+        $("#autocomplete-list").empty();
+        // 添加新的option元素
+        $.each(data, function(i, item) {
+          $('<option>').val(item).appendTo("#autocomplete-list");
+        });
+      }
+    });
+  });
 });

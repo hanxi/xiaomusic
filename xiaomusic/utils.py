@@ -7,6 +7,7 @@ import socket
 from http.cookies import SimpleCookie
 from typing import AsyncIterator
 from urllib.parse import urlparse
+import difflib
 
 from requests.utils import cookiejar_from_dict
 
@@ -61,3 +62,6 @@ def validate_proxy(proxy_str: str) -> bool:
 
     return True
 
+# 模糊搜索
+def fuzzyfinder(user_input, collection):
+    return difflib.get_close_matches(user_input, collection, 10, cutoff=0.1)
