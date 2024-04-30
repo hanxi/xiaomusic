@@ -86,4 +86,17 @@ $(function(){
       }
     });
   });
+
+  function get_playing_music() {
+    $.get("/playingmusic", function(data, status) {
+      console.log(data);
+      $("#playering-music").text(data);
+    });
+  }
+
+  // 每3秒获取下正在播放的音乐
+  get_playing_music();
+  setInterval(() => {
+    get_playing_music();
+  }, 3000);
 });

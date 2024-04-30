@@ -22,16 +22,20 @@ def allcmds():
     return KEY_WORD_DICT
 
 
-@app.route("/getvolume")
+@app.route("/getvolume", methods=["GET"])
 def getvolume():
     return {
         "volume": xiaomusic.get_volume(),
     }
 
-@app.route("/searchmusic")
+@app.route("/searchmusic", methods=["GET"])
 def searchmusic():
     name = request.args.get('name')
     return xiaomusic.searchmusic(name)
+
+@app.route("/playingmusic", methods=["GET"])
+def playingmusic():
+    return xiaomusic.playingmusic()
 
 @app.route("/", methods=["GET"])
 def redirect_to_index():

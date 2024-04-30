@@ -580,3 +580,8 @@ class XiaoMusic:
         search_list = fuzzyfinder(name, self._play_list)
         self.log.debug("searchmusic. name:%s search_list:%s", name, search_list)
         return search_list
+
+    # 正在播放中的音乐
+    def playingmusic(self):
+        self.log.debug("playingmusic. cur_music:%s", self.cur_music)
+        return self.cur_music
