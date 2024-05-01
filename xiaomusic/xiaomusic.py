@@ -59,6 +59,7 @@ class XiaoMusic:
         self.proxy = config.proxy
         self.search_prefix = config.search_prefix
         self.ffmpeg_location = config.ffmpeg_location
+        self.active_cmd = config.active_cmd.split(",")
 
         # 下载对象
         self.download_proc = None
@@ -70,6 +71,7 @@ class XiaoMusic:
         self._volume = 50
         self._all_music = {}
         self._play_list = []
+        self._playing = False
 
         # 关机定时器
         self._stop_timer = None
@@ -219,6 +221,7 @@ class XiaoMusic:
     def set_last_record(self, query):
         self.last_record = {
             "query": query,
+            "ctrl_panel": True,
         }
         self.new_record_event.set()
 
@@ -444,10 +447,11 @@ class XiaoMusic:
                 new_record = self.last_record
                 self.polling_event.clear()  # stop polling when processing the question
                 query = new_record.get("query", "").strip()
-                self.log.debug("收到消息:%s", query)
+                ctrl_panel = new_record.get("ctrl_panel", False)
+                self.log.debug("收到消息:%s 控制面板:%s", query, ctrl_panel)
 
                 # 匹配命令
-                opvalue, oparg = self.match_cmd(query)
+                opvalue, oparg = self.match_cmd(query, ctrl_panel)
                 if not opvalue:
                     await asyncio.sleep(1)
                     continue
@@ -459,7 +463,7 @@ class XiaoMusic:
                     self.log.warning(f"执行出错 {str(e)}\n{traceback.format_exc()}")
 
     # 匹配命令
-    def match_cmd(self, query):
+    def match_cmd(self, query, ctrl_panel):
         for opkey in KEY_MATCH_ORDER:
             patternarg = rf"(.*){opkey}(.*)"
             # 匹配参数
@@ -478,14 +482,24 @@ class XiaoMusic:
             )
             oparg = argafter
             opvalue = KEY_WORD_DICT[opkey]
+            if not ctrl_panel and not self._playing:
+                if self.active_cmd and opvalue not in self.active_cmd:
+                    self.log.debug(f"不在激活命令中 {opvalue}")
+                    continue
             if opkey in KEY_WORD_ARG_BEFORE_DICT:
                 oparg = argpre
-            self.log.info("匹配到指令. opkey:%s opvalue:%s oparg:%s", opkey, opvalue, oparg)
+            self.log.info(
+                "匹配到指令. opkey:%s opvalue:%s oparg:%s", opkey, opvalue, oparg
+            )
             return (opvalue, oparg)
+        if self._playing:
+            self.log.info("未匹配到指令，自动停止")
+            return ("stop", {})
         return (None, None)
 
     # 播放歌曲
     async def play(self, **kwargs):
+        self._playing = True
         parts = kwargs["arg1"].split("|")
         search_key = parts[0]
         name = parts[1] if len(parts) > 1 else search_key
@@ -545,6 +559,7 @@ class XiaoMusic:
         await self.play_next()
 
     async def stop(self, **kwargs):
+        self._playing = False
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info(f"定时器已取消")
