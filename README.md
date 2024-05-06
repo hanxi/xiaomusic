@@ -43,6 +43,10 @@ pdm run xiaomusic.py
 
 > 本地音乐会搜索 mp3 和 flac 格式的文件，下载的歌曲是 mp3 格式的。
 
+## 其他参数
+
+- XIAOMUSIC_ACTIVE_CMD 环境变量，配置成'play,random_play'，在非播放状态下，只有这两个指令（播放歌曲和随机播放）可以触发，触发后，xiaomusic进入playing状态，其他指令则可以正常触发。
+
 ## 在 Docker 里使用
 
 ```shell
@@ -66,10 +70,6 @@ direct connection
 ```
 
 见 <https://github.com/hanxi/xiaomusic/issues/2> 和 <https://github.com/hanxi/xiaomusic/issues/11>
-
-## 其他参数
-
-- XIAOMUSIC_ACTIVE_CMD 环境变量，配置成'play,random_play'，在非播放状态下，只有这两个指令（播放歌曲和随机播放）可以触发，触发后，xiaomusic进入playing状态，其他指令则可以正常触发。
 
 ### 本地编译Docker Image
 
