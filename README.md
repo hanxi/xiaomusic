@@ -147,6 +147,7 @@ services:
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [NAS部署教程](https://post.m.smzdm.com/p/avpe7n99/)
 - [群晖部署教程](https://post.m.smzdm.com/p/a7px7dol/)
+- [QNAS部署教程](https://post.smzdm.com/p/a5xz5x63/)
 
 ## Star History
 
