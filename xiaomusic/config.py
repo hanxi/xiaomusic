@@ -10,11 +10,12 @@ from xiaomusic.utils import validate_proxy
 
 LATEST_ASK_API = "https://userprofile.mina.mi.com/device_profile/v2/conversation?source=dialogu&hardware={hardware}&timestamp={timestamp}&limit=2"
 COOKIE_TEMPLATE = "deviceId={device_id}; serviceToken={service_token}; userId={user_id}"
-
+WAKEUP_KEYWORD = "小爱同学"
 HARDWARE_COMMAND_DICT = {
     # hardware: (tts_command, wakeup_command, volume_command)
     "LX06": ("5-1", "5-5", "2-1"),
-    "L05B": ("5-3", "5-4", "2-1"),
+    "L05B": ("5-3", "5-4", "2-1"),    
+    "S12": ("5-1", "5-5", "2-1"),  # 第一代小爱，型号MDZ-25-DA
     "S12A": ("5-1", "5-5", "2-1"),
     "LX01": ("5-1", "5-5", "2-1"),
     "L06A": ("5-1", "5-5", "2-1"),
