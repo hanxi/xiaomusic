@@ -9,6 +9,10 @@ from xiaomusic.config import (
     KEY_WORD_DICT,
 )
 
+from xiaomusic import (
+    __version__,
+)
+
 app = Flask(__name__)
 host = "0.0.0.0"
 port = 8090
@@ -21,6 +25,12 @@ log = None
 def allcmds():
     return KEY_WORD_DICT
 
+@app.route("/getversion", methods=["GET"])
+def getversion():
+    log.debug("getversion %s", __version__)
+    return {
+        "version": __version__,
+    }
 
 @app.route("/getvolume", methods=["GET"])
 def getvolume():
