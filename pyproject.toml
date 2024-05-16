@@ -1,6 +1,6 @@
 [project]
 name = "xiaomusic"
-version = "0.1.26"
+version = "0.1.27"
 description = "Play Music with xiaomi AI speaker"
 authors = [
     {name = "涵曦", email = "im.hanxi@gmail.com"},
@@ -9,7 +9,7 @@ dependencies = [
     "rich>=13.6.0",
     "requests>=2.31.0",
     "aiohttp>=3.8.6",
-    "miservice-fork>=2.4.3",
+    "miservice-fork>=2.4.4",
     "mutagen>=1.47.0",
     "yt-dlp>=2024.04.09",
     "flask[async]>=3.0.1",
