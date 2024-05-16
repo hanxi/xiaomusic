@@ -417,8 +417,10 @@ class XiaoMusic:
             StartHTTPServer(self.port, self.music_path, self)
             task = asyncio.create_task(self.poll_latest_ask())
             assert task is not None  # to keep the reference to task, do not remove this
+            filtered_keywords = [keyword for keyword in KEY_MATCH_ORDER if "#" not in keyword]
+            joined_keywords = "/".join(filtered_keywords)
             self.log.info(
-                f"Running xiaomusic now, 用`{'/'.join(KEY_WORD_DICT.keys())}`开头来控制"
+                f"Running xiaomusic now, 用`{joined_keywords}`开头来控制"
             )
 
             while True:
