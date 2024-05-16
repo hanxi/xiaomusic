@@ -28,7 +28,6 @@ from xiaomusic.config import (
     Config,
 )
 from xiaomusic.utils import (
-    calculate_tts_elapse,
     parse_cookie_string,
     fuzzyfinder,
 )
@@ -68,7 +67,7 @@ class XiaoMusic:
         self.cur_music = ""
         self._next_timer = None
         self._timeout = 0
-        self._volume = 50
+        self._volume = 0
         self._all_music = {}
         self._play_list = []
         self._playing = False
@@ -84,6 +83,9 @@ class XiaoMusic:
 
         # 启动时重新生成一次播放列表
         self.gen_all_music_list()
+
+        # 启动时初始化获取声音
+        self.set_last_record("get_volume#")
 
         self.log.debug("ffmpeg_location: %s", self.ffmpeg_location)
 
@@ -225,11 +227,11 @@ class XiaoMusic:
         }
         self.new_record_event.set()
 
-    async def do_tts(self, value, wait_for_finish=False):
+    async def do_tts(self, value):
         self.log.info("do_tts: %s", value)
 
         if self.config.mute_xiaoai:
-            await self.stop_if_xiaoai_is_playing()
+            await self.force_stop_xiaoai()
         else:
             # waiting for xiaoai speaker done
             await asyncio.sleep(8)
@@ -245,13 +247,10 @@ class XiaoMusic:
                 self.config.mi_did,
                 f"{self.config.tts_command} {value}",
             )
-        if wait_for_finish:
-            elapse = calculate_tts_elapse(value)
-            await asyncio.sleep(elapse)
-            await self.wait_for_tts_finish()
 
     async def do_set_volume(self, value):
         value = int(value)
+        self.log.info(f"声音设置为{value}")
         if not self.config.use_command:
             try:
                 self.log.debug("do_set_volume not use_command value:%d", value)
@@ -266,32 +265,14 @@ class XiaoMusic:
                 f"{self.config.volume_command}=#{value}",
             )
 
-    async def wait_for_tts_finish(self):
-        while True:
-            if not await self.get_if_xiaoai_is_playing():
-                break
-            await asyncio.sleep(1)
-
-    async def get_if_xiaoai_is_playing(self):
-        playing_info = await self.mina_service.player_get_status(self.device_id)
-        # WTF xiaomi api
-        is_playing = (
-            json.loads(playing_info.get("data", {}).get("info", "{}")).get("status", -1)
-            == 1
-        )
-        return is_playing
-
-    async def stop_if_xiaoai_is_playing(self):
-        is_playing = await self.get_if_xiaoai_is_playing()
-        if is_playing:
-            # stop it
-            await self.mina_service.player_pause(self.device_id)
-
-    async def wakeup_xiaoai(self):
-        return await miio_command(
-            self.miio_service,
-            self.config.mi_did,
-            f"{self.config.wakeup_command} {WAKEUP_KEYWORD} 0",
+    async def force_stop_xiaoai(self):
+        # TODO:
+        #await self.mina_service.player_stop(self.device_id)
+        await self.mina_service.ubus_request(
+            self.device_id,
+            "player_play_operation",
+            "mediaplayer",
+            {"action": "stop", "media": "app_ios"},
         )
 
     # 是否在下载中
@@ -522,7 +503,7 @@ class XiaoMusic:
         self.log.info("cur_music %s", self.cur_music)
         url = self.get_file_url(name)
         self.log.info("播放 %s", url)
-        await self.stop_if_xiaoai_is_playing()
+        await self.force_stop_xiaoai()
         await self.mina_service.play_by_url(self.device_id, url)
         self.log.info("已经开始播放了")
         # 设置下一首歌曲的播放定时器
@@ -563,7 +544,7 @@ class XiaoMusic:
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info(f"定时器已取消")
-        await self.stop_if_xiaoai_is_playing()
+        await self.force_stop_xiaoai()
 
     async def stop_after_minute(self, **kwargs):
         if self._stop_timer:
@@ -584,10 +565,14 @@ class XiaoMusic:
     async def set_volume(self, **kwargs):
         value = kwargs["arg1"]
         await self.do_set_volume(value)
-        self._volume = int(value)
-        self.log.info(f"声音设置为{value}")
 
-    def get_volume(self):
+    async def get_volume(self, **kwargs):
+        playing_info = await self.mina_service.player_get_status(self.device_id)
+        self.log.debug("get_volume. playing_info:%s", playing_info)
+        self._volume = json.loads(playing_info.get("data", {}).get("info", "{}")).get("volume", 5)
+        self.log.info("get_volume. volume:%s", self._volume)
+
+    def get_volume_ret(self):
         return self._volume
 
     # 搜索音乐

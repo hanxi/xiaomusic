@@ -24,8 +24,9 @@ def allcmds():
 
 @app.route("/getvolume", methods=["GET"])
 def getvolume():
+    volume = xiaomusic.get_volume_ret()
     return {
-        "volume": xiaomusic.get_volume(),
+        "volume": volume,
     }
 
 @app.route("/searchmusic", methods=["GET"])
