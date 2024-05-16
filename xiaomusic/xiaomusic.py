@@ -32,11 +32,14 @@ from xiaomusic.utils import (
     fuzzyfinder,
 )
 
+from xiaomusic import (
+    __version__,
+)
+
 EOF = object()
 
 PLAY_TYPE_ONE = 0  # 单曲循环
 PLAY_TYPE_ALL = 1  # 全部循环
-
 
 class XiaoMusic:
     def __init__(self, config: Config):
@@ -76,9 +79,13 @@ class XiaoMusic:
         self._stop_timer = None
 
         # setup logger
+        logging.basicConfig(
+            format=f"[{__version__}]\t%(message)s",
+            datefmt="[%X]",
+            handlers=[RichHandler(rich_tracebacks=True)]
+        )
         self.log = logging.getLogger("xiaomusic")
         self.log.setLevel(logging.DEBUG if config.verbose else logging.INFO)
-        self.log.addHandler(RichHandler())
         self.log.debug(config)
 
         # 启动时重新生成一次播放列表
