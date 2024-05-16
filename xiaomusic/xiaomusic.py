@@ -250,6 +250,7 @@ class XiaoMusic:
 
     async def do_set_volume(self, value):
         value = int(value)
+        self._volume = value
         self.log.info(f"声音设置为{value}")
         if not self.config.use_command:
             try:

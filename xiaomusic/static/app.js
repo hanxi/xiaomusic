@@ -14,6 +14,7 @@ $(function(){
   append_op_button_name("60分钟后关机");
 
   // 拉取声音
+  sendcmd("get_volume#");
   $.get("/getvolume", function(data, status) {
     console.log(data, status, data["volume"]);
     $("#volume").val(data.volume);
