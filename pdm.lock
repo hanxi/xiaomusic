@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:3ebe2bfca553a4141b8da2df035ed818068d32bdabe083a4e2bc0396dd14b81c"
+content_hash = "sha256:ef2667ea2d19174a0be9e4d6442b8c749f0ac3be48bbccf5f604ee436aaf4d22"
 
 [[package]]
 name = "aiohttp"
@@ -507,7 +507,7 @@ files = [
 
 [[package]]
 name = "miservice-fork"
-version = "2.4.3"
+version = "2.4.4"
 requires_python = ">=3.7"
 summary = "XiaoMi Cloud Service fork from https://github.com/Yonsm/MiService"
 dependencies = [
@@ -516,8 +516,8 @@ dependencies = [
     "rich",
 ]
 files = [
-    {file = "miservice_fork-2.4.3-py3-none-any.whl", hash = "sha256:e93732dbfff11435dede56ebf2c76aca6284d5d54dc198d260a684c9ea16fc07"},
-    {file = "miservice_fork-2.4.3.tar.gz", hash = "sha256:a0f7cbba41d48904d2914ea707934ebc9ddb107ae528cfb990a8da8fa9225105"},
+    {file = "miservice_fork-2.4.4-py3-none-any.whl", hash = "sha256:72aa5c13df290e1582104848743a2bda1bce8165e86f089c3a41d99835c70f13"},
+    {file = "miservice_fork-2.4.4.tar.gz", hash = "sha256:381838c11c7f9a36fb358ad5bb9e2554975f91716897fa9395a5edf2014f6587"},
 ]
 
 [[package]]
@@ -784,7 +784,7 @@ files = [
 
 [[package]]
 name = "yt-dlp"
-version = "2024.5.11.232654.dev0"
+version = "2024.5.13.232704.dev0"
 requires_python = ">=3.8"
 summary = "A feature-rich command-line audio/video downloader"
 dependencies = [
@@ -798,6 +798,6 @@ dependencies = [
     "websockets>=12.0",
 ]
 files = [
-    {file = "yt_dlp-2024.5.11.232654.dev0-py3-none-any.whl", hash = "sha256:a17f49d6ddabd398d4b9d39d0dc2903aa49029542139f50cb613022c606927b0"},
-    {file = "yt_dlp-2024.5.11.232654.dev0.tar.gz", hash = "sha256:d1a3c95aff5fa512769f4825e4b7992ace6ffc72fae2a318e5af05e3bf43767d"},
+    {file = "yt_dlp-2024.5.13.232704.dev0-py3-none-any.whl", hash = "sha256:3fa43b489ce80f1d065c6d15a389e4e7d553252069c54eb21e739a6921de5fe1"},
+    {file = "yt_dlp-2024.5.13.232704.dev0.tar.gz", hash = "sha256:67f615650843a6663d1dc127f6367f0cc08ef515ea4fe96bbd8a00772743a8ca"},
 ]
