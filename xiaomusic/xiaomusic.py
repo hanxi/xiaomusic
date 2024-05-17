@@ -274,14 +274,7 @@ class XiaoMusic:
             )
 
     async def force_stop_xiaoai(self):
-        # TODO:
-        #await self.mina_service.player_stop(self.device_id)
-        await self.mina_service.ubus_request(
-            self.device_id,
-            "player_play_operation",
-            "mediaplayer",
-            {"action": "stop", "media": "app_ios"},
-        )
+        await self.mina_service.player_stop(self.device_id)
 
     # 是否在下载中
     def is_downloading(self):
