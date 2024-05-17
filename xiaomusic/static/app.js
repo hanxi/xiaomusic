@@ -14,10 +14,18 @@ $(function(){
   append_op_button_name("60分钟后关机");
 
   // 拉取声音
+  sendcmd("get_volume#");
   $.get("/getvolume", function(data, status) {
     console.log(data, status, data["volume"]);
     $("#volume").val(data.volume);
   });
+
+  // 拉取版本
+  $.get("/getversion", function(data, status) {
+    console.log(data, status, data["version"]);
+    $("#version").text(`(${data.version})`);
+  });
+
 
   function append_op_button_name(name) {
     append_op_button(name, name);

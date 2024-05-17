@@ -45,6 +45,7 @@ KEY_WORD_DICT = {
     "停止播放": "stop",
     "分钟后关机": "stop_after_minute",
     "set_volume#": "set_volume",
+    "get_volume#": "get_volume",
 }
 
 # 命令参数在前面
@@ -55,6 +56,7 @@ KEY_WORD_ARG_BEFORE_DICT = {
 # 匹配优先级
 KEY_MATCH_ORDER = [
     "set_volume#",
+    "get_volume#",
     "分钟后关机",
     "播放歌曲",
     "放歌曲",
