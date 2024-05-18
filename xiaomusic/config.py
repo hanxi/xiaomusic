@@ -10,7 +10,6 @@ from xiaomusic.utils import validate_proxy
 
 LATEST_ASK_API = "https://userprofile.mina.mi.com/device_profile/v2/conversation?source=dialogu&hardware={hardware}&timestamp={timestamp}&limit=2"
 COOKIE_TEMPLATE = "deviceId={device_id}; serviceToken={service_token}; userId={user_id}"
-WAKEUP_KEYWORD = "小爱同学"
 HARDWARE_COMMAND_DICT = {
     # hardware: (tts_command, wakeup_command, volume_command)
     "LX06": ("5-1", "5-5", "2-1"),
