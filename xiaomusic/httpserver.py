@@ -2,6 +2,7 @@
 import os
 import traceback
 
+import sys
 from flask import Flask, request, send_from_directory
 from threading import Thread
 
@@ -12,6 +13,11 @@ from xiaomusic.config import (
 from xiaomusic import (
     __version__,
 )
+
+# 隐藏 flask 启动告警
+# https://gist.github.com/jerblack/735b9953ba1ab6234abb43174210d356
+cli = sys.modules['flask.cli']
+cli.show_server_banner = lambda *x: None
 
 app = Flask(__name__)
 host = "0.0.0.0"
