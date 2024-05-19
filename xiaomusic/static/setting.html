@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width">
+    <title>小爱音箱操控面板</title>
+    <script src="/static/jquery-3.7.1.min.js"></script>
+    <script src="/static/setting.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+  </head>
+  <body>
+    <h2>小爱音箱设置面板<span id="version">(版本未知)</span></h2>
+    <hr>
+    <div class="rows">
+      <label for="mi_did">MI_DID:</label>
+      <select id="mi_did"></select>
+      <label for="mi_hardware">MI_HARDWARE:</label>
+      <select id="mi_hardware"></select>
+      <label for="xiaomusic_search">XIAOMUSIC_SEARCH:</label>
+      <select id="xiaomusic_search">
+        <option value="ytsearch:">ytsearch:</option>
+        <option value="bilisearch:">bilisearch:</option>
+      </select>
+      <label for="xiaomusic_proxy">XIAOMUSIC_PROXY(ytsearch需要):</label>
+      <input id="xiaomusic_proxy" type="text" placeholder="http://192.168.2.5:8080"></input>
+    </div>
+    <hr>
+    <button onclick="location.href='/';">返回首页</button>
+    <button id="save">保存</button>
+  </body>
+</html>

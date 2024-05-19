@@ -9,6 +9,7 @@ import time
 import urllib.parse
 import traceback
 import mutagen
+import queue
 from xiaomusic.httpserver import StartHTTPServer
 
 from pathlib import Path
@@ -54,6 +55,7 @@ class XiaoMusic:
         self.miio_service = None
         self.polling_event = asyncio.Event()
         self.new_record_event = asyncio.Event()
+        self.queue = queue.Queue()
 
         self.music_path = config.music_path
         self.hostname = config.hostname
@@ -87,6 +89,9 @@ class XiaoMusic:
         self.log = logging.getLogger("xiaomusic")
         self.log.setLevel(logging.DEBUG if config.verbose else logging.INFO)
         self.log.debug(config)
+
+        # 尝试从设置里加载配置
+        self.try_init_setting()
 
         # 启动时重新生成一次播放列表
         self.gen_all_music_list()
@@ -130,10 +135,7 @@ class XiaoMusic:
         self.mina_service = MiNAService(account)
         self.miio_service = MiIOService(account)
 
-    async def _init_data_hardware(self):
-        if self.config.cookie:
-            # if use cookie do not need init
-            return
+    async def try_update_device_id(self):
         hardware_data = await self.mina_service.device_list()
         # fix multi xiaoai problems we check did first
         # why we use this way to fix?
@@ -155,6 +157,12 @@ class XiaoMusic:
             raise Exception(
                 f"we have no hardware: {self.config.hardware} please use `micli mina` to check"
             )
+
+    async def _init_data_hardware(self):
+        if self.config.cookie:
+            # if use cookie do not need init
+            return
+        await self.try_update_device_id()
         if not self.config.mi_did:
             devices = await self.miio_service.device_list()
             try:
@@ -412,10 +420,10 @@ class XiaoMusic:
         self.log.info(f"{sec}秒后将会播放下一首")
 
     async def run_forever(self):
+        StartHTTPServer(self.port, self.music_path, self)
         async with ClientSession() as session:
             self.session = session
             await self.init_all_data(session)
-            StartHTTPServer(self.port, self.music_path, self)
             task = asyncio.create_task(self.poll_latest_ask())
             assert task is not None  # to keep the reference to task, do not remove this
             filtered_keywords = [keyword for keyword in KEY_MATCH_ORDER if "#" not in keyword]
@@ -429,6 +437,15 @@ class XiaoMusic:
                 await self.new_record_event.wait()
                 self.new_record_event.clear()
                 new_record = self.last_record
+                if new_record is None:
+                    # 其他线程的函数调用
+                    try:
+                        func, callback, arg1 = self.queue.get(False)
+                        ret = await func(arg1=arg1)
+                        callback(ret)
+                    except queue.Empty:
+                        pass
+                    continue
                 self.polling_event.clear()  # stop polling when processing the question
                 query = new_record.get("query", "").strip()
                 ctrl_panel = new_record.get("ctrl_panel", False)
@@ -588,3 +605,77 @@ class XiaoMusic:
     def playingmusic(self):
         self.log.debug("playingmusic. cur_music:%s", self.cur_music)
         return self.cur_music
+
+    # 获取当前配置
+    def getconfig(self):
+        return self.config
+
+    def try_init_setting(self):
+        try:
+            filename = os.path.join(self.music_path, "setting.json")
+            with open(filename) as f:
+                data = json.loads(f.read())
+                self.update_config_from_setting(data)
+        except FileNotFoundError:
+            self.log.info(f"The file {filename} does not exist.")
+        except json.JSONDecodeError:
+            self.log.warning(f"The file {filename} contains invalid JSON.")
+
+    # 保存配置并重新启动
+    async def saveconfig(self, data):
+        # 默认暂时配置保存到 music 目录下
+        filename = os.path.join(self.music_path, "setting.json")
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        self.update_config_from_setting(data)
+        await self.call_main_thread_function(self.reinit)
+
+    def update_config_from_setting(self, data):
+        self.config.mi_did = data["mi_did"]
+        self.config.hardware = data["mi_hardware"]
+        self.config.search_prefix = data["xiaomusic_search"]
+        self.config.proxy = data["xiaomusic_proxy"]
+
+        self.search_prefix = self.config.search_prefix
+        self.proxy = self.config.proxy
+        self.log.info("update_config_from_setting ok. data:%s", data)
+
+    # 重新初始化
+    async def reinit(self, **kwargs):
+        await self.try_update_device_id()
+        self.log.info("reinit success")
+
+    # 获取所有设备
+    async def getalldevices(self, **kwargs):
+        arg1 = kwargs["arg1"]
+        self.log.debug("getalldevices. arg1:%s", arg1)
+        did_list = []
+        hardware_list = []
+        hardware_data = await self.mina_service.device_list()
+        for h in hardware_data:
+            did = h.get("miotDID", "")
+            if did != "":
+                did_list.append(did)
+            hardware = h.get("hardware", "")
+            if h.get("hardware", "") != "":
+                hardware_list.append(hardware)
+        alldevices = {
+            "did_list": did_list,
+            "hardware_list": hardware_list,
+        }
+        return alldevices
+
+    # 用于在web线程里调用
+    # 获取所有设备
+    async def call_main_thread_function(self, func, arg1=None):
+        loop = asyncio.get_event_loop()
+        future = loop.create_future()
+        def callback(ret):
+            nonlocal future
+            loop.call_soon_threadsafe(future.set_result, ret)
+        self.queue.put((func, callback, arg1))
+        self.last_record = None
+        self.new_record_event.set()
+        result = await future
+        return result
+

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import os
-import traceback
-
 import sys
+import traceback
+import asyncio
+
 from flask import Flask, request, send_from_directory
 from threading import Thread
 
@@ -69,6 +70,29 @@ async def do_cmd():
         return {"ret": "OK"}
     return {"ret": "Unknow cmd"}
 
+@app.route("/getsetting", methods=["GET"])
+async def getsetting():
+    config = xiaomusic.getconfig()
+    log.debug(config)
+
+    alldevices = await xiaomusic.call_main_thread_function(xiaomusic.getalldevices)
+    log.info(alldevices)
+    data = {
+        "mi_did": config.mi_did,
+        "mi_did_list": alldevices["did_list"],
+        "mi_hardware": config.hardware,
+        "mi_hardware_list": alldevices["hardware_list"],
+        "xiaomusic_search": config.search_prefix,
+        "xiaomusic_proxy": config.proxy,
+    }
+    return data
+
+@app.route("/savesetting", methods=["POST"])
+async def savesetting():
+    data = request.get_json()
+    log.info(data)
+    await xiaomusic.saveconfig(data)
+    return "save success"
 
 def static_path_handler(filename):
     log.debug(filename)
