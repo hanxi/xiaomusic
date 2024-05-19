@@ -1,4 +1,10 @@
 $(function(){
+  // 拉取版本
+  $.get("/getversion", function(data, status) {
+    console.log(data, status, data["version"]);
+    $("#version").text(`(${data.version})`);
+  });
+
   // 拉取现有配置
   $.get("/getsetting", function(data, status) {
     console.log(data, status);
