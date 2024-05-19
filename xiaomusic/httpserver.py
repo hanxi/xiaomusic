@@ -5,6 +5,7 @@ import traceback
 import asyncio
 
 from flask import Flask, request, send_from_directory
+from waitress import serve
 from threading import Thread
 
 from xiaomusic.config import (
@@ -17,8 +18,8 @@ from xiaomusic import (
 
 # 隐藏 flask 启动告警
 # https://gist.github.com/jerblack/735b9953ba1ab6234abb43174210d356
-cli = sys.modules['flask.cli']
-cli.show_server_banner = lambda *x: None
+#from flask import cli
+#cli.show_server_banner = lambda *_: None
 
 app = Flask(__name__)
 host = "0.0.0.0"
@@ -101,10 +102,8 @@ def static_path_handler(filename):
     log.debug(absolute_path)
     return send_from_directory(absolute_path, filename)
 
-
 def run_app():
-    app.run(host=host, port=port)
-
+    serve(app, host=host, port=port)
 
 def StartHTTPServer(_port, _static_path, _xiaomusic):
     global port, static_path, xiaomusic, log

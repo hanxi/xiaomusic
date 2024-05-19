@@ -13,6 +13,7 @@ dependencies = [
     "mutagen>=1.47.0",
     "yt-dlp>=2024.04.09",
     "flask[async]>=3.0.1",
+    "waitress>=3.0.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -21,3 +22,5 @@ license = {text = "MIT"}
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
+
+[tool.pdm]

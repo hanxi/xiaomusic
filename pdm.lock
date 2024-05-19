@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:3137b159cf24210912a6a3d16e6ae42511177b211996625fe6bdabebdaec230e"
+content_hash = "sha256:d771311a452ca58665efe3b74af341cb202d75d83a250896c293ea9c696e5696"
 
 [[package]]
 name = "aiohttp"
@@ -666,6 +666,16 @@ summary = "HTTP library with thread-safe connection pooling, file post, and more
 files = [
     {file = "urllib3-2.0.6-py3-none-any.whl", hash = "sha256:7a7c7003b000adf9e7ca2a377c9688bbc54ed41b985789ed576570342a375cd2"},
     {file = "urllib3-2.0.6.tar.gz", hash = "sha256:b19e1a85d206b56d7df1d5e683df4a7725252a964e3993648dd0fb5a1c157564"},
+]
+
+[[package]]
+name = "waitress"
+version = "3.0.0"
+requires_python = ">=3.8.0"
+summary = "Waitress WSGI server"
+files = [
+    {file = "waitress-3.0.0-py3-none-any.whl", hash = "sha256:2a06f242f4ba0cc563444ca3d1998959447477363a2d7e9b8b4d75d35cfd1669"},
+    {file = "waitress-3.0.0.tar.gz", hash = "sha256:005da479b04134cdd9dd602d1ee7c49d79de0537610d653674cc6cbde222b8a1"},
 ]
 
 [[package]]
