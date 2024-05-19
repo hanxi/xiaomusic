@@ -137,6 +137,19 @@ services:
 - 新功能
     - 显示正在播放的歌曲
     - 模糊搜索本地歌曲
+    - 设置页面
+
+
+采用新的设置页面之后，必须在启动前配置的环境变量只剩下:
+- MI_USER
+- MI_PASS
+- XIAOMUSIC_HOSTNAME
+
+其他的这些可以在网页里配置:
+- MI_DID
+- MI_HARDWARE
+- XIAOMUSIC_SEARCH
+- XIAOMUSIC_PROXY
 
 ## 讨论区
 
