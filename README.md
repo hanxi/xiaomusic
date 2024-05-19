@@ -2,7 +2,28 @@
 
 使用小爱/红米音箱播放音乐，音乐使用 yt-dlp 下载。
 
-## 运行
+## 最简配置运行
+
+已经支持在 web 页面配置其他参数，docker compose 配置如下：
+
+```yaml
+services:
+  xiaomusic:
+    image: hanxi/xiaomusic
+    container_name: xiaomusic
+    restart: unless-stopped
+    ports:
+      - 8090:8090
+    volumes:
+      - ./music:/app/music
+    environment:
+      MI_USER: '小米账号'
+      MI_PASS: '小米密码'
+      XIAOMUSIC_HOSTNAME: 'docker 主机 ip'
+```
+启动成功后，在 web 页面可以配置 MI_DID, MI_HARDWARE, XIAOMUSIC_SEARCH, XIAOMUSIC_PROXY 参数。
+
+## 开发环境运行
 
 - 使用 install_dependencies.sh 下载依赖
 - 使用 pdm 安装环境
@@ -50,8 +71,17 @@ pdm run xiaomusic.py
 ## 在 Docker 里使用
 
 ```shell
-docker run -e MI_USER=<your-xiaomi-account> -e MI_PASS=<your-xiaomi-password> -e MI_DID=<your-xiaomi-speaker-mid> -e MI_HARDWARE='L07A' -e XIAOMUSIC_PROXY=<proxy-for-yt-dlp> -e XIAOMUSIC_HOSTNAME=192.168.2.5 -e XIAOMUSIC_SEARCH='bilisearch:' -p 8090:8090 -v ./music:/app/music hanxi/xiaomusic
+docker run -e MI_USER=<your-xiaomi-account> \
+    -e MI_PASS=<your-xiaomi-password> \
+    -e MI_DID=<your-xiaomi-speaker-mid> \
+    -e MI_HARDWARE='L07A' \
+    -e XIAOMUSIC_PROXY=<proxy-for-yt-dlp> \
+    -e XIAOMUSIC_HOSTNAME=192.168.2.5 \
+    -e XIAOMUSIC_SEARCH='bilisearch:' \
+    -p 8090:8090 \
+    -v ./music:/app/music hanxi/xiaomusic
 ```
+
 - XIAOMUSIC_SEARCH 可以配置为 'bilisearch:' 表示歌曲从哔哩哔哩下载;
     - 配置为 'ytsearch:' 表示歌曲从 youtube 下载。
 - XIAOMUSIC_PROXY 用于配置代理，默认为空;
