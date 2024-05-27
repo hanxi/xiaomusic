@@ -172,7 +172,7 @@ class XiaoMusic:
                     if d["model"].endswith(self.config.hardware.lower())
                 )
             except StopIteration:
-                raise Exception(
+                self.log.error(
                     f"cannot find did for hardware: {self.config.hardware} "
                     "please set it via MI_DID env"
                 )
