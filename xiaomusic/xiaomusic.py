@@ -154,7 +154,7 @@ class XiaoMusic:
                 self.device_id = h.get("deviceID")
                 break
         else:
-            raise Exception(
+            self.log.error(
                 f"we have no hardware: {self.config.hardware} please use `micli mina` to check"
             )
 
