@@ -72,10 +72,10 @@ pdm run xiaomusic.py
 
 ```shell
 docker run -e MI_USER=<your-xiaomi-account> \
-    -e MI_PASS=<your-xiaomi-password> \
-    -e MI_DID=<your-xiaomi-speaker-mid> \
+    -e MI_PASS='your-xiaomi-password' \
+    -e MI_DID='your-xiaomi-speaker-mid' \
     -e MI_HARDWARE='L07A' \
-    -e XIAOMUSIC_PROXY=<proxy-for-yt-dlp> \
+    -e XIAOMUSIC_PROXY='proxy-for-yt-dlp' \
     -e XIAOMUSIC_HOSTNAME=192.168.2.5 \
     -e XIAOMUSIC_SEARCH='bilisearch:' \
     -p 8090:8090 \
