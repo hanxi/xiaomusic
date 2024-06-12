@@ -3,6 +3,7 @@ $(function(){
   append_op_button_name("全部循环");
   append_op_button_name("单曲循环");
   append_op_button_name("随机播放");
+  append_op_button_name("刷新列表");
   append_op_button_name("下一首");
   append_op_button_name("关机");
 
@@ -94,7 +95,9 @@ $(function(){
       contentType: "application/json",
       data: JSON.stringify({cmd: cmd}),
       success: () => {
-        // 请求成功时执行的操作
+        if (cmd == "刷新列表") {
+          location.reload();
+        }
       },
       error: () => {
         // 请求失败时执行的操作

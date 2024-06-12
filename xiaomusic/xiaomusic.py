@@ -580,7 +580,7 @@ class XiaoMusic:
         random.shuffle(self._play_list)
         await self.do_tts(f"已经设置为随机播放")
 
-    # 生成播放列表
+    # 刷新列表
     async def gen_music_list(self, **kwargs):
         self._gen_all_music_list()
         await self.do_tts(f"生成播放列表完毕")
