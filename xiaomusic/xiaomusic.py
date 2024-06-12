@@ -388,8 +388,12 @@ class XiaoMusic:
         next_index = index + 1
         if next_index >= play_list_len:
             next_index = 0
-        filename = self._play_list[next_index]
-        return filename
+        name = self._play_list[next_index]
+        filename = self.get_filename(name)
+        if len(filename) <= 0:
+            self._play_list.pop(next_index)
+            return self.get_next_music()
+        return name
 
     # 获取文件播放时长
     def get_file_duration(self, filename):
