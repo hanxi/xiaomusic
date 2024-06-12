@@ -1,11 +1,10 @@
 $(function(){
   $container=$("#cmds");
-  append_op_button_name("下一首");
   append_op_button_name("全部循环");
-  append_op_button_name("关机");
   append_op_button_name("单曲循环");
-  append_op_button_name("播放歌曲");
   append_op_button_name("随机播放");
+  append_op_button_name("下一首");
+  append_op_button_name("关机");
 
   $container.append($("<hr>"));
 
@@ -26,6 +25,36 @@ $(function(){
     $("#version").text(`(${data.version})`);
   });
 
+  // 拉取播放列表
+  $.get("/musiclist", function(data, status) {
+    console.log(data, status);
+    $.each(data, function(key, value) {
+      $('#music_list').append($('<option></option>').val(key).text(key));
+    });
+
+    $('#music_list').change(function() {
+      const selectedValue = $(this).val();
+      $('#music_name').empty();
+      $.each(data[selectedValue], function(index, item) {
+        $('#music_name').append($('<option></option>').val(item).text(item));
+      });
+    });
+
+    $('#music_list').trigger('change');
+
+    // 获取当前播放列表
+    $.get("curplaylist", function(data, status) {
+      $('#music_list').val(data);
+      $('#music_list').trigger('change');
+    })
+  })
+
+  $("#play_music_list").on("click", () => {
+    var music_list = $("#music_list").val();
+    var music_name = $("#music_name").val();
+    let cmd = "播放列表" + music_list + "|" + music_name;
+    sendcmd(cmd);
+  })
 
   function append_op_button_name(name) {
     append_op_button(name, name);
@@ -48,8 +77,8 @@ $(function(){
 
   $("#play").on("click", () => {
     var search_key = $("#music-name").val();
-    var filename=$("#music-filename").val();
-    let cmd = "播放歌曲"+search_key+"|"+filename;
+    var filename = $("#music-filename").val();
+    let cmd = "播放歌曲" + search_key + "|" + filename;
     sendcmd(cmd);
   });
 

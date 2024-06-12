@@ -43,6 +43,7 @@ KEY_WORD_DICT = {
     "关机": "stop",
     "停止播放": "stop",
     "分钟后关机": "stop_after_minute",
+    "播放列表": "play_music_list",
     "set_volume#": "set_volume",
     "get_volume#": "get_volume",
 }
@@ -65,6 +66,7 @@ KEY_MATCH_ORDER = [
     "随机播放",
     "关机",
     "停止播放",
+    "播放列表",
 ]
 
 SUPPORT_MUSIC_TYPE = [

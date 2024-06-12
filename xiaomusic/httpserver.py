@@ -95,6 +95,14 @@ async def savesetting():
     await xiaomusic.saveconfig(data)
     return "save success"
 
+@app.route("/musiclist", methods=["GET"])
+async def musiclist():
+    return xiaomusic.get_music_list()
+
+@app.route("/curplaylist", methods=["GET"])
+async def curplaylist():
+    return xiaomusic.get_cur_play_list()
+
 def static_path_handler(filename):
     log.debug(filename)
     log.debug(static_path)

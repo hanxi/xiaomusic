@@ -75,6 +75,8 @@ class XiaoMusic:
         self._volume = 0
         self._all_music = {}
         self._play_list = []
+        self._cur_play_list = ""
+        self._music_list = {} # 播放列表 key 为目录名, value 为 play_list
         self._playing = False
 
         # 关机定时器
@@ -94,7 +96,7 @@ class XiaoMusic:
         self.try_init_setting()
 
         # 启动时重新生成一次播放列表
-        self.gen_all_music_list()
+        self._gen_all_music_list()
 
         # 启动时初始化获取声音
         self.set_last_record("get_volume#")
@@ -340,9 +342,16 @@ class XiaoMusic:
         return f"http://{self.hostname}:{self.port}/{encoded_name}"
 
     # 递归获取目录下所有歌曲,生成随机播放列表
-    def gen_all_music_list(self):
+    def _gen_all_music_list(self):
         self._all_music = {}
+        all_music_by_dir = {}
         for root, dirs, filenames in os.walk(self.music_path):
+            self.log.debug("root:%s dirs:%s music_path:%s", root, dirs, self.music_path)
+            dir_name = os.path.basename(root)
+            if self.music_path == root:
+                dir_name = "其他"
+            if dir_name not in all_music_by_dir:
+                all_music_by_dir[dir_name] = {}
             for filename in filenames:
                 self.log.debug("gen_all_music_list. filename:%s", filename)
                 # 过滤隐藏文件
@@ -361,9 +370,19 @@ class XiaoMusic:
 
                 # 歌曲名字相同会覆盖
                 self._all_music[name] = os.path.join(root, filename)
+                all_music_by_dir[dir_name][name] = True
+            pass
         self._play_list = list(self._all_music.keys())
+        self._cur_play_list = "全部"
         random.shuffle(self._play_list)
         self.log.debug(self._all_music)
+
+        self._music_list = {}
+        self._music_list["全部"] = self._play_list
+        for dir_name,musics in all_music_by_dir.items():
+            self._music_list[dir_name] = list(musics.keys())
+            self.log.debug("dir_name:%s, list:%s", dir_name, self._music_list[dir_name])
+        pass
 
     # 把下载的音乐加入播放列表
     def add_download_music(self, name):
@@ -558,16 +577,38 @@ class XiaoMusic:
     # 随机播放
     async def random_play(self, **kwargs):
         self.play_type = PLAY_TYPE_ALL
-        await self.do_tts(f"已经设置为全部循环并随机播放")
-        # 重新生成随机播放列表
-        self.gen_all_music_list()
-        await self.play_next()
+        random.shuffle(self._play_list)
+        await self.do_tts(f"已经设置为随机播放")
+
+    # 生成播放列表
+    async def gen_music_list(self, **kwargs):
+        self._gen_all_music_list()
+        await self.do_tts(f"生成播放列表完毕")
+
+    # 播放一个播放列表
+    async def play_music_list(self, **kwargs):
+        parts = kwargs["arg1"].split("|")
+        list_name = parts[0]
+        if list_name not in self._music_list:
+            await self.do_tts(f"播放列表{list_name}不存在")
+            return
+        self._play_list = self._music_list[list_name]
+        self._cur_play_list = list_name
+        self.log.info(f"开始播放列表{list_name}")
+
+        music_name = ""
+        if len(parts) > 1:
+            music_name = parts[1]
+        else:
+            music_name = self.get_next_music()
+        await self.play(arg1=music_name)
 
     async def stop(self, **kwargs):
         self._playing = False
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info(f"定时器已取消")
+        self.cur_music = ""
         await self.force_stop_xiaoai()
 
     async def stop_after_minute(self, **kwargs):
@@ -601,9 +642,18 @@ class XiaoMusic:
 
     # 搜索音乐
     def searchmusic(self, name):
-        search_list = fuzzyfinder(name, self._play_list)
+        all_music_list = list(self._all_music.keys())
+        search_list = fuzzyfinder(name, all_music_list)
         self.log.debug("searchmusic. name:%s search_list:%s", name, search_list)
         return search_list
+
+    # 获取播放列表
+    def get_music_list(self):
+        return self._music_list
+
+    # 获取当前的播放列表
+    def get_cur_play_list(self):
+        return self._cur_play_list
 
     # 正在播放中的音乐
     def playingmusic(self):
