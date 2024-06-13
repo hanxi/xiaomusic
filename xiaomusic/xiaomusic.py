@@ -411,6 +411,7 @@ class XiaoMusic:
         filename = self.get_filename(name)
         if len(filename) <= 0:
             self._play_list.pop(next_index)
+            self.log.info(f'pop not exist music:{name}')
             return self.get_next_music()
         return name
 

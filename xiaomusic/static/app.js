@@ -27,28 +27,32 @@ $(function(){
   });
 
   // 拉取播放列表
-  $.get("/musiclist", function(data, status) {
-    console.log(data, status);
-    $.each(data, function(key, value) {
-      $('#music_list').append($('<option></option>').val(key).text(key));
-    });
-
-    $('#music_list').change(function() {
-      const selectedValue = $(this).val();
-      $('#music_name').empty();
-      $.each(data[selectedValue], function(index, item) {
-        $('#music_name').append($('<option></option>').val(item).text(item));
+  function refresh_music_list() {
+    $('#music_list').empty();
+    $.get("/musiclist", function(data, status) {
+      console.log(data, status);
+      $.each(data, function(key, value) {
+        $('#music_list').append($('<option></option>').val(key).text(key));
       });
-    });
 
-    $('#music_list').trigger('change');
+      $('#music_list').change(function() {
+        const selectedValue = $(this).val();
+        $('#music_name').empty();
+        $.each(data[selectedValue], function(index, item) {
+          $('#music_name').append($('<option></option>').val(item).text(item));
+        });
+      });
 
-    // 获取当前播放列表
-    $.get("curplaylist", function(data, status) {
-      $('#music_list').val(data);
       $('#music_list').trigger('change');
+
+      // 获取当前播放列表
+      $.get("curplaylist", function(data, status) {
+        $('#music_list').val(data);
+        $('#music_list').trigger('change');
+      })
     })
-  })
+  }
+  refresh_music_list();
 
   $("#play_music_list").on("click", () => {
     var music_list = $("#music_list").val();
@@ -96,7 +100,7 @@ $(function(){
       data: JSON.stringify({cmd: cmd}),
       success: () => {
         if (cmd == "刷新列表") {
-          location.reload();
+          setTimeout(refresh_music_list, 3000);
         }
       },
       error: () => {
