@@ -85,7 +85,7 @@ class Config:
     mute_xiaoai: bool = True
     cookie: str = ""
     use_command: bool = False
-    verbose: bool = (os.getenv("XIAOMUSIC_VERBOSE", "").lower() == "true")
+    verbose: bool = os.getenv("XIAOMUSIC_VERBOSE", "").lower() == "true"
     music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))

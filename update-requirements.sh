@@ -1,1 +1,1 @@
-pdm export -o requirements.txt
+pdm export --prod -o requirements.txt
