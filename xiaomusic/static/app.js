@@ -59,7 +59,27 @@ $(function(){
     var music_name = $("#music_name").val();
     let cmd = "播放列表" + music_list + "|" + music_name;
     sendcmd(cmd);
-  })
+  });
+
+  $("#del_music").on("click", () => {
+    var del_music_name = $("#music_name").val();
+    if (confirm(`确定删除歌曲 ${del_music_name} 吗？`)) {
+      console.log(`删除歌曲 ${del_music_name}`);
+      $.ajax({
+        type: 'POST',
+        url: '/delmusic',
+        data: JSON.stringify({"name": del_music_name}),
+        contentType: "application/json; charset=utf-8",
+        success: () => {
+          alert(`删除 ${del_music_name} 成功`);
+          refresh_music_list();
+        },
+        error: () => {
+          alert(`删除 ${del_music_name} 失败`);
+        }
+      });
+    }
+  });
 
   function append_op_button_name(name) {
     append_op_button(name, name);
@@ -96,7 +116,7 @@ $(function(){
     $.ajax({
       type: "POST",
       url: "/cmd",
-      contentType: "application/json",
+      contentType: "application/json; charset=utf-8",
       data: JSON.stringify({cmd: cmd}),
       success: () => {
         if (cmd == "刷新列表") {

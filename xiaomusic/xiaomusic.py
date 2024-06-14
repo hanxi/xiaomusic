@@ -587,6 +587,20 @@ class XiaoMusic:
         self._gen_all_music_list()
         await self.do_tts("生成播放列表完毕")
 
+    # 删除歌曲
+    def del_music(self, name):
+        filename = self.get_filename(name)
+        if filename == "":
+            self.log.info(f"${name} not exist")
+            return
+        try:
+            os.remove(filename)
+            self.log.info(f"del ${filename} success")
+        except OSError:
+            self.log.error(f"del ${filename} failed")
+            pass
+        self._gen_all_music_list()
+
     # 播放一个播放列表
     async def play_music_list(self, **kwargs):
         parts = kwargs["arg1"].split("|")

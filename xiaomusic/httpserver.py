@@ -108,6 +108,12 @@ async def musiclist():
 async def curplaylist():
     return xiaomusic.get_cur_play_list()
 
+@app.route("/delmusic", methods=["POST"])
+def delmusic():
+    data = request.get_json()
+    log.info(data)
+    xiaomusic.del_music(data["name"])
+    return 'success'
 
 def static_path_handler(filename):
     log.debug(filename)
