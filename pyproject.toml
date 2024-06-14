@@ -24,3 +24,29 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [tool.pdm]
+[tool.pdm.dev-dependencies]
+lint = [
+    "ruff>=0.4.8",
+]
+[tool.ruff]
+select = [
+        "B", # flake8-bugbear
+        "C4", # flake8-comprehensions
+        "E", # pycodestyle - Error
+        "F", # Pyflakes
+        "I", # isort
+        "W", # pycodestyle - Warning
+        "UP", # pyupgrade
+]
+ignore = [
+        "E501", # line-too-long
+        "W191", # tab-indentation
+]
+include = ["**/*.py", "**/*.pyi", "**/pyproject.toml"]
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[tool.pdm.scripts]
+lint = "ruff check ."
+fmt = "ruff format ."

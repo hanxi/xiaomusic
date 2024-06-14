@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import os
-import re
-import socket
-from http.cookies import SimpleCookie
-from typing import AsyncIterator
-from urllib.parse import urlparse
 import difflib
+import re
+from collections.abc import AsyncIterator
+from http.cookies import SimpleCookie
+from urllib.parse import urlparse
 
 from requests.utils import cookiejar_from_dict
 
@@ -61,6 +59,7 @@ def validate_proxy(proxy_str: str) -> bool:
         raise ValueError("Proxy hostname and port must be set")
 
     return True
+
 
 # 模糊搜索
 def fuzzyfinder(user_input, collection):

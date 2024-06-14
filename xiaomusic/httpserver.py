@@ -1,25 +1,21 @@
 #!/usr/bin/env python3
 import os
-import sys
-import traceback
-import asyncio
+from threading import Thread
 
 from flask import Flask, request, send_from_directory
 from waitress import serve
-from threading import Thread
-
-from xiaomusic.config import (
-    KEY_WORD_DICT,
-)
 
 from xiaomusic import (
     __version__,
 )
+from xiaomusic.config import (
+    KEY_WORD_DICT,
+)
 
 # 隐藏 flask 启动告警
 # https://gist.github.com/jerblack/735b9953ba1ab6234abb43174210d356
-#from flask import cli
-#cli.show_server_banner = lambda *_: None
+# from flask import cli
+# cli.show_server_banner = lambda *_: None
 
 app = Flask(__name__)
 host = "0.0.0.0"
@@ -33,12 +29,14 @@ log = None
 def allcmds():
     return KEY_WORD_DICT
 
+
 @app.route("/getversion", methods=["GET"])
 def getversion():
     log.debug("getversion %s", __version__)
     return {
         "version": __version__,
     }
+
 
 @app.route("/getvolume", methods=["GET"])
 def getvolume():
@@ -47,14 +45,17 @@ def getvolume():
         "volume": volume,
     }
 
+
 @app.route("/searchmusic", methods=["GET"])
 def searchmusic():
-    name = request.args.get('name')
+    name = request.args.get("name")
     return xiaomusic.searchmusic(name)
+
 
 @app.route("/playingmusic", methods=["GET"])
 def playingmusic():
     return xiaomusic.playingmusic()
+
 
 @app.route("/", methods=["GET"])
 def redirect_to_index():
@@ -70,6 +71,7 @@ async def do_cmd():
         xiaomusic.set_last_record(cmd)
         return {"ret": "OK"}
     return {"ret": "Unknow cmd"}
+
 
 @app.route("/getsetting", methods=["GET"])
 async def getsetting():
@@ -88,6 +90,7 @@ async def getsetting():
     }
     return data
 
+
 @app.route("/savesetting", methods=["POST"])
 async def savesetting():
     data = request.get_json()
@@ -95,13 +98,16 @@ async def savesetting():
     await xiaomusic.saveconfig(data)
     return "save success"
 
+
 @app.route("/musiclist", methods=["GET"])
 async def musiclist():
     return xiaomusic.get_music_list()
 
+
 @app.route("/curplaylist", methods=["GET"])
 async def curplaylist():
     return xiaomusic.get_cur_play_list()
+
 
 def static_path_handler(filename):
     log.debug(filename)
@@ -110,8 +116,10 @@ def static_path_handler(filename):
     log.debug(absolute_path)
     return send_from_directory(absolute_path, filename)
 
+
 def run_app():
     serve(app, host=host, port=port)
+
 
 def StartHTTPServer(_port, _static_path, _xiaomusic):
     global port, static_path, xiaomusic, log

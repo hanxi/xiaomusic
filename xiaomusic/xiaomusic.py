@@ -3,44 +3,42 @@ import asyncio
 import json
 import logging
 import os
+import queue
 import random
 import re
 import time
-import urllib.parse
 import traceback
-import mutagen
-import queue
-from xiaomusic.httpserver import StartHTTPServer
-
+import urllib.parse
 from pathlib import Path
 
+import mutagen
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService, miio_command
-from rich import print
 from rich.logging import RichHandler
-
-from xiaomusic.config import (
-    COOKIE_TEMPLATE,
-    LATEST_ASK_API,
-    KEY_WORD_DICT,
-    KEY_WORD_ARG_BEFORE_DICT,
-    KEY_MATCH_ORDER,
-    SUPPORT_MUSIC_TYPE,
-    Config,
-)
-from xiaomusic.utils import (
-    parse_cookie_string,
-    fuzzyfinder,
-)
 
 from xiaomusic import (
     __version__,
+)
+from xiaomusic.config import (
+    COOKIE_TEMPLATE,
+    KEY_MATCH_ORDER,
+    KEY_WORD_ARG_BEFORE_DICT,
+    KEY_WORD_DICT,
+    LATEST_ASK_API,
+    SUPPORT_MUSIC_TYPE,
+    Config,
+)
+from xiaomusic.httpserver import StartHTTPServer
+from xiaomusic.utils import (
+    fuzzyfinder,
+    parse_cookie_string,
 )
 
 EOF = object()
 
 PLAY_TYPE_ONE = 0  # 单曲循环
 PLAY_TYPE_ALL = 1  # 全部循环
+
 
 class XiaoMusic:
     def __init__(self, config: Config):
@@ -76,7 +74,7 @@ class XiaoMusic:
         self._all_music = {}
         self._play_list = []
         self._cur_play_list = ""
-        self._music_list = {} # 播放列表 key 为目录名, value 为 play_list
+        self._music_list = {}  # 播放列表 key 为目录名, value 为 play_list
         self._playing = False
 
         # 关机定时器
@@ -86,7 +84,7 @@ class XiaoMusic:
         logging.basicConfig(
             format=f"[{__version__}]\t%(message)s",
             datefmt="[%X]",
-            handlers=[RichHandler(rich_tracebacks=True)]
+            handlers=[RichHandler(rich_tracebacks=True)],
         )
         self.log = logging.getLogger("xiaomusic")
         self.log.setLevel(logging.DEBUG if config.verbose else logging.INFO)
@@ -290,7 +288,10 @@ class XiaoMusic:
     def is_downloading(self):
         if not self.download_proc:
             return False
-        if self.download_proc.returncode != None and self.download_proc.returncode < 0:
+        if (
+            self.download_proc.returncode is not None
+            and self.download_proc.returncode < 0
+        ):
             return False
         return True
 
@@ -379,7 +380,7 @@ class XiaoMusic:
 
         self._music_list = {}
         self._music_list["全部"] = self._play_list
-        for dir_name,musics in all_music_by_dir.items():
+        for dir_name, musics in all_music_by_dir.items():
             self._music_list[dir_name] = list(musics.keys())
             self.log.debug("dir_name:%s, list:%s", dir_name, self._music_list[dir_name])
         pass
@@ -396,7 +397,7 @@ class XiaoMusic:
     def get_next_music(self):
         play_list_len = len(self._play_list)
         if play_list_len == 0:
-            self.log.warning(f"没有随机到歌曲")
+            self.log.warning("没有随机到歌曲")
             return ""
         # 随机选择一个文件
         index = 0
@@ -411,7 +412,7 @@ class XiaoMusic:
         filename = self.get_filename(name)
         if len(filename) <= 0:
             self._play_list.pop(next_index)
-            self.log.info(f'pop not exist music:{name}')
+            self.log.info(f"pop not exist music:{name}")
             return self.get_next_music()
         return name
 
@@ -430,7 +431,7 @@ class XiaoMusic:
         self.log.info(f"歌曲 {self.cur_music} : {filename} 的时长 {sec} 秒")
         if self._next_timer:
             self._next_timer.cancel()
-            self.log.info(f"定时器已取消")
+            self.log.info("定时器已取消")
         self._timeout = sec
 
         async def _do_next():
@@ -450,11 +451,11 @@ class XiaoMusic:
             await self.init_all_data(session)
             task = asyncio.create_task(self.poll_latest_ask())
             assert task is not None  # to keep the reference to task, do not remove this
-            filtered_keywords = [keyword for keyword in KEY_MATCH_ORDER if "#" not in keyword]
+            filtered_keywords = [
+                keyword for keyword in KEY_MATCH_ORDER if "#" not in keyword
+            ]
             joined_keywords = "/".join(filtered_keywords)
-            self.log.info(
-                f"Running xiaomusic now, 用`{joined_keywords}`开头来控制"
-            )
+            self.log.info(f"Running xiaomusic now, 用`{joined_keywords}`开头来控制")
 
             while True:
                 self.polling_event.set()
@@ -561,30 +562,30 @@ class XiaoMusic:
         if self.play_type == PLAY_TYPE_ALL or name == "":
             name = self.get_next_music()
         if name == "":
-            await self.do_tts(f"本地没有歌曲")
+            await self.do_tts("本地没有歌曲")
             return
         await self.play(arg1=name)
 
     # 单曲循环
     async def set_play_type_one(self, **kwargs):
         self.play_type = PLAY_TYPE_ONE
-        await self.do_tts(f"已经设置为单曲循环")
+        await self.do_tts("已经设置为单曲循环")
 
     # 全部循环
     async def set_play_type_all(self, **kwargs):
         self.play_type = PLAY_TYPE_ALL
-        await self.do_tts(f"已经设置为全部循环")
+        await self.do_tts("已经设置为全部循环")
 
     # 随机播放
     async def random_play(self, **kwargs):
         self.play_type = PLAY_TYPE_ALL
         random.shuffle(self._play_list)
-        await self.do_tts(f"已经设置为随机播放")
+        await self.do_tts("已经设置为随机播放")
 
     # 刷新列表
     async def gen_music_list(self, **kwargs):
         self._gen_all_music_list()
-        await self.do_tts(f"生成播放列表完毕")
+        await self.do_tts("生成播放列表完毕")
 
     # 播放一个播放列表
     async def play_music_list(self, **kwargs):
@@ -608,14 +609,14 @@ class XiaoMusic:
         self._playing = False
         if self._next_timer:
             self._next_timer.cancel()
-            self.log.info(f"定时器已取消")
+            self.log.info("定时器已取消")
         self.cur_music = ""
         await self.force_stop_xiaoai()
 
     async def stop_after_minute(self, **kwargs):
         if self._stop_timer:
             self._stop_timer.cancel()
-            self.log.info(f"关机定时器已取消")
+            self.log.info("关机定时器已取消")
         minute = int(kwargs["arg1"])
 
         async def _do_stop():
@@ -635,7 +636,9 @@ class XiaoMusic:
     async def get_volume(self, **kwargs):
         playing_info = await self.mina_service.player_get_status(self.device_id)
         self.log.debug("get_volume. playing_info:%s", playing_info)
-        self._volume = json.loads(playing_info.get("data", {}).get("info", "{}")).get("volume", 5)
+        self._volume = json.loads(playing_info.get("data", {}).get("info", "{}")).get(
+            "volume", 5
+        )
         self.log.info("get_volume. volume:%s", self._volume)
 
     def get_volume_ret(self):
@@ -680,7 +683,7 @@ class XiaoMusic:
     async def saveconfig(self, data):
         # 默认暂时配置保存到 music 目录下
         filename = os.path.join(self.music_path, "setting.json")
-        with open(filename, 'w', encoding='utf-8') as f:
+        with open(filename, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         self.update_config_from_setting(data)
         await self.call_main_thread_function(self.reinit)
@@ -725,12 +728,13 @@ class XiaoMusic:
     async def call_main_thread_function(self, func, arg1=None):
         loop = asyncio.get_event_loop()
         future = loop.create_future()
+
         def callback(ret):
             nonlocal future
             loop.call_soon_threadsafe(future.set_result, ret)
+
         self.queue.put((func, callback, arg1))
         self.last_record = None
         self.new_record_event.set()
         result = await future
         return result
-

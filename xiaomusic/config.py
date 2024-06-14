@@ -3,8 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from dataclasses import dataclass, field
-from typing import Any, Iterable
+from dataclasses import dataclass
 
 from xiaomusic.utils import validate_proxy
 
@@ -13,7 +12,7 @@ COOKIE_TEMPLATE = "deviceId={device_id}; serviceToken={service_token}; userId={u
 HARDWARE_COMMAND_DICT = {
     # hardware: (tts_command, wakeup_command, volume_command)
     "LX06": ("5-1", "5-5", "2-1"),
-    "L05B": ("5-3", "5-4", "2-1"),    
+    "L05B": ("5-3", "5-4", "2-1"),
     "S12": ("5-1", "5-5", "2-1"),  # 第一代小爱，型号MDZ-25-DA
     "S12A": ("5-1", "5-5", "2-1"),
     "LX01": ("5-1", "5-5", "2-1"),
