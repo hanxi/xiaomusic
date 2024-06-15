@@ -523,17 +523,35 @@ class XiaoMusic:
             return ("stop", {})
         return (None, None)
 
+    # 判断是否播放一下私募歌曲
+    def check_play_next(self):
+        # 当前没我在播放的歌曲
+        if self.cur_music == "":
+            return True
+        else:
+            filename = self.get_filename(self.cur_music)
+            # 当前播放的歌曲不存在了
+            if len(filename) <= 0:
+                return True
+            pass
+        return False
+
     # 播放歌曲
     async def play(self, **kwargs):
         self._playing = True
         parts = kwargs["arg1"].split("|")
         search_key = parts[0]
         name = parts[1] if len(parts) > 1 else search_key
-        if search_key == "" and name == "":
-            await self.play_next()
-            return
         if name == "":
             name = search_key
+
+        if search_key == "" and name == "":
+            if self.check_play_next():
+                await self.play_next()
+                return
+            else:
+                name = self.cur_music
+
         self.log.debug("play. search_key:%s name:%s", search_key, name)
         filename = self.get_filename(name)
 
@@ -625,7 +643,6 @@ class XiaoMusic:
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info("定时器已取消")
-        self.cur_music = ""
         await self.force_stop_xiaoai()
 
     async def stop_after_minute(self, **kwargs):
