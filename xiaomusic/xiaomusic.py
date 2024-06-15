@@ -610,6 +610,7 @@ class XiaoMusic:
             return
         self._play_list = self._music_list[list_name]
         self._cur_play_list = list_name
+        random.shuffle(self._play_list)
         self.log.info(f"开始播放列表{list_name}")
 
         music_name = ""
