@@ -64,3 +64,23 @@ def validate_proxy(proxy_str: str) -> bool:
 # 模糊搜索
 def fuzzyfinder(user_input, collection):
     return difflib.get_close_matches(user_input, collection, 10, cutoff=0.1)
+
+
+# 歌曲排序
+def custom_sort_key(s):
+    # 使用正则表达式分别提取字符串的数字前缀和数字后缀
+    prefix_match = re.match(r"^(\d+)", s)
+    suffix_match = re.search(r"(\d+)$", s)
+
+    numeric_prefix = int(prefix_match.group(0)) if prefix_match else None
+    numeric_suffix = int(suffix_match.group(0)) if suffix_match else None
+
+    if numeric_prefix is not None:
+        # 如果前缀是数字，先按前缀数字排序，再按整个字符串排序
+        return (0, numeric_prefix, s)
+    elif numeric_suffix is not None:
+        # 如果后缀是数字，先按前缀字符排序，再按后缀数字排序
+        return (1, s[: suffix_match.start()], numeric_suffix)
+    else:
+        # 如果前缀和后缀都不是数字，按字典序排序
+        return (2, s)

@@ -32,12 +32,14 @@ from xiaomusic.httpserver import StartHTTPServer
 from xiaomusic.utils import (
     fuzzyfinder,
     parse_cookie_string,
+    custom_sort_key,
 )
 
 EOF = object()
 
 PLAY_TYPE_ONE = 0  # 单曲循环
 PLAY_TYPE_ALL = 1  # 全部循环
+PLAY_TYPE_RND = 2  # 随机播放
 
 
 class XiaoMusic:
@@ -67,7 +69,7 @@ class XiaoMusic:
         # 下载对象
         self.download_proc = None
         # 单曲循环，全部循环
-        self.play_type = PLAY_TYPE_ALL
+        self.play_type = PLAY_TYPE_RND
         self.cur_music = ""
         self._next_timer = None
         self._timeout = 0
@@ -377,7 +379,7 @@ class XiaoMusic:
             pass
         self._play_list = list(self._all_music.keys())
         self._cur_play_list = "全部"
-        random.shuffle(self._play_list)
+        self._gen_play_list()
         self.log.debug(self._all_music)
 
         self._music_list = {}
@@ -386,6 +388,13 @@ class XiaoMusic:
             self._music_list[dir_name] = list(musics.keys())
             self.log.debug("dir_name:%s, list:%s", dir_name, self._music_list[dir_name])
         pass
+
+    # 歌曲排序或者打乱顺序
+    def _gen_play_list(self):
+        if self.play_type == PLAY_TYPE_RND:
+            self._play_list.sort(key=custom_sort_key)
+        else:
+            random.shuffle(self._play_list)
 
     # 把下载的音乐加入播放列表
     def add_download_music(self, name):
@@ -579,7 +588,11 @@ class XiaoMusic:
         self.log.info("下一首")
         name = self.cur_music
         self.log.debug("play_next. name:%s, cur_music:%s", name, self.cur_music)
-        if self.play_type == PLAY_TYPE_ALL or name == "":
+        if (
+            self.play_type == PLAY_TYPE_ALL
+            or self.play_type == PLAY_TYPE_RND
+            or name == ""
+        ):
             name = self.get_next_music()
         if name == "":
             await self.do_tts("本地没有歌曲")
@@ -594,12 +607,13 @@ class XiaoMusic:
     # 全部循环
     async def set_play_type_all(self, **kwargs):
         self.play_type = PLAY_TYPE_ALL
+        self._gen_play_list()
         await self.do_tts("已经设置为全部循环")
 
     # 随机播放
     async def random_play(self, **kwargs):
-        self.play_type = PLAY_TYPE_ALL
-        random.shuffle(self._play_list)
+        self.play_type = PLAY_TYPE_RND
+        self._gen_play_list()
         await self.do_tts("已经设置为随机播放")
 
     # 刷新列表
@@ -630,7 +644,7 @@ class XiaoMusic:
             return
         self._play_list = self._music_list[list_name]
         self._cur_play_list = list_name
-        random.shuffle(self._play_list)
+        self._gen_play_list()
         self.log.info(f"开始播放列表{list_name}")
 
         music_name = ""
