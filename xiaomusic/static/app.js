@@ -38,7 +38,8 @@ $(function(){
       $('#music_list').change(function() {
         const selectedValue = $(this).val();
         $('#music_name').empty();
-        $.each(data[selectedValue], function(index, item) {
+        const sorted_musics = data[selectedValue].sort(custom_sort_key);
+        $.each(sorted_musics, function(index, item) {
           $('#music_name').append($('<option></option>').val(item).text(item));
         });
       });
@@ -163,4 +164,23 @@ $(function(){
   setInterval(() => {
     get_playing_music();
   }, 3000);
+
+  function custom_sort_key(a, b) {
+    // 使用正则表达式提取数字前缀
+    const numericPrefixA = a.match(/^(\d+)/) ? parseInt(a.match(/^(\d+)/)[1], 10) : null;
+    const numericPrefixB = b.match(/^(\d+)/) ? parseInt(b.match(/^(\d+)/)[1], 10) : null;
+
+    // 如果两个键都有数字前缀，则按数字大小排序
+    if (numericPrefixA !== null && numericPrefixB !== null) {
+      return numericPrefixA - numericPrefixB;
+    }
+
+    // 如果一个键有数字前缀而另一个没有，则有数字前缀的键排在前面
+    if (numericPrefixA !== null) return -1;
+    if (numericPrefixB !== null) return 1;
+
+    // 如果两个键都没有数字前缀，则按照常规字符串排序
+    return a.localeCompare(b);
+  }
+
 });

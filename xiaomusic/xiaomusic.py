@@ -392,9 +392,10 @@ class XiaoMusic:
     # 歌曲排序或者打乱顺序
     def _gen_play_list(self):
         if self.play_type == PLAY_TYPE_RND:
-            self._play_list.sort(key=custom_sort_key)
-        else:
             random.shuffle(self._play_list)
+        else:
+            self._play_list.sort(key=custom_sort_key)
+            self.log.debug("play_list:%s", self._play_list)
 
     # 把下载的音乐加入播放列表
     def add_download_music(self, name):
