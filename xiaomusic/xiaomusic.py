@@ -14,7 +14,6 @@ from pathlib import Path
 import mutagen
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService, miio_command
-from rich.logging import RichHandler
 
 from xiaomusic import (
     __version__,
@@ -30,9 +29,9 @@ from xiaomusic.config import (
 )
 from xiaomusic.httpserver import StartHTTPServer
 from xiaomusic.utils import (
+    custom_sort_key,
     fuzzyfinder,
     parse_cookie_string,
-    custom_sort_key,
 )
 
 EOF = object()
@@ -85,9 +84,8 @@ class XiaoMusic:
 
         # setup logger
         logging.basicConfig(
-            format=f"[{__version__}]\t%(message)s",
+            format=f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s",
             datefmt="[%X]",
-            handlers=[RichHandler(rich_tracebacks=True)],
         )
         self.log = logging.getLogger("xiaomusic")
         self.log.setLevel(logging.DEBUG if config.verbose else logging.INFO)
@@ -202,13 +200,12 @@ class XiaoMusic:
         for i in range(retries):
             try:
                 timeout = ClientTimeout(total=15)
-                r = await session.get(
-                    LATEST_ASK_API.format(
-                        hardware=self.config.hardware,
-                        timestamp=str(int(time.time() * 1000)),
-                    ),
-                    timeout=timeout,
+                url = LATEST_ASK_API.format(
+                    hardware=self.config.hardware,
+                    timestamp=str(int(time.time() * 1000)),
                 )
+                self.log.debug(f"url:{url}")
+                r = await session.get(url, timeout=timeout)
             except Exception as e:
                 self.log.warning(
                     "Execption when get latest ask from xiaoai: %s", str(e)
