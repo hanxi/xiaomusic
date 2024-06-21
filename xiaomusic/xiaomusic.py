@@ -223,6 +223,7 @@ class XiaoMusic:
                 return self._get_last_query(data)
 
     def _get_last_query(self, data):
+        self.log.debug(f"_get_last_query:{data}")
         if d := data.get("data"):
             records = json.loads(d).get("records")
             if not records:
