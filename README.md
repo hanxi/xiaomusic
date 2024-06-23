@@ -186,6 +186,15 @@ services:
 - XIAOMUSIC_SEARCH
 - XIAOMUSIC_PROXY
 
+## 更多其他可选配置
+
+- XIAOMUSIC_ACTIVE_CMD 配置唤醒命令
+- XIAOMUSIC_EXCLUDE_DIRS 配置歌曲目录里需要忽略的目录
+- XIAOMUSIC_MUSIC_PATH_DEPTH 配置歌曲目录搜索深度
+- XIAOMUSIC_DISABLE_HTTPAUTH 配置成 false 表示开启密码访问web控制台
+- XIAOMUSIC_HTTPAUTH_USERNAME 配置 web 控制台用户
+- XIAOMUSIC_HTTPAUTH_PASSWORD 配置 web 控制台密码
+
 ## 讨论区
 
 - [点击链接加入QQ频道【xiaomusic】](https://pd.qq.com/s/e2jybz0ss)
