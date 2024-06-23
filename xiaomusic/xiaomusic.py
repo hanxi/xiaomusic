@@ -57,6 +57,10 @@ class XiaoMusic:
         self.queue = queue.Queue()
 
         self.music_path = config.music_path
+        self.conf_path = config.conf_path
+        if not self.conf_path:
+            self.conf_path = config.music_path
+
         self.hostname = config.hostname
         self.port = config.port
         self.proxy = config.proxy
@@ -177,6 +181,8 @@ class XiaoMusic:
                     f"cannot find did for hardware: {self.config.hardware} "
                     "please set it via MI_DID env"
                 )
+            except Exception as e:
+                self.log.error(f"Execption init hardware {e}")
 
     def get_cookie(self):
         if self.config.cookie:
@@ -716,9 +722,16 @@ class XiaoMusic:
     def getconfig(self):
         return self.config
 
+    # 获取设置文件
+    def getsettingfile(self):
+        if not os.path.exists(self.conf_path):
+            os.makedirs(self.conf_path)
+        filename = os.path.join(self.conf_path, "setting.json")
+        return filename
+
     def try_init_setting(self):
         try:
-            filename = os.path.join(self.music_path, "setting.json")
+            filename = self.getsettingfile()
             with open(filename) as f:
                 data = json.loads(f.read())
                 self.update_config_from_setting(data)
@@ -726,11 +739,13 @@ class XiaoMusic:
             self.log.info(f"The file {filename} does not exist.")
         except json.JSONDecodeError:
             self.log.warning(f"The file {filename} contains invalid JSON.")
+        except Exception as e:
+            self.log.error(f"Execption init setting {e}")
 
     # 保存配置并重新启动
     async def saveconfig(self, data):
         # 默认暂时配置保存到 music 目录下
-        filename = os.path.join(self.music_path, "setting.json")
+        filename = self.getsettingfile()
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         self.update_config_from_setting(data)
