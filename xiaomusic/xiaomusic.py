@@ -32,6 +32,7 @@ from xiaomusic.utils import (
     custom_sort_key,
     fuzzyfinder,
     parse_cookie_string,
+    walk_to_depth,
 )
 
 EOF = object()
@@ -68,6 +69,7 @@ class XiaoMusic:
         self.ffmpeg_location = config.ffmpeg_location
         self.active_cmd = config.active_cmd.split(",")
         self.exclude_dirs = set(config.exclude_dirs.split(","))
+        self.music_path_depth = config.music_path_depth
 
         # 下载对象
         self.download_proc = None
@@ -354,7 +356,9 @@ class XiaoMusic:
     def _gen_all_music_list(self):
         self._all_music = {}
         all_music_by_dir = {}
-        for root, dirs, filenames in os.walk(self.music_path):
+        for root, dirs, filenames in walk_to_depth(
+            self.music_path, depth=self.music_path_depth
+        ):
             dirs[:] = [d for d in dirs if d not in self.exclude_dirs]
             self.log.debug("root:%s dirs:%s music_path:%s", root, dirs, self.music_path)
             dir_name = os.path.basename(root)

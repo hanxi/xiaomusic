@@ -97,6 +97,7 @@ class Config:
     ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
     active_cmd: str = os.getenv("XIAOMUSIC_ACTIVE_CMD", "play,random_play")
     exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir")
+    music_path_depth: int = int(os.getenv("XIAOMUSIC_MUSIC_PATH_DEPTH", "10"))
 
     def __post_init__(self) -> None:
         if self.proxy:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import difflib
+import os
 import re
 from collections.abc import AsyncIterator
 from http.cookies import SimpleCookie
@@ -84,3 +85,62 @@ def custom_sort_key(s):
     else:
         # 如果前缀和后缀都不是数字，按字典序排序
         return (2, s)
+
+
+# fork from https://gist.github.com/dougthor42/001355248518bc64d2f8
+def walk_to_depth(root, depth=None, *args, **kwargs):
+    """
+    Wrapper around os.walk that stops after going down `depth` folders.
+    I had my own version, but it wasn't as efficient as
+    http://stackoverflow.com/a/234329/1354930, so I modified to be more
+    similar to nosklo's answer.
+    However, nosklo's answer doesn't work if topdown=False, so I kept my
+    version.
+    """
+    # Let people use this as a standard `os.walk` function.
+    if depth is None:
+        return os.walk(root, *args, **kwargs)
+
+    # remove any trailing separators so that our counts are correct.
+    root = root.rstrip(os.path.sep)
+
+    def main_func(root, depth, *args, **kwargs):
+        """Faster because it skips traversing dirs that are too deep."""
+        root_depth = root.count(os.path.sep)
+        for dirpath, dirnames, filenames in os.walk(root, *args, **kwargs):
+            yield (dirpath, dirnames, filenames)
+
+            # calculate how far down we are.
+            current_folder_depth = dirpath.count(os.path.sep)
+            if current_folder_depth >= root_depth + depth:
+                del dirnames[:]
+
+    def fallback_func(root, depth, *args, **kwargs):
+        """Slower, but works when topdown is False"""
+        root_depth = root.count(os.path.sep)
+        for dirpath, dirnames, filenames in os.walk(root, *args, **kwargs):
+            current_folder_depth = dirpath.count(os.path.sep)
+            if current_folder_depth <= root_depth + depth:
+                yield (dirpath, dirnames, filenames)
+
+    # there's gotta be a better way do do this...
+    try:
+        if args[0] is False:
+            yield from fallback_func(root, depth, *args, **kwargs)
+            return
+        else:
+            yield from main_func(root, depth, *args, **kwargs)
+            return
+    except IndexError:
+        pass
+
+    try:
+        if kwargs["topdown"] is False:
+            yield from fallback_func(root, depth, *args, **kwargs)
+            return
+        else:
+            yield from main_func(root, depth, *args, **kwargs)
+            return
+    except KeyError:
+        yield from main_func(root, depth, *args, **kwargs)
+        return
