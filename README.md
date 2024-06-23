@@ -194,6 +194,7 @@ services:
 - XIAOMUSIC_DISABLE_HTTPAUTH 配置成 false 表示开启密码访问web控制台
 - XIAOMUSIC_HTTPAUTH_USERNAME 配置 web 控制台用户
 - XIAOMUSIC_HTTPAUTH_PASSWORD 配置 web 控制台密码
+- XIAOMUSIC_CONF_PATH 用来配置文件存放目录，记得把目录映射到主机，默认情况会把配置存放在music目录
 
 ## 讨论区
 
