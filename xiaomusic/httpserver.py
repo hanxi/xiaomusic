@@ -3,6 +3,7 @@ import os
 from threading import Thread
 
 from flask import Flask, request, send_from_directory
+from flask_httpauth import HTTPBasicAuth
 from waitress import serve
 
 from xiaomusic import (
@@ -12,12 +13,9 @@ from xiaomusic.config import (
     KEY_WORD_DICT,
 )
 
-# 隐藏 flask 启动告警
-# https://gist.github.com/jerblack/735b9953ba1ab6234abb43174210d356
-# from flask import cli
-# cli.show_server_banner = lambda *_: None
-
 app = Flask(__name__)
+auth = HTTPBasicAuth()
+
 host = "0.0.0.0"
 port = 8090
 static_path = "music"
@@ -25,7 +23,20 @@ xiaomusic = None
 log = None
 
 
+@auth.verify_password
+def verify_password(username, password):
+    if xiaomusic.config.disable_httpauth:
+        return True
+
+    if (
+        xiaomusic.config.httpauth_username == username
+        and xiaomusic.config.httpauth_password == password
+    ):
+        return username
+
+
 @app.route("/allcmds")
+@auth.login_required
 def allcmds():
     return KEY_WORD_DICT
 
@@ -39,6 +50,7 @@ def getversion():
 
 
 @app.route("/getvolume", methods=["GET"])
+@auth.login_required
 def getvolume():
     volume = xiaomusic.get_volume_ret()
     return {
@@ -47,22 +59,25 @@ def getvolume():
 
 
 @app.route("/searchmusic", methods=["GET"])
+@auth.login_required
 def searchmusic():
     name = request.args.get("name")
     return xiaomusic.searchmusic(name)
 
 
 @app.route("/playingmusic", methods=["GET"])
+@auth.login_required
 def playingmusic():
     return xiaomusic.playingmusic()
 
 
 @app.route("/", methods=["GET"])
-def redirect_to_index():
+def index():
     return send_from_directory("static", "index.html")
 
 
 @app.route("/cmd", methods=["POST"])
+@auth.login_required
 async def do_cmd():
     data = request.get_json()
     cmd = data.get("cmd")
@@ -74,6 +89,7 @@ async def do_cmd():
 
 
 @app.route("/getsetting", methods=["GET"])
+@auth.login_required
 async def getsetting():
     config = xiaomusic.getconfig()
     log.debug(config)
@@ -92,6 +108,7 @@ async def getsetting():
 
 
 @app.route("/savesetting", methods=["POST"])
+@auth.login_required
 async def savesetting():
     data = request.get_json()
     log.info(data)
@@ -100,16 +117,19 @@ async def savesetting():
 
 
 @app.route("/musiclist", methods=["GET"])
+@auth.login_required
 async def musiclist():
     return xiaomusic.get_music_list()
 
 
 @app.route("/curplaylist", methods=["GET"])
+@auth.login_required
 async def curplaylist():
     return xiaomusic.get_cur_play_list()
 
 
 @app.route("/delmusic", methods=["POST"])
+@auth.login_required
 def delmusic():
     data = request.get_json()
     log.info(data)
