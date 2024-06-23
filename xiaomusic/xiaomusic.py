@@ -322,6 +322,7 @@ class XiaoMusic:
         if self.proxy:
             sbp_args += ("--proxy", f"{self.proxy}")
 
+        self.log.debug(f"download: {sbp_args}")
         self.download_proc = await asyncio.create_subprocess_exec(*sbp_args)
         await self.do_tts(f"正在下载歌曲{search_key}")
 
