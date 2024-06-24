@@ -76,7 +76,7 @@ pdm run xiaomusic.py
 ## 在 Docker 里使用
 
 ```shell
-docker run -e MI_USER=<your-xiaomi-account> \
+docker run -e MI_USER='your-xiaomi-account' \
     -e MI_PASS='your-xiaomi-password' \
     -e MI_DID='your-xiaomi-speaker-mid' \
     -e MI_HARDWARE='L07A' \
