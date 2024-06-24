@@ -127,7 +127,9 @@ class XiaoMusic:
     async def init_all_data(self, session):
         await self.login_miboy(session)
         await self._init_data_hardware()
-        session.cookie_jar.update_cookies(self.get_cookie())
+        cookie_jar = self.get_cookie()
+        if cookie_jar:
+            session.cookie_jar.update_cookies(cookie_jar)
         self.cookie_jar = session.cookie_jar
 
     async def login_miboy(self, session):
@@ -165,7 +167,8 @@ class XiaoMusic:
                 self.log.error(
                     f"we have no hardware: {self.config.hardware} please use `micli mina` to check"
                 )
-        except Exception:
+        except Exception as e:
+            self.log.error(f"Execption {e}")
             pass
 
     async def _init_data_hardware(self):
@@ -196,15 +199,19 @@ class XiaoMusic:
             cookie_dict = cookie_jar.get_dict()
             self.device_id = cookie_dict["deviceId"]
             return cookie_jar
-        else:
-            with open(self.mi_token_home) as f:
-                user_data = json.loads(f.read())
-            user_id = user_data.get("userId")
-            service_token = user_data.get("micoapi")[1]
-            cookie_string = COOKIE_TEMPLATE.format(
-                device_id=self.device_id, service_token=service_token, user_id=user_id
-            )
-            return parse_cookie_string(cookie_string)
+
+        if not os.path.exists(self.mi_token_home):
+            self.log.error(f"{self.mi_token_home} file not exist")
+            return None
+
+        with open(self.mi_token_home) as f:
+            user_data = json.loads(f.read())
+        user_id = user_data.get("userId")
+        service_token = user_data.get("micoapi")[1]
+        cookie_string = COOKIE_TEMPLATE.format(
+            device_id=self.device_id, service_token=service_token, user_id=user_id
+        )
+        return parse_cookie_string(cookie_string)
 
     async def get_latest_ask_from_xiaoai(self, session):
         retries = 3
@@ -224,8 +231,8 @@ class XiaoMusic:
                 continue
             try:
                 data = await r.json()
-            except Exception:
-                self.log.warning("get latest ask from xiaoai error, retry")
+            except Exception as e:
+                self.log.warning(f"get latest ask from xiaoai error {e}, retry")
                 if i == 2:
                     # tricky way to fix #282 #272 # if it is the third time we re init all data
                     self.log.info("Maybe outof date trying to re init it")
@@ -259,7 +266,8 @@ class XiaoMusic:
         await self.force_stop_xiaoai()
         try:
             await self.mina_service.text_to_speech(self.device_id, value)
-        except Exception:
+        except Exception as e:
+            self.log.error(f"Execption {e}")
             pass
 
     async def do_set_volume(self, value):
@@ -268,7 +276,8 @@ class XiaoMusic:
         self.log.info(f"声音设置为{value}")
         try:
             await self.mina_service.player_set_volume(self.device_id, value)
-        except Exception:
+        except Exception as e:
+            self.log.error(f"Execption {e}")
             pass
 
     async def force_stop_xiaoai(self):
