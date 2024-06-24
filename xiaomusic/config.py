@@ -9,28 +9,6 @@ from xiaomusic.utils import validate_proxy
 
 LATEST_ASK_API = "https://userprofile.mina.mi.com/device_profile/v2/conversation?source=dialogu&hardware={hardware}&timestamp={timestamp}&limit=2"
 COOKIE_TEMPLATE = "deviceId={device_id}; serviceToken={service_token}; userId={user_id}"
-HARDWARE_COMMAND_DICT = {
-    # hardware: (tts_command, wakeup_command, volume_command)
-    "LX06": ("5-1", "5-5", "2-1"),
-    "L05B": ("5-3", "5-4", "2-1"),
-    "S12": ("5-1", "5-5", "2-1"),  # 第一代小爱，型号MDZ-25-DA
-    "S12A": ("5-1", "5-5", "2-1"),
-    "LX01": ("5-1", "5-5", "2-1"),
-    "L06A": ("5-1", "5-5", "2-1"),
-    "LX04": ("5-1", "5-4", "2-1"),
-    "L05C": ("5-3", "5-4", "2-1"),
-    "L17A": ("7-3", "7-4", "2-1"),
-    "X08E": ("7-3", "7-4", "2-1"),
-    "LX05A": ("5-1", "5-5", "2-1"),  # 小爱红外版
-    "LX5A": ("5-1", "5-5", "2-1"),  # 小爱红外版
-    "L07A": ("5-1", "5-5", "2-1"),  # Redmi小爱音箱Play(l7a)
-    "L15A": ("7-3", "7-4", "2-1"),
-    "X6A": ("7-3", "7-4", "2-1"),  # 小米智能家庭屏6
-    "X10A": ("7-3", "7-4", "2-1"),  # 小米智能家庭屏10
-    # add more here
-}
-
-DEFAULT_COMMAND = ("5-1", "5-5", "2-1")
 
 KEY_WORD_DICT = {
     "播放歌曲": "play",
@@ -83,9 +61,7 @@ class Config:
     account: str = os.getenv("MI_USER", "")
     password: str = os.getenv("MI_PASS", "")
     mi_did: str = os.getenv("MI_DID", "")
-    mute_xiaoai: bool = True
     cookie: str = ""
-    use_command: bool = False
     verbose: bool = os.getenv("XIAOMUSIC_VERBOSE", "").lower() == "true"
     music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")
     conf_path: str = os.getenv("XIAOMUSIC_CONF_PATH", None)
@@ -108,18 +84,6 @@ class Config:
     def __post_init__(self) -> None:
         if self.proxy:
             validate_proxy(self.proxy)
-
-    @property
-    def tts_command(self) -> str:
-        return HARDWARE_COMMAND_DICT.get(self.hardware, DEFAULT_COMMAND)[0]
-
-    @property
-    def wakeup_command(self) -> str:
-        return HARDWARE_COMMAND_DICT.get(self.hardware, DEFAULT_COMMAND)[1]
-
-    @property
-    def volume_command(self) -> str:
-        return HARDWARE_COMMAND_DICT.get(self.hardware, DEFAULT_COMMAND)[2]
 
     @classmethod
     def from_options(cls, options: argparse.Namespace) -> Config:

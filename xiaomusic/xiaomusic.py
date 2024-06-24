@@ -13,7 +13,7 @@ from pathlib import Path
 
 import mutagen
 from aiohttp import ClientSession, ClientTimeout
-from miservice import MiAccount, MiIOService, MiNAService, miio_command
+from miservice import MiAccount, MiIOService, MiNAService
 
 from xiaomusic import (
     __version__,
@@ -253,42 +253,20 @@ class XiaoMusic:
 
     async def do_tts(self, value):
         self.log.info("do_tts: %s", value)
-
-        if self.config.mute_xiaoai:
-            await self.force_stop_xiaoai()
-        else:
-            # waiting for xiaoai speaker done
-            await asyncio.sleep(8)
-
-        if not self.config.use_command:
-            try:
-                await self.mina_service.text_to_speech(self.device_id, value)
-            except Exception:
-                pass
-        else:
-            await miio_command(
-                self.miio_service,
-                self.config.mi_did,
-                f"{self.config.tts_command} {value}",
-            )
+        await self.force_stop_xiaoai()
+        try:
+            await self.mina_service.text_to_speech(self.device_id, value)
+        except Exception:
+            pass
 
     async def do_set_volume(self, value):
         value = int(value)
         self._volume = value
         self.log.info(f"声音设置为{value}")
-        if not self.config.use_command:
-            try:
-                self.log.debug("do_set_volume not use_command value:%d", value)
-                await self.mina_service.player_set_volume(self.device_id, value)
-            except Exception:
-                pass
-        else:
-            self.log.debug("do_set_volume use_command value:%d", value)
-            await miio_command(
-                self.miio_service,
-                self.config.mi_did,
-                f"{self.config.volume_command}=#{value}",
-            )
+        try:
+            await self.mina_service.player_set_volume(self.device_id, value)
+        except Exception:
+            pass
 
     async def force_stop_xiaoai(self):
         await self.mina_service.player_stop(self.device_id)
