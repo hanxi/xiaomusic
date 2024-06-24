@@ -73,6 +73,7 @@ KEY_MATCH_ORDER = [
 SUPPORT_MUSIC_TYPE = [
     ".mp3",
     ".flac",
+    ".wav",
 ]
 
 

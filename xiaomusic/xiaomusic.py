@@ -379,7 +379,7 @@ class XiaoMusic:
                     name,
                     extension,
                 )
-                if extension not in SUPPORT_MUSIC_TYPE:
+                if extension.lower() not in SUPPORT_MUSIC_TYPE:
                     continue
 
                 # 歌曲名字相同会覆盖
