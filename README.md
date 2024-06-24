@@ -195,6 +195,7 @@ services:
 - XIAOMUSIC_HTTPAUTH_USERNAME 配置 web 控制台用户
 - XIAOMUSIC_HTTPAUTH_PASSWORD 配置 web 控制台密码
 - XIAOMUSIC_CONF_PATH 用来存放配置文件的目录，记得把目录映射到主机，默认情况会把配置存放在music目录，具体见 <https://github.com/hanxi/xiaomusic/issues/74>
+- XIAOMUSIC_VERBOSE 设置为 true 时开启 debug 日志，用于排查问题
 
 ## 讨论区
 
