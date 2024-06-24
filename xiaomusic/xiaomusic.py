@@ -143,27 +143,30 @@ class XiaoMusic:
         self.miio_service = MiIOService(account)
 
     async def try_update_device_id(self):
-        hardware_data = await self.mina_service.device_list()
         # fix multi xiaoai problems we check did first
         # why we use this way to fix?
         # some videos and articles already in the Internet
         # we do not want to change old way, so we check if miotDID in `env` first
         # to set device id
 
-        for h in hardware_data:
-            if did := self.config.mi_did:
-                if h.get("miotDID", "") == str(did):
+        try:
+            hardware_data = await self.mina_service.device_list()
+            for h in hardware_data:
+                if did := self.config.mi_did:
+                    if h.get("miotDID", "") == str(did):
+                        self.device_id = h.get("deviceID")
+                        break
+                    else:
+                        continue
+                if h.get("hardware", "") == self.config.hardware:
                     self.device_id = h.get("deviceID")
                     break
-                else:
-                    continue
-            if h.get("hardware", "") == self.config.hardware:
-                self.device_id = h.get("deviceID")
-                break
-        else:
-            self.log.error(
-                f"we have no hardware: {self.config.hardware} please use `micli mina` to check"
-            )
+            else:
+                self.log.error(
+                    f"we have no hardware: {self.config.hardware} please use `micli mina` to check"
+                )
+        except Exception:
+            pass
 
     async def _init_data_hardware(self):
         if self.config.cookie:
