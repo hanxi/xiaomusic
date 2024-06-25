@@ -498,20 +498,27 @@ class XiaoMusic:
     async def set_next_music_timeout(self):
         name = self.cur_music
         if self.is_web_radio_music(name):
-            self.log.info("歌曲电台不会有下一首的定时器")
+            self.log.info("电台不会有下一首的定时器")
             return
 
         if self.is_web_music(name):
             url = self._all_music[name]
-            sec = int(await get_web_music_duration(url))
+            duration = await get_web_music_duration(url)
+            sec = int(duration)
             self.log.info(f"网络歌曲 {name} : {url} 的时长 {sec} 秒")
         else:
             filename = self.get_filename(name)
             sec = int(get_local_music_duration(filename))
             self.log.info(f"本地歌曲 {name} : {filename} 的时长 {sec} 秒")
+
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info("定时器已取消")
+
+        if sec <= 0:
+            self.log.warning("获取歌曲时长失败，不会开启下一首歌曲的定时器")
+            return
+
         self._timeout = sec
 
         async def _do_next():

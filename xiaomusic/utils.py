@@ -166,29 +166,44 @@ def downloadfile(url):
     return ("Unknow Error", "")
 
 
-async def get_web_music_duration(url, start=0, end=500):
+async def _get_web_music_duration(session, url, start=0, end=500):
+    duration = 0
     headers = {"Range": f"bytes={start}-{end}"}
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
-            array_buffer = await response.read()
-    with tempfile.NamedTemporaryFile() as tmp:
+    async with session.get(url, headers=headers) as response:
+        array_buffer = await response.read()
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(array_buffer)
-        try:
-            m = mutagen.File(tmp)
-        except Exception:
-            headers = {"Range": f"bytes={0}-{1000}"}
-            async with session.get(url, headers=headers) as response:
-                array_buffer = await response.read()
-        with tempfile.NamedTemporaryFile() as tmp2:
-            tmp2.write(array_buffer)
-            m = mutagen.File(tmp2)
-    return m.info.length
+        name = tmp.name
+
+    try:
+        m = mutagen.File(name)
+        duration = m.info.length
+    except Exception:
+        pass
+    os.remove(name)
+    return duration
+
+
+async def get_web_music_duration(url, start=0, end=500):
+    duration = 0
+    try:
+        # 设置总超时时间为3秒
+        timeout = aiohttp.ClientTimeout(total=3)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            duration = await _get_web_music_duration(session, url, start=0, end=500)
+            if duration <= 0:
+                duration = await _get_web_music_duration(session, url, start=0, end=1000)
+    except Exception:
+        pass
+    return duration
 
 
 # 获取文件播放时长
 def get_local_music_duration(filename):
-    # 获取音频文件对象
-    audio = mutagen.File(filename)
-    # 获取播放时长
-    duration = audio.info.length
+    duration = 0
+    try:
+        m = mutagen.File(filename)
+        duration = m.info.length
+    except Exception:
+        pass
     return duration
