@@ -269,6 +269,9 @@ class XiaoMusic:
         except Exception as e:
             self.log.error(f"Execption {e}")
             pass
+        if self._playing:
+            # 继续播放歌曲
+            await self.play()
 
     async def do_set_volume(self, value):
         value = int(value)
@@ -534,7 +537,7 @@ class XiaoMusic:
             return ("stop", {})
         return (None, None)
 
-    # 判断是否播放一下私募歌曲
+    # 判断是否播放下一首歌曲
     def check_play_next(self):
         # 当前没我在播放的歌曲
         if self.cur_music == "":
@@ -619,7 +622,6 @@ class XiaoMusic:
     # 刷新列表
     async def gen_music_list(self, **kwargs):
         self._gen_all_music_list()
-        await self.do_tts("生成播放列表完毕")
 
     # 删除歌曲
     def del_music(self, name):
@@ -711,6 +713,10 @@ class XiaoMusic:
     def playingmusic(self):
         self.log.debug("playingmusic. cur_music:%s", self.cur_music)
         return self.cur_music
+
+    # 当前是否正在播放歌曲
+    def isplaying(self):
+        return self._playing
 
     # 获取当前配置
     def getconfig(self):

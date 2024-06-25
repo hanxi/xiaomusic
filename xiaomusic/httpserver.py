@@ -71,6 +71,12 @@ def playingmusic():
     return xiaomusic.playingmusic()
 
 
+@app.route("/isplaying", methods=["GET"])
+@auth.login_required
+def isplaying():
+    return xiaomusic.isplaying()
+
+
 @app.route("/", methods=["GET"])
 def index():
     return send_from_directory("static", "index.html")
