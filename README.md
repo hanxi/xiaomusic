@@ -186,6 +186,10 @@ services:
 - XIAOMUSIC_SEARCH
 - XIAOMUSIC_PROXY
 
+## 网络歌单功能
+
+可以配置一个 json 格式的歌单，支持电台和歌曲，也可以直接用别人分享的链接，具体用法见  <https://github.com/hanxi/xiaomusic/issues/78>
+
 ## 更多其他可选配置
 
 - XIAOMUSIC_ACTIVE_CMD 配置唤醒命令，具体见 <https://github.com/hanxi/xiaomusic/pull/43>
