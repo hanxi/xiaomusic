@@ -53,7 +53,6 @@ SUPPORT_MUSIC_TYPE = [
     ".flac",
     ".wav",
     ".ape",
-    ".cue",
 ]
 
 
