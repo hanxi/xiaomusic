@@ -12,6 +12,9 @@ from xiaomusic import (
 from xiaomusic.config import (
     KEY_WORD_DICT,
 )
+from xiaomusic.utils import (
+    downloadfile,
+)
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -109,6 +112,8 @@ async def getsetting():
         "mi_hardware_list": alldevices["hardware_list"],
         "xiaomusic_search": config.search_prefix,
         "xiaomusic_proxy": config.proxy,
+        "xiaomusic_music_list_url": config.music_list_url,
+        "xiaomusic_music_list_json": config.music_list_json,
     }
     return data
 
@@ -141,6 +146,18 @@ def delmusic():
     log.info(data)
     xiaomusic.del_music(data["name"])
     return "success"
+
+
+@app.route("/downloadjson", methods=["POST"])
+@auth.login_required
+def downloadjson():
+    data = request.get_json()
+    log.info(data)
+    ret, content = downloadfile(data["url"])
+    return {
+        "ret": ret,
+        "content": content,
+    }
 
 
 def static_path_handler(filename):

@@ -81,6 +81,8 @@ class Config:
     )
     httpauth_username: str = os.getenv("XIAOMUSIC_HTTPAUTH_USERNAME", "admin")
     httpauth_password: str = os.getenv("XIAOMUSIC_HTTPAUTH_PASSWORD", "admin")
+    music_list_url: str = os.getenv("XIAOMUSIC_MUSIC_LIST_URL", "")
+    music_list_json: str = os.getenv("XIAOMUSIC_MUSIC_LIST_JSON", "")
 
     def __post_init__(self) -> None:
         if self.proxy:

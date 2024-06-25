@@ -4,10 +4,14 @@ from __future__ import annotations
 import difflib
 import os
 import re
+import tempfile
 from collections.abc import AsyncIterator
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
 
+import aiohttp
+import mutagen
+import requests
 from requests.utils import cookiejar_from_dict
 
 
@@ -144,3 +148,47 @@ def walk_to_depth(root, depth=None, *args, **kwargs):
     except KeyError:
         yield from main_func(root, depth, *args, **kwargs)
         return
+
+
+def downloadfile(url):
+    try:
+        response = requests.get(url, timeout=5)  # 增加超时以避免长时间挂起
+        response.raise_for_status()  # 如果响应不是200，引发HTTPError异常
+        return ("OK", response.text)
+    except requests.exceptions.HTTPError as errh:
+        return (f"HTTP Error: {errh}", "")
+    except requests.exceptions.ConnectionError as errc:
+        return (f"Error Connecting: {errc}", "")
+    except requests.exceptions.Timeout as errt:
+        return (f"Timeout Error: {errt}", "")
+    except requests.exceptions.RequestException as err:
+        return (f"Oops: Something Else, {err}", "")
+    return ("Unknow Error", "")
+
+
+async def get_web_music_duration(url, start=0, end=500):
+    headers = {"Range": f"bytes={start}-{end}"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            array_buffer = await response.read()
+    with tempfile.NamedTemporaryFile() as tmp:
+        tmp.write(array_buffer)
+        try:
+            m = mutagen.File(tmp)
+        except Exception:
+            headers = {"Range": f"bytes={0}-{1000}"}
+            async with session.get(url, headers=headers) as response:
+                array_buffer = await response.read()
+        with tempfile.NamedTemporaryFile() as tmp2:
+            tmp2.write(array_buffer)
+            m = mutagen.File(tmp2)
+    return m.info.length
+
+
+# 获取文件播放时长
+def get_local_music_duration(filename):
+    # 获取音频文件对象
+    audio = mutagen.File(filename)
+    # 获取播放时长
+    duration = audio.info.length
+    return duration

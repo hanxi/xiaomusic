@@ -67,3 +67,9 @@ footer {
   text-align: center;
   padding: 10px 0;
 }
+
+ textarea{
+  margin: 10px;
+  width: 300px;
+  height: 200px;
+}

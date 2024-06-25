@@ -40,6 +40,14 @@ $(function(){
     if (data.xiaomusic_proxy != "") {
       $("#xiaomusic_proxy").val(data.xiaomusic_proxy);
     }
+
+    if (data.xiaomusic_music_list_url != "") {
+      $("#xiaomusic_music_list_url").val(data.xiaomusic_music_list_url);
+    }
+
+    if (data.xiaomusic_music_list_json != "") {
+      $("#xiaomusic_music_list_json").val(data.xiaomusic_music_list_json);
+    }
   });
 
   $("#save").on("click", () => {
@@ -47,15 +55,21 @@ $(function(){
     var mi_hardware = $("#mi_hardware").val();
     var xiaomusic_search = $("#xiaomusic_search").val();
     var xiaomusic_proxy = $("#xiaomusic_proxy").val();
+    var xiaomusic_music_list_url = $("#xiaomusic_music_list_url").val();
+    var xiaomusic_music_list_json = $("#xiaomusic_music_list_json").val();
     console.log("mi_did", mi_did);
     console.log("mi_hardware", mi_hardware);
     console.log("xiaomusic_search", xiaomusic_search);
     console.log("xiaomusic_proxy", xiaomusic_proxy);
+    console.log("xiaomusic_music_list_url", xiaomusic_music_list_url);
+    console.log("xiaomusic_music_list_json", xiaomusic_music_list_json);
     var data = {
       mi_did: mi_did,
       mi_hardware: mi_hardware,
       xiaomusic_search: xiaomusic_search,
       xiaomusic_proxy: xiaomusic_proxy,
+      xiaomusic_music_list_url: xiaomusic_music_list_url,
+      xiaomusic_music_list_json: xiaomusic_music_list_json,
     };
     $.ajax({
       type: "POST",
@@ -67,6 +81,32 @@ $(function(){
       },
       error: (msg) => {
         alert(msg);
+      }
+    });
+  });
+
+  $("#get_music_list").on("click", () => {
+    var xiaomusic_music_list_url = $("#xiaomusic_music_list_url").val();
+    console.log("xiaomusic_music_list_url", xiaomusic_music_list_url);
+    var data = {
+      url: xiaomusic_music_list_url,
+    };
+    $.ajax({
+      type: "POST",
+      url: "/downloadjson",
+      contentType: "application/json",
+      data: JSON.stringify(data),
+      success: (res) => {
+        if (res.ret == "OK") {
+          $("#xiaomusic_music_list_json").val(res.content);
+        } else {
+          console.log(res);
+          alert(res.ret);
+        }
+      },
+      error: (res) => {
+        console.log(res);
+        alert(res);
       }
     });
   });

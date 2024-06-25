@@ -11,7 +11,6 @@ import traceback
 import urllib.parse
 from pathlib import Path
 
-import mutagen
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService
 
@@ -31,6 +30,8 @@ from xiaomusic.httpserver import StartHTTPServer
 from xiaomusic.utils import (
     custom_sort_key,
     fuzzyfinder,
+    get_local_music_duration,
+    get_web_music_duration,
     parse_cookie_string,
     walk_to_depth,
 )
@@ -80,6 +81,7 @@ class XiaoMusic:
         self._timeout = 0
         self._volume = 0
         self._all_music = {}
+        self._all_radio = {}  # 电台列表
         self._play_list = []
         self._cur_play_list = ""
         self._music_list = {}  # 播放列表 key 为目录名, value 为 play_list
@@ -169,7 +171,6 @@ class XiaoMusic:
                 )
         except Exception as e:
             self.log.error(f"Execption {e}")
-            pass
 
     async def _init_data_hardware(self):
         if self.config.cookie:
@@ -268,7 +269,6 @@ class XiaoMusic:
             await self.mina_service.text_to_speech(self.device_id, value)
         except Exception as e:
             self.log.error(f"Execption {e}")
-            pass
         if self._playing:
             # 继续播放歌曲
             await self.play()
@@ -281,7 +281,6 @@ class XiaoMusic:
             await self.mina_service.player_set_volume(self.device_id, value)
         except Exception as e:
             self.log.error(f"Execption {e}")
-            pass
 
     async def force_stop_xiaoai(self):
         await self.mina_service.player_stop(self.device_id)
@@ -327,7 +326,6 @@ class XiaoMusic:
         self.download_proc = await asyncio.create_subprocess_exec(*sbp_args)
         await self.do_tts(f"正在下载歌曲{search_key}")
 
-    # 本地是否存在歌曲
     def get_filename(self, name):
         if name not in self._all_music:
             self.log.debug("get_filename not in. name:%s", name)
@@ -338,10 +336,39 @@ class XiaoMusic:
             return filename
         return ""
 
-    # 获取歌曲播放地址
-    def get_file_url(self, name):
+    # 判断本地音乐是否存在，网络歌曲不判断
+    def is_music_exist(self, name):
+        if name not in self._all_music:
+            return False
+        if self.is_web_music(name):
+            return True
         filename = self.get_filename(name)
-        self.log.debug("get_file_url. name:%s, filename:%s", name, filename)
+        if filename:
+            return True
+        return False
+
+    # 是否是网络电台
+    def is_web_radio_music(self, name):
+        return name in self._all_radio
+
+    # 是否是网络歌曲
+    def is_web_music(self, name):
+        if name not in self._all_music:
+            return False
+        url = self._all_music[name]
+        return url.startswith(("http://", "https://"))
+
+    # 获取歌曲播放地址
+    def get_music_url(self, name):
+        if self.is_web_music(name):
+            url = self._all_music[name]
+            self.log.debug("get_music_url web music. name:%s, url:%s", name, url)
+            return url
+
+        filename = self.get_filename(name)
+        self.log.debug(
+            "get_music_url local music. name:%s, filename:%s", name, filename
+        )
         encoded_name = urllib.parse.quote(filename)
         return f"http://{self.hostname}:{self.port}/{encoded_name}"
 
@@ -378,7 +405,6 @@ class XiaoMusic:
                 # 歌曲名字相同会覆盖
                 self._all_music[name] = os.path.join(root, filename)
                 all_music_by_dir[dir_name][name] = True
-            pass
         self._play_list = list(self._all_music.keys())
         self._cur_play_list = "全部"
         self._gen_play_list()
@@ -389,7 +415,46 @@ class XiaoMusic:
         for dir_name, musics in all_music_by_dir.items():
             self._music_list[dir_name] = list(musics.keys())
             self.log.debug("dir_name:%s, list:%s", dir_name, self._music_list[dir_name])
-        pass
+
+        try:
+            self._append_music_list()
+        except Exception as e:
+            self.log.error(f"Execption _append_music_list {e}")
+
+    # 给歌单里补充网络歌单
+    def _append_music_list(self):
+        if not self.config.music_list_json:
+            return
+
+        music_list = json.loads(self.config.music_list_json)
+        try:
+            for item in music_list:
+                list_name = item.get("name")
+                musics = item.get("musics")
+                if (not list_name) or (not musics):
+                    continue
+                one_music_list = []
+                for music in musics:
+                    name = music.get("name")
+                    url = music.get("url")
+                    music_type = music.get("type")
+                    if (not name) or (not url):
+                        continue
+                    self._all_music[name] = url
+                    one_music_list.append(name)
+
+                    # 处理电台列表
+                    if music_type == "radio":
+                        self._all_radio[name] = url
+                self.log.info(one_music_list)
+                # 歌曲名字相同会覆盖
+                self._music_list[list_name] = one_music_list
+            if self._all_radio:
+                self._music_list["所有电台"] = list(self._all_radio.keys())
+            self.log.debug(self._all_music)
+            self.log.debug(self._music_list)
+        except Exception as e:
+            self.log.error(f"Execption music_list:{music_list} {e}")
 
     # 歌曲排序或者打乱顺序
     def _gen_play_list(self):
@@ -423,26 +488,27 @@ class XiaoMusic:
         if next_index >= play_list_len:
             next_index = 0
         name = self._play_list[next_index]
-        filename = self.get_filename(name)
-        if len(filename) <= 0:
+        if not self.is_music_exist(name):
             self._play_list.pop(next_index)
             self.log.info(f"pop not exist music:{name}")
             return self.get_next_music()
         return name
 
-    # 获取文件播放时长
-    def get_file_duration(self, filename):
-        # 获取音频文件对象
-        audio = mutagen.File(filename)
-        # 获取播放时长
-        duration = audio.info.length
-        return duration
-
     # 设置下一首歌曲的播放定时器
-    def set_next_music_timeout(self):
-        filename = self.get_filename(self.cur_music)
-        sec = int(self.get_file_duration(filename))
-        self.log.info(f"歌曲 {self.cur_music} : {filename} 的时长 {sec} 秒")
+    async def set_next_music_timeout(self):
+        name = self.cur_music
+        if self.is_web_radio_music(name):
+            self.log.info("歌曲电台不会有下一首的定时器")
+            return
+
+        if self.is_web_music(name):
+            url = self._all_music[name]
+            sec = int(await get_web_music_duration(url))
+            self.log.info(f"网络歌曲 {name} : {url} 的时长 {sec} 秒")
+        else:
+            filename = self.get_filename(name)
+            sec = int(get_local_music_duration(filename))
+            self.log.info(f"本地歌曲 {name} : {filename} 的时长 {sec} 秒")
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info("定时器已取消")
@@ -543,11 +609,9 @@ class XiaoMusic:
         if self.cur_music == "":
             return True
         else:
-            filename = self.get_filename(self.cur_music)
             # 当前播放的歌曲不存在了
-            if len(filename) <= 0:
+            if self.is_music_exist(self.cur_music):
                 return True
-            pass
         return False
 
     # 播放歌曲
@@ -567,9 +631,9 @@ class XiaoMusic:
                 name = self.cur_music
 
         self.log.debug("play. search_key:%s name:%s", search_key, name)
-        filename = self.get_filename(name)
 
-        if len(filename) <= 0:
+        # 本地歌曲不存在时下载
+        if not self.is_music_exist(name):
             await self.download(search_key, name)
             self.log.info("正在下载中 %s", search_key + ":" + name)
             await self.download_proc.wait()
@@ -578,13 +642,13 @@ class XiaoMusic:
 
         self.cur_music = name
         self.log.info("cur_music %s", self.cur_music)
-        url = self.get_file_url(name)
+        url = self.get_music_url(name)
         self.log.info("播放 %s", url)
         await self.force_stop_xiaoai()
         await self.mina_service.play_by_url(self.device_id, url)
         self.log.info("已经开始播放了")
         # 设置下一首歌曲的播放定时器
-        self.set_next_music_timeout()
+        await self.set_next_music_timeout()
 
     # 下一首
     async def play_next(self, **kwargs):
@@ -634,7 +698,6 @@ class XiaoMusic:
             self.log.info(f"del ${filename} success")
         except OSError:
             self.log.error(f"del ${filename} failed")
-            pass
         self._gen_all_music_list()
 
     # 播放一个播放列表
@@ -752,10 +815,12 @@ class XiaoMusic:
         await self.call_main_thread_function(self.reinit)
 
     def update_config_from_setting(self, data):
-        self.config.mi_did = data["mi_did"]
-        self.config.hardware = data["mi_hardware"]
-        self.config.search_prefix = data["xiaomusic_search"]
-        self.config.proxy = data["xiaomusic_proxy"]
+        self.config.mi_did = data.get("mi_did")
+        self.config.hardware = data.get("mi_hardware")
+        self.config.search_prefix = data.get("xiaomusic_search")
+        self.config.proxy = data.get("xiaomusic_proxy")
+        self.config.music_list_url = data.get("xiaomusic_music_list_url")
+        self.config.music_list_json = data.get("xiaomusic_music_list_json")
 
         self.search_prefix = self.config.search_prefix
         self.proxy = self.config.proxy
@@ -764,6 +829,7 @@ class XiaoMusic:
     # 重新初始化
     async def reinit(self, **kwargs):
         await self.try_update_device_id()
+        self._gen_all_music_list()
         self.log.info("reinit success")
 
     # 获取所有设备

@@ -22,9 +22,14 @@
       </select>
       <label for="xiaomusic_proxy">XIAOMUSIC_PROXY(ytsearch需要):</label>
       <input id="xiaomusic_proxy" type="text" placeholder="http://192.168.2.5:8080"></input>
+      <label for="xiaomusic_music_list_url">歌单地址:</label>
+      <input id="xiaomusic_music_list_url" type="text" value="https://gist.githubusercontent.com/hanxi/dda82d964a28f8110f8fba81c3ff8314/raw/example.json"></input>
+      <label for="xiaomusic_music_list_json">歌单内容:</label>
+      <textarea id="xiaomusic_music_list_json" type="text"></textarea>
     </div>
     <hr>
     <button onclick="location.href='/';">返回首页</button>
+    <button id="get_music_list">获取歌单</button>
     <button id="save">保存</button>
 
     <footer>
