@@ -269,7 +269,7 @@ class XiaoMusic:
             await self.mina_service.text_to_speech(self.device_id, value)
         except Exception as e:
             self.log.error(f"Execption {e}")
-        if self._playing:
+        if self._playing and not self.is_downloading():
             # 继续播放歌曲
             await self.play()
 
@@ -322,7 +322,7 @@ class XiaoMusic:
         if self.proxy:
             sbp_args += ("--proxy", f"{self.proxy}")
 
-        self.log.debug(f"download: {sbp_args}")
+        self.log.info(f"download: {sbp_args}")
         self.download_proc = await asyncio.create_subprocess_exec(*sbp_args)
         await self.do_tts(f"正在下载歌曲{search_key}")
 
@@ -623,7 +623,6 @@ class XiaoMusic:
 
     # 播放歌曲
     async def play(self, **kwargs):
-        self._playing = True
         parts = kwargs.get("arg1", "").split("|")
         search_key = parts[0]
         name = parts[1] if len(parts) > 1 else search_key
@@ -637,7 +636,7 @@ class XiaoMusic:
             else:
                 name = self.cur_music
 
-        self.log.debug("play. search_key:%s name:%s", search_key, name)
+        self.log.info("play. search_key:%s name:%s", search_key, name)
 
         # 本地歌曲不存在时下载
         if not self.is_music_exist(name):
@@ -647,6 +646,7 @@ class XiaoMusic:
             # 把文件插入到播放列表里
             self.add_download_music(name)
 
+        self._playing = True
         self.cur_music = name
         self.log.info("cur_music %s", self.cur_music)
         url = self.get_music_url(name)
