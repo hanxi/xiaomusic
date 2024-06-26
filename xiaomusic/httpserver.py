@@ -9,9 +9,6 @@ from waitress import serve
 from xiaomusic import (
     __version__,
 )
-from xiaomusic.config import (
-    KEY_WORD_DICT,
-)
 from xiaomusic.utils import (
     downloadfile,
 )
@@ -41,7 +38,7 @@ def verify_password(username, password):
 @app.route("/allcmds")
 @auth.login_required
 def allcmds():
-    return KEY_WORD_DICT
+    return xiaomusic.config.key_word_dict
 
 
 @app.route("/getversion", methods=["GET"])

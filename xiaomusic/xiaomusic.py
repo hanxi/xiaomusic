@@ -19,9 +19,7 @@ from xiaomusic import (
 )
 from xiaomusic.config import (
     COOKIE_TEMPLATE,
-    KEY_MATCH_ORDER,
     KEY_WORD_ARG_BEFORE_DICT,
-    KEY_WORD_DICT,
     LATEST_ASK_API,
     SUPPORT_MUSIC_TYPE,
     Config,
@@ -448,7 +446,7 @@ class XiaoMusic:
                     # 处理电台列表
                     if music_type == "radio":
                         self._all_radio[name] = url
-                self.log.info(one_music_list)
+                self.log.debug(one_music_list)
                 # 歌曲名字相同会覆盖
                 self._music_list[list_name] = one_music_list
             if self._all_radio:
@@ -541,7 +539,7 @@ class XiaoMusic:
             task = asyncio.create_task(self.poll_latest_ask())
             assert task is not None  # to keep the reference to task, do not remove this
             filtered_keywords = [
-                keyword for keyword in KEY_MATCH_ORDER if "#" not in keyword
+                keyword for keyword in self.config.key_match_order if "#" not in keyword
             ]
             joined_keywords = "/".join(filtered_keywords)
             self.log.info(f"Running xiaomusic now, 用`{joined_keywords}`开头来控制")
@@ -579,7 +577,7 @@ class XiaoMusic:
 
     # 匹配命令
     def match_cmd(self, query, ctrl_panel):
-        for opkey in KEY_MATCH_ORDER:
+        for opkey in self.config.key_match_order:
             patternarg = rf"(.*){opkey}(.*)"
             # 匹配参数
             matcharg = re.match(patternarg, query)
@@ -596,7 +594,7 @@ class XiaoMusic:
                 argafter,
             )
             oparg = argafter
-            opvalue = KEY_WORD_DICT[opkey]
+            opvalue = self.config.key_word_dict[opkey]
             if not ctrl_panel and not self._playing:
                 if self.active_cmd and opvalue not in self.active_cmd:
                     self.log.debug(f"不在激活命令中 {opvalue}")
@@ -622,6 +620,36 @@ class XiaoMusic:
             if not self.is_music_exist(self.cur_music):
                 return True
         return False
+
+    # 播放本地歌曲
+    async def playlocal(self, **kwargs):
+        name = kwargs.get("arg1", "")
+        if name == "":
+            if self.check_play_next():
+                await self.play_next()
+                return
+            else:
+                name = self.cur_music
+
+        self.log.info(f"playlocal. name:{name}")
+
+        # 本地歌曲不存在时下载
+        if not self.is_music_exist(name):
+            await self.do_tts(f"本地不存在歌曲{name}")
+            return
+        await self._playmusic(name)
+
+    async def _playmusic(self, name):
+        self._playing = True
+        self.cur_music = name
+        self.log.info(f"cur_music {self.cur_music}")
+        url = self.get_music_url(name)
+        self.log.info(f"播放 {url}")
+        await self.force_stop_xiaoai()
+        await self.mina_service.play_by_url(self.device_id, url)
+        self.log.info("已经开始播放了")
+        # 设置下一首歌曲的播放定时器
+        await self.set_next_music_timeout()
 
     # 播放歌曲
     async def play(self, **kwargs):
@@ -650,17 +678,7 @@ class XiaoMusic:
             await self.download_proc.wait()
             # 把文件插入到播放列表里
             self.add_download_music(name)
-
-        self._playing = True
-        self.cur_music = name
-        self.log.info("cur_music %s", self.cur_music)
-        url = self.get_music_url(name)
-        self.log.info("播放 %s", url)
-        await self.force_stop_xiaoai()
-        await self.mina_service.play_by_url(self.device_id, url)
-        self.log.info("已经开始播放了")
-        # 设置下一首歌曲的播放定时器
-        await self.set_next_music_timeout()
+        await self._playmusic(name)
 
     # 下一首
     async def play_next(self, **kwargs):
@@ -836,7 +854,7 @@ class XiaoMusic:
 
         self.search_prefix = self.config.search_prefix
         self.proxy = self.config.proxy
-        self.log.info("update_config_from_setting ok. data:%s", data)
+        self.log.debug("update_config_from_setting ok. data:%s", data)
 
     # 重新初始化
     async def reinit(self, **kwargs):

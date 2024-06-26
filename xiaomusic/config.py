@@ -10,15 +10,15 @@ from xiaomusic.utils import validate_proxy
 LATEST_ASK_API = "https://userprofile.mina.mi.com/device_profile/v2/conversation?source=dialogu&hardware={hardware}&timestamp={timestamp}&limit=2"
 COOKIE_TEMPLATE = "deviceId={device_id}; serviceToken={service_token}; userId={user_id}"
 
-KEY_WORD_DICT = {
+# 默认口令
+DEFAULT_KEY_WORD_DICT = {
     "播放歌曲": "play",
-    "放歌曲": "play",
+    "播放本地歌曲": "playlocal",
+    "关机": "stop",
     "下一首": "play_next",
     "单曲循环": "set_play_type_one",
     "全部循环": "set_play_type_all",
     "随机播放": "random_play",
-    "关机": "stop",
-    "停止播放": "stop",
     "分钟后关机": "stop_after_minute",
     "播放列表": "play_music_list",
     "刷新列表": "gen_music_list",
@@ -31,8 +31,8 @@ KEY_WORD_ARG_BEFORE_DICT = {
     "分钟后关机": True,
 }
 
-# 匹配优先级
-KEY_MATCH_ORDER = [
+# 口令匹配优先级
+DEFAULT_KEY_MATCH_ORDER = [
     "set_volume#",
     "get_volume#",
     "分钟后关机",
@@ -86,10 +86,26 @@ class Config:
     disable_download: bool = (
         os.getenv("XIAOMUSIC_DISABLE_DOWNLOAD", "false").lower() == "true"
     )
+    key_word_dict = DEFAULT_KEY_WORD_DICT.copy()
+    key_match_order = DEFAULT_KEY_MATCH_ORDER.copy()
+
+    def append_keyword(self, keys, action):
+        for key in keys.split(","):
+            self.key_word_dict[key] = action
+            if key not in self.key_match_order:
+                self.key_match_order.append(key)
 
     def __post_init__(self) -> None:
         if self.proxy:
             validate_proxy(self.proxy)
+        keywords_playlocal = os.getenv(
+            "XIAOMUSIC_KEYWORDS_PLAYLOCAL", "播放本地歌曲,本地播放歌曲"
+        )
+        self.append_keyword(keywords_playlocal, "playlocal")
+        keywords_play = os.getenv("XIAOMUSIC_KEYWORDS_PLAY", "播放歌曲,放歌曲")
+        self.append_keyword(keywords_play, "play")
+        keywords_stop = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止")
+        self.append_keyword(keywords_stop, "stop")
 
     @classmethod
     def from_options(cls, options: argparse.Namespace) -> Config:
