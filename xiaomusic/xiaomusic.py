@@ -642,6 +642,9 @@ class XiaoMusic:
 
         # 本地歌曲不存在时下载
         if not self.is_music_exist(name):
+            if self.config.disable_download:
+                await self.do_tts(f"本地不存在歌曲{name}")
+                return
             await self.download(search_key, name)
             self.log.info("正在下载中 %s", search_key + ":" + name)
             await self.download_proc.wait()
