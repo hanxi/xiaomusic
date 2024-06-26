@@ -108,7 +108,7 @@ class XiaoMusic:
         # 启动时初始化获取声音
         self.set_last_record("get_volume#")
 
-        self.log.debug("ffmpeg_location: %s", self.ffmpeg_location)
+        self.log.info("ffmpeg_location: %s", self.ffmpeg_location)
 
     async def poll_latest_ask(self):
         async with ClientSession() as session:
