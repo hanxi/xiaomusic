@@ -151,8 +151,26 @@ def walk_to_depth(root, depth=None, *args, **kwargs):
 
 
 def downloadfile(url):
+    # 清理和验证URL
     try:
-        response = requests.get(url, timeout=5)  # 增加超时以避免长时间挂起
+        # 解析URL
+        parsed_url = urlparse(url)
+
+        # 基础验证：仅允许HTTP和HTTPS协议
+        if parsed_url.scheme not in ("http", "https"):
+            return (
+                f"Invalid URL scheme: {parsed_url.scheme}. Only HTTP and HTTPS are allowed.",
+                "",
+            )
+
+        # 构建目标URL
+        cleaned_url = parsed_url.geturl()
+    except Exception as e:
+        return (f"Invalid URL: {e}", "")
+
+    # 发起请求
+    try:
+        response = requests.get(cleaned_url, timeout=5)  # 增加超时以避免长时间挂起
         response.raise_for_status()  # 如果响应不是200，引发HTTPError异常
         return ("OK", response.text)
     except requests.exceptions.HTTPError as errh:
@@ -163,7 +181,7 @@ def downloadfile(url):
         return (f"Timeout Error: {errt}", "")
     except requests.exceptions.RequestException as err:
         return (f"Oops: Something Else, {err}", "")
-    return ("Unknow Error", "")
+    return ("Unknown Error", "")
 
 
 async def _get_web_music_duration(session, url, start=0, end=500):
