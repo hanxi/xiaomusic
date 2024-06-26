@@ -153,7 +153,11 @@ def delmusic():
 def downloadjson():
     data = request.get_json()
     log.info(data)
-    ret, content = downloadfile(data["url"])
+    url = data["url"]
+    ret, content = downloadfile(url)
+    if ret != "OK":
+        log.warning(f"downloadjson failed. url:{url} ret:{ret}")
+        ret = "Download JSON file failed."
     return {
         "ret": ret,
         "content": content,
