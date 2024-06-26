@@ -543,6 +543,7 @@ class XiaoMusic:
             ]
             joined_keywords = "/".join(filtered_keywords)
             self.log.info(f"Running xiaomusic now, 用`{joined_keywords}`开头来控制")
+            self.log.info(self.config.key_word_dict)
 
             while True:
                 self.polling_event.set()
@@ -594,7 +595,7 @@ class XiaoMusic:
                 argafter,
             )
             oparg = argafter
-            opvalue = self.config.key_word_dict[opkey]
+            opvalue = self.config.key_word_dict.get(opkey)
             if not ctrl_panel and not self._playing:
                 if self.active_cmd and opvalue not in self.active_cmd:
                     self.log.debug(f"不在激活命令中 {opvalue}")
