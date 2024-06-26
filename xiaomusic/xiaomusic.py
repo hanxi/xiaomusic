@@ -269,6 +269,8 @@ class XiaoMusic:
             await self.mina_service.text_to_speech(self.device_id, value)
         except Exception as e:
             self.log.error(f"Execption {e}")
+
+        self.log.debug(f"do_tts. cur_music:{self.cur_music}")
         if self._playing and not self.is_downloading():
             # 继续播放歌曲
             await self.play()
@@ -617,7 +619,7 @@ class XiaoMusic:
             return True
         else:
             # 当前播放的歌曲不存在了
-            if self.is_music_exist(self.cur_music):
+            if not self.is_music_exist(self.cur_music):
                 return True
         return False
 
