@@ -154,8 +154,9 @@ def downloadjson():
     data = request.get_json()
     log.info(data)
     url = data["url"]
-    ret, content = downloadfile(url)
-    if ret != "OK":
+    retmsg, content = downloadfile(url)
+    ret = "OK"
+    if retmsg != "OK":
         log.warning(f"downloadjson failed. url:{url} ret:{ret}")
         ret = "Download JSON file failed."
     return {
