@@ -624,7 +624,7 @@ class XiaoMusic:
     # 播放歌曲
     async def play(self, **kwargs):
         self._playing = True
-        parts = kwargs["arg1"].split("|")
+        parts = kwargs.get("arg1", "").split("|")
         search_key = parts[0]
         name = parts[1] if len(parts) > 1 else search_key
         if name == "":
@@ -709,7 +709,7 @@ class XiaoMusic:
 
     # 播放一个播放列表
     async def play_music_list(self, **kwargs):
-        parts = kwargs["arg1"].split("|")
+        parts = kwargs.get("arg1").split("|")
         list_name = parts[0]
         if list_name not in self._music_list:
             await self.do_tts(f"播放列表{list_name}不存在")
@@ -737,7 +737,7 @@ class XiaoMusic:
         if self._stop_timer:
             self._stop_timer.cancel()
             self.log.info("关机定时器已取消")
-        minute = int(kwargs["arg1"])
+        minute = int(kwargs.get("arg1", 0))
 
         async def _do_stop():
             await asyncio.sleep(minute * 60)
@@ -750,7 +750,7 @@ class XiaoMusic:
         self.log.info(f"{minute}分钟后将关机")
 
     async def set_volume(self, **kwargs):
-        value = kwargs["arg1"]
+        value = kwargs.get("arg1", 0)
         await self.do_set_volume(value)
 
     async def get_volume(self, **kwargs):
@@ -841,8 +841,6 @@ class XiaoMusic:
 
     # 获取所有设备
     async def getalldevices(self, **kwargs):
-        arg1 = kwargs["arg1"]
-        self.log.debug("getalldevices. arg1:%s", arg1)
         did_list = []
         hardware_list = []
         hardware_data = await self.mina_service.device_list()
