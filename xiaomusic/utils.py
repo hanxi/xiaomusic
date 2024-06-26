@@ -192,7 +192,9 @@ async def get_web_music_duration(url, start=0, end=500):
         async with aiohttp.ClientSession(timeout=timeout) as session:
             duration = await _get_web_music_duration(session, url, start=0, end=500)
             if duration <= 0:
-                duration = await _get_web_music_duration(session, url, start=0, end=1000)
+                duration = await _get_web_music_duration(
+                    session, url, start=0, end=1000
+                )
     except Exception:
         pass
     return duration
