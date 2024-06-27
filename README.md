@@ -257,6 +257,9 @@ services:
 - XIAOMUSIC_VERBOSE 设置为 true 时开启 debug 日志，用于排查问题
 - XIAOMUSIC_DISABLE_DOWNLOAD 设为 true 时关闭下载功能，见 <https://github.com/hanxi/xiaomusic/issues/82>
 - XIAOMUSIC_USE_MUSIC_API 设为 true 时使用 player_play_music 接口播放音乐，用于兼容不能播放的型号
+- XIAOMUSIC_KEYWORDS_PLAY 用来播放歌曲的口令前缀，默认是 "播放歌曲,放歌曲" ，可以用英文逗号分割配置多个
+- XIAOMUSIC_KEYWORDS_STOP 用来关机的口令，默认是 "关机,暂停,停止" ，可以用英文逗号分割配置多个。
+- XIAOMUSIC_KEYWORDS_PLAYLOCAL 用来播放本地歌曲的口令前缀，本地找不到时不会下载歌曲，默认是 "播放本地歌曲,本地播放歌曲" ，可以用英文逗号分割配置多个。
 
 ## 讨论区
 
