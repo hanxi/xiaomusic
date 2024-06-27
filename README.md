@@ -179,6 +179,26 @@ services:
       XIAOMUSIC_HOSTNAME: '192.168.2.5'
 ```
 
+setting.json 文件不存到 music 可以这样写，会把 setting.json 文件放到容器的 /app/conf 目录且映射到本地的 ./conf 目录：
+
+```yaml
+services:
+  xiaomusic:
+    image: hanxi/xiaomusic
+    container_name: xiaomusic
+    restart: unless-stopped
+    ports:
+      - 8090:8090
+    volumes:
+      - ./music:/app/music
+      - ./conf:/app/conf
+    environment:
+      MI_USER: '小米账号'
+      MI_PASS: '小米密码'
+      XIAOMUSIC_HOSTNAME: 'docker 主机 ip'
+      XIAOMUSIC_CONF_PATH: '/app/conf'
+```
+
 
 ## 简易的控制面板
 
