@@ -66,15 +66,23 @@ pdm run xiaomusic.py
 
 > 隐藏玩法: 对小爱同学说播放歌曲小猪佩奇的故事，会播放小猪佩奇的故事。
 
-## 已测试设备
+## 已测试支持的设备
 
 ```txt
-"L07A": ("5-1", "5-5"),  # Redmi小爱音箱Play(l7a)
+- L07A
+- S12
+- LX5A
+- LX05
+- L16A
+- LX06
+- LX01
 ````
 ## 支持音乐格式
 
 - mp3
 - flac
+- wav
+- ape
 
 > 本地音乐会搜索 mp3 和 flac 格式的文件，下载的歌曲是 mp3 格式的。
 
@@ -210,12 +218,13 @@ services:
 - XIAOMUSIC_CONF_PATH 用来存放配置文件的目录，记得把目录映射到主机，默认情况会把配置存放在music目录，具体见 <https://github.com/hanxi/xiaomusic/issues/74>
 - XIAOMUSIC_VERBOSE 设置为 true 时开启 debug 日志，用于排查问题
 - XIAOMUSIC_DISABLE_DOWNLOAD 设为 true 时关闭下载功能，见 <https://github.com/hanxi/xiaomusic/issues/82>
+- XIAOMUSIC_USE_MUSIC_API 设为 true 时使用 player_play_music 接口播放音乐，用于兼容不能播放的型号
 
 ## 讨论区
 
 - [点击链接加入QQ频道【xiaomusic】](https://pd.qq.com/s/e2jybz0ss)
 - [点击链接加入群聊【xiaomusic】 604526973](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=13St5PLVcTxYlWTAs_iAawazjtdD1l-a&authKey=dJWEpaT2fDBDpdUUOWj%2FLt6NS1ePBfShDfz7a6seNURi05VvVnAGQzXF%2FM%2F5HgIm&noverify=0&group_code=604526973)
-- https://github.com/hanxi/xiaomusic/issues
+- <https://github.com/hanxi/xiaomusic/issues>
 
 ## 感谢
 
