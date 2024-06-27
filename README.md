@@ -32,6 +32,24 @@ services:
 ```
 启动成功后，在 web 页面可以配置 MI_DID, MI_HARDWARE, XIAOMUSIC_SEARCH, XIAOMUSIC_PROXY 参数。
 
+如果需要修改 8090 端口为其他端口，比如 5678，需要这样配，3个数字都需要是 5678 
+```yaml
+services:
+  xiaomusic:
+    image: hanxi/xiaomusic
+    container_name: xiaomusic
+    restart: unless-stopped
+    ports:
+      - 5678:5678
+    volumes:
+      - ./music:/app/music
+    environment:
+      MI_USER: '小米账号'
+      MI_PASS: '小米密码'
+      XIAOMUSIC_HOSTNAME: 'docker 主机 ip'
+      XIAOMUSIC_PORT: 5678
+```
+
 ## 开发环境运行
 
 - 使用 install_dependencies.sh 下载依赖
