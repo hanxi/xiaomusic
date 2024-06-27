@@ -33,10 +33,11 @@ function convertToJSON() {
   var musicsArray = [];
   var currentName = '';
   lines.forEach(function(line) {
-    if (line.startsWith('#EXTINF:-1,')) {
-      currentName = line.substring(11).trim();
+    line = line.trim();
+    if (line.startsWith('#EXTINF:')) {
+      currentName = line.replace(/.*,/g, '');
     } else if (line.startsWith('http') && currentName !== '') {
-      musicsArray.push({"name": currentName, "type": "radio", "url": line.trim()});
+      musicsArray.push({"name": currentName, "type": "radio", "url": line});
       currentName = ''; // Reset the name for the next entry
     }
   });
