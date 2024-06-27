@@ -16,6 +16,8 @@ import mutagen
 import requests
 from requests.utils import cookiejar_from_dict
 
+from xiaomusic.const import SUPPORT_MUSIC_TYPE
+
 
 ### HELP FUNCTION ###
 def parse_cookie_string(cookie_string):
@@ -193,6 +195,20 @@ async def _get_web_music_duration(session, url, start=0, end=500):
 async def get_web_music_duration(url, start=0, end=500):
     duration = 0
     try:
+        parsed_url = urlparse(url)
+        file_path = parsed_url.path
+        _, extension = os.path.splitext(file_path)
+        if extension.lower() not in SUPPORT_MUSIC_TYPE:
+            cleaned_url = parsed_url.geturl()
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    cleaned_url,
+                    allow_redirects=True,
+                    headers={
+                        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
+                    },
+                ) as response:
+                    url = response.url
         # 设置总超时时间为3秒
         timeout = aiohttp.ClientTimeout(total=3)
         async with aiohttp.ClientSession(timeout=timeout) as session:

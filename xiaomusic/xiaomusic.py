@@ -10,18 +10,18 @@ import time
 import traceback
 import urllib.parse
 from pathlib import Path
-
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService
-
 from xiaomusic import (
     __version__,
 )
-from xiaomusic.config import (
+from xiaomusic.const import (
     COOKIE_TEMPLATE,
-    KEY_WORD_ARG_BEFORE_DICT,
     LATEST_ASK_API,
     SUPPORT_MUSIC_TYPE,
+)
+from xiaomusic.config import (
+    KEY_WORD_ARG_BEFORE_DICT,
     Config,
 )
 from xiaomusic.httpserver import StartHTTPServer
@@ -359,7 +359,12 @@ class XiaoMusic:
         url = self._all_music[name]
         return url.startswith(("http://", "https://"))
 
-    # 获取歌曲播放地址
+    # 获取歌曲播放地址和播放时长
+    def get_music_url_duration(self, name):
+        url = self.get_music_url(name)
+        duration = self.get_music_duration(name)
+        return url, duration
+
     def get_music_url(self, name):
         if self.is_web_music(name):
             url = self._all_music[name]
@@ -494,6 +499,23 @@ class XiaoMusic:
             self.log.info(f"pop not exist music:{name}")
             return self.get_next_music()
         return name
+
+    # 获取歌曲播放时长
+    async def get_music_duration(self, name):
+        if self.is_web_radio_music(name):
+            self.log.info("电台不会有播放时长")
+            return 0
+
+        if self.is_web_music(name):
+            url = self._all_music[name]
+            duration = await get_web_music_duration(url)
+            sec = int(duration)
+            self.log.info(f"网络歌曲 {name}下一首的定时器 的时长 {sec} 秒")
+        else:
+            filename = self.get_filename(name)
+            sec = int(get_local_music_duration(filename))
+            self.log.info(f"本地歌曲 {name} : {filename} 的时长 {sec} 秒")
+
 
     # 设置下一首歌曲的播放定时器
     async def set_next_music_timeout(self):
@@ -673,7 +695,7 @@ class XiaoMusic:
         self._playing = True
         self.cur_music = name
         self.log.info(f"cur_music {self.cur_music}")
-        url = self.get_music_url(name)
+        url, duration = self.get_music_url_duration(name)
         self.log.info(f"播放 {url}")
         await self.force_stop_xiaoai()
         await self.play_url(url)
