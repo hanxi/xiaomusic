@@ -262,4 +262,5 @@ services:
 [![Star History Chart](https://api.star-history.com/svg?repos=hanxi/xiaomusic&type=Date)](https://star-history.com/#hanxi/xiaomusic&Date)
 
 ## 赞赏
-谢谢就够了
+
+- 爱发电 <https://afdian.net/a/imhanxi>
