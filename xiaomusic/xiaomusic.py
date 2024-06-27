@@ -623,24 +623,33 @@ class XiaoMusic:
                 return True
         return False
 
+    async def _play_by_music_url(self, device_id, url):
+        audio_id = get_random(30)
+        music = {
+            "payload": {
+                "audio_items": [
+                    {"item_id": {"audio_id": audio_id}, "stream": {"url": url}}
+                ],
+            }
+        }
+        return await self.mina_service.ubus_request(
+            device_id,
+            "player_play_music",
+            "mediaplayer",
+            {"startaudioid": audio_id, "music": json.dumps(music)},
+        )
+
     async def play_url(self, url):
         if self.config.use_music_api:
-            audio_id = get_random(30)
-            music = {
-                "payload": {
-                    "audio_items": [
-                        {"item_id": {"audio_id": audio_id}, "stream": {"url": url}}
-                    ],
-                }
-            }
-            return await self.mina_service.ubus_request(
-                self.device_id,
-                "player_play_music",
-                "mediaplayer",
-                {"startaudioid": audio_id, "music": json.dumps(music)},
+            ret = await self._play_by_music_url(self.device_id, url)
+            self.log.debug(
+                f"play_url play_by_music_url {self.config.hardware}. ret:{ret} url:{url}"
             )
         else:
-            await self.mina_service.play_by_url(self.device_id, url)
+            ret = await self.mina_service.play_by_url(self.device_id, url)
+            self.log.debug(
+                f"play_url play_by_url {self.config.hardware}. ret:{ret} url:{url}"
+            )
 
     # 播放本地歌曲
     async def playlocal(self, **kwargs):
