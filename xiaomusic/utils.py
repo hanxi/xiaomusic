@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import difflib
 import os
+import random
 import re
+import string
 import tempfile
 from collections.abc import AsyncIterator
 from http.cookies import SimpleCookie
@@ -213,3 +215,7 @@ def get_local_music_duration(filename):
     except Exception:
         pass
     return duration
+
+
+def get_random(length):
+    return "".join(random.sample(string.ascii_letters + string.digits, length))

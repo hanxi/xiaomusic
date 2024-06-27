@@ -86,6 +86,9 @@ class Config:
     )
     key_word_dict = DEFAULT_KEY_WORD_DICT.copy()
     key_match_order = DEFAULT_KEY_MATCH_ORDER.copy()
+    use_music_api: bool = (
+        os.getenv("XIAOMUSIC_USE_MUSIC_API", "false").lower() == "true"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):

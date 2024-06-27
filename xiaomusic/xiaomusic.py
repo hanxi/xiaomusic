@@ -29,6 +29,7 @@ from xiaomusic.utils import (
     custom_sort_key,
     fuzzyfinder,
     get_local_music_duration,
+    get_random,
     get_web_music_duration,
     parse_cookie_string,
     walk_to_depth,
@@ -622,6 +623,25 @@ class XiaoMusic:
                 return True
         return False
 
+    async def play_url(self, url):
+        if self.config.use_music_api:
+            audio_id = get_random(30)
+            music = {
+                "payload": {
+                    "audio_items": [
+                        {"item_id": {"audio_id": audio_id}, "stream": {"url": url}}
+                    ],
+                }
+            }
+            return await self.mina_service.ubus_request(
+                self.device_id,
+                "player_play_music",
+                "mediaplayer",
+                {"startaudioid": audio_id, "music": json.dumps(music)},
+            )
+        else:
+            await self.mina_service.play_by_url(self.device_id, url)
+
     # 播放本地歌曲
     async def playlocal(self, **kwargs):
         name = kwargs.get("arg1", "")
@@ -647,7 +667,7 @@ class XiaoMusic:
         url = self.get_music_url(name)
         self.log.info(f"播放 {url}")
         await self.force_stop_xiaoai()
-        await self.mina_service.play_by_url(self.device_id, url)
+        await self.play_url(url)
         self.log.info("已经开始播放了")
         # 设置下一首歌曲的播放定时器
         await self.set_next_music_timeout()
