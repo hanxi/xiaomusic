@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 import argparse
 import json
 import os
 from dataclasses import dataclass
+
 from xiaomusic.utils import validate_proxy
 
 # 默认口令

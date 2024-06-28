@@ -10,19 +10,21 @@ import time
 import traceback
 import urllib.parse
 from pathlib import Path
+
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService
+
 from xiaomusic import (
     __version__,
+)
+from xiaomusic.config import (
+    KEY_WORD_ARG_BEFORE_DICT,
+    Config,
 )
 from xiaomusic.const import (
     COOKIE_TEMPLATE,
     LATEST_ASK_API,
     SUPPORT_MUSIC_TYPE,
-)
-from xiaomusic.config import (
-    KEY_WORD_ARG_BEFORE_DICT,
-    Config,
 )
 from xiaomusic.httpserver import StartHTTPServer
 from xiaomusic.utils import (
@@ -647,11 +649,15 @@ class XiaoMusic:
 
     async def _play_by_music_url(self, device_id, url):
         audio_id = get_random(30)
+        audio_type = ""
+        if self.config.hardware in ['LX04', 'X10A', 'X08A']:
+            audio_type = "MUSIC"
         music = {
             "payload": {
                 "audio_items": [
                     {"item_id": {"audio_id": audio_id}, "stream": {"url": url}}
                 ],
+                "audio_type": audio_type,
             }
         }
         return await self.mina_service.ubus_request(
