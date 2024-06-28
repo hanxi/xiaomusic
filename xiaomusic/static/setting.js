@@ -48,7 +48,6 @@ $(function(){
 
     // 初始化联动
     linkSelects('#mi_did', data.mi_did_list, '#mi_hardware', data.mi_hardware_list);
-    linkSelects('#mi_hardware', data.mi_hardware_list, '#mi_did', data.mi_did_list);
 
     if (data.xiaomusic_search != "") {
       $("#xiaomusic_search").val(data.xiaomusic_search);
