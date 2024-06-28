@@ -106,6 +106,7 @@ pdm run xiaomusic.py
 ```txt
 - L07A
 - S12
+- S12A
 - LX5A
 - LX05
 - L16A
@@ -115,6 +116,11 @@ pdm run xiaomusic.py
 - L05B
 - L05C
 ````
+
+型号与产品名称对照可以在这里查询 <https://home.miot-spec.com/s/xiaomi.wifispeaker>
+
+> 如果你的设备支持播放，请反馈给我添加到支持列表里，谢谢。
+
 ## 支持音乐格式
 
 - mp3
