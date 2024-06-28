@@ -94,6 +94,8 @@ pdm run xiaomusic.py
 - L16A
 - LX06
 - LX01
+- L05B
+- L05C
 ````
 ## 支持音乐格式
 
