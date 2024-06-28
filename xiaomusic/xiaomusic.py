@@ -10,7 +10,9 @@ import time
 import traceback
 import urllib.parse
 from pathlib import Path
+import copy
 
+from logging.handlers import RotatingFileHandler
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService
 
@@ -91,14 +93,8 @@ class XiaoMusic:
         # 关机定时器
         self._stop_timer = None
 
-        # setup logger
-        logging.basicConfig(
-            format=f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s",
-            datefmt="[%X]",
-        )
-        self.log = logging.getLogger("xiaomusic")
-        self.log.setLevel(logging.DEBUG if config.verbose else logging.INFO)
-        self.log.debug(config)
+        # 初始化日志
+        self.setup_logger()
 
         # 尝试从设置里加载配置
         self.try_init_setting()
@@ -109,7 +105,26 @@ class XiaoMusic:
         # 启动时初始化获取声音
         self.set_last_record("get_volume#")
 
-        self.log.info("ffmpeg_location: %s", self.ffmpeg_location)
+    def setup_logger(self):
+        logging.basicConfig(
+            format=f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s",
+            datefmt="[%X]",
+        )
+
+        log_file = self.config.log_file
+        log_path = os.path.dirname(log_file)
+        if not os.path.exists(log_path):
+            os.makedirs(log_path)
+        if os.path.exists(log_file):
+            os.remove(log_file)
+        handler = RotatingFileHandler(self.config.log_file, maxBytes=1024*1024, backupCount=0)
+        self.log = logging.getLogger("xiaomusic")
+        self.log.addHandler(handler)
+        self.log.setLevel(logging.DEBUG if self.config.verbose else logging.INFO)
+        debug_config = copy.deepcopy(self.config)
+        debug_config.account = '******'
+        debug_config.password = '******'
+        self.log.info(debug_config)
 
     async def poll_latest_ask(self):
         async with ClientSession() as session:
