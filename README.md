@@ -243,7 +243,9 @@ services:
 
 ## 网络歌单功能
 
-可以配置一个 json 格式的歌单，支持电台和歌曲，也可以直接用别人分享的链接，具体用法见  <https://github.com/hanxi/xiaomusic/issues/78>
+可以配置一个 json 格式的歌单，支持电台和歌曲，也可以直接用别人分享的链接，同时配备了 m3u 文件格式转换工具，可以很方便的把 m3u 电台文件转换成网络歌单格式的 json 文件，具体用法见  <https://github.com/hanxi/xiaomusic/issues/78>
+
+> 欢迎有想法的朋友们制作更多的歌单转换工具。
 
 ## 更多其他可选配置
 
