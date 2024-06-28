@@ -28,6 +28,7 @@ services:
     environment:
       MI_USER: '小米账号'
       MI_PASS: '小米密码'
+      XIAOMUSIC_VERBOSE: 'true'
       XIAOMUSIC_HOSTNAME: 'docker 主机 ip'
 ```
 
@@ -36,6 +37,7 @@ services:
 ```yaml
 docker run -e MI_USER='小米账号' \
     -e MI_PASS='小米密码' \
+    -e XIAOMUSIC_VERBOSE='true' \
     -e XIAOMUSIC_HOSTNAME='docker 主机 ip' \
     -p 8090:8090 \
     -v ./music:/app/music \
@@ -58,9 +60,12 @@ services:
     environment:
       MI_USER: '小米账号'
       MI_PASS: '小米密码'
+      XIAOMUSIC_VERBOSE: 'true'
       XIAOMUSIC_HOSTNAME: 'docker 主机 ip'
       XIAOMUSIC_PORT: 5678
 ```
+
+其中 XIAOMUSIC_VERBOSE 设置为 'true' 时表示开启 debug 日志，遇到问题可以去 web 设置页面底部 **下载日志文件** 按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
 
 ## 开发环境运行
 
@@ -104,6 +109,7 @@ pdm run xiaomusic.py
 - LX5A
 - LX05
 - L16A
+- L17A
 - LX06
 - LX01
 - L05B
@@ -271,7 +277,6 @@ services:
 - XIAOMUSIC_HTTPAUTH_USERNAME 配置 web 控制台用户
 - XIAOMUSIC_HTTPAUTH_PASSWORD 配置 web 控制台密码
 - XIAOMUSIC_CONF_PATH 用来存放配置文件的目录，记得把目录映射到主机，默认情况会把配置存放在music目录，具体见 <https://github.com/hanxi/xiaomusic/issues/74>
-- XIAOMUSIC_VERBOSE 设置为 true 时开启 debug 日志，用于排查问题
 - XIAOMUSIC_DISABLE_DOWNLOAD 设为 true 时关闭下载功能，见 <https://github.com/hanxi/xiaomusic/issues/82>
 - XIAOMUSIC_USE_MUSIC_API 设为 true 时使用 player_play_music 接口播放音乐，用于兼容不能播放的型号
 - XIAOMUSIC_KEYWORDS_PLAY 用来播放歌曲的口令前缀，默认是 "播放歌曲,放歌曲" ，可以用英文逗号分割配置多个
