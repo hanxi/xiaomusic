@@ -1,4 +1,8 @@
-button {
+.button {
+  line-height: 50px;
+  font-size: 14px;
+}
+button, .button {
   margin: 10px;
   width: 100px;
   height: 50px;
@@ -10,7 +14,7 @@ button {
   border-radius: 10px;
   background-color: #008CBA;
 }
-button:active {
+button:active, .button:active {
   font-weight:bold;
   background-color: #007CBA;
   transform: translateY(2px);
