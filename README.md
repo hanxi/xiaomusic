@@ -30,6 +30,18 @@ services:
       MI_PASS: '小米密码'
       XIAOMUSIC_HOSTNAME: 'docker 主机 ip'
 ```
+
+对应的 docker 启动命令如下:
+
+```yaml
+docker run -e MI_USER='小米账号' \
+    -e MI_PASS='小米密码' \
+    -e XIAOMUSIC_HOSTNAME='docker 主机 ip' \
+    -p 8090:8090 \
+    -v ./music:/app/music \
+    hanxi/xiaomusic
+```
+
 启动成功后，在 web 页面可以配置 MI_DID, MI_HARDWARE, XIAOMUSIC_SEARCH, XIAOMUSIC_PROXY 参数。
 
 如果需要修改 8090 端口为其他端口，比如 5678，需要这样配，3个数字都需要是 5678 
