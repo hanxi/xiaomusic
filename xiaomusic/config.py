@@ -43,6 +43,7 @@ DEFAULT_KEY_MATCH_ORDER = [
     "播放列表",
 ]
 
+
 @dataclass
 class Config:
     hardware: str = os.getenv("MI_HARDWARE", "L07A")

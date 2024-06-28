@@ -208,7 +208,7 @@ async def get_web_music_duration(url, start=0, end=500):
                         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
                     },
                 ) as response:
-                    url = response.url
+                    url = str(response.url)
         # 设置总超时时间为3秒
         timeout = aiohttp.ClientTimeout(total=3)
         async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -219,7 +219,7 @@ async def get_web_music_duration(url, start=0, end=500):
                 )
     except Exception:
         pass
-    return duration
+    return duration, url
 
 
 # 获取文件播放时长

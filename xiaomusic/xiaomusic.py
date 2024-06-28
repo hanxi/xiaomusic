@@ -361,11 +361,27 @@ class XiaoMusic:
         url = self._all_music[name]
         return url.startswith(("http://", "https://"))
 
-    # 获取歌曲播放地址和播放时长
-    def get_music_url_duration(self, name):
+    # 获取歌曲播放时长，播放地址
+    async def get_music_sec_url(self, name):
+        sec = 0
         url = self.get_music_url(name)
-        duration = self.get_music_duration(name)
-        return url, duration
+        if self.is_web_radio_music(name):
+            self.log.info("电台不会有播放时长")
+            return 0, url
+
+        if self.is_web_music(name):
+            origin_url = url
+            duration, url = await get_web_music_duration(url)
+            sec = int(duration)
+            self.log.info(f"网络歌曲 {name} : {origin_url} {url} 的时长 {sec} 秒")
+        else:
+            filename = self.get_filename(name)
+            sec = int(get_local_music_duration(filename))
+            self.log.info(f"本地歌曲 {name} : {filename} {url} 的时长 {sec} 秒")
+
+        if sec <= 0:
+            self.log.warning(f"获取歌曲时长失败 {name} {url}")
+        return sec, url
 
     def get_music_url(self, name):
         if self.is_web_music(name):
@@ -502,47 +518,14 @@ class XiaoMusic:
             return self.get_next_music()
         return name
 
-    # 获取歌曲播放时长
-    async def get_music_duration(self, name):
-        if self.is_web_radio_music(name):
-            self.log.info("电台不会有播放时长")
-            return 0
-
-        if self.is_web_music(name):
-            url = self._all_music[name]
-            duration = await get_web_music_duration(url)
-            sec = int(duration)
-            self.log.info(f"网络歌曲 {name}下一首的定时器 的时长 {sec} 秒")
-        else:
-            filename = self.get_filename(name)
-            sec = int(get_local_music_duration(filename))
-            self.log.info(f"本地歌曲 {name} : {filename} 的时长 {sec} 秒")
-
-
     # 设置下一首歌曲的播放定时器
-    async def set_next_music_timeout(self):
-        name = self.cur_music
-        if self.is_web_radio_music(name):
-            self.log.info("电台不会有下一首的定时器")
+    async def set_next_music_timeout(self, sec):
+        if sec <= 0:
             return
-
-        if self.is_web_music(name):
-            url = self._all_music[name]
-            duration = await get_web_music_duration(url)
-            sec = int(duration)
-            self.log.info(f"网络歌曲 {name} : {url} 的时长 {sec} 秒")
-        else:
-            filename = self.get_filename(name)
-            sec = int(get_local_music_duration(filename))
-            self.log.info(f"本地歌曲 {name} : {filename} 的时长 {sec} 秒")
 
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info("定时器已取消")
-
-        if sec <= 0:
-            self.log.warning("获取歌曲时长失败，不会开启下一首歌曲的定时器")
-            return
 
         self._timeout = sec
 
@@ -554,7 +537,7 @@ class XiaoMusic:
                 self.log.warning(f"执行出错 {str(e)}\n{traceback.format_exc()}")
 
         self._next_timer = asyncio.ensure_future(_do_next())
-        self.log.info(f"{sec}秒后将会播放下一首")
+        self.log.info(f"{sec}秒后将会播放下一首歌曲")
 
     async def run_forever(self):
         StartHTTPServer(self.port, self.music_path, self)
@@ -650,7 +633,7 @@ class XiaoMusic:
     async def _play_by_music_url(self, device_id, url):
         audio_id = get_random(30)
         audio_type = ""
-        if self.config.hardware in ['LX04', 'X10A', 'X08A']:
+        if self.config.hardware in ["LX04", "X10A", "X08A"]:
             audio_type = "MUSIC"
         music = {
             "payload": {
@@ -701,13 +684,13 @@ class XiaoMusic:
         self._playing = True
         self.cur_music = name
         self.log.info(f"cur_music {self.cur_music}")
-        url, duration = self.get_music_url_duration(name)
+        sec, url = await self.get_music_sec_url(name)
         self.log.info(f"播放 {url}")
         await self.force_stop_xiaoai()
         await self.play_url(url)
         self.log.info("已经开始播放了")
         # 设置下一首歌曲的播放定时器
-        await self.set_next_music_timeout()
+        await self.set_next_music_timeout(sec)
 
     # 播放歌曲
     async def play(self, **kwargs):
