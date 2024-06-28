@@ -197,7 +197,7 @@ services:
       XIAOMUSIC_HOSTNAME: '192.168.2.5'
 ```
 
-setting.json 文件不存到 music 可以这样写，会把 setting.json 文件放到容器的 /app/conf 目录且映射到本地的 ./conf 目录：
+如果想让 setting.json 文件不存储到 music 目录，可以这样配，下面的示例会把 setting.json 文件放到容器的 /app/conf 目录且映射到本地的 ./conf 目录：
 
 ```yaml
 services:
