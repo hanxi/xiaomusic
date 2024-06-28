@@ -5,33 +5,50 @@ $(function(){
     $("#version").text(`(${data.version})`);
   });
 
+  const updateSelectOptions = (selectId, optionsList, selectedOption) => {
+    const select = $(selectId);
+    select.empty();
+    optionsList.forEach(option => {
+      select.append(new Option(option, option));
+    });
+    select.val(selectedOption);
+  };
+
+  let isChanging = false;
+  // 更新下拉菜单的函数
+  const updateSelect = (selectId, value) => {
+    if (!isChanging) {
+      isChanging = true;
+      $(selectId).val(value);
+      isChanging = false;
+    }
+  };
+
+  // 联动逻辑
+  const linkSelects = (sourceSelect, sourceList, targetSelect, targetList) => {
+    $(sourceSelect).change(function() {
+      if (!isChanging) {
+        const selectedValue = $(this).val();
+        const selectedIndex = sourceList.indexOf(selectedValue);
+        console.log(selectedIndex, selectedValue,sourceList,targetList)
+        if (selectedIndex !== -1) {
+          updateSelect(targetSelect, targetList[selectedIndex]);
+        }
+      }
+    });
+  };
+
+
   // 拉取现有配置
   $.get("/getsetting", function(data, status) {
     console.log(data, status);
 
-    var mi_did_div = $("#mi_did")
-    mi_did_div.empty();
-    $.each(data.mi_did_list, function(index, option){
-      mi_did_div.append($('<option>', {
-        value:option,
-        text:option,
-      }));
-      if (data.mi_did == option) {
-        mi_did_div.val(option);
-      }
-    });
+    updateSelectOptions("#mi_did", data.mi_did_list, data.mi_did);
+    updateSelectOptions("#mi_hardware", data.mi_hardware_list, data.mi_hardware);
 
-    var mi_hardware_div = $("#mi_hardware")
-    mi_hardware_div.empty();
-    $.each(data.mi_hardware_list, function(index, option){
-      mi_hardware_div.append($('<option>', {
-        value:option,
-        text:option,
-      }));
-      if (data.mi_hardware == option) {
-        mi_hardware_div.val(option);
-      }
-    });
+    // 初始化联动
+    linkSelects('#mi_did', data.mi_did_list, '#mi_hardware', data.mi_hardware_list);
+    linkSelects('#mi_hardware', data.mi_hardware_list, '#mi_did', data.mi_did_list);
 
     if (data.xiaomusic_search != "") {
       $("#xiaomusic_search").val(data.xiaomusic_search);
