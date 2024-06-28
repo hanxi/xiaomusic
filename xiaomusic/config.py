@@ -79,7 +79,7 @@ class Config:
     use_music_api: bool = (
         os.getenv("XIAOMUSIC_USE_MUSIC_API", "false").lower() == "true"
     )
-    log_file: str = os.getenv("XIAOMUSIC_MUSIC_LOG_FILE", "/tmp/tmp1/tmp2/xiaomusic.log")
+    log_file: str = os.getenv("XIAOMUSIC_MUSIC_LOG_FILE", "/tmp/xiaomusic.txt")
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):

@@ -117,13 +117,15 @@ class XiaoMusic:
             os.makedirs(log_path)
         if os.path.exists(log_file):
             os.remove(log_file)
-        handler = RotatingFileHandler(self.config.log_file, maxBytes=1024*1024, backupCount=0)
+        handler = RotatingFileHandler(self.config.log_file, maxBytes=10*1024*1024, backupCount=1)
         self.log = logging.getLogger("xiaomusic")
         self.log.addHandler(handler)
         self.log.setLevel(logging.DEBUG if self.config.verbose else logging.INFO)
         debug_config = copy.deepcopy(self.config)
         debug_config.account = '******'
         debug_config.password = '******'
+        debug_config.httpauth_username = '******'
+        debug_config.httpauth_password = '******'
         self.log.info(debug_config)
 
     async def poll_latest_ask(self):
