@@ -108,10 +108,6 @@ pdm run xiaomusic.py
 > 本地音乐会搜索目录下上面格式的文件，下载的歌曲是 mp3 格式的。
 > 已知 L05B L05C 不支持 flac 格式。
 
-## 其他参数
-
-- XIAOMUSIC_ACTIVE_CMD 环境变量，配置成'play,random_play'，在非播放状态下，只有这两个指令（播放歌曲和随机播放）可以触发，触发后，xiaomusic进入playing状态，其他指令则可以正常触发。
-
 ## 在 Docker 里使用
 
 ```shell
@@ -251,7 +247,7 @@ services:
 
 ## 更多其他可选配置
 
-- XIAOMUSIC_ACTIVE_CMD 配置唤醒命令，具体见 <https://github.com/hanxi/xiaomusic/pull/43>
+- XIAOMUSIC_ACTIVE_CMD 环境变量，用于唤醒口令，配置成'play,random_play'，在非播放状态下，只有这两个指令（播放歌曲和随机播放）可以触发，触发后，xiaomusic进入playing状态，其他指令则可以正常触发。具体见 <https://github.com/hanxi/xiaomusic/pull/43>
 - XIAOMUSIC_EXCLUDE_DIRS 配置歌曲目录里需要忽略的目录
 - XIAOMUSIC_MUSIC_PATH_DEPTH 配置歌曲目录搜索深度，具体见 <https://github.com/hanxi/xiaomusic/issues/76>
 - XIAOMUSIC_DISABLE_HTTPAUTH 配置成 false 表示开启密码访问web控制台，具体见 <https://github.com/hanxi/xiaomusic/issues/47>
