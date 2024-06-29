@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import copy
 import json
 import logging
 import os
@@ -9,10 +10,9 @@ import re
 import time
 import traceback
 import urllib.parse
-from pathlib import Path
-import copy
-
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService
 
@@ -117,15 +117,17 @@ class XiaoMusic:
             os.makedirs(log_path)
         if os.path.exists(log_file):
             os.remove(log_file)
-        handler = RotatingFileHandler(self.config.log_file, maxBytes=10*1024*1024, backupCount=1)
+        handler = RotatingFileHandler(
+            self.config.log_file, maxBytes=10 * 1024 * 1024, backupCount=1
+        )
         self.log = logging.getLogger("xiaomusic")
         self.log.addHandler(handler)
         self.log.setLevel(logging.DEBUG if self.config.verbose else logging.INFO)
         debug_config = copy.deepcopy(self.config)
-        debug_config.account = '******'
-        debug_config.password = '******'
-        debug_config.httpauth_username = '******'
-        debug_config.httpauth_password = '******'
+        debug_config.account = "******"
+        debug_config.password = "******"
+        debug_config.httpauth_username = "******"
+        debug_config.httpauth_password = "******"
         self.log.info(debug_config)
 
     async def poll_latest_ask(self):
@@ -288,12 +290,12 @@ class XiaoMusic:
         except Exception as e:
             self.log.error(f"Execption {e}")
         # 最大等8秒
-        sec = min(8, int(len(value)/3.3))
+        sec = min(8, int(len(value) / 3.3))
         await asyncio.sleep(sec)
         self.log.debug(f"do_tts. cur_music:{self.cur_music}")
         if self._playing and not self.is_downloading():
             # 继续播放歌曲
-            self.log.info(f"继续播放歌曲")
+            self.log.info("继续播放歌曲")
             await self.play()
 
     async def do_set_volume(self, value):
@@ -712,7 +714,7 @@ class XiaoMusic:
         sec, url = await self.get_music_sec_url(name)
         self.log.info(f"播放 {url}")
         await self.force_stop_xiaoai()
-        await self.play_url(arg1 = url)
+        await self.play_url(arg1=url)
         self.log.info("已经开始播放了")
         # 设置下一首歌曲的播放定时器
         await self.set_next_music_timeout(sec)
@@ -818,7 +820,7 @@ class XiaoMusic:
     async def stop(self, **kwargs):
         self._playing = False
         if kwargs.get("arg1", "") != "notts":
-            await self.do_tts(f"收到关机口令,再见")
+            await self.do_tts("收到关机口令,再见")
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info("定时器已取消")

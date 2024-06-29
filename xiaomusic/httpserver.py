@@ -2,7 +2,7 @@
 import os
 from threading import Thread
 
-from flask import Flask, request, send_from_directory, send_file
+from flask import Flask, request, send_file, send_from_directory
 from flask_httpauth import HTTPBasicAuth
 from waitress import serve
 
@@ -162,17 +162,20 @@ def downloadjson():
         "content": content,
     }
 
+
 @app.route("/downloadlog", methods=["GET"])
 @auth.login_required
 def downloadlog():
     return send_file(xiaomusic.config.log_file, as_attachment=True)
 
+
 @app.route("/playurl", methods=["GET"])
 @auth.login_required
 async def playurl():
-    url = request.args.get('url')
+    url = request.args.get("url")
     log.info(f"play_url:{url}")
     return await xiaomusic.call_main_thread_function(xiaomusic.play_url, arg1=url)
+
 
 def static_path_handler(filename):
     log.debug(filename)

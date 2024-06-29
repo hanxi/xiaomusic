@@ -61,7 +61,9 @@ class Config:
         "XIAOMUSIC_SEARCH", "ytsearch:"
     )  # "bilisearch:" or "ytsearch:"
     ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
-    active_cmd: str = os.getenv("XIAOMUSIC_ACTIVE_CMD", "play,random_play,playlocal,play_music_list,stop")
+    active_cmd: str = os.getenv(
+        "XIAOMUSIC_ACTIVE_CMD", "play,random_play,playlocal,play_music_list,stop"
+    )
     exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir")
     music_path_depth: int = int(os.getenv("XIAOMUSIC_MUSIC_PATH_DEPTH", "10"))
     disable_httpauth: bool = (
