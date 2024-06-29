@@ -311,8 +311,8 @@ class XiaoMusic:
     async def force_stop_xiaoai(self):
         ret = await self.mina_service.player_pause(self.device_id)
         self.log.debug(f"force_stop_xiaoai player_pause ret:{ret}")
-        ret = await self.mina_service.player_stop(self.device_id)
-        self.log.debug(f"force_stop_xiaoai player_stop ret:{ret}")
+        #ret = await self.mina_service.player_stop(self.device_id)
+        #self.log.debug(f"force_stop_xiaoai player_stop ret:{ret}")
 
     # 是否在下载中
     def is_downloading(self):
