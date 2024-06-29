@@ -291,6 +291,8 @@ services:
 - XIAOMUSIC_KEYWORDS_PLAY 用来播放歌曲的口令前缀，默认是 "播放歌曲,放歌曲" ，可以用英文逗号分割配置多个
 - XIAOMUSIC_KEYWORDS_STOP 用来关机的口令，默认是 "关机,暂停,停止" ，可以用英文逗号分割配置多个。
 - XIAOMUSIC_KEYWORDS_PLAYLOCAL 用来播放本地歌曲的口令前缀，本地找不到时不会下载歌曲，默认是 "播放本地歌曲,本地播放歌曲" ，可以用英文逗号分割配置多个。
+- XIAOMUSIC_ENABLE_FUZZY_MATCH 设为 true 时开启模糊匹配（默认），设为 false 时关闭模糊匹配，支持模糊匹配歌名和歌单名。 具体见 <https://github.com/hanxi/xiaomusic/issues/52>
+- XIAOMUSIC_FUZZY_MATCH_CUTOFF 设置模糊搜索匹配的最低相似度阈值（默认0.6，可以配0到1直接的小数），越小越模糊，越大越精准。具体见 <https://github.com/hanxi/xiaomusic/issues/52>
 
 ## 讨论区
 
