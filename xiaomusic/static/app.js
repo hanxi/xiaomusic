@@ -82,6 +82,13 @@ $(function(){
     }
   });
 
+  $("#playurl").on("click", () => {
+    var url = $("#music-url").val();
+    $.get(`/playurl?url=${url}`, function(data, status) {
+      console.log(data);
+    });
+  });
+
   function append_op_button_name(name) {
     append_op_button(name, name);
   }

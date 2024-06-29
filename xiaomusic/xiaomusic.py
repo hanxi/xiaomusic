@@ -287,10 +287,13 @@ class XiaoMusic:
             await self.mina_service.text_to_speech(self.device_id, value)
         except Exception as e:
             self.log.error(f"Execption {e}")
-
+        # 最大等8秒
+        sec = min(8, int(len(value)/3.3))
+        await asyncio.sleep(sec)
         self.log.debug(f"do_tts. cur_music:{self.cur_music}")
         if self._playing and not self.is_downloading():
             # 继续播放歌曲
+            self.log.info(f"继续播放歌曲")
             await self.play()
 
     async def do_set_volume(self, value):
@@ -303,7 +306,10 @@ class XiaoMusic:
             self.log.error(f"Execption {e}")
 
     async def force_stop_xiaoai(self):
-        await self.mina_service.player_stop(self.device_id)
+        ret = await self.mina_service.player_pause(self.device_id)
+        self.log.debug(f"force_stop_xiaoai player_pause ret:{ret}")
+        ret = await self.mina_service.player_stop(self.device_id)
+        self.log.debug(f"force_stop_xiaoai player_stop ret:{ret}")
 
     # 是否在下载中
     def is_downloading(self):
@@ -587,7 +593,7 @@ class XiaoMusic:
                 self.polling_event.clear()  # stop polling when processing the question
                 query = new_record.get("query", "").strip()
                 ctrl_panel = new_record.get("ctrl_panel", False)
-                self.log.debug("收到消息:%s 控制面板:%s", query, ctrl_panel)
+                self.log.info("收到消息:%s 控制面板:%s", query, ctrl_panel)
 
                 # 匹配命令
                 opvalue, oparg = self.match_cmd(query, ctrl_panel)
@@ -633,7 +639,7 @@ class XiaoMusic:
             return (opvalue, oparg)
         if self._playing:
             self.log.info("未匹配到指令，自动停止")
-            return ("stop", {})
+            return ("stop", "notts")
         return (None, None)
 
     # 判断是否播放下一首歌曲
@@ -667,7 +673,8 @@ class XiaoMusic:
             {"startaudioid": audio_id, "music": json.dumps(music)},
         )
 
-    async def play_url(self, url):
+    async def play_url(self, **kwargs):
+        url = kwargs.get("arg1", "")
         if self.config.use_music_api:
             ret = await self._play_by_music_url(self.device_id, url)
             self.log.debug(
@@ -678,6 +685,7 @@ class XiaoMusic:
             self.log.debug(
                 f"play_url play_by_url {self.config.hardware}. ret:{ret} url:{url}"
             )
+        return ret
 
     # 播放本地歌曲
     async def playlocal(self, **kwargs):
@@ -704,7 +712,7 @@ class XiaoMusic:
         sec, url = await self.get_music_sec_url(name)
         self.log.info(f"播放 {url}")
         await self.force_stop_xiaoai()
-        await self.play_url(url)
+        await self.play_url(arg1 = url)
         self.log.info("已经开始播放了")
         # 设置下一首歌曲的播放定时器
         await self.set_next_music_timeout(sec)
@@ -809,6 +817,8 @@ class XiaoMusic:
 
     async def stop(self, **kwargs):
         self._playing = False
+        if kwargs.get("arg1", "") != "notts":
+            await self.do_tts(f"收到关机口令,再见")
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info("定时器已取消")
@@ -823,12 +833,12 @@ class XiaoMusic:
         async def _do_stop():
             await asyncio.sleep(minute * 60)
             try:
-                await self.stop()
+                await self.stop(arg1="notts")
             except Exception as e:
                 self.log.warning(f"执行出错 {str(e)}\n{traceback.format_exc()}")
 
         self._stop_timer = asyncio.ensure_future(_do_stop())
-        self.log.info(f"{minute}分钟后将关机")
+        await self.do_tts(f"收到,{minute}分钟后将关机")
 
     async def set_volume(self, **kwargs):
         value = kwargs.get("arg1", 0)
@@ -838,7 +848,7 @@ class XiaoMusic:
         playing_info = await self.mina_service.player_get_status(self.device_id)
         self.log.debug("get_volume. playing_info:%s", playing_info)
         self._volume = json.loads(playing_info.get("data", {}).get("info", "{}")).get(
-            "volume", 5
+            "volume", 0
         )
         self.log.info("get_volume. volume:%s", self._volume)
 
