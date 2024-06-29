@@ -106,6 +106,7 @@ pdm run xiaomusic.py
 ## 已测试支持的设备
 
 ```txt
+- L06A
 - L07A
 - S12
 - S12A
