@@ -11,6 +11,8 @@
 
 使用小爱音箱播放音乐，音乐使用 yt-dlp 下载。
 
+<https://github.com/hanxi/xiaomusic>
+
 ## 最简配置运行
 
 已经支持在 web 页面配置其他参数，docker compose 配置如下：
