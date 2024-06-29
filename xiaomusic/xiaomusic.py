@@ -828,6 +828,7 @@ class XiaoMusic:
             self.log.info(f"根据【{list_name}】找到播放列表【{real_name}】")
             list_name = real_name
         self.log.info(f"没找到播放列表【{list_name}】")
+        return list_name
 
     # 播放一个播放列表
     async def play_music_list(self, **kwargs):
