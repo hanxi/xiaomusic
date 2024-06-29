@@ -72,7 +72,12 @@ def validate_proxy(proxy_str: str) -> bool:
 
 # 模糊搜索
 def fuzzyfinder(user_input, collection):
-    return difflib.get_close_matches(user_input, collection, 10, cutoff=0.1)
+    return difflib.get_close_matches(user_input, collection, n=10, cutoff=0.1)
+
+
+def find_best_match(user_input, collection, cutoff=0.6):
+    matches = difflib.get_close_matches(user_input, collection, n=1, cutoff=cutoff)
+    return matches[0] if matches else None
 
 
 # 歌曲排序

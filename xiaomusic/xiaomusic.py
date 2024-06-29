@@ -31,6 +31,7 @@ from xiaomusic.const import (
 from xiaomusic.httpserver import StartHTTPServer
 from xiaomusic.utils import (
     custom_sort_key,
+    find_best_match,
     fuzzyfinder,
     get_local_music_duration,
     get_random,
@@ -689,6 +690,20 @@ class XiaoMusic:
             )
         return ret
 
+    def find_real_music_name(self, name):
+        if not self.config.enable_fuzzy_match:
+            self.log.debug("没开启模糊匹配")
+            return name
+
+        all_music_list = list(self._all_music.keys())
+        real_name = find_best_match(
+            name, all_music_list, cutoff=self.config.fuzzy_match_cutoff
+        )
+        if real_name:
+            self.log.info(f"根据【{name}】找到歌曲【{real_name}】")
+            return real_name
+        self.log.info(f"没找到歌曲【{name}】")
+
     # 播放本地歌曲
     async def playlocal(self, **kwargs):
         name = kwargs.get("arg1", "")
@@ -702,6 +717,7 @@ class XiaoMusic:
         self.log.info(f"playlocal. name:{name}")
 
         # 本地歌曲不存在时下载
+        name = self.find_real_music_name(name)
         if not self.is_music_exist(name):
             await self.do_tts(f"本地不存在歌曲{name}")
             return
@@ -737,6 +753,7 @@ class XiaoMusic:
         self.log.info("play. search_key:%s name:%s", search_key, name)
 
         # 本地歌曲不存在时下载
+        name = self.find_real_music_name(name)
         if not self.is_music_exist(name):
             if self.config.disable_download:
                 await self.do_tts(f"本地不存在歌曲{name}")
@@ -798,10 +815,26 @@ class XiaoMusic:
             self.log.error(f"del ${filename} failed")
         self._gen_all_music_list()
 
+    def find_real_music_list_name(self, list_name):
+        if not self.config.enable_fuzzy_match:
+            self.log.debug("没开启模糊匹配")
+            return list_name
+
+        # 模糊搜一个播放列表
+        real_name = find_best_match(
+            list_name, self._music_list, cutoff=self.config.fuzzy_match_cutoff
+        )
+        if real_name:
+            self.log.info(f"根据【{list_name}】找到播放列表【{real_name}】")
+            list_name = real_name
+        self.log.info(f"没找到播放列表【{list_name}】")
+
     # 播放一个播放列表
     async def play_music_list(self, **kwargs):
         parts = kwargs.get("arg1").split("|")
         list_name = parts[0]
+
+        list_name = self.find_real_music_list_name(list_name)
         if list_name not in self._music_list:
             await self.do_tts(f"播放列表{list_name}不存在")
             return

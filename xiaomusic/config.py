@@ -82,6 +82,12 @@ class Config:
         os.getenv("XIAOMUSIC_USE_MUSIC_API", "false").lower() == "true"
     )
     log_file: str = os.getenv("XIAOMUSIC_MUSIC_LOG_FILE", "/tmp/xiaomusic.txt")
+    # 模糊搜索匹配的最低相似度阈值
+    fuzzy_match_cutoff: float = float(os.getenv("XIAOMUSIC_FUZZY_MATCH_CUTOFF", "0.6"))
+    # 开启模糊搜索
+    enable_fuzzy_match: bool = (
+        os.getenv("XIAOMUSIC_ENABLE_FUZZY_MATCH", "true").lower() == "true"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
