@@ -2,7 +2,7 @@ $(function(){
   // 拉取版本
   $.get("/getversion", function(data, status) {
     console.log(data, status, data["version"]);
-    $("#version").text(`(${data.version})`);
+    $("#version").text(`${data.version}`);
   });
 
   const updateSelectOptions = (selectId, optionsList, selectedOption) => {

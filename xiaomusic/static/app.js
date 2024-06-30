@@ -23,7 +23,7 @@ $(function(){
   // 拉取版本
   $.get("/getversion", function(data, status) {
     console.log(data, status, data["version"]);
-    $("#version").text(`(${data.version})`);
+    $("#version").text(`${data.version}`);
   });
 
   // 拉取播放列表
