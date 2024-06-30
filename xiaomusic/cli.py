@@ -1,8 +1,20 @@
 import argparse
 import asyncio
 
+from xiaomusic import (
+    __version__,
+)
 from xiaomusic.config import Config
 from xiaomusic.xiaomusic import XiaoMusic
+
+LOGO = r"""
+ __  __  _                   __  __                 _
+ \ \/ / (_)   __ _    ___   |  \/  |  _   _   ___  (_)   ___
+  \  /  | |  / _` |  / _ \  | |\/| | | | | | / __| | |  / __|
+  /  \  | | | (_| | | (_) | | |  | | | |_| | \__ \ | | | (__
+ /_/\_\ |_|  \__,_|  \___/  |_|  |_|  \__,_| |___/ |_|  \___|
+          {}
+"""
 
 
 def main():
@@ -44,6 +56,8 @@ def main():
         dest="ffmpeg_location",
         help="ffmpeg bin path",
     )
+
+    print(LOGO.format(f"XiaoMusic v{__version__} by: github.com/hanxi"))
 
     options = parser.parse_args()
     config = Config.from_options(options)
