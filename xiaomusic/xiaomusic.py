@@ -855,7 +855,7 @@ class XiaoMusic:
     async def stop(self, **kwargs):
         self._playing = False
         if kwargs.get("arg1", "") != "notts":
-            await self.do_tts("收到关机口令,再见")
+            await self.do_tts("收到指令,再见")
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info("定时器已取消")
