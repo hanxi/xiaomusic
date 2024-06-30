@@ -88,6 +88,7 @@ class Config:
     enable_fuzzy_match: bool = (
         os.getenv("XIAOMUSIC_ENABLE_FUZZY_MATCH", "true").lower() == "true"
     )
+    stop_tts_msg: str = os.getenv("XIAOMUSIC_STOP_TTS_MSG", "收到,再见")
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):

@@ -291,7 +291,7 @@ class XiaoMusic:
         except Exception as e:
             self.log.error(f"Execption {e}")
         # 最大等8秒
-        sec = min(8, int(len(value) / 3.3))
+        sec = min(8, int(len(value) / 3))
         await asyncio.sleep(sec)
         self.log.debug(f"do_tts. cur_music:{self.cur_music}")
         if self._playing and not self.is_downloading():
@@ -871,7 +871,8 @@ class XiaoMusic:
     async def stop(self, **kwargs):
         self._playing = False
         if kwargs.get("arg1", "") != "notts":
-            await self.do_tts("收到指令,再见")
+            if self.config.stop_tts_msg:
+                await self.do_tts(self.config.stop_tts_msg)
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info("定时器已取消")
