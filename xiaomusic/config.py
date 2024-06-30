@@ -90,6 +90,12 @@ class Config:
     )
     stop_tts_msg: str = os.getenv("XIAOMUSIC_STOP_TTS_MSG", "收到,再见")
 
+    keywords_playlocal: str = os.getenv(
+        "XIAOMUSIC_KEYWORDS_PLAYLOCAL", "播放本地歌曲,本地播放歌曲"
+    )
+    keywords_play: str = os.getenv("XIAOMUSIC_KEYWORDS_PLAY", "播放歌曲,放歌曲")
+    keywords_stop: str = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止,停止播放")
+
     def append_keyword(self, keys, action):
         for key in keys.split(","):
             self.key_word_dict[key] = action
@@ -99,14 +105,9 @@ class Config:
     def __post_init__(self) -> None:
         if self.proxy:
             validate_proxy(self.proxy)
-        keywords_playlocal = os.getenv(
-            "XIAOMUSIC_KEYWORDS_PLAYLOCAL", "播放本地歌曲,本地播放歌曲"
-        )
-        self.append_keyword(keywords_playlocal, "playlocal")
-        keywords_play = os.getenv("XIAOMUSIC_KEYWORDS_PLAY", "播放歌曲,放歌曲")
-        self.append_keyword(keywords_play, "play")
-        keywords_stop = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止,停止播放")
-        self.append_keyword(keywords_stop, "stop")
+        self.append_keyword(self.keywords_playlocal, "playlocal")
+        self.append_keyword(self.keywords_play, "play")
+        self.append_keyword(self.keywords_stop, "stop")
 
         # 保存配置到 config-example.json 文件
         # with open("config-example.json", "w") as f:

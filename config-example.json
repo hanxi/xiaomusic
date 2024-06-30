@@ -24,5 +24,9 @@
     "use_music_api": false,
     "log_file": "/tmp/xiaomusic.txt",
     "fuzzy_match_cutoff": 0.6,
-    "enable_fuzzy_match": true
+    "enable_fuzzy_match": true,
+    "stop_tts_msg": "收到,再见",
+    "keywords_playlocal": "播放本地歌曲,本地播放歌曲",
+    "keywords_play": "播放歌曲,放歌曲",
+    "keywords_stop": "关机,暂停,停止,停止播放"
 }
