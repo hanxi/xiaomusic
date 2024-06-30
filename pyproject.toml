@@ -23,7 +23,7 @@ license = {text = "MIT"}
 Homepage = "https://github.com/hanxi/xiaomusic"
 
 [project.scripts]
-xiaogpt = "xiaomusic.cli:main"
+xiaomusic = "xiaomusic.cli:main"
 
 [build-system]
 requires = ["pdm-backend"]
