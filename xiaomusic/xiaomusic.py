@@ -311,8 +311,8 @@ class XiaoMusic:
     async def force_stop_xiaoai(self):
         ret = await self.mina_service.player_pause(self.device_id)
         self.log.debug(f"force_stop_xiaoai player_pause ret:{ret}")
-        #ret = await self.mina_service.player_stop(self.device_id)
-        #self.log.debug(f"force_stop_xiaoai player_stop ret:{ret}")
+        # ret = await self.mina_service.player_stop(self.device_id)
+        # self.log.debug(f"force_stop_xiaoai player_stop ret:{ret}")
 
     # 是否在下载中
     def is_downloading(self):
@@ -703,6 +703,7 @@ class XiaoMusic:
             self.log.info(f"根据【{name}】找到歌曲【{real_name}】")
             return real_name
         self.log.info(f"没找到歌曲【{name}】")
+        return name
 
     # 播放本地歌曲
     async def playlocal(self, **kwargs):
@@ -759,7 +760,7 @@ class XiaoMusic:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
             await self.download(search_key, name)
-            self.log.info("正在下载中 %s", search_key + ":" + name)
+            self.log.info(f"正在下载中 {search_key} {name}")
             await self.download_proc.wait()
             # 把文件插入到播放列表里
             self.add_download_music(name)
