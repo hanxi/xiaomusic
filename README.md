@@ -72,6 +72,37 @@ services:
 
 其中 XIAOMUSIC_VERBOSE 设置为 'true' 时表示开启 debug 日志，遇到问题可以去 web 设置页面底部【下载日志文件】按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
 
+## pip 方式安装运行
+
+```shell
+> pip install xiaomusic
+> xiaomusic --help
+ __  __  _                   __  __                 _
+ \ \/ / (_)   __ _    ___   |  \/  |  _   _   ___  (_)   ___
+  \  /  | |  / _` |  / _ \  | |\/| | | | | | / __| | |  / __|
+  /  \  | | | (_| | | (_) | | |  | | | |_| | \__ \ | | | (__
+ /_/\_\ |_|  \__,_|  \___/  |_|  |_|  \__,_| |___/ |_|  \___|
+          XiaoMusic v0.1.81 by: github.com/hanxi
+
+usage: xiaomusic.py [-h] [--hardware HARDWARE] [--account ACCOUNT]
+                    [--password PASSWORD] [--cookie COOKIE] [--verbose]
+                    [--config CONFIG] [--ffmpeg_location FFMPEG_LOCATION]
+
+options:
+  -h, --help            show this help message and exit
+  --hardware HARDWARE   小爱 hardware
+  --account ACCOUNT     xiaomi account
+  --password PASSWORD   xiaomi password
+  --cookie COOKIE       xiaomi cookie
+  --verbose             show info
+  --config CONFIG       config file path
+  --ffmpeg_location FFMPEG_LOCATION
+                        ffmpeg bin path
+> xiaomusic --config config.json
+```
+
+其中 `config.json` 文件可以参考 `config-example.json` 文件配置。见 <https://github.com/hanxi/xiaomusic/issues/94>
+
 ## 开发环境运行
 
 - 使用 install_dependencies.sh 下载依赖
