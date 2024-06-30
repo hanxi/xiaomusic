@@ -476,6 +476,7 @@ class XiaoMusic:
         if not self.config.music_list_json:
             return
 
+        self._all_radio = {}
         music_list = json.loads(self.config.music_list_json)
         try:
             for item in music_list:
