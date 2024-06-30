@@ -50,7 +50,7 @@ docker run -e MI_USER='小米账号' \
 
 ### ✨ 修改8090端口
 
-如果需要修改 8090 端口为其他端口，比如 5678，需要这样配，3个数字都需要是 5678
+如果需要修改 8090 端口为其他端口，比如 5678，需要这样配，3个数字都需要是 5678 。见 <https://github.com/hanxi/xiaomusic/issues/19>
 
 ```yaml
 services:
