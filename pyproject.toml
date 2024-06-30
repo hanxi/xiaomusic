@@ -19,6 +19,12 @@ requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 
+[project.urls]
+Homepage = "https://github.com/hanxi/xiaomusic"
+
+[project.scripts]
+xiaogpt = "xiaomusic.cli:main"
+
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
