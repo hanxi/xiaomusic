@@ -48,7 +48,9 @@ docker run -e MI_USER='小米账号' \
 
 启动成功后，在 web 页面可以配置 MI_DID, MI_HARDWARE, XIAOMUSIC_SEARCH, XIAOMUSIC_PROXY 参数。
 
-### ✨ 如果需要修改 8090 端口为其他端口，比如 5678，需要这样配，3个数字都需要是 5678
+### ✨ 修改8090端口
+
+如果需要修改 8090 端口为其他端口，比如 5678，需要这样配，3个数字都需要是 5678
 
 ```yaml
 services:
