@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass,asdict
 
 from xiaomusic.utils import validate_proxy
 
@@ -106,6 +106,11 @@ class Config:
         self.append_keyword(keywords_play, "play")
         keywords_stop = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止")
         self.append_keyword(keywords_stop, "stop")
+
+        # 保存配置到 config-example.json 文件
+        #with open("config-example.json", "w") as f:
+        #    data = asdict(self)
+        #    json.dump(data, f, ensure_ascii=False, indent=4)
 
     @classmethod
     def from_options(cls, options: argparse.Namespace) -> Config:
