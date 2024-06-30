@@ -610,8 +610,26 @@ class XiaoMusic:
                 except Exception as e:
                     self.log.warning(f"执行出错 {str(e)}\n{traceback.format_exc()}")
 
+    # 检查是否匹配到完全一样的指令
+    def check_full_match_cmd(self, query, ctrl_panel):
+        if query in self.config.key_match_order:
+            opkey = query
+            opvalue = self.config.key_word_dict.get(opkey)
+            if ctrl_panel or self._playing:
+                return opvalue
+            else:
+                if not self.active_cmd or opvalue in self.active_cmd:
+                    return opvalue
+        return None
+
     # 匹配命令
     def match_cmd(self, query, ctrl_panel):
+        # 优先处理完全匹配
+        opvalue = self.check_full_match_cmd(query, ctrl_panel)
+        if opvalue:
+            self.log.info(f"完全匹配指令. query:{query} opvalue:{opvalue}")
+            return (opvalue, None)
+
         for opkey in self.config.key_match_order:
             patternarg = rf"(.*){opkey}(.*)"
             # 匹配参数
@@ -629,16 +647,14 @@ class XiaoMusic:
                 argafter,
             )
             oparg = argafter
+            if opkey in KEY_WORD_ARG_BEFORE_DICT:
+                oparg = argpre
             opvalue = self.config.key_word_dict.get(opkey)
             if not ctrl_panel and not self._playing:
                 if self.active_cmd and opvalue not in self.active_cmd:
-                    self.log.debug(f"不在激活命令中 {opvalue}")
+                    self.log.ifno(f"不在激活命令中 {opvalue}")
                     continue
-            if opkey in KEY_WORD_ARG_BEFORE_DICT:
-                oparg = argpre
-            self.log.info(
-                "匹配到指令. opkey:%s opvalue:%s oparg:%s", opkey, opvalue, oparg
-            )
+            self.log.info(f"匹配到指令. opkey:{opkey} opvalue:{opvalue} oparg:{oparg}")
             return (opvalue, oparg)
         if self._playing:
             self.log.info("未匹配到指令，自动停止")

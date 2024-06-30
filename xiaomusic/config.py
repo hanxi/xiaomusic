@@ -104,7 +104,7 @@ class Config:
         self.append_keyword(keywords_playlocal, "playlocal")
         keywords_play = os.getenv("XIAOMUSIC_KEYWORDS_PLAY", "播放歌曲,放歌曲")
         self.append_keyword(keywords_play, "play")
-        keywords_stop = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止")
+        keywords_stop = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止,停止播放")
         self.append_keyword(keywords_stop, "stop")
 
         # 保存配置到 config-example.json 文件
