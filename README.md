@@ -142,7 +142,7 @@ pdm run xiaomusic.py
 | 型号   | 名称                                                                                             |
 | ---- | ---------------------------------------------------------------------------------------------- |
 | L06A | [小爱音箱](https://home.mi.com/baike/index.html#/detail?model=xiaomi.wifispeaker.l06a)             |
-| L07A | -                                                                                              |
+| L07A | [Redmi小爱音箱 Play](https://home.mi.com/webapp/content/baike/product/index.html?model=xiaomi.wifispeaker.l7a)                     |
 | S12  | [小米AI音箱](https://home.mi.com/baike/index.html#/detail?model=xiaomi.wifispeaker.s12)            |
 | S12A | -                                                                                              |
 | LX5A | [小爱音箱 万能遥控版](https://home.mi.com/baike/index.html#/detail?model=xiaomi.wifispeaker.lx5a)       |
