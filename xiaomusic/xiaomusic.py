@@ -689,13 +689,13 @@ class XiaoMusic:
     async def play_url(self, **kwargs):
         url = kwargs.get("arg1", "")
         if self.config.use_music_api:
-            ret = await self.mina_service.play_by_music_url(self.device_id, url, _type=2)
-            self.log.debug(
+            ret = await self.play_by_music_url(self.device_id, url)
+            self.log.info(
                 f"play_url play_by_music_url {self.config.hardware}. ret:{ret} url:{url}"
             )
         else:
             ret = await self.mina_service.play_by_url(self.device_id, url)
-            self.log.debug(
+            self.log.info(
                 f"play_url play_by_url {self.config.hardware}. ret:{ret} url:{url}"
             )
         return ret
@@ -1011,6 +1011,28 @@ class XiaoMusic:
         self.new_record_event.set()
         result = await future
         return result
+
+    async def play_by_music_url(self, deviceId, url, _type=2):
+        self.log.info(f"play_by_music_url url:{url}, type:{_type}")
+        audio_type = ""
+        if _type == 1:
+            # If set to MUSIC, the light will be on
+            audio_type = "MUSIC"
+        audio_id = "1741636975854617441"
+        music = {
+            "payload": {
+                "audio_items": [
+                    {"item_id": {"audio_id": audio_id}, "stream": {"url": url}}
+                ],
+                "audio_type": audio_type,
+            }
+        }
+        return await self.mina_service.ubus_request(
+            deviceId,
+            "player_play_music",
+            "mediaplayer",
+            {"startaudioid": audio_id, "music": json.dumps(music)},
+        )
 
     async def debug_play_by_music_url(self, arg1=None):
         if arg1 is None:
