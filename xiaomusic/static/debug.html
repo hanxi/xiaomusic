@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Debug For XiaoMusic</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script src="/static/jquery-3.7.1.min.js"></script>
+
+    <script>
+var vConsole = new window.VConsole();
+
+function postJSON() {
+  var data = $('#post-input').val();
+  $.ajax({
+    type: 'POST',
+    url: '/debug_play_by_music_url',
+    data: data,
+    contentType: "application/json; charset=utf-8",
+    success: (err) => {
+      console.log("succ", res);
+    },
+    error: (res) => {
+      console.log("error", res);
+    }
+  });
+}
+</script>
+  </head>
+  <body>
+    <h1>Debug For XiaoMusic</h1>
+    <textarea id="post-input" rows="10" cols="50" placeholder="粘贴json数据..."></textarea><br>
+    <button onclick="postJSON()">提交</button><br>
+  </body>
+  <footer>
+    <p>Powered by <a href="https://github.com/hanxi/xiaomusic" target="_blank">xiaomusic</a></p>
+  </footer>
+</html>

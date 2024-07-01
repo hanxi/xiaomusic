@@ -1011,3 +1011,15 @@ class XiaoMusic:
         self.new_record_event.set()
         result = await future
         return result
+
+    async def debug_play_by_music_url(self, arg1=None):
+        if arg1 is None:
+            arg1 = {}
+        data = arg1
+        self.log.info(f"debug_play_by_music_url: {data}")
+        return await self.mina_service.ubus_request(
+            self.device_id,
+            "player_play_music",
+            "mediaplayer",
+            data,
+        )

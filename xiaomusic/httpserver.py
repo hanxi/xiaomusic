@@ -177,6 +177,16 @@ async def playurl():
     return await xiaomusic.call_main_thread_function(xiaomusic.play_url, arg1=url)
 
 
+@app.route("/debug_play_by_music_url", methods=["POST"])
+@auth.login_required
+async def debug_play_by_music_url():
+    data = request.get_json()
+    log.info(f"data:{data}")
+    return await xiaomusic.call_main_thread_function(
+        xiaomusic.debug_play_by_music_url, arg1=data
+    )
+
+
 def static_path_handler(filename):
     log.debug(filename)
     log.debug(static_path)
