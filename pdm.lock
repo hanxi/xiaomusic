@@ -519,7 +519,7 @@ files = [
 
 [[package]]
 name = "miservice-fork"
-version = "2.6.0"
+version = "2.6.1"
 requires_python = ">=3.8"
 summary = "XiaoMi Cloud Service fork from https://github.com/Yonsm/MiService"
 dependencies = [
@@ -528,8 +528,8 @@ dependencies = [
     "rich",
 ]
 files = [
-    {file = "miservice_fork-2.6.0-py3-none-any.whl", hash = "sha256:98169a77ea41a7b9392e1b1fab8cb80a4165fed8a9e882d9ada9a16dd1120347"},
-    {file = "miservice_fork-2.6.0.tar.gz", hash = "sha256:a59d337d1f7a92566aa147e96595a8d2f5bf3f7000ae5e7dd9ed451f18d6e2fd"},
+    {file = "miservice_fork-2.6.1-py3-none-any.whl", hash = "sha256:9b2cc4208486bbbf788d1bde6e2cbc70f241ce10db4dca6f918076a2d2942a39"},
+    {file = "miservice_fork-2.6.1.tar.gz", hash = "sha256:1702281e1e9827958eb3e82bc3242cd013c018e9aa1de8509b4805b5ccf5e60c"},
 ]
 
 [[package]]
@@ -832,7 +832,7 @@ files = [
 
 [[package]]
 name = "yt-dlp"
-version = "2024.6.24.232830.dev0"
+version = "2024.6.30.232744.dev0"
 requires_python = ">=3.8"
 summary = "A feature-rich command-line audio/video downloader"
 dependencies = [
@@ -846,6 +846,6 @@ dependencies = [
     "websockets>=12.0",
 ]
 files = [
-    {file = "yt_dlp-2024.6.24.232830.dev0-py3-none-any.whl", hash = "sha256:efffecef44ce688e9ee3c02226eb1ba4ad64b37744726e9e4df5c2bd04ea93c5"},
-    {file = "yt_dlp-2024.6.24.232830.dev0.tar.gz", hash = "sha256:0e89b46958984954393692a8c41e0f6d76a773be2df381c3d3a4ff24ce89aa32"},
+    {file = "yt_dlp-2024.6.30.232744.dev0-py3-none-any.whl", hash = "sha256:62e0086b18ac5449277e9d9366ead4eb9e1ba0db23c607ad076da07f945fc1ea"},
+    {file = "yt_dlp-2024.6.30.232744.dev0.tar.gz", hash = "sha256:06dedc2e6b007a64d7f4019fe4f5773f1d6b9421d9f5f58df9e3233ce9683d5b"},
 ]

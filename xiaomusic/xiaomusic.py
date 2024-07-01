@@ -34,7 +34,6 @@ from xiaomusic.utils import (
     find_best_match,
     fuzzyfinder,
     get_local_music_duration,
-    get_random,
     get_web_music_duration,
     parse_cookie_string,
     walk_to_depth,
@@ -673,30 +672,10 @@ class XiaoMusic:
                 return True
         return False
 
-    async def _play_by_music_url(self, device_id, url):
-        audio_id = get_random(30)
-        audio_type = ""
-        if self.config.hardware in ["LX04", "X10A", "X08A"]:
-            audio_type = "MUSIC"
-        music = {
-            "payload": {
-                "audio_items": [
-                    {"item_id": {"audio_id": audio_id}, "stream": {"url": url}}
-                ],
-                "audio_type": audio_type,
-            }
-        }
-        return await self.mina_service.ubus_request(
-            device_id,
-            "player_play_music",
-            "mediaplayer",
-            {"startaudioid": audio_id, "music": json.dumps(music)},
-        )
-
     async def play_url(self, **kwargs):
         url = kwargs.get("arg1", "")
         if self.config.use_music_api:
-            ret = await self._play_by_music_url(self.device_id, url)
+            ret = await self.mina_service.play_by_music_url(self.device_id, url)
             self.log.debug(
                 f"play_url play_by_music_url {self.config.hardware}. ret:{ret} url:{url}"
             )
