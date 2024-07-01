@@ -307,11 +307,25 @@ class XiaoMusic:
         except Exception as e:
             self.log.error(f"Execption {e}")
 
+    async def get_if_xiaoai_is_playing(self):
+        playing_info = await self.mina_service.player_get_status(self.device_id)
+        # WTF xiaomi api
+        is_playing = (
+            json.loads(playing_info.get("data", {}).get("info", "{}")).get("status", -1)
+            == 1
+        )
+        return is_playing
+
+    async def stop_if_xiaoai_is_playing(self):
+        is_playing = await self.get_if_xiaoai_is_playing()
+        if is_playing:
+            # stop it
+            ret = await self.mina_service.player_stop(self.device_id)
+            self.log.debug(f"force_stop_xiaoai player_stop ret:{ret}")
+
     async def force_stop_xiaoai(self):
         ret = await self.mina_service.player_pause(self.device_id)
         self.log.debug(f"force_stop_xiaoai player_pause ret:{ret}")
-        # ret = await self.mina_service.player_stop(self.device_id)
-        # self.log.debug(f"force_stop_xiaoai player_stop ret:{ret}")
 
     # 是否在下载中
     def is_downloading(self):
