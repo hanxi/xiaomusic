@@ -13,6 +13,8 @@
 
 <https://github.com/hanxi/xiaomusic>
 
+初次安装遇到问题请查阅 <https://github.com/hanxi/xiaomusic/issues/99> 上是否已经有解决办法。
+
 ## 最简配置运行
 
 已经支持在 web 页面配置其他参数，docker compose 配置如下：
