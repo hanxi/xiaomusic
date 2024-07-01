@@ -309,6 +309,7 @@ class XiaoMusic:
 
     async def get_if_xiaoai_is_playing(self):
         playing_info = await self.mina_service.player_get_status(self.device_id)
+        self.log.info(playing_info)
         # WTF xiaomi api
         is_playing = (
             json.loads(playing_info.get("data", {}).get("info", "{}")).get("status", -1)
@@ -321,11 +322,12 @@ class XiaoMusic:
         if is_playing:
             # stop it
             ret = await self.mina_service.player_stop(self.device_id)
-            self.log.debug(f"force_stop_xiaoai player_stop ret:{ret}")
+            self.log.info(f"force_stop_xiaoai player_stop ret:{ret}")
 
     async def force_stop_xiaoai(self):
         ret = await self.mina_service.player_pause(self.device_id)
-        self.log.debug(f"force_stop_xiaoai player_pause ret:{ret}")
+        self.log.info(f"force_stop_xiaoai player_pause ret:{ret}")
+        await self.stop_if_xiaoai_is_playing()
 
     # 是否在下载中
     def is_downloading(self):
@@ -1027,11 +1029,13 @@ class XiaoMusic:
                 "audio_type": audio_type,
             }
         }
+        data = {"startaudioid": audio_id, "music": json.dumps(music)}
+        self.log.info(json.dumps(data))
         return await self.mina_service.ubus_request(
             deviceId,
             "player_play_music",
             "mediaplayer",
-            {"startaudioid": audio_id, "music": json.dumps(music)},
+            data,
         )
 
     async def debug_play_by_music_url(self, arg1=None):
