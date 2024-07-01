@@ -689,7 +689,7 @@ class XiaoMusic:
     async def play_url(self, **kwargs):
         url = kwargs.get("arg1", "")
         if self.config.use_music_api:
-            ret = await self.mina_service.play_by_music_url(self.device_id, url)
+            ret = await self.mina_service.play_by_music_url(self.device_id, url, _type=2)
             self.log.debug(
                 f"play_url play_by_music_url {self.config.hardware}. ret:{ret} url:{url}"
             )
