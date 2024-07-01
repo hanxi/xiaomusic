@@ -628,7 +628,7 @@ class XiaoMusic:
         opvalue = self.check_full_match_cmd(query, ctrl_panel)
         if opvalue:
             self.log.info(f"完全匹配指令. query:{query} opvalue:{opvalue}")
-            return (opvalue, None)
+            return (opvalue, "")
 
         for opkey in self.config.key_match_order:
             patternarg = rf"(.*){opkey}(.*)"
