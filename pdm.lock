@@ -5,7 +5,7 @@
 groups = ["default", "lint"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:813253734c7d7835a76cd87fe8fe0329e02ad067f535aee6a9e11cb106569dd2"
+content_hash = "sha256:e7455b13bf13306ccf5ad11781191edb62991d9fbe8f8ce1e61a2f35c713cc2a"
 
 [[package]]
 name = "aiohttp"
@@ -632,8 +632,8 @@ files = [
 
 [[package]]
 name = "requests"
-version = "2.32.3"
-requires_python = ">=3.8"
+version = "2.31.0"
+requires_python = ">=3.7"
 summary = "Python HTTP for Humans."
 dependencies = [
     "certifi>=2017.4.17",
@@ -642,8 +642,8 @@ dependencies = [
     "urllib3<3,>=1.21.1",
 ]
 files = [
-    {file = "requests-2.32.3-py3-none-any.whl", hash = "sha256:70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6"},
-    {file = "requests-2.32.3.tar.gz", hash = "sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760"},
+    {file = "requests-2.31.0-py3-none-any.whl", hash = "sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f"},
+    {file = "requests-2.31.0.tar.gz", hash = "sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1"},
 ]
 
 [[package]]
@@ -832,7 +832,7 @@ files = [
 
 [[package]]
 name = "yt-dlp"
-version = "2024.6.30.232744.dev0"
+version = "2024.5.30.232720.dev0"
 requires_python = ">=3.8"
 summary = "A feature-rich command-line audio/video downloader"
 dependencies = [
@@ -841,11 +841,11 @@ dependencies = [
     "certifi",
     "mutagen",
     "pycryptodomex",
-    "requests<3,>=2.32.2",
+    "requests<3,>=2.31.0",
     "urllib3<3,>=1.26.17",
     "websockets>=12.0",
 ]
 files = [
-    {file = "yt_dlp-2024.6.30.232744.dev0-py3-none-any.whl", hash = "sha256:62e0086b18ac5449277e9d9366ead4eb9e1ba0db23c607ad076da07f945fc1ea"},
-    {file = "yt_dlp-2024.6.30.232744.dev0.tar.gz", hash = "sha256:06dedc2e6b007a64d7f4019fe4f5773f1d6b9421d9f5f58df9e3233ce9683d5b"},
+    {file = "yt_dlp-2024.5.30.232720.dev0-py3-none-any.whl", hash = "sha256:d6e563a2923807392325722028e7792e35affb694a505617b008195d0d212d2c"},
+    {file = "yt_dlp-2024.5.30.232720.dev0.tar.gz", hash = "sha256:9e2b177c5b13ea6f54cee1c56a69dd7832d506fba73a2247c6470e7d1952f959"},
 ]
