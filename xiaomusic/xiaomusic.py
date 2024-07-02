@@ -106,9 +106,12 @@ class XiaoMusic:
         self.set_last_record("get_volume#")
 
     def setup_logger(self):
+        log_format = f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s"
+        date_format = "[%X]"
+        formatter = logging.Formatter(fmt=log_format, datefmt=date_format)
         logging.basicConfig(
-            format=f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s",
-            datefmt="[%X]",
+            format=log_format,
+            datefmt=date_format,
         )
 
         log_file = self.config.log_file
@@ -120,6 +123,7 @@ class XiaoMusic:
         handler = RotatingFileHandler(
             self.config.log_file, maxBytes=10 * 1024 * 1024, backupCount=1
         )
+        handler.setFormatter(formatter)
         self.log = logging.getLogger("xiaomusic")
         self.log.addHandler(handler)
         self.log.setLevel(logging.DEBUG if self.config.verbose else logging.INFO)
@@ -283,7 +287,11 @@ class XiaoMusic:
         self.new_record_event.set()
 
     async def do_tts(self, value):
-        self.log.info("do_tts: %s", value)
+        self.log.info(f"try do_tts value:{value}")
+        if not value:
+            self.log.info("do_tts no value")
+            return
+
         await self.force_stop_xiaoai()
         try:
             await self.mina_service.text_to_speech(self.device_id, value)
@@ -292,11 +300,15 @@ class XiaoMusic:
         # 最大等8秒
         sec = min(8, int(len(value) / 3))
         await asyncio.sleep(sec)
-        self.log.debug(f"do_tts. cur_music:{self.cur_music}")
-        if self._playing and not self.is_downloading():
+        self.log.info(f"do_tts ok. cur_music:{self.cur_music}")
+        if self.isplaying() and not self.isdownloading():
             # 继续播放歌曲
-            self.log.info("继续播放歌曲")
+            self.log.info("现在继续播放歌曲")
             await self.play()
+        else:
+            self.log.info(
+                f"不会继续播放歌曲. isplaying:{self.isplaying()} isdownloading:{self.isdownloading()}"
+            )
 
     async def do_set_volume(self, value):
         value = int(value)
@@ -330,13 +342,14 @@ class XiaoMusic:
         await self.stop_if_xiaoai_is_playing()
 
     # 是否在下载中
-    def is_downloading(self):
+    def isdownloading(self):
         if not self.download_proc:
             return False
         if (
             self.download_proc.returncode is not None
             and self.download_proc.returncode < 0
         ):
+            self.log.info(f"returncode isdownloading:{self.download_proc.returncode}")
             return False
         return True
 
@@ -366,7 +379,8 @@ class XiaoMusic:
         if self.proxy:
             sbp_args += ("--proxy", f"{self.proxy}")
 
-        self.log.info(f"download: {sbp_args}")
+        cmd = " ".join(sbp_args)
+        self.log.info(f"download cmd: {cmd}")
         self.download_proc = await asyncio.create_subprocess_exec(*sbp_args)
         await self.do_tts(f"正在下载歌曲{search_key}")
 
@@ -567,7 +581,7 @@ class XiaoMusic:
 
         if self._next_timer:
             self._next_timer.cancel()
-            self.log.info("定时器已取消")
+            self.log.info("旧定时器已取消")
 
         self._timeout = sec
 
@@ -631,7 +645,7 @@ class XiaoMusic:
         if query in self.config.key_match_order:
             opkey = query
             opvalue = self.config.key_word_dict.get(opkey)
-            if ctrl_panel or self._playing:
+            if ctrl_panel or self.isplaying():
                 return opvalue
             else:
                 if not self.active_cmd or opvalue in self.active_cmd:
@@ -666,13 +680,13 @@ class XiaoMusic:
             if opkey in KEY_WORD_ARG_BEFORE_DICT:
                 oparg = argpre
             opvalue = self.config.key_word_dict.get(opkey)
-            if not ctrl_panel and not self._playing:
+            if not ctrl_panel and not self.isplaying():
                 if self.active_cmd and opvalue not in self.active_cmd:
                     self.log.ifno(f"不在激活命令中 {opvalue}")
                     continue
             self.log.info(f"匹配到指令. opkey:{opkey} opvalue:{opvalue} oparg:{oparg}")
             return (opvalue, oparg)
-        if self._playing:
+        if self.isplaying():
             self.log.info("未匹配到指令，自动停止")
             return ("stop", "notts")
         return (None, None)
@@ -741,8 +755,8 @@ class XiaoMusic:
         self.cur_music = name
         self.log.info(f"cur_music {self.cur_music}")
         sec, url = await self.get_music_sec_url(name)
-        self.log.info(f"播放 {url}")
         await self.force_stop_xiaoai()
+        self.log.info(f"播放 {url}")
         await self.play_url(arg1=url)
         self.log.info("已经开始播放了")
         # 设置下一首歌曲的播放定时器
@@ -867,12 +881,12 @@ class XiaoMusic:
     async def stop(self, **kwargs):
         self._playing = False
         if kwargs.get("arg1", "") != "notts":
-            if self.config.stop_tts_msg:
-                await self.do_tts(self.config.stop_tts_msg)
+            await self.do_tts(self.config.stop_tts_msg)
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info("定时器已取消")
         await self.force_stop_xiaoai()
+        self.log.info("stop now")
 
     async def stop_after_minute(self, **kwargs):
         if self._stop_timer:
