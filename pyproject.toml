@@ -1,6 +1,6 @@
 [project]
 name = "xiaomusic"
-version = "0.1.88"
+version = "0.1.89"
 description = "Play Music with xiaomi AI speaker"
 authors = [
     {name = "涵曦", email = "im.hanxi@gmail.com"},
