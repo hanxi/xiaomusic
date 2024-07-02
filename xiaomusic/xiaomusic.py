@@ -1039,7 +1039,7 @@ class XiaoMusic:
         if _type == 1:
             # If set to MUSIC, the light will be on
             audio_type = "MUSIC"
-        audio_id = "1741636975854617441"
+        audio_id = "1582971365183456177"
         music = {
             "payload": {
                 "audio_type": audio_type,
