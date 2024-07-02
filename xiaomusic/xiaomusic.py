@@ -345,12 +345,14 @@ class XiaoMusic:
     def isdownloading(self):
         if not self.download_proc:
             return False
-        if (
-            self.download_proc.returncode is not None
-            and self.download_proc.returncode < 0
-        ):
-            self.log.info(f"returncode isdownloading:{self.download_proc.returncode}")
+
+        if self.download_proc.returncode is not None:
+            self.log.info(
+                f"Process exited with returncode:{self.download_proc.returncode}"
+            )
             return False
+
+        self.log.info("Download Process is still running.")
         return True
 
     # 下载歌曲
