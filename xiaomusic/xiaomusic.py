@@ -301,6 +301,10 @@ class XiaoMusic:
         sec = min(8, int(len(value) / 3))
         await asyncio.sleep(sec)
         self.log.info(f"do_tts ok. cur_music:{self.cur_music}")
+        await self.check_replay()
+
+    # 继续播放被打断的歌曲
+    async def check_replay(self):
         if self.isplaying() and not self.isdownloading():
             # 继续播放歌曲
             self.log.info("现在继续播放歌曲")
@@ -634,6 +638,7 @@ class XiaoMusic:
                 opvalue, oparg = self.match_cmd(query, ctrl_panel)
                 if not opvalue:
                     await asyncio.sleep(1)
+                    await self.check_replay()
                     continue
 
                 try:
@@ -688,9 +693,7 @@ class XiaoMusic:
                     continue
             self.log.info(f"匹配到指令. opkey:{opkey} opvalue:{opvalue} oparg:{oparg}")
             return (opvalue, oparg)
-        if self.isplaying():
-            self.log.info("未匹配到指令，自动停止")
-            return ("stop", "notts")
+        self.log.info(f"未匹配到指令 {query} {ctrl_panel}")
         return (None, None)
 
     # 判断是否播放下一首歌曲
