@@ -30,7 +30,8 @@ case "$arch" in
 x86_64)
 	echo "64位 x86 架构"
 	pkg=ffmpeg-master-latest-linux64-gpl
-	install_from_build "$pkg"
+	#install_from_build "$pkg"
+	install_from_apt
 	;;
 arm64 | aarch64)
 	echo "64位 ARM 架构"

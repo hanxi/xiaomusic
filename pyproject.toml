@@ -6,11 +6,10 @@ authors = [
     {name = "涵曦", email = "im.hanxi@gmail.com"},
 ]
 dependencies = [
-    "requests==2.31.0",
     "aiohttp>=3.8.6",
     "miservice-fork>=2.5.0",
     "mutagen>=1.47.0",
-    "yt-dlp>=2024.04.09",
+    "yt-dlp>=2024.07.01",
     "flask[async]>=3.0.1",
     "waitress>=3.0.0",
     "flask-HTTPAuth>=4.8.0",
