@@ -98,7 +98,6 @@ async def do_cmd():
 @auth.login_required
 async def getsetting():
     config = xiaomusic.getconfig()
-    log.debug(config)
 
     alldevices = await xiaomusic.call_main_thread_function(xiaomusic.getalldevices)
     log.info(alldevices)
