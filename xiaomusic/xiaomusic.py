@@ -1042,10 +1042,23 @@ class XiaoMusic:
         audio_id = "1741636975854617441"
         music = {
             "payload": {
-                "audio_items": [
-                    {"item_id": {"audio_id": audio_id}, "stream": {"url": url}}
-                ],
                 "audio_type": audio_type,
+                "audio_items": [
+                    {
+                        "item_id": {
+                            "audio_id": audio_id,
+                            "cp": {
+                                "album_id": "-1",
+                                "episode_index": 0,
+                                "id": "372639235",
+                                "name": "xiaowei",
+                            },
+                        },
+                        "stream": {
+                            "url": "http://ngcdn001.cnr.cn/live/zgzs/index.m3u8"
+                        },
+                    }
+                ],
             }
         }
         data = {"startaudioid": audio_id, "music": json.dumps(music)}
