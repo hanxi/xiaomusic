@@ -1054,9 +1054,7 @@ class XiaoMusic:
                                 "name": "xiaowei",
                             },
                         },
-                        "stream": {
-                            "url": "http://ngcdn001.cnr.cn/live/zgzs/index.m3u8"
-                        },
+                        "stream": {"url": url},
                     }
                 ],
             }
