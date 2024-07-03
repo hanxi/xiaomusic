@@ -158,6 +158,7 @@ pdm run xiaomusic.py
 型号与产品名称对照可以在这里查询 <https://home.miot-spec.com/s/xiaomi.wifispeaker>
 
 > 如果你的设备支持播放，请反馈给我添加到支持列表里，谢谢。
+> 目前应该所有设备类型都已经支持播放，有问题随时反馈。
 
 ## 支持音乐格式
 
