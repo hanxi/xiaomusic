@@ -1039,8 +1039,8 @@ class XiaoMusic:
         if _type == 1:
             # If set to MUSIC, the light will be on
             audio_type = "MUSIC"
-        audio_id = "1582971365183456177"
-        id = "355454500"
+        audio_id = self.config.use_music_audio_id
+        id = self.config.use_music_id
         music = {
             "payload": {
                 "audio_type": audio_type,

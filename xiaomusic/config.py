@@ -81,6 +81,8 @@ class Config:
     use_music_api: bool = (
         os.getenv("XIAOMUSIC_USE_MUSIC_API", "false").lower() == "true"
     )
+    use_music_audio_id: str = os.getenv("XIAOMUSIC_USE_MUSIC_AUDIO_ID", "1582971365183456177")
+    use_music_id: str = os.getenv("XIAOMUSIC_USE_MUSIC_ID", "355454500")
     log_file: str = os.getenv("XIAOMUSIC_MUSIC_LOG_FILE", "/tmp/xiaomusic.txt")
     # 模糊搜索匹配的最低相似度阈值
     fuzzy_match_cutoff: float = float(os.getenv("XIAOMUSIC_FUZZY_MATCH_CUTOFF", "0.6"))
