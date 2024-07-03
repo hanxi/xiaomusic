@@ -1040,6 +1040,7 @@ class XiaoMusic:
             # If set to MUSIC, the light will be on
             audio_type = "MUSIC"
         audio_id = "1582971365183456177"
+        id = "355454500"
         music = {
             "payload": {
                 "audio_type": audio_type,
@@ -1050,14 +1051,21 @@ class XiaoMusic:
                             "cp": {
                                 "album_id": "-1",
                                 "episode_index": 0,
-                                "id": "372639235",
+                                "id": id,
                                 "name": "xiaowei",
                             },
                         },
                         "stream": {"url": url},
                     }
                 ],
-            }
+                "list_params": {
+                    "listId": "-1",
+                    "loadmore_offset": 0,
+                    "origin": "xiaowei",
+                    "type": "MUSIC",
+                },
+            },
+            "play_behavior": "REPLACE_ALL",
         }
         data = {"startaudioid": audio_id, "music": json.dumps(music)}
         self.log.info(json.dumps(data))
