@@ -20,9 +20,14 @@ LOGO = r"""
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--port",
+        dest="port",
+        help="监听端口",
+    )
+    parser.add_argument(
         "--hardware",
         dest="hardware",
-        help="小爱 hardware",
+        help="小爱音箱型号",
     )
     parser.add_argument(
         "--account",
