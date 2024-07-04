@@ -73,15 +73,16 @@ services:
   \  /  | |  / _` |  / _ \  | |\/| | | | | | / __| | |  / __|
   /  \  | | | (_| | | (_) | | |  | | | |_| | \__ \ | | | (__
  /_/\_\ |_|  \__,_|  \___/  |_|  |_|  \__,_| |___/ |_|  \___|
-          XiaoMusic v0.1.81 by: github.com/hanxi
+          XiaoMusic v0.1.92 by: github.com/hanxi
 
-usage: xiaomusic.py [-h] [--hardware HARDWARE] [--account ACCOUNT]
-                    [--password PASSWORD] [--cookie COOKIE] [--verbose]
-                    [--config CONFIG] [--ffmpeg_location FFMPEG_LOCATION]
+usage: xiaomusic [-h] [--port PORT] [--hardware HARDWARE] [--account ACCOUNT]
+                 [--password PASSWORD] [--cookie COOKIE] [--verbose]
+                 [--config CONFIG] [--ffmpeg_location FFMPEG_LOCATION]
 
 options:
   -h, --help            show this help message and exit
-  --hardware HARDWARE   小爱 hardware
+  --port PORT           监听端口
+  --hardware HARDWARE   小爱音箱型号
   --account ACCOUNT     xiaomi account
   --password PASSWORD   xiaomi password
   --cookie COOKIE       xiaomi cookie
@@ -93,6 +94,8 @@ options:
 ```
 
 其中 `config.json` 文件可以参考 `config-example.json` 文件配置。见 <https://github.com/hanxi/xiaomusic/issues/94>
+
+不修改默认端口 8090 的情况下，只需要执行 `xiaomusic` 即可启动。
 
 ## 开发环境运行
 
