@@ -56,14 +56,10 @@ services:
     volumes:
       - ./music:/app/music
     environment:
-      MI_USER: '小米账号'
-      MI_PASS: '小米密码'
-      XIAOMUSIC_VERBOSE: 'true'
-      XIAOMUSIC_HOSTNAME: 'docker 主机 ip'
       XIAOMUSIC_PORT: 5678
 ```
 
-其中 XIAOMUSIC_VERBOSE 设置为 'true' 时表示开启 debug 日志，遇到问题可以去 web 设置页面底部【下载日志文件】按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
+遇到问题可以去 web 设置页面底部点击【下载日志文件】按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
 
 > 目前除了 XIAOMUSIC_PORT 只能在启动前配置，其他参数都可以在 web 网页里配置。
 
@@ -322,6 +318,7 @@ services:
 - XIAOMUSIC_KEYWORDS_PLAYLOCAL 用来播放本地歌曲的口令前缀，本地找不到时不会下载歌曲，默认是 "播放本地歌曲,本地播放歌曲" ，可以用英文逗号分割配置多个。
 - XIAOMUSIC_ENABLE_FUZZY_MATCH 设为 true 时开启模糊匹配（默认），设为 false 时关闭模糊匹配，支持模糊匹配歌名和歌单名。 具体见 <https://github.com/hanxi/xiaomusic/issues/52>
 - XIAOMUSIC_FUZZY_MATCH_CUTOFF 设置模糊搜索匹配的最低相似度阈值（默认0.6，可以配0到1直接的小数），越小越模糊，越大越精准。具体见 <https://github.com/hanxi/xiaomusic/issues/52>
+- XIAOMUSIC_PUBLIC_PORT 用于设置外网端口，当使用反向代理时可以设置为外网端口，XIAOMUSIC_HOSTNAME 设为外网IP或者域名即可。
 
 ## 讨论区
 
