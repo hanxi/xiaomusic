@@ -640,13 +640,13 @@ class XiaoMusic:
                 self.log.info("收到消息:%s 控制面板:%s", query, ctrl_panel)
 
                 # 匹配命令
-                opvalue, oparg = self.match_cmd(query, ctrl_panel)
-                if not opvalue:
-                    await asyncio.sleep(1)
-                    await self.check_replay()
-                    continue
-
                 try:
+                    opvalue, oparg = self.match_cmd(query, ctrl_panel)
+                    if not opvalue:
+                        await asyncio.sleep(1)
+                        await self.check_replay()
+                        continue
+
                     func = getattr(self, opvalue)
                     await func(arg1=oparg)
                 except Exception as e:
