@@ -29,26 +29,17 @@ services:
       - 8090:8090
     volumes:
       - ./music:/app/music
-    environment:
-      MI_USER: '小米账号'
-      MI_PASS: '小米密码'
-      XIAOMUSIC_VERBOSE: 'true'
-      XIAOMUSIC_HOSTNAME: 'docker 主机 ip'
 ```
 
 对应的 docker 启动命令如下:
 
 ```yaml
-docker run -e MI_USER='小米账号' \
-    -e MI_PASS='小米密码' \
-    -e XIAOMUSIC_VERBOSE='true' \
-    -e XIAOMUSIC_HOSTNAME='docker 主机 ip' \
-    -p 8090:8090 \
+docker run -p 8090:8090 \
     -v ./music:/app/music \
     hanxi/xiaomusic
 ```
 
-启动成功后，在 web 页面可以配置 MI_DID, MI_HARDWARE, XIAOMUSIC_SEARCH, XIAOMUSIC_PROXY 参数。
+启动成功后，在 web 页面可以配置其他参数，带有 `*` 号的配置是必须要配置的，其他的用不上时不用修改。
 
 ### ✨ 修改8090端口
 
@@ -73,6 +64,8 @@ services:
 ```
 
 其中 XIAOMUSIC_VERBOSE 设置为 'true' 时表示开启 debug 日志，遇到问题可以去 web 设置页面底部【下载日志文件】按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
+
+> 目前除了 XIAOMUSIC_PORT 只能在启动前配置，其他参数都可以在 web 网页里配置。
 
 ## pip 方式安装运行
 
