@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 from dataclasses import dataclass
+from typing import get_type_hints
 
 from xiaomusic.utils import validate_proxy
 
@@ -58,7 +59,7 @@ class Config:
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))
     proxy: str | None = os.getenv("XIAOMUSIC_PROXY", None)
     search_prefix: str = os.getenv(
-        "XIAOMUSIC_SEARCH", "ytsearch:"
+        "XIAOMUSIC_SEARCH", "bilisearch:"
     )  # "bilisearch:" or "ytsearch:"
     ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
     active_cmd: str = os.getenv(
@@ -137,3 +138,34 @@ class Config:
                 if value is not None and key in cls.__dataclass_fields__:
                     result[key] = value
         return result
+
+    def update_config(self, data):
+        # 获取类型提示
+        type_hints = get_type_hints(self)
+
+        for k, v in data.items():
+            if v and k in type_hints:
+                # 获取字段的类型
+                expected_type = type_hints[k]
+
+                # 根据期望的类型进行转换
+                if isinstance(v, expected_type):
+                    # 如果v已经是正确的类型，则直接赋值
+                    setattr(self, k, v)
+                else:
+                    # 尝试转换类型
+                    try:
+                        # 特殊情况处理（例如对布尔值的转换）
+                        if expected_type is bool:
+                            converted_value = False
+                            if v and v.lower() == "true":
+                                converted_value = True
+                        else:
+                            # 使用期望类型的构造函数进行转换
+                            converted_value = expected_type(v)
+                    except (ValueError, TypeError) as e:
+                        print(f"Error converting {v} to {expected_type}: {e}")
+                        continue
+
+                    # 设置转换后的值
+                    setattr(self, k, converted_value)

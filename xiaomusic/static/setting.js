@@ -5,6 +5,17 @@ $(function(){
     $("#version").text(`${data.version}`);
   });
 
+  // 遍历所有的select元素，默认选中只有1个选项的
+  const autoSelectOne = () => {
+    $('select').each(function() {
+      // 如果select元素仅有一个option子元素
+      if ($(this).children('option').length === 1) {
+        // 选中这个option
+        $(this).find('option').prop('selected', true);
+      }
+    });
+  };
+
   const updateSelectOptions = (selectId, optionsList, selectedOption) => {
     const select = $(selectId);
     select.empty();
@@ -42,51 +53,37 @@ $(function(){
   // 拉取现有配置
   $.get("/getsetting", function(data, status) {
     console.log(data, status);
-
     updateSelectOptions("#mi_did", data.mi_did_list, data.mi_did);
-    updateSelectOptions("#mi_hardware", data.mi_hardware_list, data.mi_hardware);
+    updateSelectOptions("#hardware", data.mi_hardware_list, data.hardware);
 
     // 初始化联动
-    linkSelects('#mi_did', data.mi_did_list, '#mi_hardware', data.mi_hardware_list);
+    linkSelects('#mi_did', data.mi_did_list, '#hardware', data.mi_hardware_list);
 
-    if (data.xiaomusic_search != "") {
-      $("#xiaomusic_search").val(data.xiaomusic_search);
+    // 初始化显示
+    for (const key in data) {
+      if (data.hasOwnProperty(key) && data[key] != "") {
+        const $element = $("#" + key);
+        if ($element.length) {
+          $element.val(data[key]);
+        }
+      }
     }
 
-    if (data.xiaomusic_proxy != "") {
-      $("#xiaomusic_proxy").val(data.xiaomusic_proxy);
-    }
-
-    if (data.xiaomusic_music_list_url != "") {
-      $("#xiaomusic_music_list_url").val(data.xiaomusic_music_list_url);
-    }
-
-    if (data.xiaomusic_music_list_json != "") {
-      $("#xiaomusic_music_list_json").val(data.xiaomusic_music_list_json);
-    }
+    autoSelectOne();
   });
 
   $("#save").on("click", () => {
-    var mi_did = $("#mi_did").val();
-    var mi_hardware = $("#mi_hardware").val();
-    var xiaomusic_search = $("#xiaomusic_search").val();
-    var xiaomusic_proxy = $("#xiaomusic_proxy").val();
-    var xiaomusic_music_list_url = $("#xiaomusic_music_list_url").val();
-    var xiaomusic_music_list_json = $("#xiaomusic_music_list_json").val();
-    console.log("mi_did", mi_did);
-    console.log("mi_hardware", mi_hardware);
-    console.log("xiaomusic_search", xiaomusic_search);
-    console.log("xiaomusic_proxy", xiaomusic_proxy);
-    console.log("xiaomusic_music_list_url", xiaomusic_music_list_url);
-    console.log("xiaomusic_music_list_json", xiaomusic_music_list_json);
-    var data = {
-      mi_did: mi_did,
-      mi_hardware: mi_hardware,
-      xiaomusic_search: xiaomusic_search,
-      xiaomusic_proxy: xiaomusic_proxy,
-      xiaomusic_music_list_url: xiaomusic_music_list_url,
-      xiaomusic_music_list_json: xiaomusic_music_list_json,
-    };
+    var setting = $('#setting');
+    var inputs = setting.find('input, select, textarea');
+    var data = {};
+    inputs.each(function() {
+      var id = this.id;
+      if (id) {
+        data[id] = $(this).val();
+      }
+    });
+    console.log(data)
+
     $.ajax({
       type: "POST",
       url: "/savesetting",
@@ -102,10 +99,10 @@ $(function(){
   });
 
   $("#get_music_list").on("click", () => {
-    var xiaomusic_music_list_url = $("#xiaomusic_music_list_url").val();
-    console.log("xiaomusic_music_list_url", xiaomusic_music_list_url);
+    var music_list_url = $("#music_list_url").val();
+    console.log("music_list_url", music_list_url);
     var data = {
-      url: xiaomusic_music_list_url,
+      url: music_list_url,
     };
     $.ajax({
       type: "POST",
@@ -114,7 +111,7 @@ $(function(){
       data: JSON.stringify(data),
       success: (res) => {
         if (res.ret == "OK") {
-          $("#xiaomusic_music_list_json").val(res.content);
+          $("#music_list_json").val(res.content);
         } else {
           console.log(res);
           alert(res.ret);

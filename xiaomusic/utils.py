@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import copy
 import difflib
 import os
 import random
@@ -240,3 +241,30 @@ def get_local_music_duration(filename):
 
 def get_random(length):
     return "".join(random.sample(string.ascii_letters + string.digits, length))
+
+
+# 深拷贝把敏感数据设置位*
+def deepcopy_data_no_sensitive_info(data, fields_to_anonymize=None):
+    if fields_to_anonymize is None:
+        fields_to_anonymize = [
+            "account",
+            "password",
+            "httpauth_username",
+            "httpauth_password",
+        ]
+
+    copy_data = copy.deepcopy(data)
+
+    # 检查copy_data是否是字典或具有属性的对象
+    if isinstance(copy_data, dict):
+        # 对字典进行处理
+        for field in fields_to_anonymize:
+            if field in copy_data:
+                copy_data[field] = "******"
+    else:
+        # 对对象进行处理
+        for field in fields_to_anonymize:
+            if hasattr(copy_data, field):
+                setattr(copy_data, field, "******")
+
+    return copy_data

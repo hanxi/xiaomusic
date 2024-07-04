@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+from dataclasses import asdict
 from threading import Thread
 
 from flask import Flask, request, send_file, send_from_directory
@@ -10,6 +11,7 @@ from xiaomusic import (
     __version__,
 )
 from xiaomusic.utils import (
+    deepcopy_data_no_sensitive_info,
     downloadfile,
 )
 
@@ -98,19 +100,11 @@ async def do_cmd():
 @auth.login_required
 async def getsetting():
     config = xiaomusic.getconfig()
-
+    data = asdict(config)
     alldevices = await xiaomusic.call_main_thread_function(xiaomusic.getalldevices)
-    log.info(alldevices)
-    data = {
-        "mi_did": config.mi_did,
-        "mi_did_list": alldevices["did_list"],
-        "mi_hardware": config.hardware,
-        "mi_hardware_list": alldevices["hardware_list"],
-        "xiaomusic_search": config.search_prefix,
-        "xiaomusic_proxy": config.proxy,
-        "xiaomusic_music_list_url": config.music_list_url,
-        "xiaomusic_music_list_json": config.music_list_json,
-    }
+    log.info(f"getsetting alldevices: {alldevices}")
+    data["mi_did_list"] = alldevices["did_list"]
+    data["mi_hardware_list"] = alldevices["hardware_list"]
     return data
 
 
@@ -118,7 +112,8 @@ async def getsetting():
 @auth.login_required
 async def savesetting():
     data = request.get_json()
-    log.info(data)
+    debug_data = deepcopy_data_no_sensitive_info(data)
+    log.info(f"saveconfig: {debug_data}")
     await xiaomusic.saveconfig(data)
     return "save success"
 

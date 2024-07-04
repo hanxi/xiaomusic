@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import asyncio
-import copy
 import json
 import logging
 import os
@@ -31,6 +30,7 @@ from xiaomusic.const import (
 from xiaomusic.httpserver import StartHTTPServer
 from xiaomusic.utils import (
     custom_sort_key,
+    deepcopy_data_no_sensitive_info,
     find_best_match,
     fuzzyfinder,
     get_local_music_duration,
@@ -61,20 +61,6 @@ class XiaoMusic:
         self.new_record_event = asyncio.Event()
         self.queue = queue.Queue()
 
-        self.music_path = config.music_path
-        self.conf_path = config.conf_path
-        if not self.conf_path:
-            self.conf_path = config.music_path
-
-        self.hostname = config.hostname
-        self.port = config.port
-        self.proxy = config.proxy
-        self.search_prefix = config.search_prefix
-        self.ffmpeg_location = config.ffmpeg_location
-        self.active_cmd = config.active_cmd.split(",")
-        self.exclude_dirs = set(config.exclude_dirs.split(","))
-        self.music_path_depth = config.music_path_depth
-
         # 下载对象
         self.download_proc = None
         # 单曲循环，全部循环
@@ -93,6 +79,9 @@ class XiaoMusic:
         # 关机定时器
         self._stop_timer = None
 
+        # 初始化配置
+        self.init_config()
+
         # 初始化日志
         self.setup_logger()
 
@@ -104,6 +93,24 @@ class XiaoMusic:
 
         # 启动时初始化获取声音
         self.set_last_record("get_volume#")
+
+        debug_config = deepcopy_data_no_sensitive_info(self.config)
+        self.log.info(f"Startup OK. {debug_config}")
+
+    def init_config(self):
+        self.music_path = self.config.music_path
+        self.conf_path = self.config.conf_path
+        if not self.conf_path:
+            self.conf_path = self.config.music_path
+
+        self.hostname = self.config.hostname
+        self.port = self.config.port
+        self.proxy = self.config.proxy
+        self.search_prefix = self.config.search_prefix
+        self.ffmpeg_location = self.config.ffmpeg_location
+        self.active_cmd = self.config.active_cmd.split(",")
+        self.exclude_dirs = set(self.config.exclude_dirs.split(","))
+        self.music_path_depth = self.config.music_path_depth
 
     def setup_logger(self):
         log_format = f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s"
@@ -127,12 +134,6 @@ class XiaoMusic:
         self.log = logging.getLogger("xiaomusic")
         self.log.addHandler(handler)
         self.log.setLevel(logging.DEBUG if self.config.verbose else logging.INFO)
-        debug_config = copy.deepcopy(self.config)
-        debug_config.account = "******"
-        debug_config.password = "******"
-        debug_config.httpauth_username = "******"
-        debug_config.httpauth_password = "******"
-        self.log.info(debug_config)
 
     async def poll_latest_ask(self):
         async with ClientSession() as session:
@@ -982,19 +983,23 @@ class XiaoMusic:
         await self.call_main_thread_function(self.reinit)
 
     def update_config_from_setting(self, data):
-        self.config.mi_did = data.get("mi_did")
+        # 兼容旧配置:一段时间后清理这里的旧代码
         self.config.hardware = data.get("mi_hardware")
         self.config.search_prefix = data.get("xiaomusic_search")
         self.config.proxy = data.get("xiaomusic_proxy")
         self.config.music_list_url = data.get("xiaomusic_music_list_url")
         self.config.music_list_json = data.get("xiaomusic_music_list_json")
 
-        self.search_prefix = self.config.search_prefix
-        self.proxy = self.config.proxy
-        self.log.debug("update_config_from_setting ok. data:%s", data)
+        # 自动赋值相同字段的配置
+        self.config.update_config(data)
+
+        self.init_config()
+        debug_config = deepcopy_data_no_sensitive_info(self.config)
+        self.log.info("update_config_from_setting ok. data:%s", debug_config)
 
     # 重新初始化
     async def reinit(self, **kwargs):
+        self.setup_logger()
         await self.init_all_data(self.session)
         self._gen_all_music_list()
         self.log.info("reinit success")
