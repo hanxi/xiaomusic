@@ -56,7 +56,8 @@ class Config:
     music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")
     conf_path: str = os.getenv("XIAOMUSIC_CONF_PATH", None)
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
-    port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))
+    port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))  # 监听端口
+    public_port: int = int(os.getenv("XIAOMUSIC_PUBLIC_PORT", 0))  # 歌曲访问端口
     proxy: str | None = os.getenv("XIAOMUSIC_PROXY", None)
     search_prefix: str = os.getenv(
         "XIAOMUSIC_SEARCH", "bilisearch:"
