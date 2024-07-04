@@ -995,7 +995,7 @@ class XiaoMusic:
 
     # 重新初始化
     async def reinit(self, **kwargs):
-        await self.try_update_device_id()
+        await self.init_all_data(self.session)
         self._gen_all_music_list()
         self.log.info("reinit success")
 
