@@ -289,12 +289,18 @@ class XiaoMusic:
         self.log.info(f"do_tts ok. cur_music:{self.cur_music}")
         await self.check_replay()
 
-    async def text_to_speech(self, value):
+    async def text_to_speech_one(self, device_id, value):
         try:
-            for device_id in self.device2hardware:
-                await self.mina_service.text_to_speech(device_id, value)
+            await self.mina_service.text_to_speech(device_id, value)
         except Exception as e:
             self.log.error(f"Execption {e}")
+
+    async def text_to_speech(self, value):
+        tasks = [
+            self.text_to_speech_one(device_id, value)
+            for device_id in self.device2hardware
+        ]
+        await asyncio.gather(*tasks)
 
     # 继续播放被打断的歌曲
     async def check_replay(self):
@@ -336,19 +342,24 @@ class XiaoMusic:
             # stop it
             ret = await self.mina_service.player_stop(device_id)
             self.log.info(
-                f"force_stop_xiaoai player_stop device_id:{device_id} ret:{ret}"
+                f"stop_if_xiaoai_is_playing player_stop device_id:{device_id} ret:{ret}"
             )
 
-    async def force_stop_xiaoai(self):
+    async def force_stop_one_xiaoai(self, device_id):
         try:
-            for device_id in self.device2hardware:
-                ret = await self.mina_service.player_pause(device_id)
-                self.log.info(
-                    f"force_stop_xiaoai player_pause device_id:{device_id} ret:{ret}"
-                )
-                await self.stop_if_xiaoai_is_playing(device_id)
+            ret = await self.mina_service.player_pause(device_id)
+            self.log.info(
+                f"force_stop_one_xiaoai player_pause device_id:{device_id} ret:{ret}"
+            )
+            await self.stop_if_xiaoai_is_playing(device_id)
         except Exception as e:
             self.log.error(f"Execption {e}")
+
+    async def force_stop_xiaoai(self):
+        tasks = [
+            self.force_stop_one_xiaoai(device_id) for device_id in self.device2hardware
+        ]
+        await asyncio.gather(*tasks)
 
     # 是否在下载中
     def isdownloading(self):
@@ -720,21 +731,28 @@ class XiaoMusic:
         url = kwargs.get("arg1", "")
         await self.all_player_play(url)
 
-    async def all_player_play(self, url):
+    async def play_one_url(self, device_id, url):
         try:
-            for device_id in self.device2hardware:
-                if self.config.use_music_api:
-                    ret = await self.play_by_music_url(device_id, url)
-                    self.log.info(
-                        f"player_play play_by_music_url device_id:{device_id} ret:{ret} url:{url}"
-                    )
-                else:
-                    ret = await self.mina_service.play_by_url(device_id, url)
-                    self.log.info(
-                        f"player_play play_by_url device_id:{device_id} ret:{ret} url:{url}"
-                    )
+            if self.config.use_music_api:
+                ret = await self.play_by_music_url(device_id, url)
+                self.log.info(
+                    f"play_one_url play_by_music_url device_id:{device_id} ret:{ret} url:{url}"
+                )
+            else:
+                ret = await self.mina_service.play_by_url(device_id, url)
+                self.log.info(
+                    f"play_one_url play_by_url device_id:{device_id} ret:{ret} url:{url}"
+                )
         except Exception as e:
             self.log.error(f"Execption {e}")
+        return ret
+
+    async def all_player_play(self, url):
+        tasks = [
+            self.play_one_url(device_id, url) for device_id in self.device2hardware
+        ]
+        results = await asyncio.gather(*tasks)
+        self.log.info(f"all_player_play {url} {results}")
 
     def find_real_music_name(self, name):
         if not self.config.enable_fuzzy_match:
