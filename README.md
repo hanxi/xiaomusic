@@ -323,6 +323,11 @@ services:
 - XIAOMUSIC_FUZZY_MATCH_CUTOFF 设置模糊搜索匹配的最低相似度阈值（默认0.6，可以配0到1直接的小数），越小越模糊，越大越精准。具体见 <https://github.com/hanxi/xiaomusic/issues/52>
 - XIAOMUSIC_PUBLIC_PORT 用于设置外网端口，当使用反向代理时可以设置为外网端口，XIAOMUSIC_HOSTNAME 设为外网IP或者域名即可。
 
+## 高级篇
+
+- 自定义口令功能 <https://github.com/hanxi/xiaomusic/issues/105>
+- [ ] 缺少一篇教程 [如何写自定义插件](https://github.com/hanxi/xiaomusic/issues/105)
+
 ## 讨论区
 
 - [点击链接加入QQ频道【xiaomusic】](https://pd.qq.com/s/e2jybz0ss)
