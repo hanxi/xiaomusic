@@ -27,13 +27,33 @@ function postJSON() {
     }
   });
 }
-</script>
+
+function sendDebugCmd() {
+  var cmd = $("#cmd").val();
+  $.ajax({
+    type: "POST",
+    url: "/cmd",
+    contentType: "application/json; charset=utf-8",
+    data: JSON.stringify({cmd: cmd}),
+    success: () => {
+    },
+    error: () => {
+      // 请求失败时执行的操作
+    }
+  });
+}
+    </script>
   </head>
   <body>
     <h1>Debug For XiaoMusic</h1>
     <textarea id="post-input" rows="10" cols="50" placeholder="粘贴json数据..."></textarea><br>
     <button onclick="postJSON()">提交</button><br>
+
+    <hr>
+    <input id="cmd" type="text"></input>
+    <button onclick="sendDebugCmd()">测试自定义口令</button><br>
   </body>
+
   <footer>
     <p>Powered by <a href="https://github.com/hanxi/xiaomusic" target="_blank">xiaomusic</a></p>
   </footer>

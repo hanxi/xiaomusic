@@ -28,6 +28,7 @@ from xiaomusic.const import (
     SUPPORT_MUSIC_TYPE,
 )
 from xiaomusic.httpserver import StartHTTPServer
+from xiaomusic.plugin import PluginManager
 from xiaomusic.utils import (
     custom_sort_key,
     deepcopy_data_no_sensitive_info,
@@ -93,6 +94,9 @@ class XiaoMusic:
 
         # 启动时初始化获取声音
         self.set_last_record("get_volume#")
+
+        # 初始化插件
+        self.plugin_manager = PluginManager(self)
 
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"Startup OK. {debug_config}")
@@ -670,6 +674,10 @@ class XiaoMusic:
         opvalue = self.check_full_match_cmd(query, ctrl_panel)
         if opvalue:
             self.log.info(f"完全匹配指令. query:{query} opvalue:{opvalue}")
+            # 自定义口令
+            if opvalue.startswith("exec#"):
+                code = opvalue.split("#", 1)[1]
+                return ("exec", code)
             return (opvalue, "")
 
         for opkey in self.config.key_match_order:
@@ -1096,3 +1104,7 @@ class XiaoMusic:
             "mediaplayer",
             data,
         )
+
+    async def exec(self, arg1=None):
+        code = arg1 if arg1 else 'code1("hello")'
+        await self.plugin_manager.execute_plugin(code)
