@@ -13,7 +13,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from aiohttp import ClientSession, ClientTimeout
-from miservice import MiAccount, MiIOService, MiNAService
+from miservice import MiAccount, MiNAService
 
 from xiaomusic import (
     __version__,
@@ -55,12 +55,12 @@ class XiaoMusic:
         self.last_timestamp = int(time.time() * 1000)  # timestamp last call mi speaker
         self.last_record = None
         self.cookie_jar = None
-        self.device_id = ""
         self.mina_service = None
-        self.miio_service = None
         self.polling_event = asyncio.Event()
         self.new_record_event = asyncio.Event()
         self.queue = queue.Queue()
+        self.device2hardware = {}
+        self.did2device = {}
 
         # 下载对象
         self.download_proc = None
@@ -145,12 +145,14 @@ class XiaoMusic:
 
     async def poll_latest_ask(self):
         async with ClientSession() as session:
-            session._cookie_jar = self.cookie_jar
             while True:
                 self.log.debug(
                     "Listening new message, timestamp: %s", self.last_timestamp
                 )
-                await self.get_latest_ask_from_xiaoai(session)
+                session._cookie_jar = self.cookie_jar
+                # 拉取所有音箱的对话记录
+                for device_id in self.device2hardware:
+                    await self.get_latest_ask_from_xiaoai(session, device_id)
                 start = time.perf_counter()
                 self.log.debug("Polling_event, timestamp: %s", self.last_timestamp)
                 await self.polling_event.wait()
@@ -161,7 +163,7 @@ class XiaoMusic:
 
     async def init_all_data(self, session):
         await self.login_miboy(session)
-        await self._init_data_hardware()
+        await self.try_update_device_id()
         cookie_jar = self.get_cookie()
         if cookie_jar:
             session.cookie_jar.update_cookies(cookie_jar)
@@ -177,61 +179,26 @@ class XiaoMusic:
         # Forced login to refresh to refresh token
         await account.login("micoapi")
         self.mina_service = MiNAService(account)
-        self.miio_service = MiIOService(account)
 
     async def try_update_device_id(self):
-        # fix multi xiaoai problems we check did first
-        # why we use this way to fix?
-        # some videos and articles already in the Internet
-        # we do not want to change old way, so we check if miotDID in `env` first
-        # to set device id
-
         try:
+            mi_dids = self.config.mi_did.split(",")
             hardware_data = await self.mina_service.device_list()
+            self.device2hardware = {}
+            self.did2device = {}
             for h in hardware_data:
-                if did := self.config.mi_did:
-                    if h.get("miotDID", "") == str(did):
-                        self.device_id = h.get("deviceID")
-                        break
-                    else:
-                        continue
-                if h.get("hardware", "") == self.config.hardware:
-                    self.device_id = h.get("deviceID")
-                    break
-            else:
-                self.log.error(
-                    f"we have no hardware: {self.config.hardware} please use `micli mina` to check"
-                )
+                device = h.get("deviceID", "")
+                hardware = h.get("hardware", "")
+                did = h.get("miotDID", "")
+                if device and hardware and did and (did in mi_dids):
+                    self.device2hardware[device] = hardware
+                    self.did2device[did] = device
         except Exception as e:
             self.log.error(f"Execption {e}")
-
-    async def _init_data_hardware(self):
-        if self.config.cookie:
-            # if use cookie do not need init
-            return
-        await self.try_update_device_id()
-        if not self.config.mi_did:
-            devices = await self.miio_service.device_list()
-            try:
-                self.config.mi_did = next(
-                    d["did"]
-                    for d in devices
-                    if d["model"].endswith(self.config.hardware.lower())
-                )
-            except StopIteration:
-                self.log.error(
-                    f"cannot find did for hardware: {self.config.hardware} "
-                    "please set it via MI_DID env"
-                )
-            except Exception as e:
-                self.log.error(f"Execption init hardware {e}")
 
     def get_cookie(self):
         if self.config.cookie:
             cookie_jar = parse_cookie_string(self.config.cookie)
-            # set attr from cookie fix #134
-            cookie_dict = cookie_jar.get_dict()
-            self.device_id = cookie_dict["deviceId"]
             return cookie_jar
 
         if not os.path.exists(self.mi_token_home):
@@ -242,12 +209,18 @@ class XiaoMusic:
             user_data = json.loads(f.read())
         user_id = user_data.get("userId")
         service_token = user_data.get("micoapi")[1]
+        device_id = self.get_one_device()
         cookie_string = COOKIE_TEMPLATE.format(
-            device_id=self.device_id, service_token=service_token, user_id=user_id
+            device_id=device_id, service_token=service_token, user_id=user_id
         )
         return parse_cookie_string(cookie_string)
 
-    async def get_latest_ask_from_xiaoai(self, session):
+    def get_one_device(self):
+        device_id = next(iter(self.device2hardware), "")
+        return device_id
+
+    async def get_latest_ask_from_xiaoai(self, session, device_id):
+        cookies = {"deviceId": device_id}
         retries = 3
         for i in range(retries):
             try:
@@ -257,7 +230,7 @@ class XiaoMusic:
                     timestamp=str(int(time.time() * 1000)),
                 )
                 self.log.debug(f"url:{url}")
-                r = await session.get(url, timeout=timeout)
+                r = await session.get(url, timeout=timeout, cookies=cookies)
             except Exception as e:
                 self.log.warning(
                     "Execption when get latest ask from xiaoai: %s", str(e)
@@ -302,15 +275,20 @@ class XiaoMusic:
             return
 
         await self.force_stop_xiaoai()
-        try:
-            await self.mina_service.text_to_speech(self.device_id, value)
-        except Exception as e:
-            self.log.error(f"Execption {e}")
+        await self.text_to_speech(value)
+
         # 最大等8秒
         sec = min(8, int(len(value) / 3))
         await asyncio.sleep(sec)
         self.log.info(f"do_tts ok. cur_music:{self.cur_music}")
         await self.check_replay()
+
+    async def text_to_speech(self, value):
+        try:
+            for device_id in self.device2hardware:
+                await self.mina_service.text_to_speech(device_id, value)
+        except Exception as e:
+            self.log.error(f"Execption {e}")
 
     # 继续播放被打断的歌曲
     async def check_replay(self):
@@ -327,13 +305,17 @@ class XiaoMusic:
         value = int(value)
         self._volume = value
         self.log.info(f"声音设置为{value}")
+        await self.player_set_volume(value)
+
+    async def player_set_volume(self, value):
         try:
-            await self.mina_service.player_set_volume(self.device_id, value)
+            for device_id in self.device2hardware:
+                await self.mina_service.player_set_volume(device_id, value)
         except Exception as e:
             self.log.error(f"Execption {e}")
 
-    async def get_if_xiaoai_is_playing(self):
-        playing_info = await self.mina_service.player_get_status(self.device_id)
+    async def get_if_xiaoai_is_playing(self, device_id):
+        playing_info = await self.mina_service.player_get_status(device_id)
         self.log.info(playing_info)
         # WTF xiaomi api
         is_playing = (
@@ -342,17 +324,25 @@ class XiaoMusic:
         )
         return is_playing
 
-    async def stop_if_xiaoai_is_playing(self):
-        is_playing = await self.get_if_xiaoai_is_playing()
+    async def stop_if_xiaoai_is_playing(self, device_id):
+        is_playing = await self.get_if_xiaoai_is_playing(device_id)
         if is_playing:
             # stop it
-            ret = await self.mina_service.player_stop(self.device_id)
-            self.log.info(f"force_stop_xiaoai player_stop ret:{ret}")
+            ret = await self.mina_service.player_stop(device_id)
+            self.log.info(
+                f"force_stop_xiaoai player_stop device_id:{device_id} ret:{ret}"
+            )
 
     async def force_stop_xiaoai(self):
-        ret = await self.mina_service.player_pause(self.device_id)
-        self.log.info(f"force_stop_xiaoai player_pause ret:{ret}")
-        await self.stop_if_xiaoai_is_playing()
+        try:
+            for device_id in self.device2hardware:
+                ret = await self.mina_service.player_pause(device_id)
+                self.log.info(
+                    f"force_stop_xiaoai player_pause device_id:{device_id} ret:{ret}"
+                )
+                await self.stop_if_xiaoai_is_playing(device_id)
+        except Exception as e:
+            self.log.error(f"Execption {e}")
 
     # 是否在下载中
     def isdownloading(self):
@@ -722,17 +712,23 @@ class XiaoMusic:
 
     async def play_url(self, **kwargs):
         url = kwargs.get("arg1", "")
-        if self.config.use_music_api:
-            ret = await self.play_by_music_url(self.device_id, url)
-            self.log.info(
-                f"play_url play_by_music_url {self.config.hardware}. ret:{ret} url:{url}"
-            )
-        else:
-            ret = await self.mina_service.play_by_url(self.device_id, url)
-            self.log.info(
-                f"play_url play_by_url {self.config.hardware}. ret:{ret} url:{url}"
-            )
-        return ret
+        await self.all_player_play(url)
+
+    async def all_player_play(self, url):
+        try:
+            for device_id in self.device2hardware:
+                if self.config.use_music_api:
+                    ret = await self.play_by_music_url(device_id, url)
+                    self.log.info(
+                        f"player_play play_by_music_url device_id:{device_id} ret:{ret} url:{url}"
+                    )
+                else:
+                    ret = await self.mina_service.play_by_url(device_id, url)
+                    self.log.info(
+                        f"player_play play_by_url device_id:{device_id} ret:{ret} url:{url}"
+                    )
+        except Exception as e:
+            self.log.error(f"Execption {e}")
 
     def find_real_music_name(self, name):
         if not self.config.enable_fuzzy_match:
@@ -927,7 +923,9 @@ class XiaoMusic:
         await self.do_set_volume(value)
 
     async def get_volume(self, **kwargs):
-        playing_info = await self.mina_service.player_get_status(self.device_id)
+        # 取一个音箱的声音
+        device_id = self.get_one_device()
+        playing_info = await self.mina_service.player_get_status(device_id)
         self.log.debug("get_volume. playing_info:%s", playing_info)
         self._volume = json.loads(playing_info.get("data", {}).get("info", "{}")).get(
             "volume", 0
@@ -1097,9 +1095,10 @@ class XiaoMusic:
         if arg1 is None:
             arg1 = {}
         data = arg1
-        self.log.info(f"debug_play_by_music_url: {data}")
+        device_id = self.get_one_device()
+        self.log.info(f"debug_play_by_music_url: {data} {device_id}")
         return await self.mina_service.ubus_request(
-            self.device_id,
+            device_id,
             "player_play_music",
             "mediaplayer",
             data,

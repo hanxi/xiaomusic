@@ -61,6 +61,12 @@ def main():
         dest="ffmpeg_location",
         help="ffmpeg bin path",
     )
+    parser.add_argument(
+        "--enable_config_example",
+        dest="enable_config_example",
+        help="是否输出示例配置文件",
+        action="store_true",
+    )
 
     print(LOGO.format(f"XiaoMusic v{__version__} by: github.com/hanxi"))
 

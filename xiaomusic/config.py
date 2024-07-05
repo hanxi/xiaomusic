@@ -59,10 +59,10 @@ def default_key_match_order():
 
 @dataclass
 class Config:
-    hardware: str = os.getenv("MI_HARDWARE", "L07A")
     account: str = os.getenv("MI_USER", "")
     password: str = os.getenv("MI_PASS", "")
-    mi_did: str = os.getenv("MI_DID", "")
+    mi_did: str = os.getenv("MI_DID", "")  # 逗号分割支持多设备
+    hardware: str = os.getenv("MI_HARDWARE", "L07A")  # 逗号分割支持多设备
     cookie: str = ""
     verbose: bool = os.getenv("XIAOMUSIC_VERBOSE", "").lower() == "true"
     music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")
@@ -107,6 +107,7 @@ class Config:
         os.getenv("XIAOMUSIC_ENABLE_FUZZY_MATCH", "true").lower() == "true"
     )
     stop_tts_msg: str = os.getenv("XIAOMUSIC_STOP_TTS_MSG", "收到,再见")
+    enable_config_example: bool = False
 
     keywords_playlocal: str = os.getenv(
         "XIAOMUSIC_KEYWORDS_PLAYLOCAL", "播放本地歌曲,本地播放歌曲"
@@ -139,10 +140,10 @@ class Config:
         self.append_user_keyword()
 
         # 保存配置到 config-example.json 文件
-        with open("config-example.json", "w") as f:
-            data = asdict(self)
-            print(data)
-            json.dump(data, f, ensure_ascii=False, indent=4)
+        if self.enable_config_example:
+            with open("config-example.json", "w") as f:
+                data = asdict(self)
+                json.dump(data, f, ensure_ascii=False, indent=4)
 
     @classmethod
     def from_options(cls, options: argparse.Namespace) -> Config:
