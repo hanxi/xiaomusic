@@ -11,6 +11,7 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/ffmpeg /app/ffmpeg
 COPY xiaomusic/ ./xiaomusic/
+COPY plugins/ ./plugins/
 COPY xiaomusic.py .
 ENV XDG_CONFIG_HOME=/config
 ENV XIAOMUSIC_HOSTNAME=192.168.2.5
