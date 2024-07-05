@@ -86,8 +86,8 @@ class Config:
     disable_httpauth: bool = (
         os.getenv("XIAOMUSIC_DISABLE_HTTPAUTH", "true").lower() == "true"
     )
-    httpauth_username: str = os.getenv("XIAOMUSIC_HTTPAUTH_USERNAME", "admin")
-    httpauth_password: str = os.getenv("XIAOMUSIC_HTTPAUTH_PASSWORD", "admin")
+    httpauth_username: str = os.getenv("XIAOMUSIC_HTTPAUTH_USERNAME", "")
+    httpauth_password: str = os.getenv("XIAOMUSIC_HTTPAUTH_PASSWORD", "")
     music_list_url: str = os.getenv("XIAOMUSIC_MUSIC_LIST_URL", "")
     music_list_json: str = os.getenv("XIAOMUSIC_MUSIC_LIST_JSON", "")
     disable_download: bool = (
