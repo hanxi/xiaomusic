@@ -6,6 +6,14 @@
     <script src="/static/jquery-3.7.1.min.js"></script>
     <script src="/static/setting.js"></script>
     <link rel="stylesheet" type="text/css" href="/static/style.css">
+
+    <!--
+<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+<script>
+var vConsole = new window.VConsole();
+</script>
+-->
+
   </head>
   <body>
     <h2>小爱音箱设置面板
@@ -14,18 +22,20 @@
       </a>)
     </h2>
     <hr>
+
+    <div class="rows">
+      <label for="mi_did_hardware">*勾选设备(至少勾选1个):</label>
+      <div id="mi_did_hardware">
+      </div>
+    </div>
+    <br>
+
     <div id="setting" class="rows">
       <label for="account">*小米账号:</label>
       <input id="account" type="text" placeholder="填写小米登录账号"></input>
 
       <label for="password">*小米密码:</label>
       <input id="password" type="password" placeholder="填写小米登录密码"></input>
-
-      <label for="mi_did">*MI_DID:</label>
-      <select id="mi_did"></select>
-
-      <label for="hardware">*MI_HARDWARE(型号):</label>
-      <select id="hardware" disabled></select>
 
       <label for="hostname">*XIAOMUSIC_HOSTNAME(IP或域名):</label>
       <input id="hostname" type="text"></input>

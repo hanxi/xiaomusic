@@ -77,3 +77,41 @@ footer {
   width: 300px;
   height: 200px;
 }
+
+/* 隐藏原生复选框 */
+.custom-checkbox {
+  display: none;
+}
+
+/* 修改后的自定义复选框外观 */
+.checkbox-label {
+  display: inline-block;
+  width: 200px; /* 宽度 */
+  height: 20px; /* 高度 */
+  background-color: #fff; /* 背景颜色 */
+  border: 0px solid #ccc; /* 边框 */
+  border-radius: 3px; /* 圆角边框 */
+  position: relative; /* 设置相对定位 */
+  cursor: pointer; /* 鼠标形状 */
+  padding-left: 40px; /* 给左边的复选框图标留下空位 */
+}
+
+/* 对勾的样式 */
+.custom-checkbox:checked + .checkbox-label::after {
+  content: '✔';
+  position: absolute;
+  left: 10px; /* 对勾图标靠左侧位置 */
+  color: #000; /* 对勾颜色 */
+  font-size: 18px; /* 对勾字体大小，视清晰度需调整 */
+}
+
+/* 标签文本样式，使用 ::before 伪元素表示复选框未选中时的样式 */
+.custom-checkbox + .checkbox-label::before {
+  content: '⬜'; /* 表示未选中时的复选框样式，这里用了白色方块 */
+  position: absolute;
+  left: 8px; /* 方块图标靠左侧位置 */
+  top: 1px; /* 方块图标顶部位置 */
+  color: #000; /* 方块颜色 */
+  font-size: 18px; /* 方块字体大小，视清晰度需调整 */
+}
+
