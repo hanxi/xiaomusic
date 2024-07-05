@@ -106,6 +106,12 @@ class XiaoMusic:
         self.conf_path = self.config.conf_path
         if not self.conf_path:
             self.conf_path = self.config.music_path
+        self.download_path = self.config.download_path
+        if not self.download_path:
+            self.download_path = self.music_path
+
+        if not os.path.exists(self.download_path):
+            os.makedirs(self.download_path)
 
         self.hostname = self.config.hostname
         self.port = self.config.port
@@ -373,7 +379,7 @@ class XiaoMusic:
             "--audio-format",
             "mp3",
             "--paths",
-            self.music_path,
+            self.download_path,
             "-o",
             f"{name}.mp3",
             "--ffmpeg-location",
@@ -551,7 +557,7 @@ class XiaoMusic:
 
     # 把下载的音乐加入播放列表
     def add_download_music(self, name):
-        self._all_music[name] = os.path.join(self.music_path, f"{name}.mp3")
+        self._all_music[name] = os.path.join(self.download_path, f"{name}.mp3")
         if name not in self._play_list:
             self._play_list.append(name)
             self.log.debug("add_music %s", name)

@@ -65,7 +65,10 @@ class Config:
     hardware: str = os.getenv("MI_HARDWARE", "L07A")  # 逗号分割支持多设备
     cookie: str = ""
     verbose: bool = os.getenv("XIAOMUSIC_VERBOSE", "").lower() == "true"
-    music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")
+    music_path: str = os.getenv(
+        "XIAOMUSIC_MUSIC_PATH", "music"
+    )  # 只能是music目录下的子目录
+    download_path: str = os.getenv("XIAOMUSIC_DOWNLOAD_PATH", "")
     conf_path: str = os.getenv("XIAOMUSIC_CONF_PATH", None)
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))  # 监听端口
