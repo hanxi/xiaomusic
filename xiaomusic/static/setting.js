@@ -76,10 +76,16 @@ $(function(){
 
     // 初始化显示
     for (const key in data) {
-      if (data.hasOwnProperty(key) && data[key] != "") {
+      if (data.hasOwnProperty(key)) {
         const $element = $("#" + key);
         if ($element.length) {
-          $element.val(data[key]);
+          if (data[key] === true) {
+            $element.val('true');
+          } else if (data[key] === false) {
+            $element.val('false');
+          } else {
+            $element.val(data[key]);
+          }
         }
       }
     }
