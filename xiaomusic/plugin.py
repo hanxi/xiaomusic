@@ -1,6 +1,8 @@
 import importlib
 import inspect
+import os
 import pkgutil
+import sys
 
 
 class PluginManager:
@@ -8,7 +10,13 @@ class PluginManager:
         self.xiaomusic = xiaomusic
         self.log = xiaomusic.log
         self._funcs = {}
+        self._add_plugin_dir_to_path(plugin_dir)
         self._load_plugins(plugin_dir)
+
+    def _add_plugin_dir_to_path(self, plugin_dir):
+        plugin_dir_path = os.path.join(os.path.dirname(__file__), plugin_dir)
+        if plugin_dir_path not in sys.path:
+            sys.path.append(plugin_dir_path)
 
     def _load_plugins(self, plugin_dir):
         # 假设 plugins 已经在搜索路径上
