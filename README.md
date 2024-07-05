@@ -159,6 +159,7 @@ pdm run xiaomusic.py
 - wav
 - ape
 - ogg
+- m4a
 
 > 本地音乐会搜索目录下上面格式的文件，下载的歌曲是 mp3 格式的。
 > 已知 L05B L05C 不支持 flac 格式。

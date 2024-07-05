@@ -4,6 +4,7 @@ SUPPORT_MUSIC_TYPE = [
     ".wav",
     ".ape",
     ".ogg",
+    ".m4a",
 ]
 
 LATEST_ASK_API = "https://userprofile.mina.mi.com/device_profile/v2/conversation?source=dialogu&hardware={hardware}&timestamp={timestamp}&limit=2"
