@@ -729,7 +729,7 @@ class XiaoMusic:
 
     async def play_url(self, **kwargs):
         url = kwargs.get("arg1", "")
-        await self.all_player_play(url)
+        return await self.all_player_play(url)
 
     async def play_one_url(self, device_id, url):
         try:
@@ -753,6 +753,7 @@ class XiaoMusic:
         ]
         results = await asyncio.gather(*tasks)
         self.log.info(f"all_player_play {url} {results}")
+        return results
 
     def find_real_music_name(self, name):
         if not self.config.enable_fuzzy_match:
