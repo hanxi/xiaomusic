@@ -52,7 +52,7 @@ class XiaoMusic:
         self.config = config
 
         self.mi_token_home = Path.home() / ".mi.token"
-        self.last_timestamp = int(time.time() * 1000)  # timestamp last call mi speaker
+        self.last_timestamp = {}  # timestamp last call mi speaker
         self.last_record = None
         self.cookie_jar = None
         self.mina_service = None
@@ -152,19 +152,22 @@ class XiaoMusic:
     async def poll_latest_ask(self):
         async with ClientSession() as session:
             while True:
-                self.log.debug(
-                    "Listening new message, timestamp: %s", self.last_timestamp
-                )
+                self.log.debug(f"Listening new message, timestamp: self.last_timestamp")
                 session._cookie_jar = self.cookie_jar
+
                 # 拉取所有音箱的对话记录
-                for device_id in self.device2hardware:
-                    await self.get_latest_ask_from_xiaoai(session, device_id)
+                tasks = [
+                    self.get_latest_ask_from_xiaoai(session, device_id)
+                    for device_id in self.device2hardware
+                ]
+                await asyncio.gather(*tasks)
+
                 start = time.perf_counter()
-                self.log.debug("Polling_event, timestamp: %s", self.last_timestamp)
+                self.log.debug(f"Polling_event, timestamp: {self.last_timestamp}")
                 await self.polling_event.wait()
                 if (d := time.perf_counter() - start) < 1:
                     # sleep to avoid too many request
-                    self.log.debug("Sleep %f, timestamp: %s", d, self.last_timestamp)
+                    self.log.debug(f"Sleep {d}, timestamp: {self.last_timestamp}")
                     await asyncio.sleep(1 - d)
 
     async def init_all_data(self, session):
@@ -251,18 +254,21 @@ class XiaoMusic:
                     self.log.info("Maybe outof date trying to re init it")
                     await self.init_all_data(self.session)
             else:
-                return self._get_last_query(data)
+                return self._get_last_query(device_id, data)
 
-    def _get_last_query(self, data):
-        self.log.debug(f"_get_last_query:{data}")
+    def _get_last_query(self, device_id, data):
+        self.log.debug(f"_get_last_query device_id:{device_id} data:{data}")
         if d := data.get("data"):
             records = json.loads(d).get("records")
             if not records:
                 return
             last_record = records[0]
             timestamp = last_record.get("time")
-            if timestamp > self.last_timestamp:
-                self.last_timestamp = timestamp
+            # 首次用当前时间初始化
+            if device_id not in self.last_timestamp:
+                self.last_timestamp[device_id] = int(time.time() * 1000)
+            if timestamp > self.last_timestamp[device_id]:
+                self.last_timestamp[device_id] = timestamp
                 self.last_record = last_record
                 self.new_record_event.set()
 
@@ -466,7 +472,7 @@ class XiaoMusic:
             self.log.debug("get_music_url web music. name:%s, url:%s", name, url)
             return url
 
-        filename = self.get_filename(name).replace('\\','/')
+        filename = self.get_filename(name).replace("\\", "/")
         self.log.debug(
             "get_music_url local music. name:%s, filename:%s", name, filename
         )
