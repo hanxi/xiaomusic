@@ -2,4 +2,4 @@
 
 cz bump --check-consistency --increment patch
 
-#git push -u origin main --tags
+git push -u origin main --tags
