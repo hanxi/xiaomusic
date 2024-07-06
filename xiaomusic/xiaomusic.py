@@ -1051,14 +1051,17 @@ class XiaoMusic:
     async def getalldevices(self, **kwargs):
         did_list = []
         hardware_list = []
-        hardware_data = await self.mina_service.device_list()
-        for h in hardware_data:
-            did = h.get("miotDID", "")
-            if did != "":
-                did_list.append(did)
-            hardware = h.get("hardware", "")
-            if h.get("hardware", "") != "":
-                hardware_list.append(hardware)
+        try:
+            hardware_data = await self.mina_service.device_list()
+            for h in hardware_data:
+                did = h.get("miotDID", "")
+                if did != "":
+                    did_list.append(did)
+                hardware = h.get("hardware", "")
+                if h.get("hardware", "") != "":
+                    hardware_list.append(hardware)
+        except Exception as e:
+            self.log.error(f"Execption {e}")
         alldevices = {
             "did_list": did_list,
             "hardware_list": hardware_list,
