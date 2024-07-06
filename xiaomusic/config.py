@@ -120,6 +120,9 @@ class Config:
     user_key_word_dict: dict[str, str] = field(
         default_factory=default_user_key_word_dict
     )
+    enable_force_stop: bool = (
+        os.getenv("XIAOMUSIC_ENABLE_FORCE_STOP", "false").lower() == "true"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):

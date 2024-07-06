@@ -344,11 +344,11 @@ class XiaoMusic:
 
     async def stop_if_xiaoai_is_playing(self, device_id):
         is_playing = await self.get_if_xiaoai_is_playing(device_id)
-        if is_playing:
+        if is_playing or self.config.enable_force_stop:
             # stop it
             ret = await self.mina_service.player_stop(device_id)
             self.log.info(
-                f"stop_if_xiaoai_is_playing player_stop device_id:{device_id} ret:{ret}"
+                f"stop_if_xiaoai_is_playing player_stop device_id:{device_id} enable_force_stop:{self.config.enable_force_stop} ret:{ret}"
             )
 
     async def force_stop_one_xiaoai(self, device_id):
