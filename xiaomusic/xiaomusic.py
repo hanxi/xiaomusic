@@ -466,7 +466,7 @@ class XiaoMusic:
             self.log.debug("get_music_url web music. name:%s, url:%s", name, url)
             return url
 
-        filename = self.get_filename(name)
+        filename = self.get_filename(name).replace('\\','/')
         self.log.debug(
             "get_music_url local music. name:%s, filename:%s", name, filename
         )
