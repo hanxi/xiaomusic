@@ -152,7 +152,9 @@ class XiaoMusic:
     async def poll_latest_ask(self):
         async with ClientSession() as session:
             while True:
-                self.log.debug(f"Listening new message, timestamp: self.last_timestamp")
+                self.log.debug(
+                    f"Listening new message, timestamp: {self.last_timestamp}"
+                )
                 session._cookie_jar = self.cookie_jar
 
                 # 拉取所有音箱的对话记录
