@@ -3,7 +3,7 @@ name = "xiaomusic"
 version = "0.1.95"
 description = "Play Music with xiaomi AI speaker"
 authors = [
-    {name = "涵曦", email = "im.hanxi@gmail.com"},
+{name = "涵曦", email = "im.hanxi@gmail.com"},
 ]
 dependencies = [
     "aiohttp>=3.8.6",
@@ -33,19 +33,22 @@ build-backend = "pdm.backend"
 lint = [
     "ruff>=0.4.8",
 ]
+dev = [
+    "commitizen>=3.27.0",
+]
 [tool.ruff]
 lint.select = [
-        "B", # flake8-bugbear
-        "C4", # flake8-comprehensions
-        "E", # pycodestyle - Error
-        "F", # Pyflakes
-        "I", # isort
-        "W", # pycodestyle - Warning
-        "UP", # pyupgrade
+    "B", # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "E", # pycodestyle - Error
+    "F", # Pyflakes
+    "I", # isort
+    "W", # pycodestyle - Warning
+    "UP", # pyupgrade
 ]
 lint.ignore = [
-        "E501", # line-too-long
-        "W191", # tab-indentation
+    "E501", # line-too-long
+    "W191", # tab-indentation
 ]
 include = ["**/*.py", "**/*.pyi", "**/pyproject.toml"]
 
@@ -63,3 +66,6 @@ version_scheme = "pep440"
 version_provider = "pep621"
 update_changelog_on_bump = true
 major_version_zero = true
+version_files = [
+    "xiaomusic/__init__.py",
+]
