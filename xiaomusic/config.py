@@ -73,7 +73,7 @@ class Config:
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))  # 监听端口
     public_port: int = int(os.getenv("XIAOMUSIC_PUBLIC_PORT", 0))  # 歌曲访问端口
-    proxy: str | None = os.getenv("XIAOMUSIC_PROXY", None)
+    proxy: str = os.getenv("XIAOMUSIC_PROXY", None)
     search_prefix: str = os.getenv(
         "XIAOMUSIC_SEARCH", "bilisearch:"
     )  # "bilisearch:" or "ytsearch:"
@@ -163,42 +163,39 @@ class Config:
         return cls(**config)
 
     @classmethod
+    def convert_value(cls, k, v, type_hints):
+        if v is not None and k in type_hints:
+            expected_type = type_hints[k]
+            try:
+                if expected_type is bool:
+                    converted_value = False
+                    if str(v).lower() == "true":
+                        converted_value = True
+                else:
+                    converted_value = expected_type(v)
+                print(converted_value)
+                return converted_value
+            except (ValueError, TypeError) as e:
+                print(f"Error converting {k}:{v} to {expected_type}: {e}")
+        return None
+
+    @classmethod
     def read_from_file(cls, config_path: str) -> dict:
         result = {}
         with open(config_path, "rb") as f:
-            config = json.load(f)
-            for key, value in config.items():
-                if value is not None and key in cls.__dataclass_fields__:
-                    result[key] = value
+            data = json.load(f)
+            type_hints = get_type_hints(cls)
+
+            for k, v in data.items():
+                converted_value = cls.convert_value(k, v, type_hints)
+                if converted_value is not None:
+                    result[k] = converted_value
         return result
 
     def update_config(self, data):
-        # 获取类型提示
         type_hints = get_type_hints(self)
 
         for k, v in data.items():
-            if v and k in type_hints:
-                # 获取字段的类型
-                expected_type = type_hints[k]
-
-                # 根据期望的类型进行转换
-                if isinstance(v, expected_type):
-                    # 如果v已经是正确的类型，则直接赋值
-                    setattr(self, k, v)
-                else:
-                    # 尝试转换类型
-                    try:
-                        # 特殊情况处理（例如对布尔值的转换）
-                        if expected_type is bool:
-                            converted_value = False
-                            if v and v.lower() == "true":
-                                converted_value = True
-                        else:
-                            # 使用期望类型的构造函数进行转换
-                            converted_value = expected_type(v)
-                    except (ValueError, TypeError) as e:
-                        print(f"Error converting {v} to {expected_type}: {e}")
-                        continue
-
-                    # 设置转换后的值
-                    setattr(self, k, converted_value)
+            converted_value = self.convert_value(k, v, type_hints)
+            if converted_value is not None:
+                setattr(self, k, converted_value)
