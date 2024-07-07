@@ -37,7 +37,7 @@ from xiaomusic.utils import (
     get_local_music_duration,
     get_web_music_duration,
     parse_cookie_string,
-    walk_to_depth,
+    traverse_music_directory,
 )
 
 EOF = object()
@@ -481,39 +481,34 @@ class XiaoMusic:
         encoded_name = urllib.parse.quote(filename)
         return f"http://{self.hostname}:{self.public_port}/{encoded_name}"
 
-    # 递归获取目录下所有歌曲,生成随机播放列表
+    # 获取目录下所有歌曲,生成随机播放列表
     def _gen_all_music_list(self):
         self._all_music = {}
         all_music_by_dir = {}
-        for root, dirs, filenames in walk_to_depth(
-            self.music_path, depth=self.music_path_depth
-        ):
-            dirs[:] = [d for d in dirs if d not in self.exclude_dirs]
-            self.log.debug("root:%s dirs:%s music_path:%s", root, dirs, self.music_path)
-            dir_name = os.path.basename(root)
-            if self.music_path == root:
+        local_musics = traverse_music_directory(
+            self.music_path,
+            depth=self.music_path_depth,
+            exclude_dirs=self.exclude_dirs,
+            support_extension=SUPPORT_MUSIC_TYPE,
+        )
+        for dir_name, files in local_musics.items():
+            if len(files) == 0:
+                continue
+            if dir_name == os.path.basename(self.music_path):
                 dir_name = "其他"
+            if self.music_path != self.download_path and dir_name == os.path.basename(
+                self.download_path
+            ):
+                dir_name = "下载"
             if dir_name not in all_music_by_dir:
                 all_music_by_dir[dir_name] = {}
-            for filename in filenames:
-                self.log.debug("gen_all_music_list. filename:%s", filename)
-                # 过滤隐藏文件
-                if filename.startswith("."):
-                    continue
-                # 过滤非音乐文件
-                (name, extension) = os.path.splitext(filename)
-                self.log.debug(
-                    "gen_all_music_list. filename:%s, name:%s, extension:%s",
-                    filename,
-                    name,
-                    extension,
-                )
-                if extension.lower() not in SUPPORT_MUSIC_TYPE:
-                    continue
-
+            for file in files:
                 # 歌曲名字相同会覆盖
-                self._all_music[name] = os.path.join(root, filename)
+                filename = os.path.basename(file)
+                (name, _) = os.path.splitext(filename)
+                self._all_music[name] = file
                 all_music_by_dir[dir_name][name] = True
+
         self._play_list = list(self._all_music.keys())
         self._cur_play_list = "全部"
         self._gen_play_list()

@@ -101,63 +101,48 @@ def custom_sort_key(s):
         return (2, s)
 
 
-# fork from https://gist.github.com/dougthor42/001355248518bc64d2f8
-def walk_to_depth(root, depth=None, *args, **kwargs):
-    """
-    Wrapper around os.walk that stops after going down `depth` folders.
-    I had my own version, but it wasn't as efficient as
-    http://stackoverflow.com/a/234329/1354930, so I modified to be more
-    similar to nosklo's answer.
-    However, nosklo's answer doesn't work if topdown=False, so I kept my
-    version.
-    """
-    # Let people use this as a standard `os.walk` function.
-    if depth is None:
-        return os.walk(root, *args, **kwargs)
+def _get_depth_path(root, directory, depth):
+    # 计算当前目录的深度
+    relative_path = root[len(directory) :].strip(os.sep)
+    path_parts = relative_path.split(os.sep)
+    if len(path_parts) >= depth:
+        return os.path.join(directory, *path_parts[:depth])
+    else:
+        return root
 
-    # remove any trailing separators so that our counts are correct.
-    root = root.rstrip(os.path.sep)
 
-    def main_func(root, depth, *args, **kwargs):
-        """Faster because it skips traversing dirs that are too deep."""
-        root_depth = root.count(os.path.sep)
-        for dirpath, dirnames, filenames in os.walk(root, *args, **kwargs):
-            yield (dirpath, dirnames, filenames)
+def _append_files_result(result, root, joinpath, files, support_extension):
+    dir_name = os.path.basename(root)
+    if dir_name not in result:
+        result[dir_name] = []
+    for file in files:
+        # 过滤隐藏文件
+        if file.startswith("."):
+            continue
+        # 过滤文件后缀
+        (name, extension) = os.path.splitext(file)
+        if extension.lower() not in support_extension:
+            continue
 
-            # calculate how far down we are.
-            current_folder_depth = dirpath.count(os.path.sep)
-            if current_folder_depth >= root_depth + depth:
-                del dirnames[:]
+        result[dir_name].append(os.path.join(joinpath, file))
 
-    def fallback_func(root, depth, *args, **kwargs):
-        """Slower, but works when topdown is False"""
-        root_depth = root.count(os.path.sep)
-        for dirpath, dirnames, filenames in os.walk(root, *args, **kwargs):
-            current_folder_depth = dirpath.count(os.path.sep)
-            if current_folder_depth <= root_depth + depth:
-                yield (dirpath, dirnames, filenames)
 
-    # there's gotta be a better way do do this...
-    try:
-        if args[0] is False:
-            yield from fallback_func(root, depth, *args, **kwargs)
-            return
+def traverse_music_directory(
+    directory, depth=10, exclude_dirs=None, support_extension=None
+):
+    result = {}
+    for root, dirs, files in os.walk(directory):
+        # 忽略排除的目录
+        dirs[:] = [d for d in dirs if d not in exclude_dirs]
+
+        # 计算当前目录的深度
+        current_depth = root[len(directory) :].count(os.sep) + 1
+        if current_depth > depth:
+            depth_path = _get_depth_path(root, directory, depth - 1)
+            _append_files_result(result, depth_path, root, files, support_extension)
         else:
-            yield from main_func(root, depth, *args, **kwargs)
-            return
-    except IndexError:
-        pass
-
-    try:
-        if kwargs["topdown"] is False:
-            yield from fallback_func(root, depth, *args, **kwargs)
-            return
-        else:
-            yield from main_func(root, depth, *args, **kwargs)
-            return
-    except KeyError:
-        yield from main_func(root, depth, *args, **kwargs)
-        return
+            _append_files_result(result, root, root, files, support_extension)
+    return result
 
 
 def downloadfile(url):
