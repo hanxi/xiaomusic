@@ -173,7 +173,6 @@ class Config:
                         converted_value = True
                 else:
                     converted_value = expected_type(v)
-                print(converted_value)
                 return converted_value
             except (ValueError, TypeError) as e:
                 print(f"Error converting {k}:{v} to {expected_type}: {e}")

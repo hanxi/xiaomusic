@@ -723,6 +723,10 @@ class XiaoMusic:
 
     # 判断是否播放下一首歌曲
     def check_play_next(self):
+        # 当前歌曲不在当前播放列表
+        if self.cur_music not in self._play_list:
+            return True
+
         # 当前没我在播放的歌曲
         if self.cur_music == "":
             return True
@@ -838,7 +842,7 @@ class XiaoMusic:
 
     # 下一首
     async def play_next(self, **kwargs):
-        self.log.info("下一首")
+        self.log.info("开始播放下一首")
         name = self.cur_music
         self.log.debug("play_next. name:%s, cur_music:%s", name, self.cur_music)
         if (
