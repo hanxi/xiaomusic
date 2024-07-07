@@ -198,12 +198,12 @@ class XiaoMusic:
             self.device2hardware = {}
             self.did2device = {}
             for h in hardware_data:
-                device = h.get("deviceID", "")
+                device_id = h.get("deviceID", "")
                 hardware = h.get("hardware", "")
                 did = h.get("miotDID", "")
-                if device and hardware and did and (did in mi_dids):
-                    self.device2hardware[device] = hardware
-                    self.did2device[did] = device
+                if device_id and hardware and did and (did in mi_dids):
+                    self.device2hardware[device_id] = hardware
+                    self.did2device[did] = device_id
         except Exception as e:
             self.log.error(f"Execption {e}")
 
@@ -236,8 +236,9 @@ class XiaoMusic:
         for i in range(retries):
             try:
                 timeout = ClientTimeout(total=15)
+                hardware = self.device2hardware[device_id]
                 url = LATEST_ASK_API.format(
-                    hardware=self.config.hardware,
+                    hardware=hardware,
                     timestamp=str(int(time.time() * 1000)),
                 )
                 self.log.debug(f"url:{url}")
