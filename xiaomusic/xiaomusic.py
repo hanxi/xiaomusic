@@ -9,6 +9,7 @@ import re
 import time
 import traceback
 import urllib.parse
+from dataclasses import asdict
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -64,8 +65,6 @@ class XiaoMusic:
 
         # 下载对象
         self.download_proc = None
-        # 单曲循环，全部循环
-        self.play_type = PLAY_TYPE_RND
         self.cur_music = ""
         self._next_timer = None
         self._timeout = 0
@@ -102,6 +101,8 @@ class XiaoMusic:
         self.log.info(f"Startup OK. {debug_config}")
 
     def init_config(self):
+        # 单曲循环，全部循环
+        self.play_type = self.config.play_type
         self.music_path = self.config.music_path
         self.conf_path = self.config.conf_path
         if not self.conf_path:
@@ -854,18 +855,21 @@ class XiaoMusic:
     # 单曲循环
     async def set_play_type_one(self, **kwargs):
         self.play_type = PLAY_TYPE_ONE
+        self.save_play_type()
         await self.do_tts("已经设置为单曲循环")
 
     # 全部循环
     async def set_play_type_all(self, **kwargs):
         self.play_type = PLAY_TYPE_ALL
         self._gen_play_list()
+        self.save_play_type()
         await self.do_tts("已经设置为全部循环")
 
     # 随机播放
     async def random_play(self, **kwargs):
         self.play_type = PLAY_TYPE_RND
         self._gen_play_list()
+        self.save_play_type()
         await self.do_tts("已经设置为随机播放")
 
     # 刷新列表
@@ -897,7 +901,8 @@ class XiaoMusic:
         if real_name:
             self.log.info(f"根据【{list_name}】找到播放列表【{real_name}】")
             list_name = real_name
-        self.log.info(f"没找到播放列表【{list_name}】")
+        else:
+            self.log.info(f"没找到播放列表【{list_name}】")
         return list_name
 
     # 播放一个播放列表
@@ -917,8 +922,6 @@ class XiaoMusic:
         music_name = ""
         if len(parts) > 1:
             music_name = parts[1]
-        else:
-            music_name = self.get_next_music()
         await self.play(arg1=music_name)
 
     async def stop(self, **kwargs):
@@ -1014,12 +1017,30 @@ class XiaoMusic:
 
     # 保存配置并重新启动
     async def saveconfig(self, data):
+        # 配置文件落地
+        self.do_saveconfig(data)
+        # 更新配置
+        self.update_config_from_setting(data)
+        # 重新初始化
+        await self.call_main_thread_function(self.reinit)
+
+    # 配置文件落地
+    def do_saveconfig(self, data):
         # 默认暂时配置保存到 music 目录下
         filename = self.getsettingfile()
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-        self.update_config_from_setting(data)
-        await self.call_main_thread_function(self.reinit)
+
+    # 把当前配置落地
+    def save_cur_config(self):
+        data = asdict(self.config)
+        self.do_saveconfig(data)
+        self.log.info("save_cur_config ok")
+
+    # 播放类型落地
+    def save_play_type(self):
+        self.config.play_type = self.play_type
+        self.save_cur_config()
 
     def update_config_from_setting(self, data):
         # 兼容旧配置:一段时间后清理这里的旧代码

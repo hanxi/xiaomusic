@@ -123,6 +123,7 @@ class Config:
     enable_force_stop: bool = (
         os.getenv("XIAOMUSIC_ENABLE_FORCE_STOP", "false").lower() == "true"
     )
+    play_type: int = int(os.getenv("XIAOMUSIC_PLAY_TYPE", "2"))
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
