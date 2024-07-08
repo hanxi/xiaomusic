@@ -712,10 +712,17 @@ class XiaoMusic:
             if opkey in KEY_WORD_ARG_BEFORE_DICT:
                 oparg = argpre
             opvalue = self.config.key_word_dict.get(opkey)
-            if not ctrl_panel and not self.isplaying():
-                if self.active_cmd and opvalue not in self.active_cmd:
-                    self.log.info(f"不在激活命令中 {opvalue}")
-                    continue
+
+            if (
+                (not ctrl_panel)
+                and (not self.isplaying())
+                and self.active_cmd
+                and (opvalue not in self.active_cmd)
+                and (opkey not in self.active_cmd)
+            ):
+                self.log.info(f"不在激活命令中 {opvalue}")
+                continue
+
             self.log.info(f"匹配到指令. opkey:{opkey} opvalue:{opvalue} oparg:{oparg}")
             return (opvalue, oparg)
         self.log.info(f"未匹配到指令 {query} {ctrl_panel}")
