@@ -66,7 +66,7 @@ services:
 ## pip 方式安装运行
 
 ```shell
-> pip install xiaomusic
+> pip install -U xiaomusic
 > xiaomusic --help
  __  __  _                   __  __                 _
  \ \/ / (_)   __ _    ___   |  \/  |  _   _   ___  (_)   ___
