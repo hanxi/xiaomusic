@@ -750,7 +750,7 @@ class XiaoMusic:
     async def play_one_url(self, device_id, url):
         try:
             if self.config.use_music_api:
-                ret = await self.play_by_music_url(device_id, url)
+                ret = await self.mina_service.play_by_music_url(device_id, url)
                 self.log.info(
                     f"play_one_url play_by_music_url device_id:{device_id} ret:{ret} url:{url}"
                 )
@@ -1111,49 +1111,6 @@ class XiaoMusic:
         self.new_record_event.set()
         result = await future
         return result
-
-    async def play_by_music_url(self, deviceId, url, _type=2):
-        self.log.info(f"play_by_music_url url:{url}, type:{_type}")
-        audio_type = ""
-        if _type == 1:
-            # If set to MUSIC, the light will be on
-            audio_type = "MUSIC"
-        audio_id = self.config.use_music_audio_id
-        id = self.config.use_music_id
-        music = {
-            "payload": {
-                "audio_type": audio_type,
-                "audio_items": [
-                    {
-                        "item_id": {
-                            "audio_id": audio_id,
-                            "cp": {
-                                "album_id": "-1",
-                                "episode_index": 0,
-                                "id": id,
-                                "name": "xiaowei",
-                            },
-                        },
-                        "stream": {"url": url},
-                    }
-                ],
-                "list_params": {
-                    "listId": "-1",
-                    "loadmore_offset": 0,
-                    "origin": "xiaowei",
-                    "type": "MUSIC",
-                },
-            },
-            "play_behavior": "REPLACE_ALL",
-        }
-        data = {"startaudioid": audio_id, "music": json.dumps(music)}
-        self.log.info(json.dumps(data))
-        return await self.mina_service.ubus_request(
-            deviceId,
-            "player_play_music",
-            "mediaplayer",
-            data,
-        )
 
     async def debug_play_by_music_url(self, arg1=None):
         if arg1 is None:
