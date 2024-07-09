@@ -7,7 +7,7 @@ authors = [
 ]
 dependencies = [
     "aiohttp>=3.8.6",
-    "miservice-fork>=2.5.0",
+    "miservice-fork>=2.7.0",
     "mutagen>=1.47.0",
     "yt-dlp>=2024.07.01",
     "flask[async]>=3.0.1",
