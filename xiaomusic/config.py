@@ -18,12 +18,10 @@ def default_key_word_dict():
         "下一首": "play_next",
         "单曲循环": "set_play_type_one",
         "全部循环": "set_play_type_all",
-        "随机播放": "random_play",
+        "随机播放": "set_random_play",
         "分钟后关机": "stop_after_minute",
         "播放列表": "play_music_list",
         "刷新列表": "gen_music_list",
-        "set_volume#": "set_volume",
-        "get_volume#": "get_volume",
     }
 
 
@@ -43,8 +41,6 @@ KEY_WORD_ARG_BEFORE_DICT = {
 # 口令匹配优先级
 def default_key_match_order():
     return [
-        "set_volume#",
-        "get_volume#",
         "分钟后关机",
         "播放歌曲",
         "下一首",
@@ -58,11 +54,21 @@ def default_key_match_order():
 
 
 @dataclass
+class Device:
+    did: str = ""
+    device_id: str = ""
+    hardware: str = ""
+    name: str = ""
+    play_type: int = ""
+    cur_music: str = ""
+    cur_playlist: str = ""
+
+
+@dataclass
 class Config:
     account: str = os.getenv("MI_USER", "")
     password: str = os.getenv("MI_PASS", "")
     mi_did: str = os.getenv("MI_DID", "")  # 逗号分割支持多设备
-    hardware: str = os.getenv("MI_HARDWARE", "L07A")  # 逗号分割支持多设备
     cookie: str = ""
     verbose: bool = os.getenv("XIAOMUSIC_VERBOSE", "").lower() == "true"
     music_path: str = os.getenv(
@@ -79,7 +85,7 @@ class Config:
     )  # "bilisearch:" or "ytsearch:"
     ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
     active_cmd: str = os.getenv(
-        "XIAOMUSIC_ACTIVE_CMD", "play,random_play,playlocal,play_music_list,stop"
+        "XIAOMUSIC_ACTIVE_CMD", "play,set_random_play,playlocal,play_music_list,stop"
     )
     exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir")
     music_path_depth: int = int(os.getenv("XIAOMUSIC_MUSIC_PATH_DEPTH", "10"))
@@ -123,7 +129,10 @@ class Config:
     enable_force_stop: bool = (
         os.getenv("XIAOMUSIC_ENABLE_FORCE_STOP", "false").lower() == "true"
     )
-    play_type: int = int(os.getenv("XIAOMUSIC_PLAY_TYPE", "2"))
+    devices: dict[str, Device] = field(default_factory=dict)
+    group_list: str = os.getenv(
+        "XIAOMUSIC_GROUP_LIST", ""
+    )  # did2:group_name,did2:group_name
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
@@ -150,7 +159,7 @@ class Config:
         if self.enable_config_example:
             with open("config-example.json", "w") as f:
                 data = asdict(self)
-                json.dump(data, f, ensure_ascii=False, indent=4)
+                json.dump(data, f, ensure_ascii=False, indent=2)
 
     @classmethod
     def from_options(cls, options: argparse.Namespace) -> Config:
@@ -171,6 +180,10 @@ class Config:
                     converted_value = False
                     if str(v).lower() == "true":
                         converted_value = True
+                elif expected_type == dict[str, Device]:
+                    converted_value = {}
+                    for kk, vv in v.items():
+                        converted_value[kk] = Device(**vv)
                 else:
                     converted_value = expected_type(v)
                 return converted_value
@@ -192,7 +205,7 @@ class Config:
         return result
 
     def update_config(self, data):
-        type_hints = get_type_hints(self)
+        type_hints = get_type_hints(self, globals(), locals())
 
         for k, v in data.items():
             converted_value = self.convert_value(k, v, type_hints)

@@ -53,11 +53,29 @@ def getversion():
 
 @app.route("/getvolume", methods=["GET"])
 @auth.login_required
-def getvolume():
-    volume = xiaomusic.get_volume_ret()
-    return {
-        "volume": volume,
-    }
+async def getvolume():
+    did = request.args.get("did")
+    if not xiaomusic.did_exist(did):
+        return {"volume": 0}
+
+    volume = await xiaomusic.call_main_thread_function(xiaomusic.get_volume, did=did)
+    return {"volume": volume}
+
+
+@app.route("/setvolume", methods=["POST"])
+@auth.login_required
+async def setvolume():
+    data = request.get_json()
+    did = data.get("did")
+    volume = data.get("volume")
+    if not xiaomusic.did_exist(did):
+        return {"ret": "Did not exist"}
+
+    log.info(f"set_volume {did} {volume}")
+    await xiaomusic.call_main_thread_function(
+        xiaomusic.set_volume, did=did, arg1=volume
+    )
+    return {"ret": "OK", "volume": volume}
 
 
 @app.route("/searchmusic", methods=["GET"])
@@ -70,13 +88,19 @@ def searchmusic():
 @app.route("/playingmusic", methods=["GET"])
 @auth.login_required
 def playingmusic():
-    return xiaomusic.playingmusic()
+    did = request.args.get("did")
+    if not xiaomusic.did_exist(did):
+        return ""
+    return xiaomusic.playingmusic(did)
 
 
 @app.route("/isplaying", methods=["GET"])
 @auth.login_required
 def isplaying():
-    return xiaomusic.isplaying()
+    did = request.args.get("did")
+    if not xiaomusic.did_exist(did):
+        return False
+    return xiaomusic.isplaying(did)
 
 
 @app.route("/", methods=["GET"])
@@ -88,10 +112,14 @@ def index():
 @auth.login_required
 async def do_cmd():
     data = request.get_json()
+    did = data.get("did")
     cmd = data.get("cmd")
+    if not xiaomusic.did_exist(did):
+        return {"ret": "Did not exist"}
+
     if len(cmd) > 0:
-        log.debug("docmd. cmd:%s", cmd)
-        xiaomusic.set_last_record(cmd)
+        log.info(f"docmd. did:{did} cmd:{cmd}")
+        xiaomusic.set_last_record(did, cmd)
         return {"ret": "OK"}
     return {"ret": "Unknow cmd"}
 
@@ -101,10 +129,9 @@ async def do_cmd():
 async def getsetting():
     config = xiaomusic.getconfig()
     data = asdict(config)
-    alldevices = await xiaomusic.call_main_thread_function(xiaomusic.getalldevices)
-    log.info(f"getsetting alldevices: {alldevices}")
-    data["mi_did_list"] = alldevices["did_list"]
-    data["mi_hardware_list"] = alldevices["hardware_list"]
+    device_list = await xiaomusic.call_main_thread_function(xiaomusic.getalldevices)
+    log.info(f"getsetting device_list: {device_list}")
+    data["device_list"] = device_list
     return data
 
 
@@ -127,7 +154,10 @@ async def musiclist():
 @app.route("/curplaylist", methods=["GET"])
 @auth.login_required
 async def curplaylist():
-    return xiaomusic.get_cur_play_list()
+    did = request.args.get("did")
+    if not xiaomusic.did_exist(did):
+        return ""
+    return xiaomusic.get_cur_play_list(did)
 
 
 @app.route("/delmusic", methods=["POST"])
@@ -149,7 +179,7 @@ def downloadjson():
         ret = "OK"
         content = downloadfile(url)
     except Exception as e:
-        log.warning(f"downloadjson failed. url:{url} e:{e}")
+        log.exception(f"Execption {e}")
         ret = "Download JSON file failed."
     return {
         "ret": ret,
@@ -166,9 +196,15 @@ def downloadlog():
 @app.route("/playurl", methods=["GET"])
 @auth.login_required
 async def playurl():
+    did = request.args.get("did")
     url = request.args.get("url")
-    log.info(f"play_url:{url}")
-    return await xiaomusic.call_main_thread_function(xiaomusic.play_url, arg1=url)
+    if not xiaomusic.did_exist(did):
+        return {"ret": "Did not exist"}
+
+    log.info(f"playurl did: {did} url: {url}")
+    return await xiaomusic.call_main_thread_function(
+        xiaomusic.play_url, did=did, arg1=url
+    )
 
 
 @app.route("/debug_play_by_music_url", methods=["POST"])

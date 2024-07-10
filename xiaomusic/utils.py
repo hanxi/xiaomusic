@@ -253,3 +253,19 @@ def deepcopy_data_no_sensitive_info(data, fields_to_anonymize=None):
                 setattr(copy_data, field, "******")
 
     return copy_data
+
+
+# k1:v1,k2:v2
+def parse_str_to_dict(s, d1=",", d2=":"):
+    # 初始化一个空字典
+    result = {}
+    parts = s.split(d1)
+
+    for part in parts:
+        # 根据冒号切割
+        subparts = part.split(d2)
+        if len(subparts) == 2:  # 防止数据不是成对出现
+            k, v = subparts
+            result[k] = v
+
+    return result

@@ -13,11 +13,40 @@ $(function(){
   append_op_button_name("30分钟后关机");
   append_op_button_name("60分钟后关机");
 
-  // 拉取声音
-  sendcmd("get_volume#");
-  $.get("/getvolume", function(data, status) {
-    console.log(data, status, data["volume"]);
-    $("#volume").val(data.volume);
+  // 拉取现有配置
+  $.get("/getsetting", function(data, status) {
+    console.log(data, status);
+    localStorage.setItem('mi_did', data.mi_did);
+
+    var did = localStorage.getItem('cur_did');
+    if ((did == null || did == "") && data.mi_did != null) {
+      var dids = data.mi_did.split(',');
+      did = dids[0];
+      localStorage.setItem('cur_did', did);
+    }
+
+    window.did = did;
+    $.get(`/getvolume?did=${did}`, function(data, status) {
+      console.log(data, status, data["volume"]);
+      $("#volume").val(data.volume);
+    });
+    refresh_music_list();
+
+    $("#did").empty();
+    var dids = data.mi_did.split(',');
+    $.each(dids, function(index, value) {
+      var device = data.device_list.find(function(device) {
+        return device.miotDID == value;
+      });
+
+      if (device) {
+        var option = $('<option></option>')
+            .val(value)
+            .text(device.name)
+            .prop('selected', value === did);
+        $("#did").append(option);
+      }
+    });
   });
 
   // 拉取版本
@@ -47,13 +76,20 @@ $(function(){
       $('#music_list').trigger('change');
 
       // 获取当前播放列表
-      $.get("curplaylist", function(data, status) {
-        $('#music_list').val(data);
-        $('#music_list').trigger('change');
+      $.get(`curplaylist?did=${did}`, function(data, status) {
+        if (data != "") {
+          $('#music_list').val(data);
+          $('#music_list').trigger('change');
+        }
       })
     })
+
+    // 每3秒获取下正在播放的音乐
+    get_playing_music();
+    setInterval(() => {
+      get_playing_music();
+    }, 3000);
   }
-  refresh_music_list();
 
   $("#play_music_list").on("click", () => {
     var music_list = $("#music_list").val();
@@ -84,7 +120,7 @@ $(function(){
 
   $("#playurl").on("click", () => {
     var url = $("#music-url").val();
-    $.get(`/playurl?url=${url}`, function(data, status) {
+    $.get(`/playurl?url=${url}&did=${did}`, function(data, status) {
       console.log(data);
     });
   });
@@ -115,9 +151,18 @@ $(function(){
     sendcmd(cmd);
   });
 
-  $("#volume").on('input', function () {
+  $("#volume").on('change', function () {
     var value = $(this).val();
-    sendcmd("set_volume#"+value);
+    $.ajax({
+      type: "POST",
+      url: "/setvolume",
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({did: did, volume: value}),
+      success: () => {
+      },
+      error: () => {
+      }
+    });
   });
 
   function sendcmd(cmd) {
@@ -125,7 +170,7 @@ $(function(){
       type: "POST",
       url: "/cmd",
       contentType: "application/json; charset=utf-8",
-      data: JSON.stringify({cmd: cmd}),
+      data: JSON.stringify({did: did, cmd: cmd}),
       success: () => {
         if (cmd == "刷新列表") {
           setTimeout(refresh_music_list, 3000);
@@ -160,17 +205,11 @@ $(function(){
   });
 
   function get_playing_music() {
-    $.get("/playingmusic", function(data, status) {
+    $.get(`/playingmusic?did=${did}`, function(data, status) {
       console.log(data);
       $("#playering-music").text(data);
     });
   }
-
-  // 每3秒获取下正在播放的音乐
-  get_playing_music();
-  setInterval(() => {
-    get_playing_music();
-  }, 3000);
 
   function custom_sort_key(a, b) {
     // 使用正则表达式提取数字前缀

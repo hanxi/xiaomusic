@@ -16,23 +16,22 @@ $(function(){
     });
   };
 
-  function updateCheckbox(selector, mi_did_list, mi_did, mi_hardware_list) {
+  function updateCheckbox(selector, mi_did, device_list) {
     // 清除现有的内容
     $(selector).empty();
 
     // 将 mi_did 字符串通过逗号分割转换为数组，以便于判断默认选中项
     var selected_dids = mi_did.split(',');
 
-    // 遍历传入的 mi_did_list 和 mi_hardware_list
-    $.each(mi_did_list, function(index, did) {
-      // 获取硬件标识，假定列表是一一对应的
-      var hardware = mi_hardware_list[index];
-
+    $.each(device_list, function(index, device) {
+      var did = device.miotDID;
+      var hardware = device.hardware;
+      var name = device.name;
       // 创建复选框元素
       var checkbox = $('<input>', {
         type: 'checkbox',
         id: did,
-        value: `${did}|${hardware}`,
+        value: `${did}`,
         class: 'custom-checkbox', // 添加样式类
         // 如果mi_did中包含了该did，则默认选中
         checked: selected_dids.indexOf(did) !== -1
@@ -42,7 +41,7 @@ $(function(){
       var label = $('<label>', {
         for: did,
         class: 'checkbox-label', // 添加样式类
-        text: `【${hardware}】 ${did}` // 设定标签内容为did和hardware的拼接
+        text: `【${hardware}】${name}` // 设定标签内容
       });
 
       // 将复选框和标签添加到目标选择器元素中
@@ -50,29 +49,22 @@ $(function(){
     });
   }
 
-  function getSelectedDidsAndHardware(containerSelector) {
+  function getSelectedDids(containerSelector) {
     var selectedDids = [];
-    var selectedHardware = [];
 
     // 仅选择给定容器中选中的复选框
     $(containerSelector + ' .custom-checkbox:checked').each(function() {
-      // 解析当前复选框的值（值中包含了 did 和 hardware，使用 '|' 分割）
-      var parts = this.value.split('|');
-      selectedDids.push(parts[0]);
-      selectedHardware.push(parts[1]);
+      var did = this.value;
+      selectedDids.push(did);
     });
 
-    // 返回包含 did_list 和 hardware_list 的对象
-    return {
-      did_list: selectedDids.join(','),
-      hardware_list: selectedHardware.join(',')
-    };
+    return selectedDids.join(',');
   }
 
   // 拉取现有配置
   $.get("/getsetting", function(data, status) {
     console.log(data, status);
-    updateCheckbox("#mi_did_hardware", data.mi_did_list, data.mi_did, data.mi_hardware_list);
+    updateCheckbox("#mi_did", data.mi_did, data.device_list);
 
     // 初始化显示
     for (const key in data) {
@@ -103,9 +95,8 @@ $(function(){
         data[id] = $(this).val();
       }
     });
-    var selectedData = getSelectedDidsAndHardware("#mi_did_hardware");
-    data["mi_did"] = selectedData.did_list;
-    data["hardware"] = selectedData.hardware_list;
+    var did_list = getSelectedDids("#mi_did");
+    data["mi_did"] = did_list;
     console.log(data)
 
     $.ajax({
