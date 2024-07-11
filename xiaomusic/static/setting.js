@@ -41,7 +41,7 @@ $(function(){
       var label = $('<label>', {
         for: did,
         class: 'checkbox-label', // 添加样式类
-        text: `【${hardware}】${name}` // 设定标签内容
+        text: `【${hardware} ${did}】${name}` // 设定标签内容
       });
 
       // 将复选框和标签添加到目标选择器元素中

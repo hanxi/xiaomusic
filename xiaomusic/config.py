@@ -132,7 +132,7 @@ class Config:
     devices: dict[str, Device] = field(default_factory=dict)
     group_list: str = os.getenv(
         "XIAOMUSIC_GROUP_LIST", ""
-    )  # did2:group_name,did2:group_name
+    )  # did1:group_name,did2:group_name
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
