@@ -67,7 +67,7 @@ async def getvolume():
 async def setvolume():
     data = request.get_json()
     did = data.get("did")
-    volume = data.get("volume")
+    volume = int(data.get("volume"))
     if not xiaomusic.did_exist(did):
         return {"ret": "Did not exist"}
 
