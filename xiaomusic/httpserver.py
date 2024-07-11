@@ -90,8 +90,15 @@ def searchmusic():
 def playingmusic():
     did = request.args.get("did")
     if not xiaomusic.did_exist(did):
-        return ""
-    return xiaomusic.playingmusic(did)
+        return {"ret": "Did not exist"}
+
+    is_playing = xiaomusic.isplaying(did)
+    cur_music = xiaomusic.playingmusic(did)
+    return {
+        "ret": "OK",
+        "is_playing": is_playing,
+        "cur_music": cur_music,
+    }
 
 
 @app.route("/isplaying", methods=["GET"])

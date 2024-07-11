@@ -29,35 +29,6 @@ input,select {
   height: 40px;
 }
 
-.container{
-  width: 280px;
-  overflow: hidden;
-  display: inline-block;
-}
-@keyframes text-scroll {
-  0% {
-    left: 100%;
-  }
-  25% {
-    left: 50%;
-  }
-  50% {
-    left: 0%;
-  }
-  75% {
-    left: -50%;
-  }
-  100% {
-    left: -100%;
-  }
-}
-.text {
-  white-space: nowrap;
-  font-weight: bold;
-  position: relative;
-  animation: text-scroll 10s linear infinite;
-}
-
 .rows {
   display: flex;
   flex-direction: column;
@@ -96,4 +67,13 @@ footer {
   cursor: pointer;
   vertical-align: middle; /* 确保与复选框垂直居中对齐 */
   margin-left: 1px; /* 给复选框和标签之间一些距离，如果需要的话 */
+}
+
+.text {
+  margin: 10px;
+  width: 150px;
+  height: 50px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
 }

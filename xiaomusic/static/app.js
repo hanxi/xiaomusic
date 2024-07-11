@@ -1,8 +1,13 @@
 $(function(){
   $container=$("#cmds");
-  append_op_button_name("全部循环");
-  append_op_button_name("单曲循环");
-  append_op_button_name("随机播放");
+
+  const PLAY_TYPE_ONE = 0; // 单曲循环
+  const PLAY_TYPE_ALL = 1; // 全部循环
+  const PLAY_TYPE_RND = 2; // 随机播放
+  append_op_button("play_type_all", "全部循环", "全部循环");
+  append_op_button("play_type_one", "单曲循环", "单曲循环");
+  append_op_button("play_type_rnd", "随机播放", "随机播放");
+
   append_op_button_name("刷新列表");
   append_op_button_name("下一首");
   append_op_button_name("关机");
@@ -42,6 +47,17 @@ $(function(){
             .text(cur_device.name)
             .prop('selected', value === did);
         $("#did").append(option);
+
+        if (cur_device.play_type == PLAY_TYPE_ALL) {
+          $("#play_type_all").css('background-color', '#b1a8f3');
+          $("#play_type_all").text('✔️ 全部循环');
+        } else if (cur_device.play_type == PLAY_TYPE_ONE) {
+          $("#play_type_one").css('background-color', '#b1a8f3');
+          $("#play_type_one").text('✔️ 单曲循环');
+        } else if (cur_device.play_type == PLAY_TYPE_RND) {
+          $("#play_type_rnd").css('background-color', '#b1a8f3');
+          $("#play_type_rnd").text('✔️ 随机播放');
+        }
       }
     });
   });
@@ -123,14 +139,17 @@ $(function(){
   });
 
   function append_op_button_name(name) {
-    append_op_button(name, name);
+    append_op_button(null, name, name);
   }
 
-  function append_op_button(name, cmd) {
+  function append_op_button(id, name, cmd) {
     // 创建按钮
     const $button = $("<button>");
     $button.text(name);
     $button.attr("type", "button");
+    if (id !== null) {
+      $button.attr("id", id);
+    }
 
     // 设置按钮点击事件
     $button.on("click", () => {
@@ -172,6 +191,9 @@ $(function(){
         if (cmd == "刷新列表") {
           setTimeout(refresh_music_list, 3000);
         }
+        if (["全部循环", "单曲循环", "随机播放"].includes(cmd)) {
+          location.reload();
+        }
       },
       error: () => {
         // 请求失败时执行的操作
@@ -204,7 +226,13 @@ $(function(){
   function get_playing_music() {
     $.get(`/playingmusic?did=${did}`, function(data, status) {
       console.log(data);
-      $("#playering-music").text(data);
+      if (data.ret == "OK") {
+        if (data.is_playing) {
+          $("#playering-music").text(`【播放中】 ${data.cur_music}`);
+        } else {
+          $("#playering-music").text(`【空闲中】 ${data.cur_music}`);
+        }
+      }
     });
   }
 

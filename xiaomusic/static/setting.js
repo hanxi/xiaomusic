@@ -106,6 +106,7 @@ $(function(){
       data: JSON.stringify(data),
       success: (msg) => {
         alert(msg);
+        location.reload();
       },
       error: (msg) => {
         alert(msg);
