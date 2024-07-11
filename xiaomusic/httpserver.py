@@ -127,11 +127,13 @@ async def do_cmd():
 @app.route("/getsetting", methods=["GET"])
 @auth.login_required
 async def getsetting():
+    need_device_list = request.args.get("need_device_list")
     config = xiaomusic.getconfig()
     data = asdict(config)
-    device_list = await xiaomusic.call_main_thread_function(xiaomusic.getalldevices)
-    log.info(f"getsetting device_list: {device_list}")
-    data["device_list"] = device_list
+    if need_device_list == "true":
+        device_list = await xiaomusic.call_main_thread_function(xiaomusic.getalldevices)
+        log.info(f"getsetting device_list: {device_list}")
+        data["device_list"] = device_list
     return data
 
 

@@ -35,14 +35,11 @@ $(function(){
     $("#did").empty();
     var dids = data.mi_did.split(',');
     $.each(dids, function(index, value) {
-      var device = data.device_list.find(function(device) {
-        return device.miotDID == value;
-      });
-
-      if (device) {
+      var cur_device = Object.values(data.devices).find(device => device.did === value);
+      if (cur_device) {
         var option = $('<option></option>')
             .val(value)
-            .text(device.name)
+            .text(cur_device.name)
             .prop('selected', value === did);
         $("#did").append(option);
       }

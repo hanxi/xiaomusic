@@ -62,7 +62,7 @@ $(function(){
   }
 
   // 拉取现有配置
-  $.get("/getsetting", function(data, status) {
+  $.get("/getsetting?need_device_list=true", function(data, status) {
     console.log(data, status);
     updateCheckbox("#mi_did", data.mi_did, data.device_list);
 
