@@ -85,7 +85,7 @@ $(function(){
     autoSelectOne();
   });
 
-  $("#save").on("click", () => {
+  $(".save-button").on("click", () => {
     var setting = $('#setting');
     var inputs = setting.find('input, select, textarea');
     var data = {};
