@@ -1,10 +1,11 @@
 import argparse
-import asyncio
 
-from xiaomusic import (
-    __version__,
-)
+import uvicorn
+
+from xiaomusic import __version__
 from xiaomusic.config import Config
+from xiaomusic.httpserver import HttpInit
+from xiaomusic.httpserver import app as HttpApp
 from xiaomusic.xiaomusic import XiaoMusic
 
 LOGO = r"""
@@ -74,8 +75,9 @@ def main():
     config = Config.from_options(options)
 
     xiaomusic = XiaoMusic(config)
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(xiaomusic.run_forever())
+    HttpInit(xiaomusic)
+
+    uvicorn.run(HttpApp, host="0.0.0.0", port=config.port)
 
 
 if __name__ == "__main__":

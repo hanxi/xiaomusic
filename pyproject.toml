@@ -10,9 +10,9 @@ dependencies = [
     "miservice-fork>=2.7.0",
     "mutagen>=1.47.0",
     "yt-dlp>=2024.07.01",
-    "flask[async]>=3.0.1",
-    "waitress>=3.0.0",
-    "flask-HTTPAuth>=4.8.0",
+    "uvicorn>=0.30.1",
+    "fastapi>=0.111.0",
+    "starlette>=0.37.2",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -54,6 +54,9 @@ include = ["**/*.py", "**/*.pyi", "**/pyproject.toml"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
 
 [tool.pdm.scripts]
 lint = "ruff check ."

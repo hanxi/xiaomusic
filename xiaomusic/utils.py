@@ -14,7 +14,6 @@ from urllib.parse import urlparse
 
 import aiohttp
 import mutagen
-import requests
 from requests.utils import cookiejar_from_dict
 
 from xiaomusic.const import SUPPORT_MUSIC_TYPE
@@ -145,24 +144,28 @@ def traverse_music_directory(
     return result
 
 
-def downloadfile(url):
+async def downloadfile(url):
     # 清理和验证URL
     # 解析URL
     parsed_url = urlparse(url)
-
     # 基础验证：仅允许HTTP和HTTPS协议
     if parsed_url.scheme not in ("http", "https"):
         raise Warning(
             f"Invalid URL scheme: {parsed_url.scheme}. Only HTTP and HTTPS are allowed."
         )
-
     # 构建目标URL
     cleaned_url = parsed_url.geturl()
 
-    # 发起请求
-    response = requests.get(cleaned_url, timeout=5)  # 增加超时以避免长时间挂起
-    response.raise_for_status()  # 如果响应不是200，引发HTTPError异常
-    return response.text
+    # 使用 aiohttp 创建一个客户端会话来发起请求
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            cleaned_url, timeout=5
+        ) as response:  # 增加超时以避免长时间挂起
+            # 如果响应不是200，引发异常
+            response.raise_for_status()
+            # 读取响应文本
+            text = await response.text()
+            return text
 
 
 async def _get_web_music_duration(session, url, start=0, end=500):

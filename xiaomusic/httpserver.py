@@ -1,94 +1,108 @@
-#!/usr/bin/env python3
+import asyncio
+import json
 import os
+from contextlib import asynccontextmanager
 from dataclasses import asdict
-from threading import Thread
 
-from flask import Flask, request, send_file, send_from_directory
-from flask_httpauth import HTTPBasicAuth
-from waitress import serve
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+from starlette.responses import FileResponse
 
-from xiaomusic import (
-    __version__,
-)
+from xiaomusic import __version__
 from xiaomusic.utils import (
     deepcopy_data_no_sensitive_info,
     downloadfile,
 )
 
-app = Flask(__name__)
-auth = HTTPBasicAuth()
-
-host = "0.0.0.0"
-port = 8090
-static_path = "music"
 xiaomusic = None
+config = None
 log = None
 
 
-@auth.verify_password
-def verify_password(username, password):
-    if xiaomusic.config.disable_httpauth:
+@asynccontextmanager
+async def app_lifespan(app):
+    if xiaomusic is not None:
+        task = asyncio.create_task(xiaomusic.run_forever())
+        yield
+        task.cancel()
+
+
+app = FastAPI(lifespan=app_lifespan)
+security = HTTPBasic()
+
+
+def HttpInit(_xiaomusic):
+    global xiaomusic, config, log
+    xiaomusic = _xiaomusic
+    config = xiaomusic.config
+    log = xiaomusic.log
+
+    app.mount("/static", StaticFiles(directory="xiaomusic/static"), name="static")
+    app.mount("/music", StaticFiles(directory=config.music_path), name="music")
+
+
+def verification(creds: HTTPBasicCredentials = Depends(security)):
+    username = creds.username
+    password = creds.password
+
+    if config.disable_httpauth:
         return True
-
-    if (
-        xiaomusic.config.httpauth_username == username
-        and xiaomusic.config.httpauth_password == password
-    ):
-        return username
-
-
-@app.route("/allcmds")
-@auth.login_required
-def allcmds():
-    return xiaomusic.config.key_word_dict
+    if config.httpauth_username == username and config.httpauth_password == password:
+        return True
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
 
 
-@app.route("/getversion", methods=["GET"])
+@app.get("/")
+async def read_index():
+    return FileResponse("xiaomusic/static/index.html")
+
+
+@app.get("/getversion")
 def getversion():
     log.debug("getversion %s", __version__)
-    return {
-        "version": __version__,
-    }
+    return {"version": __version__}
 
 
-@app.route("/getvolume", methods=["GET"])
-@auth.login_required
-async def getvolume():
-    did = request.args.get("did")
+@app.get("/getvolume")
+async def getvolume(did: str = "", Verifcation=Depends(verification)):
     if not xiaomusic.did_exist(did):
         return {"volume": 0}
 
-    volume = await xiaomusic.call_main_thread_function(xiaomusic.get_volume, did=did)
+    volume = await xiaomusic.get_volume(did=did)
     return {"volume": volume}
 
 
-@app.route("/setvolume", methods=["POST"])
-@auth.login_required
-async def setvolume():
-    data = request.get_json()
-    did = data.get("did")
-    volume = int(data.get("volume"))
+class DidVolume(BaseModel):
+    did: str
+    volume: int = 0
+
+
+@app.post("/setvolume")
+async def setvolume(data: DidVolume, Verifcation=Depends(verification)):
+    did = data.did
+    volume = data.volume
     if not xiaomusic.did_exist(did):
         return {"ret": "Did not exist"}
 
     log.info(f"set_volume {did} {volume}")
-    await xiaomusic.call_main_thread_function(
-        xiaomusic.set_volume, did=did, arg1=volume
-    )
+    await xiaomusic.set_volume(did=did, arg1=volume)
     return {"ret": "OK", "volume": volume}
 
 
-@app.route("/searchmusic", methods=["GET"])
-@auth.login_required
-def searchmusic():
-    name = request.args.get("name")
+@app.get("/searchmusic")
+def searchmusic(name: str = "", Verifcation=Depends(verification)):
     return xiaomusic.searchmusic(name)
 
 
-@app.route("/playingmusic", methods=["GET"])
-@auth.login_required
-def playingmusic():
-    did = request.args.get("did")
+@app.get("/playingmusic")
+def playingmusic(did: str = "", Verifcation=Depends(verification)):
     if not xiaomusic.did_exist(did):
         return {"ret": "Did not exist"}
 
@@ -101,92 +115,84 @@ def playingmusic():
     }
 
 
-@app.route("/isplaying", methods=["GET"])
-@auth.login_required
-def isplaying():
-    did = request.args.get("did")
-    if not xiaomusic.did_exist(did):
-        return False
-    return xiaomusic.isplaying(did)
+class DidCmd(BaseModel):
+    did: str
+    cmd: str
 
 
-@app.route("/", methods=["GET"])
-def index():
-    return send_from_directory("static", "index.html")
-
-
-@app.route("/cmd", methods=["POST"])
-@auth.login_required
-async def do_cmd():
-    data = request.get_json()
-    did = data.get("did")
-    cmd = data.get("cmd")
+@app.post("/cmd")
+async def do_cmd(data: DidCmd, Verifcation=Depends(verification)):
+    did = data.did
+    cmd = data.cmd
+    log.info(f"docmd. did:{did} cmd:{cmd}")
     if not xiaomusic.did_exist(did):
         return {"ret": "Did not exist"}
 
     if len(cmd) > 0:
-        log.info(f"docmd. did:{did} cmd:{cmd}")
-        xiaomusic.set_last_record(did, cmd)
+        asyncio.create_task(xiaomusic.do_check_cmd(did=did, query=cmd))
         return {"ret": "OK"}
     return {"ret": "Unknow cmd"}
 
 
-@app.route("/getsetting", methods=["GET"])
-@auth.login_required
-async def getsetting():
-    need_device_list = request.args.get("need_device_list")
+@app.get("/getsetting")
+async def getsetting(need_device_list: bool = False, Verifcation=Depends(verification)):
     config = xiaomusic.getconfig()
     data = asdict(config)
-    if need_device_list == "true":
-        device_list = await xiaomusic.call_main_thread_function(xiaomusic.getalldevices)
+    if need_device_list:
+        device_list = await xiaomusic.getalldevices()
         log.info(f"getsetting device_list: {device_list}")
         data["device_list"] = device_list
     return data
 
 
-@app.route("/savesetting", methods=["POST"])
-@auth.login_required
-async def savesetting():
-    data = request.get_json()
-    debug_data = deepcopy_data_no_sensitive_info(data)
-    log.info(f"saveconfig: {debug_data}")
-    await xiaomusic.saveconfig(data)
-    return "save success"
+@app.post("/savesetting")
+async def savesetting(request: Request, Verifcation=Depends(verification)):
+    try:
+        data_json = await request.body()
+        data = json.loads(data_json.decode("utf-8"))
+        debug_data = deepcopy_data_no_sensitive_info(data)
+        log.info(f"saveconfig: {debug_data}")
+        await xiaomusic.saveconfig(data)
+        return "save success"
+    except json.JSONDecodeError as err:
+        raise HTTPException(status_code=400, detail="Invalid JSON") from err
 
 
-@app.route("/musiclist", methods=["GET"])
-@auth.login_required
-async def musiclist():
+@app.get("/musiclist")
+async def musiclist(Verifcation=Depends(verification)):
     return xiaomusic.get_music_list()
 
 
-@app.route("/curplaylist", methods=["GET"])
-@auth.login_required
-async def curplaylist():
-    did = request.args.get("did")
+@app.get("/curplaylist")
+async def curplaylist(did: str = "", Verifcation=Depends(verification)):
     if not xiaomusic.did_exist(did):
         return ""
     return xiaomusic.get_cur_play_list(did)
 
 
-@app.route("/delmusic", methods=["POST"])
-@auth.login_required
-def delmusic():
-    data = request.get_json()
+class MusicItem(BaseModel):
+    name: str
+
+
+@app.post("/delmusic")
+def delmusic(data: MusicItem, Verifcation=Depends(verification)):
     log.info(data)
-    xiaomusic.del_music(data["name"])
+    xiaomusic.del_music(data.name)
     return "success"
 
 
-@app.route("/downloadjson", methods=["POST"])
-@auth.login_required
-def downloadjson():
-    data = request.get_json()
+class UrlInfo(BaseModel):
+    url: str
+
+
+@app.post("/downloadjson")
+async def downloadjson(data: UrlInfo, Verifcation=Depends(verification)):
     log.info(data)
-    url = data["url"]
+    url = data.url
+    content = ""
     try:
         ret = "OK"
-        content = downloadfile(url)
+        content = await downloadfile(url)
     except Exception as e:
         log.exception(f"Execption {e}")
         ret = "Download JSON file failed."
@@ -196,17 +202,17 @@ def downloadjson():
     }
 
 
-@app.route("/downloadlog", methods=["GET"])
-@auth.login_required
-def downloadlog():
-    return send_file(xiaomusic.config.log_file, as_attachment=True)
+@app.get("/downloadlog")
+def downloadlog(Verifcation=Depends(verification)):
+    file_path = xiaomusic.config.log_file
+    if os.path.exists(file_path):
+        return FileResponse(path=file_path, media_type="text/plain")
+    else:
+        return {"message": "File not found."}
 
 
-@app.route("/playurl", methods=["GET"])
-@auth.login_required
-async def playurl():
-    did = request.args.get("did")
-    url = request.args.get("url")
+@app.get("/playurl")
+async def playurl(did: str, url: str, Verifcation=Depends(verification)):
     if not xiaomusic.did_exist(did):
         return {"ret": "Did not exist"}
 
@@ -216,40 +222,12 @@ async def playurl():
     )
 
 
-@app.route("/debug_play_by_music_url", methods=["POST"])
-@auth.login_required
-async def debug_play_by_music_url():
-    data = request.get_json()
-    log.info(f"data:{data}")
-    return await xiaomusic.call_main_thread_function(
-        xiaomusic.debug_play_by_music_url, arg1=data
-    )
-
-
-def static_path_handler(filename):
-    log.debug(filename)
-    log.debug(static_path)
-    absolute_path = os.path.abspath(static_path)
-    log.debug(absolute_path)
-    return send_from_directory(absolute_path, filename)
-
-
-def run_app():
-    serve(app, host=host, port=port)
-
-
-def StartHTTPServer(_port, _static_path, _xiaomusic):
-    global port, static_path, xiaomusic, log
-    port = _port
-    static_path = _static_path
-    xiaomusic = _xiaomusic
-    log = xiaomusic.log
-
-    app.add_url_rule(
-        f"/{static_path}/<path:filename>", "static_path_handler", static_path_handler
-    )
-
-    server_thread = Thread(target=run_app)
-    server_thread.daemon = True
-    server_thread.start()
-    xiaomusic.log.info(f"Serving on {host}:{port}")
+@app.post("/debug_play_by_music_url")
+async def debug_play_by_music_url(request: Request, Verifcation=Depends(verification)):
+    try:
+        data = await request.body()
+        data_dict = json.loads(data.decode("utf-8"))
+        log.info(f"data:{data_dict}")
+        return await xiaomusic.debug_play_by_music_url(arg1=data_dict)
+    except json.JSONDecodeError as err:
+        raise HTTPException(status_code=400, detail="Invalid JSON") from err

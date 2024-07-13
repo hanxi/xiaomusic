@@ -14,9 +14,7 @@ from pathlib import Path
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiNAService
 
-from xiaomusic import (
-    __version__,
-)
+from xiaomusic import __version__
 from xiaomusic.config import (
     KEY_WORD_ARG_BEFORE_DICT,
     Config,
@@ -31,7 +29,6 @@ from xiaomusic.const import (
     PLAY_TYPE_TTS,
     SUPPORT_MUSIC_TYPE,
 )
-from xiaomusic.httpserver import StartHTTPServer
 from xiaomusic.plugin import PluginManager
 from xiaomusic.utils import (
     custom_sort_key,
@@ -57,7 +54,6 @@ class XiaoMusic:
         self.mina_service = None
         self.polling_event = asyncio.Event()
         self.new_record_event = asyncio.Event()
-        self.call_queue = asyncio.Queue()
 
         self.all_music = {}
         self._all_radio = {}  # 电台列表
@@ -306,15 +302,6 @@ class XiaoMusic:
                 self.last_record = last_record
                 self.new_record_event.set()
 
-    # 手动插入消息
-    def set_last_record(self, did, query):
-        self.last_record = {
-            "did": did,
-            "query": query,
-            "ctrl_panel": True,
-        }
-        self.new_record_event.set()
-
     def get_filename(self, name):
         if name not in self.all_music:
             self.log.debug(f"get_filename not in. name:{name}")
@@ -467,7 +454,6 @@ class XiaoMusic:
             self.log.exception(f"Execption {e}")
 
     async def run_forever(self):
-        StartHTTPServer(self.port, self.music_path, self)
         async with ClientSession() as session:
             self.session = session
             await self.init_all_data(session)
@@ -485,36 +471,25 @@ class XiaoMusic:
                 await self.new_record_event.wait()
                 self.new_record_event.clear()
                 new_record = self.last_record
-                if new_record is None:
-                    # 其他线程的函数调用
-                    try:
-                        func, callback, kwargs = await self.call_queue.get()
-                        try:
-                            ret = await func(**kwargs)
-                        except Exception as e:
-                            self.log.exception(f"Execption {e}")
-                        callback(ret)
-                    except Exception as e:
-                        self.log.exception(f"Execption {e}")
-                    continue
                 self.polling_event.clear()  # stop polling when processing the question
                 query = new_record.get("query", "").strip()
                 did = new_record.get("did", "").strip()
-                ctrl_panel = new_record.get("ctrl_panel", False)
-                self.log.info("收到消息:%s 控制面板:%s did:%s", query, ctrl_panel, did)
+                await self._do_check_cmd(did, query, False)
 
-                # 匹配命令
-                try:
-                    opvalue, oparg = self.match_cmd(did, query, ctrl_panel)
-                    if not opvalue:
-                        await asyncio.sleep(1)
-                        await self.check_replay(did)
-                        continue
+    # 匹配命令
+    async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
+        self.log.info(f"收到消息:{query} 控制面板:{ctrl_panel} did:{did}")
+        try:
+            opvalue, oparg = self.match_cmd(did, query, ctrl_panel)
+            if not opvalue:
+                await asyncio.sleep(1)
+                await self.check_replay(did)
+                return
 
-                    func = getattr(self, opvalue)
-                    await func(did=did, arg1=oparg)
-                except Exception as e:
-                    self.log.exception(f"Execption {e}")
+            func = getattr(self, opvalue)
+            await func(did=did, arg1=oparg)
+        except Exception as e:
+            self.log.exception(f"Execption {e}")
 
     # 检查是否匹配到完全一样的指令
     def check_full_match_cmd(self, did, query, ctrl_panel):
@@ -751,7 +726,7 @@ class XiaoMusic:
         # 配置文件落地
         self.save_cur_config()
         # 重新初始化
-        await self.call_main_thread_function(self.reinit)
+        await self.reinit()
 
     # 配置文件落地
     def do_saveconfig(self, data):
@@ -791,21 +766,6 @@ class XiaoMusic:
         except Exception as e:
             self.log.exception(f"Execption {e}")
         return device_list
-
-    # 用于在web线程里调用
-    # 获取所有设备
-    async def call_main_thread_function(self, func, **kwargs):
-        loop = asyncio.get_event_loop()
-        future = loop.create_future()
-
-        def callback(ret):
-            loop.call_soon_threadsafe(future.set_result, ret)
-
-        await self.call_queue.put((func, callback, kwargs))
-        self.last_record = None
-        self.new_record_event.set()
-        result = await future
-        return result
 
     async def debug_play_by_music_url(self, arg1=None):
         if arg1 is None:
