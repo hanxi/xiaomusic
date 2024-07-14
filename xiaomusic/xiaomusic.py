@@ -75,6 +75,9 @@ class XiaoMusic:
         # 初始化插件
         self.plugin_manager = PluginManager(self)
 
+        # 更新设备列表
+        self.update_devices()
+
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"Startup OK. {debug_config}")
 
@@ -99,8 +102,6 @@ class XiaoMusic:
         self.active_cmd = self.config.active_cmd.split(",")
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
         self.music_path_depth = self.config.music_path_depth
-
-        self.update_devices()
 
     def update_devices(self):
         self.device_id_did = {}  # key 为 device_id
@@ -144,24 +145,24 @@ class XiaoMusic:
     async def poll_latest_ask(self):
         async with ClientSession() as session:
             while True:
-                self.log.debug(
-                    f"Listening new message, timestamp: {self.last_timestamp}"
-                )
+                #self.log.debug(
+                #    f"Listening new message, timestamp: {self.last_timestamp}"
+                #)
                 session._cookie_jar = self.cookie_jar
 
                 # 拉取所有音箱的对话记录
                 tasks = [
                     self.get_latest_ask_from_xiaoai(session, device_id)
-                    for device_id in self.config.devices
+                    for device_id in self.device_id_did
                 ]
                 await asyncio.gather(*tasks)
 
                 start = time.perf_counter()
-                self.log.debug(f"Polling_event, timestamp: {self.last_timestamp}")
+                #self.log.debug(f"Polling_event, timestamp: {self.last_timestamp}")
                 await self.polling_event.wait()
                 if (d := time.perf_counter() - start) < 1:
                     # sleep to avoid too many request
-                    self.log.debug(f"Sleep {d}, timestamp: {self.last_timestamp}")
+                    #self.log.debug(f"Sleep {d}, timestamp: {self.last_timestamp}")
                     await asyncio.sleep(1 - d)
 
     async def init_all_data(self, session):
@@ -268,7 +269,7 @@ class XiaoMusic:
                     hardware=hardware,
                     timestamp=str(int(time.time() * 1000)),
                 )
-                self.log.debug(f"url:{url}")
+                #self.log.debug(f"url:{url} device_id:{device_id} hardware:{hardware}")
                 r = await session.get(url, timeout=timeout, cookies=cookies)
             except Exception as e:
                 self.log.exception(f"Execption {e}")
@@ -363,9 +364,13 @@ class XiaoMusic:
             return url
 
         filename = self.get_filename(name).replace("\\", "/")
+        if filename.startswith(self.config.music_path):
+            filename = filename[len(self.config.music_path) :]
+        if filename.startswith("/"):
+            filename = filename[1:]
         self.log.debug(f"get_music_url local music. name:{name}, filename:{filename}")
         encoded_name = urllib.parse.quote(filename)
-        return f"http://{self.hostname}:{self.public_port}/{encoded_name}"
+        return f"http://{self.hostname}:{self.public_port}/music/{encoded_name}"
 
     # 获取目录下所有歌曲,生成随机播放列表
     def _gen_all_music_list(self):
@@ -474,7 +479,7 @@ class XiaoMusic:
                 self.polling_event.clear()  # stop polling when processing the question
                 query = new_record.get("query", "").strip()
                 did = new_record.get("did", "").strip()
-                await self._do_check_cmd(did, query, False)
+                await self.do_check_cmd(did, query, False)
 
     # 匹配命令
     async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
@@ -490,6 +495,9 @@ class XiaoMusic:
             await func(did=did, arg1=oparg)
         except Exception as e:
             self.log.exception(f"Execption {e}")
+
+    async def check_replay(self, did):
+        return await self.devices[did].check_replay()
 
     # 检查是否匹配到完全一样的指令
     def check_full_match_cmd(self, did, query, ctrl_panel):
@@ -754,6 +762,7 @@ class XiaoMusic:
         self.setup_logger()
         await self.init_all_data(self.session)
         self._gen_all_music_list()
+        self.update_devices()
 
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"reinit success. data:{debug_config}")

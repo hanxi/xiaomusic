@@ -67,11 +67,13 @@ app = FastAPI(
 )
 
 
-def reset_dependency():
-    if not config.disable_httpauth:
+def reset_http_server():
+    log.info(f"disable_httpauth:{config.disable_httpauth}")
+    if config.disable_httpauth:
         app.dependency_overrides[verification] = no_verification
     else:
         app.dependency_overrides = {}
+    app.mount("/music", StaticFiles(directory=config.music_path), name="music")
 
 
 def HttpInit(_xiaomusic):
@@ -81,8 +83,7 @@ def HttpInit(_xiaomusic):
     log = xiaomusic.log
 
     app.mount("/static", StaticFiles(directory="xiaomusic/static"), name="static")
-    app.mount("/music", StaticFiles(directory=config.music_path), name="music")
-    reset_dependency()
+    reset_http_server()
 
 
 @app.get("/")
@@ -179,7 +180,7 @@ async def savesetting(request: Request):
         debug_data = deepcopy_data_no_sensitive_info(data)
         log.info(f"saveconfig: {debug_data}")
         await xiaomusic.saveconfig(data)
-        reset_dependency()
+        reset_http_server()
         return "save success"
     except json.JSONDecodeError as err:
         raise HTTPException(status_code=400, detail="Invalid JSON") from err
