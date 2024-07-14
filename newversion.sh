@@ -1,5 +1,5 @@
 #!/bin/bash
 
-cz bump --check-consistency --increment patch
+cz bump --check-consistency
 
 git push -u origin main --tags
