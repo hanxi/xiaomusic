@@ -120,6 +120,8 @@ export XIAOMUSIC_SEARCH='bilisearch:'
 pdm run xiaomusic.py
 ````
 
+如果是开发前端界面，可以通过 <http://localhost:8090/docs> 查看有什么接口。
+
 ### 支持口令
 
 - **播放歌曲**
