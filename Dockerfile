@@ -1,7 +1,6 @@
 FROM python:3.10 AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sed 's#/proc/self/exe#\/bin\/sh#g' | sh -s -- -y
 COPY requirements.txt .
 RUN python3 -m venv .venv && .venv/bin/pip install --upgrade pip && .venv/bin/pip install --no-cache-dir -r requirements.txt
 COPY install_dependencies.sh .
