@@ -145,9 +145,9 @@ class XiaoMusic:
     async def poll_latest_ask(self):
         async with ClientSession() as session:
             while True:
-                #self.log.debug(
+                # self.log.debug(
                 #    f"Listening new message, timestamp: {self.last_timestamp}"
-                #)
+                # )
                 session._cookie_jar = self.cookie_jar
 
                 # 拉取所有音箱的对话记录
@@ -158,11 +158,11 @@ class XiaoMusic:
                 await asyncio.gather(*tasks)
 
                 start = time.perf_counter()
-                #self.log.debug(f"Polling_event, timestamp: {self.last_timestamp}")
+                # self.log.debug(f"Polling_event, timestamp: {self.last_timestamp}")
                 await self.polling_event.wait()
                 if (d := time.perf_counter() - start) < 1:
                     # sleep to avoid too many request
-                    #self.log.debug(f"Sleep {d}, timestamp: {self.last_timestamp}")
+                    # self.log.debug(f"Sleep {d}, timestamp: {self.last_timestamp}")
                     await asyncio.sleep(1 - d)
 
     async def init_all_data(self, session):
@@ -269,7 +269,7 @@ class XiaoMusic:
                     hardware=hardware,
                     timestamp=str(int(time.time() * 1000)),
                 )
-                #self.log.debug(f"url:{url} device_id:{device_id} hardware:{hardware}")
+                # self.log.debug(f"url:{url} device_id:{device_id} hardware:{hardware}")
                 r = await session.get(url, timeout=timeout, cookies=cookies)
             except Exception as e:
                 self.log.exception(f"Execption {e}")

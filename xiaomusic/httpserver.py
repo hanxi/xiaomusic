@@ -1,5 +1,6 @@
 import asyncio
 import json
+from pathlib import Path
 import os
 import secrets
 from contextlib import asynccontextmanager
@@ -73,7 +74,6 @@ def reset_http_server():
         app.dependency_overrides[verification] = no_verification
     else:
         app.dependency_overrides = {}
-    app.mount("/music", StaticFiles(directory=config.music_path), name="music")
 
 
 def HttpInit(_xiaomusic):
@@ -84,6 +84,24 @@ def HttpInit(_xiaomusic):
 
     app.mount("/static", StaticFiles(directory="xiaomusic/static"), name="static")
     reset_http_server()
+
+
+@app.get("/music/{file_path:path}")
+async def read_music_file(file_path: str):
+    base_dir = Path(config.music_path).resolve()
+    real_path = os.path.join(base_dir, file_path)
+    file_location = Path(real_path).resolve()
+    log.info(f"read_music_file. file_path:{file_path} real_path:{real_path}")
+    if not file_location.exists() or not file_location.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # 确保请求的文件在我们的基础目录下
+    if base_dir not in file_location.parents:
+        raise HTTPException(
+            status_code=403, detail="Access to this file is not permitted"
+        )
+
+    return FileResponse(file_location)
 
 
 @app.get("/")
