@@ -77,7 +77,7 @@ def main():
     xiaomusic = XiaoMusic(config)
     HttpInit(xiaomusic)
 
-    uvicorn.run(HttpApp, host="0.0.0.0", port=config.port)
+    uvicorn.run(HttpApp, host=["::", "0.0.0.0"], port=config.port)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,10 @@
 import asyncio
 import json
 import os
+import secrets
 from contextlib import asynccontextmanager
 from dataclasses import asdict
+from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -29,8 +31,47 @@ async def app_lifespan(app):
         task.cancel()
 
 
-app = FastAPI(lifespan=app_lifespan)
 security = HTTPBasic()
+
+
+def verification(
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+):
+    current_username_bytes = credentials.username.encode("utf8")
+    correct_username_bytes = config.httpauth_username.encode("utf8")
+    is_correct_username = secrets.compare_digest(
+        current_username_bytes, correct_username_bytes
+    )
+    current_password_bytes = credentials.password.encode("utf8")
+    correct_password_bytes = config.httpauth_password.encode("utf8")
+    is_correct_password = secrets.compare_digest(
+        current_password_bytes, correct_password_bytes
+    )
+    if not (is_correct_username and is_correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return True
+
+
+def no_verification():
+    return True
+
+
+app = FastAPI(
+    lifespan=app_lifespan,
+    version=__version__,
+    dependencies=[Depends(verification)],
+)
+
+
+def reset_dependency():
+    if not config.disable_httpauth:
+        app.dependency_overrides[verification] = no_verification
+    else:
+        app.dependency_overrides = {}
 
 
 def HttpInit(_xiaomusic):
@@ -41,22 +82,7 @@ def HttpInit(_xiaomusic):
 
     app.mount("/static", StaticFiles(directory="xiaomusic/static"), name="static")
     app.mount("/music", StaticFiles(directory=config.music_path), name="music")
-
-
-def verification(creds: HTTPBasicCredentials = Depends(security)):
-    username = creds.username
-    password = creds.password
-
-    if config.disable_httpauth:
-        return True
-    if config.httpauth_username == username and config.httpauth_password == password:
-        return True
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+    reset_dependency()
 
 
 @app.get("/")
@@ -71,7 +97,7 @@ def getversion():
 
 
 @app.get("/getvolume")
-async def getvolume(did: str = "", Verifcation=Depends(verification)):
+async def getvolume(did: str = ""):
     if not xiaomusic.did_exist(did):
         return {"volume": 0}
 
@@ -85,7 +111,7 @@ class DidVolume(BaseModel):
 
 
 @app.post("/setvolume")
-async def setvolume(data: DidVolume, Verifcation=Depends(verification)):
+async def setvolume(data: DidVolume):
     did = data.did
     volume = data.volume
     if not xiaomusic.did_exist(did):
@@ -97,12 +123,12 @@ async def setvolume(data: DidVolume, Verifcation=Depends(verification)):
 
 
 @app.get("/searchmusic")
-def searchmusic(name: str = "", Verifcation=Depends(verification)):
+def searchmusic(name: str = ""):
     return xiaomusic.searchmusic(name)
 
 
 @app.get("/playingmusic")
-def playingmusic(did: str = "", Verifcation=Depends(verification)):
+def playingmusic(did: str = ""):
     if not xiaomusic.did_exist(did):
         return {"ret": "Did not exist"}
 
@@ -121,7 +147,7 @@ class DidCmd(BaseModel):
 
 
 @app.post("/cmd")
-async def do_cmd(data: DidCmd, Verifcation=Depends(verification)):
+async def do_cmd(data: DidCmd):
     did = data.did
     cmd = data.cmd
     log.info(f"docmd. did:{did} cmd:{cmd}")
@@ -135,7 +161,7 @@ async def do_cmd(data: DidCmd, Verifcation=Depends(verification)):
 
 
 @app.get("/getsetting")
-async def getsetting(need_device_list: bool = False, Verifcation=Depends(verification)):
+async def getsetting(need_device_list: bool = False):
     config = xiaomusic.getconfig()
     data = asdict(config)
     if need_device_list:
@@ -146,13 +172,14 @@ async def getsetting(need_device_list: bool = False, Verifcation=Depends(verific
 
 
 @app.post("/savesetting")
-async def savesetting(request: Request, Verifcation=Depends(verification)):
+async def savesetting(request: Request):
     try:
         data_json = await request.body()
         data = json.loads(data_json.decode("utf-8"))
         debug_data = deepcopy_data_no_sensitive_info(data)
         log.info(f"saveconfig: {debug_data}")
         await xiaomusic.saveconfig(data)
+        reset_dependency()
         return "save success"
     except json.JSONDecodeError as err:
         raise HTTPException(status_code=400, detail="Invalid JSON") from err
@@ -164,7 +191,7 @@ async def musiclist(Verifcation=Depends(verification)):
 
 
 @app.get("/curplaylist")
-async def curplaylist(did: str = "", Verifcation=Depends(verification)):
+async def curplaylist(did: str = ""):
     if not xiaomusic.did_exist(did):
         return ""
     return xiaomusic.get_cur_play_list(did)
@@ -175,7 +202,7 @@ class MusicItem(BaseModel):
 
 
 @app.post("/delmusic")
-def delmusic(data: MusicItem, Verifcation=Depends(verification)):
+def delmusic(data: MusicItem):
     log.info(data)
     xiaomusic.del_music(data.name)
     return "success"
@@ -186,7 +213,7 @@ class UrlInfo(BaseModel):
 
 
 @app.post("/downloadjson")
-async def downloadjson(data: UrlInfo, Verifcation=Depends(verification)):
+async def downloadjson(data: UrlInfo):
     log.info(data)
     url = data.url
     content = ""
@@ -212,7 +239,7 @@ def downloadlog(Verifcation=Depends(verification)):
 
 
 @app.get("/playurl")
-async def playurl(did: str, url: str, Verifcation=Depends(verification)):
+async def playurl(did: str, url: str):
     if not xiaomusic.did_exist(did):
         return {"ret": "Did not exist"}
 
@@ -223,7 +250,7 @@ async def playurl(did: str, url: str, Verifcation=Depends(verification)):
 
 
 @app.post("/debug_play_by_music_url")
-async def debug_play_by_music_url(request: Request, Verifcation=Depends(verification)):
+async def debug_play_by_music_url(request: Request):
     try:
         data = await request.body()
         data_dict = json.loads(data.decode("utf-8"))
