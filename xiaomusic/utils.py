@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import difflib
+import mimetypes
 import os
 import random
 import re
@@ -168,6 +169,13 @@ async def downloadfile(url):
             return text
 
 
+def is_mp3(url):
+    mt = mimetypes.guess_type(url)
+    if mt and mt[0] == "audio/mpeg":
+        return True
+    return False
+
+
 async def _get_web_music_duration(session, url, start=0, end=500):
     duration = 0
     headers = {"Range": f"bytes={start}-{end}"}
@@ -178,7 +186,10 @@ async def _get_web_music_duration(session, url, start=0, end=500):
         name = tmp.name
 
     try:
-        m = mutagen.File(name)
+        if is_mp3(url):
+            m = mutagen.mp3.MP3(name)
+        else:
+            m = mutagen.File(name)
         duration = m.info.length
     except Exception:
         pass
@@ -220,7 +231,10 @@ async def get_web_music_duration(url, start=0, end=500):
 def get_local_music_duration(filename):
     duration = 0
     try:
-        m = mutagen.File(filename)
+        if is_mp3(filename):
+            m = mutagen.mp3.MP3(filename)
+        else:
+            m = mutagen.File(filename)
         duration = m.info.length
     except Exception:
         pass
