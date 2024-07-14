@@ -29,6 +29,7 @@ services:
       - 8090:8090
     volumes:
       - ./music:/app/music
+      - ./conf:/app/conf
 ```
 
 对应的 docker 启动命令如下:
@@ -36,8 +37,11 @@ services:
 ```yaml
 docker run -p 8090:8090 \
     -v ./music:/app/music \
+    -v ./conf:/app/conf
     hanxi/xiaomusic
 ```
+
+其中 conf 目录为配置文件存放目录，music 目录为音乐存放目录，建议分开配置为不同的目录。
 
 启动成功后，在 web 页面可以配置其他参数，带有 `*` 号的配置是必须要配置的，其他的用不上时不用修改。初次配置时需要在页面上输入小米账号和密码保存后才能获取到设备列表。
 
