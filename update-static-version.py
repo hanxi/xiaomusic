@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import re
-import sys
 from pathlib import Path
 
 
@@ -43,6 +42,7 @@ def update_html_version(html_files, version):
 # 使用案例
 if __name__ == "__main__":
     import time
+
     t = str(int(time.time()))
 
     # 指定目录
