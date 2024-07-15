@@ -82,7 +82,8 @@ def HttpInit(_xiaomusic):
     config = xiaomusic.config
     log = xiaomusic.log
 
-    app.mount("/static", StaticFiles(directory="xiaomusic/static"), name="static")
+    folder = os.path.dirname(__file__)
+    app.mount("/static", StaticFiles(directory=f"{folder}/static"), name="static")
     reset_http_server()
 
 
