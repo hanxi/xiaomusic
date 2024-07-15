@@ -42,12 +42,8 @@ def update_html_version(html_files, version):
 
 # 使用案例
 if __name__ == "__main__":
-    # 导入 xiaomusic 包以获取 __version__ 变量
-    try:
-        from xiaomusic import __version__ as new_version
-    except ImportError as e:
-        print("无法导入版本号：", e)
-        sys.exit(1)
+    import time
+    t = str(int(time.time()))
 
     # 指定目录
     html_directory = "xiaomusic/static"  # 修改为实际的HTML文件目录路径
@@ -56,4 +52,4 @@ if __name__ == "__main__":
     html_files_to_update = get_html_files(html_directory)
 
     # 执行更新
-    update_html_version(html_files_to_update, new_version)
+    update_html_version(html_files_to_update, t)
