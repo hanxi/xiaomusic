@@ -60,6 +60,14 @@ $(function(){
         }
       }
     });
+
+    console.log('cur_did', did);
+    $('#did').change(function() {
+      did = $(this).val();
+      localStorage.setItem('cur_did', did);
+      window.did = did;
+      console.log('cur_did', did);
+    })
   });
 
   // 拉取版本
