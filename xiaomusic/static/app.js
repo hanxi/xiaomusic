@@ -24,8 +24,13 @@ $(function(){
     localStorage.setItem('mi_did', data.mi_did);
 
     var did = localStorage.getItem('cur_did');
-    if ((did == null || did == "") && data.mi_did != null) {
-      var dids = data.mi_did.split(',');
+    var dids = [];
+    if (data.mi_did != null) {
+      dids = data.mi_did.split(',');
+    }
+    console.log('cur_did', did);
+    console.log('dids', dids);
+    if ((dids.length > 0) && (did == null || did == "" || !dids.includes(did))) {
       did = dids[0];
       localStorage.setItem('cur_did', did);
     }
