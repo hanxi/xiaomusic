@@ -92,7 +92,8 @@ def HttpInit(_xiaomusic):
 
 @app.get("/")
 async def read_index():
-    return FileResponse("xiaomusic/static/index.html")
+    folder = os.path.dirname(__file__)
+    return FileResponse(f"{folder}/static/index.html")
 
 
 @app.get("/getversion")
