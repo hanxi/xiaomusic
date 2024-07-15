@@ -821,6 +821,7 @@ class XiaoMusicDevice:
         self._playing = False
         # 关机定时器
         self._stop_timer = None
+        self._last_cmd = None
         self.update_playlist()
 
     # 初始化播放列表
@@ -832,6 +833,10 @@ class XiaoMusicDevice:
 
     # 播放歌曲
     async def play(self, name="", search_key=""):
+        self._last_cmd = "play"
+        return await self._play(name=name, search_key=search_key)
+
+    async def _play(self, name="", search_key=""):
         if search_key == "" and name == "":
             if self.check_play_next():
                 await self.play_next()
@@ -855,6 +860,9 @@ class XiaoMusicDevice:
 
     # 下一首
     async def play_next(self):
+        return await self._play_next()
+
+    async def _play_next(self):
         self.log.info("开始播放下一首")
         name = self.cur_music
         if (
@@ -867,10 +875,11 @@ class XiaoMusicDevice:
         if name == "":
             await self.do_tts("本地没有歌曲")
             return
-        await self.play(name)
+        await self._play(name)
 
     # 播放本地歌曲
     async def playlocal(self, name):
+        self._last_cmd = "playlocal"
         if name == "":
             if self.check_play_next():
                 await self.play_next()
@@ -894,7 +903,14 @@ class XiaoMusicDevice:
         sec, url = await self.xiaomusic.get_music_sec_url(name)
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
-        await self.group_player_play(url)
+        results = await self.group_player_play(url)
+        if all(ele is None for ele in results):
+            self.log.info(f"播放 {name} 失败")
+            await asyncio.sleep(1)
+            if self.isplaying() and self._last_cmd != "stop":
+                await self._play_next()
+            return
+
         self.log.info("已经开始播放了")
 
         # 取消组内所有的下一首歌曲的定时器
@@ -998,7 +1014,7 @@ class XiaoMusicDevice:
         if self.isplaying() and not self.isdownloading():
             # 继续播放歌曲
             self.log.info("现在继续播放歌曲")
-            await self.play()
+            await self._play()
         else:
             self.log.info(
                 f"不会继续播放歌曲. isplaying:{self.isplaying()} isdownloading:{self.isdownloading()}"
@@ -1141,12 +1157,14 @@ class XiaoMusicDevice:
         await self.do_tts(tts)
 
     async def play_music_list(self, list_name, music_name):
+        self._last_cmd = "play_music_list"
         self._cur_play_list = list_name
         self._play_list = self.xiaomusic.music_list[list_name]
         self.log.info(f"开始播放列表{list_name}")
-        await self.play(music_name)
+        await self._play(music_name)
 
     async def stop(self, arg1=""):
+        self._last_cmd = "stop"
         self._playing = False
         if arg1 != "notts":
             await self.do_tts(self.config.stop_tts_msg)
