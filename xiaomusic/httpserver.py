@@ -4,7 +4,6 @@ import os
 import secrets
 from contextlib import asynccontextmanager
 from dataclasses import asdict
-from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
@@ -75,6 +74,10 @@ def reset_http_server():
     else:
         app.dependency_overrides = {}
 
+    # 更新 music 链接
+    app.router.routes = [route for route in app.router.routes if route.path != "/music"]
+    app.mount("/music", StaticFiles(directory=config.music_path), name="music")
+
 
 def HttpInit(_xiaomusic):
     global xiaomusic, config, log
@@ -85,23 +88,6 @@ def HttpInit(_xiaomusic):
     folder = os.path.dirname(__file__)
     app.mount("/static", StaticFiles(directory=f"{folder}/static"), name="static")
     reset_http_server()
-
-
-@app.get("/music/{file_path:path}")
-async def read_music_file(file_path: str):
-    base_dir = os.path.abspath(config.music_path)
-    real_path = os.path.normpath(os.path.join(base_dir, file_path))
-    log.info(f"read_music_file. file_path:{file_path} real_path:{real_path}")
-    if not real_path.startswith(base_dir):
-        raise HTTPException(
-            status_code=403, detail="Access to this file is not permitted"
-        )
-
-    file_location = Path(real_path).resolve()
-    if not file_location.exists() or not file_location.is_file():
-        raise HTTPException(status_code=404, detail="File not found")
-
-    return FileResponse(file_location)
 
 
 @app.get("/")
