@@ -152,11 +152,13 @@ pdm run xiaomusic.py
 | LX01 | [小爱音箱mini](https://home.mi.com/baike/index.html#/detail?model=xiaomi.wifispeaker.lx01)         |
 | L05B | [小爱音箱Play](https://home.mi.com/baike/index.html#/detail?model=xiaomi.wifispeaker.l05b)         |
 | L05C | [小米小爱音箱Play 增强版](https://home.mi.com/baike/index.html#/detail?model=xiaomi.wifispeaker.l05c)   |
+| LX04 X10A X08A | 已经支持的触屏版 |
 
 型号与产品名称对照可以在这里查询 <https://home.miot-spec.com/s/xiaomi.wifispeaker>
 
 > 如果你的设备支持播放，请反馈给我添加到支持列表里，谢谢。
 > 目前应该所有设备类型都已经支持播放，有问题随时反馈。
+> 其他触屏版不能播放可以设置 XIAOMUSIC_USE_MUSIC_API 为 true 试试。
 
 ## 支持音乐格式
 
