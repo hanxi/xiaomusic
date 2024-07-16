@@ -78,7 +78,50 @@ def main():
     xiaomusic = XiaoMusic(config)
     HttpInit(xiaomusic)
 
-    uvicorn.run(HttpApp, host=["::", "0.0.0.0"], port=config.port)
+    log_config = {
+        "version": 1,
+        "formatters": {
+            "default": {
+                "()": "uvicorn.logging.DefaultFormatter",
+                "format": f"%(asctime)s [{__version__}] [%(levelname)s] %(filename)s:%(lineno)d: %(message)s",
+                "use_colors": False,
+            },
+        },
+        "handlers": {
+            "default": {
+                "class": "logging.StreamHandler",
+                "formatter": "default",
+                "stream": "ext://sys.stdout",
+            },
+            "file": {
+                "class": "logging.FileHandler",
+                "formatter": "default",
+                "filename": config.log_file,
+                "mode": "a",
+                "encoding": "utf-8",
+            },
+        },
+        "loggers": {
+            "uvicorn": {
+                "handlers": ["default", "file"],
+                "level": "INFO",
+            },
+            "uvicorn.error": {
+                "level": "INFO",
+                "handlers": ["default", "file"],
+                "propagate": False,
+            },
+            "uvicorn.access": {
+                "handlers": ["default", "file"],
+                "level": "INFO",
+                "propagate": False,
+            },
+        },
+    }
+
+    uvicorn.run(
+        HttpApp, host=["::", "0.0.0.0"], port=config.port, log_config=log_config
+    )
 
 
 if __name__ == "__main__":
