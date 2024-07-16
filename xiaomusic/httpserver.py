@@ -250,9 +250,7 @@ async def playurl(did: str, url: str):
         return {"ret": "Did not exist"}
 
     log.info(f"playurl did: {did} url: {url}")
-    return await xiaomusic.call_main_thread_function(
-        xiaomusic.play_url, did=did, arg1=url
-    )
+    return await xiaomusic.play_url(did=did, arg1=url)
 
 
 @app.post("/debug_play_by_music_url")
