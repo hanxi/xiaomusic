@@ -16,7 +16,8 @@ COPY xiaomusic.py .
 ENV XDG_CONFIG_HOME=/config
 ENV XIAOMUSIC_HOSTNAME=192.168.2.5
 ENV XIAOMUSIC_PORT=8090
-VOLUME /config
+VOLUME /app/conf
+VOLUME /app/music
 EXPOSE 8090
 ENV PATH=/app/.venv/bin:$PATH
 ENTRYPOINT [".venv/bin/python3","xiaomusic.py"]
