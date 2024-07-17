@@ -2,6 +2,8 @@ import asyncio
 import json
 import os
 import secrets
+import shutil
+import tempfile
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from typing import Annotated
@@ -10,6 +12,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.background import BackgroundTask
 from starlette.responses import FileResponse
 
 from xiaomusic import __version__
@@ -239,7 +242,29 @@ async def downloadjson(data: UrlInfo):
 def downloadlog(Verifcation=Depends(verification)):
     file_path = xiaomusic.config.log_file
     if os.path.exists(file_path):
-        return FileResponse(path=file_path, media_type="text/plain")
+        # 创建一个临时文件来保存日志的快照
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        try:
+            with open(file_path, "rb") as f:
+                shutil.copyfileobj(f, temp_file)
+            temp_file.close()
+
+            # 使用BackgroundTask在响应发送完毕后删除临时文件
+            def cleanup_temp_file(tmp_file_path):
+                os.remove(tmp_file_path)
+
+            background_task = BackgroundTask(cleanup_temp_file, temp_file.name)
+            return FileResponse(
+                temp_file.name,
+                media_type="text/plain",
+                filename="xiaomusic.txt",
+                background=background_task,
+            )
+        except Exception as e:
+            os.remove(temp_file.name)
+            raise HTTPException(
+                status_code=500, detail="Error capturing log file"
+            ) from e
     else:
         return {"message": "File not found."}
 

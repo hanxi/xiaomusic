@@ -78,49 +78,25 @@ def main():
     xiaomusic = XiaoMusic(config)
     HttpInit(xiaomusic)
 
-    log_config = {
-        "version": 1,
-        "formatters": {
-            "default": {
-                "()": "uvicorn.logging.DefaultFormatter",
-                "format": f"%(asctime)s [{__version__}] [%(levelname)s] %(filename)s:%(lineno)d: %(message)s",
-                "use_colors": False,
-            },
-        },
-        "handlers": {
-            "default": {
-                "class": "logging.StreamHandler",
-                "formatter": "default",
-                "stream": "ext://sys.stdout",
-            },
-            "file": {
-                "class": "logging.FileHandler",
-                "formatter": "default",
-                "filename": config.log_file,
-                "mode": "a",
-                "encoding": "utf-8",
-            },
-        },
-        "loggers": {
-            "uvicorn": {
-                "handlers": ["default", "file"],
-                "level": "INFO",
-            },
-            "uvicorn.error": {
-                "level": "INFO",
-                "handlers": ["default", "file"],
-                "propagate": False,
-            },
-            "uvicorn.access": {
-                "handlers": ["default", "file"],
-                "level": "INFO",
-                "propagate": False,
-            },
-        },
-    }
+    from uvicorn.config import LOGGING_CONFIG
 
+    LOGGING_CONFIG["formatters"]["access"] = {
+        "format": f"%(asctime)s [{__version__}] [%(levelname)s] %(filename)s:%(lineno)d: %(message)s",
+        "datefmt": "[%X]",
+    }
+    LOGGING_CONFIG["handlers"]["access"] = {
+        "level": "INFO",
+        "class": "logging.handlers.RotatingFileHandler",
+        "formatter": "access",
+        "filename": config.log_file,
+        "maxBytes": 10 * 1024 * 1024,
+        "backupCount": 1,
+    }
     uvicorn.run(
-        HttpApp, host=["::", "0.0.0.0"], port=config.port, log_config=log_config
+        HttpApp,
+        host=["::", "0.0.0.0"],
+        port=config.port,
+        log_config=LOGGING_CONFIG,
     )
 
 
