@@ -322,7 +322,7 @@ services:
 - XIAOMUSIC_DISABLE_HTTPAUTH 配置成 false 表示开启密码访问web控制台，具体见 <https://github.com/hanxi/xiaomusic/issues/47>
 - XIAOMUSIC_HTTPAUTH_USERNAME 配置 web 控制台用户
 - XIAOMUSIC_HTTPAUTH_PASSWORD 配置 web 控制台密码
-- XIAOMUSIC_CONF_PATH 用来存放配置文件的目录，记得把目录映射到主机，默认情况会把配置存放在music目录，具体见 <https://github.com/hanxi/xiaomusic/issues/74>
+- XIAOMUSIC_CONF_PATH 用来存放配置文件的目录，记得把目录映射到主机，默认为 `/app/config` ，具体见 <https://github.com/hanxi/xiaomusic/issues/74>
 - XIAOMUSIC_DISABLE_DOWNLOAD 设为 true 时关闭下载功能，见 <https://github.com/hanxi/xiaomusic/issues/82>
 - XIAOMUSIC_USE_MUSIC_API 设为 true 时使用 player_play_music 接口播放音乐，用于兼容不能播放的型号，如果发现需要设置这个选项的时候请告知我加一下设备型号，方便以后不用设置。 见 <https://github.com/hanxi/xiaomusic/issues/30>
 - XIAOMUSIC_KEYWORDS_PLAY 用来播放歌曲的口令前缀，默认是 "播放歌曲,放歌曲" ，可以用英文逗号分割配置多个

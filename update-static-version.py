@@ -21,7 +21,8 @@ def update_html_version(html_files, version):
     :param html_files: 需要更新的HTML文件路径的列表。
     :param version: 新的版本号字符串。
     """
-    pattern = re.compile(r"(/static/[a-zA-Z0-9_.-]+)(\?version=[0-9.a-zA-Z_-]*)?")
+    pattern = re.compile(r'(/static/.*(css|js))\?version=[^"]*"')
+    #pattern = re.compile(r'(/static/.*html)\?version=[^"]*"')
 
     for html_file in html_files:
         if not html_file.exists():
@@ -31,7 +32,8 @@ def update_html_version(html_files, version):
         html_content = html_file.read_text()
 
         # 更新CSS和JS版本号
-        html_content = pattern.sub(r"\g<1>?version=" + version, html_content)
+        html_content = pattern.sub(fr'\g<1>?version={version}"', html_content)
+        #html_content = pattern.sub(fr'\g<1>"', html_content)
 
         # 保存更改到HTML文件
         html_file.write_text(html_content)
