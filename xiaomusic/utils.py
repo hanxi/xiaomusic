@@ -136,11 +136,23 @@ def _append_files_result(result, root, joinpath, files, support_extension):
         result[dir_name].append(os.path.join(joinpath, file))
 
 
+def custom_walk(top, followlinks=True):
+    for root, dirs, files in os.walk(top, followlinks=False):
+        yield root, dirs, files
+
+        for dir in dirs:
+            path = os.path.join(root, dir)
+            if followlinks and os.path.islink(path):
+                # 如果启用 followlinks 并且是符号链接，获取其实际路径
+                real_path = os.readlink(path)
+                yield from custom_walk(real_path, followlinks=followlinks)
+
+
 def traverse_music_directory(
     directory, depth=10, exclude_dirs=None, support_extension=None
 ):
     result = {}
-    for root, dirs, files in os.walk(directory):
+    for root, dirs, files in custom_walk(directory):
         # 忽略排除的目录
         dirs[:] = [d for d in dirs if d not in exclude_dirs]
 
