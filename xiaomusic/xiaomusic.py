@@ -87,6 +87,9 @@ class XiaoMusic:
     def init_config(self):
         self.music_path = self.config.music_path
         self.conf_path = self.config.conf_path
+        # 兼容旧配置空的情况
+        if not self.conf_path:
+            self.conf_path = "conf"
         self.download_path = self.config.download_path
         if not self.download_path:
             self.download_path = self.music_path

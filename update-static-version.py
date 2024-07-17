@@ -22,7 +22,7 @@ def update_html_version(html_files, version):
     :param version: 新的版本号字符串。
     """
     pattern = re.compile(r'(/static/.*(css|js))\?version=[^"]*"')
-    #pattern = re.compile(r'(/static/.*html)\?version=[^"]*"')
+    # pattern = re.compile(r'(/static/.*html)\?version=[^"]*"')
 
     for html_file in html_files:
         if not html_file.exists():
@@ -32,8 +32,8 @@ def update_html_version(html_files, version):
         html_content = html_file.read_text()
 
         # 更新CSS和JS版本号
-        html_content = pattern.sub(fr'\g<1>?version={version}"', html_content)
-        #html_content = pattern.sub(fr'\g<1>"', html_content)
+        html_content = pattern.sub(rf'\g<1>?version={version}"', html_content)
+        # html_content = pattern.sub(fr'\g<1>"', html_content)
 
         # 保存更改到HTML文件
         html_file.write_text(html_content)
