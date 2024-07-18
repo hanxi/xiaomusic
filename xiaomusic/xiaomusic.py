@@ -403,13 +403,14 @@ class XiaoMusic:
                 (name, _) = os.path.splitext(filename)
                 self.all_music[name] = file
                 all_music_by_dir[dir_name][name] = True
+                self.log.debug(f"_gen_all_music_list {name}:{dir_name}:{file}")
 
-        self.log.debug(self.all_music)
+        #self.log.debug(self.all_music)
 
         self.music_list = {}
         for dir_name, musics in all_music_by_dir.items():
             self.music_list[dir_name] = list(musics.keys())
-            self.log.debug("dir_name:%s, list:%s", dir_name, self.music_list[dir_name])
+            #self.log.debug("dir_name:%s, list:%s", dir_name, self.music_list[dir_name])
 
         try:
             self._append_music_list()
@@ -457,8 +458,8 @@ class XiaoMusic:
                 self.music_list[list_name] = one_music_list
             if self._all_radio:
                 self.music_list["所有电台"] = list(self._all_radio.keys())
-            self.log.debug(self.all_music)
-            self.log.debug(self.music_list)
+            #self.log.debug(self.all_music)
+            #self.log.debug(self.music_list)
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
