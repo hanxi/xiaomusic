@@ -145,16 +145,17 @@ class Config:
             self.key_word_dict[k] = v
             self.key_match_order.append(k)
 
+    def init_keyword(self):
+        self.append_keyword(self.keywords_playlocal, "playlocal")
+        self.append_keyword(self.keywords_play, "play")
+        self.append_keyword(self.keywords_stop, "stop")
+        self.append_user_keyword()
+
     def __post_init__(self) -> None:
         if self.proxy:
             validate_proxy(self.proxy)
 
-        self.append_keyword(self.keywords_playlocal, "playlocal")
-        self.append_keyword(self.keywords_play, "play")
-        self.append_keyword(self.keywords_stop, "stop")
-
-        self.append_user_keyword()
-
+        self.init_keyword()
         # 保存配置到 config-example.json 文件
         if self.enable_config_example:
             with open("config-example.json", "w") as f:
@@ -211,3 +212,4 @@ class Config:
             converted_value = self.convert_value(k, v, type_hints)
             if converted_value is not None:
                 setattr(self, k, converted_value)
+        self.init_keyword()

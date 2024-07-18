@@ -468,13 +468,6 @@ class XiaoMusic:
             await self.init_all_data(session)
             task = asyncio.create_task(self.poll_latest_ask())
             assert task is not None  # to keep the reference to task, do not remove this
-            filtered_keywords = [
-                keyword for keyword in self.config.key_match_order if "#" not in keyword
-            ]
-            joined_keywords = "/".join(filtered_keywords)
-            self.log.info(f"语音控制已启动, 用【{joined_keywords}】开头来控制")
-            self.log.debug(f"key_word_dict: {self.config.key_word_dict}")
-
             while True:
                 self.polling_event.set()
                 await self.new_record_event.wait()
@@ -760,6 +753,10 @@ class XiaoMusic:
         self.init_config()
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"update_config_from_setting ok. data:{debug_config}")
+
+        joined_keywords = "/".join(self.config.key_match_order)
+        self.log.info(f"语音控制已启动, 用【{joined_keywords}】开头来控制")
+        self.log.debug(f"key_word_dict: {self.config.key_word_dict}")
 
     # 重新初始化
     async def reinit(self, **kwargs):
