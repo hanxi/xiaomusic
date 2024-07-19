@@ -133,6 +133,9 @@ class Config:
     group_list: str = os.getenv(
         "XIAOMUSIC_GROUP_LIST", ""
     )  # did1:group_name,did2:group_name
+    remove_id3tag: bool = (
+        os.getenv("XIAOMUSIC_REMOVE_ID3TAG", "false").lower() == "true"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
