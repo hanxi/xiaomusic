@@ -379,12 +379,13 @@ class XiaoMusic:
         self.log.debug(f"get_music_url local music. name:{name}, filename:{filename}")
 
         #移除MP3 ID3 v2标签和填充，减少播放前延迟 
-        if self.remove_id3tag and is_mp3(f"./music/{filename}"):
+        if self.remove_id3tag and is_mp3(f"{self.music_path}/{filename}"):
             self.log.info(f"remove_id3tag:{self.remove_id3tag}, is_mp3:True ")
-            filename = remove_id3_tags(filename)
-            self.log.info(f"filename after remove id3 tag: {filename}, orgin file saved")
-        else:
-            self.log.info(f"No id3 tag remove needed")
+            filename,change = remove_id3_tags(filename,self.music_path)
+            if change:
+                self.log.info(f"ID3 tag removed, orgin mp3 file saved as bak")
+            else:
+                self.log.info(f"No ID3 tag remove needed")
         encoded_name = urllib.parse.quote(filename)
         return f"http://{self.hostname}:{self.public_port}/music/{encoded_name}"
 

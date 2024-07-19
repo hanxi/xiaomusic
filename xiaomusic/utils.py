@@ -305,16 +305,17 @@ def no_padding(info):
     # this will remove all padding
     return 0
 
-def remove_id3_tags(filename):
+def remove_id3_tags(filename,music_path):
 
-    file_path = "./music/" + filename
+    file_path = music_path + "/" + filename
     audio = MP3(file_path, ID3=ID3)
+    change = False
     
     # 检查是否存在ID3 v2.3或v2.4标签
     if audio.tags and (audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0)):
 
         # 构造新文件的路径
-        new_file_path = file_path.rsplit('.', 1)[0] + '-withtag.mp3'
+        new_file_path = file_path + ".bak"
 
         # 备份原始文件为新文件
         shutil.copy(file_path, new_file_path)
@@ -327,8 +328,10 @@ def remove_id3_tags(filename):
         
         # 保存修改后的文件
         audio.save()
+
+        change = True
     
-    return filename
+    return filename,change
 
     
 
