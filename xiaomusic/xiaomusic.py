@@ -37,12 +37,11 @@ from xiaomusic.utils import (
     fuzzyfinder,
     get_local_music_duration,
     get_web_music_duration,
+    is_mp3,
     parse_cookie_string,
     parse_str_to_dict,
-    traverse_music_directory,
     remove_id3_tags,
-    is_mp3
-
+    traverse_music_directory,
 )
 
 
@@ -371,21 +370,22 @@ class XiaoMusic:
             self.log.debug(f"get_music_url web music. name:{name}, url:{url}")
             return url
 
-        filename = self.get_filename(name).replace("\\", "/")
+        filename = self.get_filename(name)
+        # 移除MP3 ID3 v2标签和填充，减少播放前延迟
+        if self.remove_id3tag and is_mp3(filename):
+            self.log.info(f"remove_id3tag:{self.remove_id3tag}, is_mp3:True ")
+            change = remove_id3_tags(filename)
+            if change:
+                self.log.info("ID3 tag removed, orgin mp3 file saved as bak")
+            else:
+                self.log.info("No ID3 tag remove needed")
+
+        filename = filename.replace("\\", "/")
         if filename.startswith(self.config.music_path):
             filename = filename[len(self.config.music_path) :]
         if filename.startswith("/"):
             filename = filename[1:]
         self.log.debug(f"get_music_url local music. name:{name}, filename:{filename}")
-
-        #移除MP3 ID3 v2标签和填充，减少播放前延迟 
-        if self.remove_id3tag and is_mp3(f"{self.music_path}/{filename}"):
-            self.log.info(f"remove_id3tag:{self.remove_id3tag}, is_mp3:True ")
-            filename,change = remove_id3_tags(filename,self.music_path)
-            if change:
-                self.log.info(f"ID3 tag removed, orgin mp3 file saved as bak")
-            else:
-                self.log.info(f"No ID3 tag remove needed")
         encoded_name = urllib.parse.quote(filename)
         return f"http://{self.hostname}:{self.public_port}/music/{encoded_name}"
 
@@ -418,12 +418,12 @@ class XiaoMusic:
                 all_music_by_dir[dir_name][name] = True
                 self.log.debug(f"_gen_all_music_list {name}:{dir_name}:{file}")
 
-        #self.log.debug(self.all_music)
+        # self.log.debug(self.all_music)
 
         self.music_list = {}
         for dir_name, musics in all_music_by_dir.items():
             self.music_list[dir_name] = list(musics.keys())
-            #self.log.debug("dir_name:%s, list:%s", dir_name, self.music_list[dir_name])
+            # self.log.debug("dir_name:%s, list:%s", dir_name, self.music_list[dir_name])
 
         try:
             self._append_music_list()
@@ -471,8 +471,8 @@ class XiaoMusic:
                 self.music_list[list_name] = one_music_list
             if self._all_radio:
                 self.music_list["所有电台"] = list(self._all_radio.keys())
-            #self.log.debug(self.all_music)
-            #self.log.debug(self.music_list)
+            # self.log.debug(self.all_music)
+            # self.log.debug(self.music_list)
         except Exception as e:
             self.log.exception(f"Execption {e}")
 

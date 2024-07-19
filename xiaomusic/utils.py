@@ -7,18 +7,17 @@ import mimetypes
 import os
 import random
 import re
+import shutil
 import string
 import tempfile
 from collections.abc import AsyncIterator
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
-from mutagen.id3 import ID3
-from mutagen.mp3 import MP3
-import os
-import shutil
 
 import aiohttp
 import mutagen
+from mutagen.id3 import ID3
+from mutagen.mp3 import MP3
 from requests.utils import cookiejar_from_dict
 
 from xiaomusic.const import SUPPORT_MUSIC_TYPE
@@ -300,20 +299,21 @@ def parse_str_to_dict(s, d1=",", d2=":"):
 
     return result
 
+
 # remove mp3 file id3 tag and padding to reduce delay
 def no_padding(info):
     # this will remove all padding
     return 0
 
-def remove_id3_tags(filename,music_path):
 
-    file_path = music_path + "/" + filename
+def remove_id3_tags(file_path):
     audio = MP3(file_path, ID3=ID3)
     change = False
-    
-    # 检查是否存在ID3 v2.3或v2.4标签
-    if audio.tags and (audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0)):
 
+    # 检查是否存在ID3 v2.3或v2.4标签
+    if audio.tags and (
+        audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0)
+    ):
         # 构造新文件的路径
         new_file_path = file_path + ".bak"
 
@@ -325,14 +325,10 @@ def remove_id3_tags(filename,music_path):
 
         # 删除padding
         audio.save(padding=no_padding)
-        
+
         # 保存修改后的文件
         audio.save()
 
         change = True
-    
-    return filename,change
 
-    
-
-
+    return change

@@ -79,7 +79,11 @@ def reset_http_server():
 
     # 更新 music 链接
     app.router.routes = [route for route in app.router.routes if route.path != "/music"]
-    app.mount("/music", StaticFiles(directory=config.music_path,follow_symlink=True), name="music")
+    app.mount(
+        "/music",
+        StaticFiles(directory=config.music_path, follow_symlink=True),
+        name="music",
+    )
 
 
 def HttpInit(_xiaomusic):
