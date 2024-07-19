@@ -12,6 +12,10 @@ import tempfile
 from collections.abc import AsyncIterator
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
+from mutagen.id3 import ID3
+from mutagen.mp3 import MP3
+import os
+import shutil
 
 import aiohttp
 import mutagen
@@ -295,3 +299,37 @@ def parse_str_to_dict(s, d1=",", d2=":"):
             result[k] = v
 
     return result
+
+# remove mp3 file id3 tag and padding to reduce delay
+def no_padding(info):
+    # this will remove all padding
+    return 0
+
+def remove_id3_tags(filename):
+
+    file_path = "./music/" + filename
+    audio = MP3(file_path, ID3=ID3)
+    
+    # 检查是否存在ID3 v2.3或v2.4标签
+    if audio.tags and (audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0)):
+
+        # 构造新文件的路径
+        new_file_path = file_path.rsplit('.', 1)[0] + '-withtag.mp3'
+
+        # 备份原始文件为新文件
+        shutil.copy(file_path, new_file_path)
+
+        # 删除ID3标签
+        audio.delete()
+
+        # 删除padding
+        audio.save(padding=no_padding)
+        
+        # 保存修改后的文件
+        audio.save()
+    
+    return filename
+
+    
+
+

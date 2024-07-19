@@ -95,6 +95,13 @@ var vConsole = new window.VConsole();
           <option value="true" selected>true</option>
           <option value="false">false</option>
         </select>
+
+        <label for="remove_id3tag">去除MP3 ID3v2和填充，减少播放前延迟:</label>
+        <select id="remove_id3tag">
+          <option value="true" >true</option>
+          <option value="false" selected>false</option>
+        </select>
+
         <label for="httpauth_username">web控制台账户:</label>
         <input id="httpauth_username" type="text" value=""></input>
         <label for="httpauth_password">web控制台密码:</label>

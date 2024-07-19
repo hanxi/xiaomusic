@@ -40,6 +40,9 @@ from xiaomusic.utils import (
     parse_cookie_string,
     parse_str_to_dict,
     traverse_music_directory,
+    remove_id3_tags,
+    is_mp3
+
 )
 
 
@@ -106,6 +109,7 @@ class XiaoMusic:
         self.active_cmd = self.config.active_cmd.split(",")
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
         self.music_path_depth = self.config.music_path_depth
+        self.remove_id3tag = self.config.remove_id3tag
 
     def update_devices(self):
         self.device_id_did = {}  # key 为 device_id
@@ -373,6 +377,14 @@ class XiaoMusic:
         if filename.startswith("/"):
             filename = filename[1:]
         self.log.debug(f"get_music_url local music. name:{name}, filename:{filename}")
+
+        #移除MP3 ID3 v2标签和填充，减少播放前延迟 
+        if self.remove_id3tag and is_mp3(f"./music/{filename}"):
+            self.log.info(f"remove_id3tag:{self.remove_id3tag}, is_mp3:True ")
+            filename = remove_id3_tags(filename)
+            self.log.info(f"filename after remove id3 tag: {filename}, orgin file saved")
+        else:
+            self.log.info(f"No id3 tag remove needed")
         encoded_name = urllib.parse.quote(filename)
         return f"http://{self.hostname}:{self.public_port}/music/{encoded_name}"
 
