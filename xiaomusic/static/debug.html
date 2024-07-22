@@ -30,11 +30,12 @@ function postJSON() {
 
 function sendDebugCmd() {
   var cmd = $("#cmd").val();
+  var did = localStorage.getItem('cur_did');
   $.ajax({
     type: "POST",
     url: "/cmd",
     contentType: "application/json; charset=utf-8",
-    data: JSON.stringify({cmd: cmd}),
+    data: JSON.stringify({did: did, cmd: cmd}),
     success: () => {
     },
     error: () => {
