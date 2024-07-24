@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import copy
 import difflib
+import io
+import logging
 import mimetypes
 import os
 import random
@@ -14,6 +16,7 @@ from collections.abc import AsyncIterator
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
 
+import aiofiles
 import aiohttp
 import mutagen
 from mutagen.id3 import ID3
@@ -193,23 +196,20 @@ async def _get_web_music_duration(session, url, start=0, end=500):
     headers = {"Range": f"bytes={start}-{end}"}
     async with session.get(url, headers=headers) as response:
         array_buffer = await response.read()
-    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+    with tempfile.NamedTemporaryFile() as tmp:
         tmp.write(array_buffer)
-        name = tmp.name
-
-    try:
-        if is_mp3(url):
-            m = mutagen.mp3.MP3(name)
-        else:
-            m = mutagen.File(name)
-        duration = m.info.length
-    except Exception:
-        pass
-    os.remove(name)
+        try:
+            if is_mp3(url):
+                m = mutagen.mp3.MP3(tmp)
+            else:
+                m = mutagen.File(tmp)
+            duration = m.info.length
+        except Exception as e:
+            logging.error(f"Error _get_web_music_duration: {e}")
     return duration
 
 
-async def get_web_music_duration(url, start=0, end=500):
+async def get_web_music_duration(url):
     duration = 0
     try:
         parsed_url = urlparse(url)
@@ -232,24 +232,27 @@ async def get_web_music_duration(url, start=0, end=500):
             duration = await _get_web_music_duration(session, url, start=0, end=500)
             if duration <= 0:
                 duration = await _get_web_music_duration(
-                    session, url, start=0, end=1000
+                    session, url, start=0, end=3000
                 )
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f"Error get_web_music_duration: {e}")
     return duration, url
 
 
 # 获取文件播放时长
-def get_local_music_duration(filename):
+async def get_local_music_duration(filename):
     duration = 0
     try:
+        async with aiofiles.open(filename, "rb") as f:
+            buffer = io.BytesIO(await f.read())
         if is_mp3(filename):
-            m = mutagen.mp3.MP3(filename)
+            m = mutagen.mp3.MP3(buffer)
         else:
-            m = mutagen.File(filename)
-        duration = m.info.length
-    except Exception:
-        pass
+            m = mutagen.File(buffer)
+        if m and m.info:
+            duration = m.info.length
+    except Exception as e:
+        logging.error(f"Error getting local music duration: {e}")
     return duration
 
 

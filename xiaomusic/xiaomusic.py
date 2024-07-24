@@ -2,6 +2,7 @@
 import asyncio
 import json
 import logging
+import math
 import os
 import random
 import re
@@ -353,11 +354,12 @@ class XiaoMusic:
         if self.is_web_music(name):
             origin_url = url
             duration, url = await get_web_music_duration(url)
-            sec = int(duration)
+            sec = math.ceil(duration)
             self.log.info(f"网络歌曲 {name} : {origin_url} {url} 的时长 {sec} 秒")
         else:
             filename = self.get_filename(name)
-            sec = int(get_local_music_duration(filename))
+            duration = await get_local_music_duration(filename)
+            sec = math.ceil(duration)
             self.log.info(f"本地歌曲 {name} : {filename} {url} 的时长 {sec} 秒")
 
         if sec <= 0:

@@ -13,6 +13,7 @@ dependencies = [
     "uvicorn>=0.30.1",
     "fastapi>=0.111.0",
     "starlette>=0.37.2",
+    "aiofiles>=24.1.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
