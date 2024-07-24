@@ -1,8 +1,13 @@
 FROM python:3.10 AS builder
 ENV DEBIAN_FRONTEND=noninteractive
+RUN pip install -U pdm
+ENV PDM_CHECK_UPDATE=false
 WORKDIR /app
-COPY requirements.txt .
-RUN python3 -m venv .venv && .venv/bin/pip install --upgrade pip && .venv/bin/pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml README.md .
+COPY xiaomusic/ ./xiaomusic/
+COPY plugins/ ./plugins/
+COPY xiaomusic.py .
+RUN pdm install --prod --no-editable
 COPY install_dependencies.sh .
 RUN bash install_dependencies.sh
 
@@ -13,7 +18,6 @@ COPY --from=builder /app/ffmpeg /app/ffmpeg
 COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/
 COPY xiaomusic.py .
-ENV XDG_CONFIG_HOME=/config
 ENV XIAOMUSIC_HOSTNAME=192.168.2.5
 ENV XIAOMUSIC_PORT=8090
 VOLUME /app/conf
