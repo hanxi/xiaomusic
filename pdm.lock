@@ -976,14 +976,14 @@ files = [
 
 [[package]]
 name = "ruff"
-version = "0.5.3"
+version = "0.5.4"
 requires_python = ">=3.7"
 summary = "An extremely fast Python linter and code formatter, written in Rust."
 groups = ["lint"]
 marker = "python_full_version == \"3.10.12\""
 files = [
-    {file = "ruff-0.5.3-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:03bfe9ab5bdc0b08470c3b261643ad54ea86edc32b64d1e080892d7953add3ad"},
-    {file = "ruff-0.5.3.tar.gz", hash = "sha256:2a3eb4f1841771fa5b67a56be9c2d16fd3cc88e378bd86aaeaec2f7e6bcdd0a2"},
+    {file = "ruff-0.5.4-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:93789f14ca2244fb91ed481456f6d0bb8af1f75a330e133b67d08f06ad85b516"},
+    {file = "ruff-0.5.4.tar.gz", hash = "sha256:2795726d5f71c4f4e70653273d1c23a8182f07dd8e48c12de5d867bfb7557eed"},
 ]
 
 [[package]]
@@ -1094,7 +1094,7 @@ files = [
 
 [[package]]
 name = "uvicorn"
-version = "0.30.1"
+version = "0.30.3"
 requires_python = ">=3.8"
 summary = "The lightning-fast ASGI server."
 groups = ["default"]
@@ -1105,13 +1105,13 @@ dependencies = [
     "typing-extensions>=4.0; python_version < \"3.11\"",
 ]
 files = [
-    {file = "uvicorn-0.30.1-py3-none-any.whl", hash = "sha256:cd17daa7f3b9d7a24de3617820e634d0933b69eed8e33a516071174427238c81"},
-    {file = "uvicorn-0.30.1.tar.gz", hash = "sha256:d46cd8e0fd80240baffbcd9ec1012a712938754afcf81bce56c024c1656aece8"},
+    {file = "uvicorn-0.30.3-py3-none-any.whl", hash = "sha256:94a3608da0e530cea8f69683aa4126364ac18e3826b6630d1a65f4638aade503"},
+    {file = "uvicorn-0.30.3.tar.gz", hash = "sha256:0d114d0831ff1adbf231d358cbf42f17333413042552a624ea6a9b4c33dcfd81"},
 ]
 
 [[package]]
 name = "uvicorn"
-version = "0.30.1"
+version = "0.30.3"
 extras = ["standard"]
 requires_python = ">=3.8"
 summary = "The lightning-fast ASGI server."
@@ -1122,14 +1122,14 @@ dependencies = [
     "httptools>=0.5.0",
     "python-dotenv>=0.13",
     "pyyaml>=5.1",
-    "uvicorn==0.30.1",
+    "uvicorn==0.30.3",
     "uvloop!=0.15.0,!=0.15.1,>=0.14.0; (sys_platform != \"cygwin\" and sys_platform != \"win32\") and platform_python_implementation != \"PyPy\"",
     "watchfiles>=0.13",
     "websockets>=10.4",
 ]
 files = [
-    {file = "uvicorn-0.30.1-py3-none-any.whl", hash = "sha256:cd17daa7f3b9d7a24de3617820e634d0933b69eed8e33a516071174427238c81"},
-    {file = "uvicorn-0.30.1.tar.gz", hash = "sha256:d46cd8e0fd80240baffbcd9ec1012a712938754afcf81bce56c024c1656aece8"},
+    {file = "uvicorn-0.30.3-py3-none-any.whl", hash = "sha256:94a3608da0e530cea8f69683aa4126364ac18e3826b6630d1a65f4638aade503"},
+    {file = "uvicorn-0.30.3.tar.gz", hash = "sha256:0d114d0831ff1adbf231d358cbf42f17333413042552a624ea6a9b4c33dcfd81"},
 ]
 
 [[package]]
@@ -1345,7 +1345,7 @@ files = [
 
 [[package]]
 name = "yt-dlp"
-version = "2024.7.16"
+version = "2024.7.25"
 requires_python = ">=3.8"
 summary = "A feature-rich command-line audio/video downloader"
 groups = ["default"]
@@ -1361,6 +1361,6 @@ dependencies = [
     "websockets>=12.0",
 ]
 files = [
-    {file = "yt_dlp-2024.7.16-py3-none-any.whl", hash = "sha256:424805a112e757b141e767bc938d49db56d13d6415a92fa4cd8acadd55790be0"},
-    {file = "yt_dlp-2024.7.16.tar.gz", hash = "sha256:c5bd517a49dea1923ec8e14f51858f10fd89dfece14cb701392b480b41b2f516"},
+    {file = "yt_dlp-2024.7.25-py3-none-any.whl", hash = "sha256:f44b5f33776b4f718900c670fe6e4698fb6fcd426455cd837cf25a1d6d4d9560"},
+    {file = "yt_dlp-2024.7.25.tar.gz", hash = "sha256:7587aa25e236cf7b14bdb9378bbffff51202d901b04202be0cf62cbb56d3b52c"},
 ]
