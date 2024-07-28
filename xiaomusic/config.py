@@ -147,9 +147,11 @@ class Config:
     def append_user_keyword(self):
         for k, v in self.user_key_word_dict.items():
             self.key_word_dict[k] = v
-            self.key_match_order.append(k)
+            if k not in self.key_match_order:
+                self.key_match_order.append(k)
 
     def init_keyword(self):
+        self.key_match_order = default_key_match_order()
         self.append_keyword(self.keywords_playlocal, "playlocal")
         self.append_keyword(self.keywords_play, "play")
         self.append_keyword(self.keywords_stop, "stop")
