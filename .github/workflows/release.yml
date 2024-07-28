@@ -26,6 +26,10 @@ jobs:
       - name: Publish package distributions to PyPI
         run: pdm publish
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
       - run: npx changelogithub
         continue-on-error: true
         env:
