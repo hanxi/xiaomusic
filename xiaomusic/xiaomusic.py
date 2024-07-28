@@ -855,7 +855,7 @@ class XiaoMusicDevice:
     async def _play(self, name="", search_key=""):
         if search_key == "" and name == "":
             if self.check_play_next():
-                await self.play_next()
+                await self._play_next()
                 return
             else:
                 name = self.cur_music
@@ -888,7 +888,7 @@ class XiaoMusicDevice:
             or (name not in self._play_list)
         ):
             name = self.get_next_music()
-        self.log.info(f"play_next. name:{name}, cur_music:{self.cur_music}")
+        self.log.info(f"_play_next. name:{name}, cur_music:{self.cur_music}")
         if name == "":
             await self.do_tts("本地没有歌曲")
             return
@@ -899,7 +899,7 @@ class XiaoMusicDevice:
         self._last_cmd = "playlocal"
         if name == "":
             if self.check_play_next():
-                await self.play_next()
+                await self._play_next()
                 return
             else:
                 name = self.cur_music
@@ -914,6 +914,9 @@ class XiaoMusicDevice:
         await self._playmusic(name)
 
     async def _playmusic(self, name):
+        # 取消组内所有的下一首歌曲的定时器
+        self.cancel_group_next_timer()
+
         self._playing = True
         self.cur_music = name
         self.log.info(f"cur_music {self.cur_music}")
@@ -928,10 +931,8 @@ class XiaoMusicDevice:
                 await self._play_next()
             return
 
-        self.log.info("已经开始播放了")
+        self.log.info(f"【{name}】已经开始播放了")
 
-        # 取消组内所有的下一首歌曲的定时器
-        self.cancel_group_next_timer()
         # 设置下一首歌曲的播放定时器
         sec = sec + self.config.delay_sec
         await self.set_next_music_timeout(sec)
@@ -1084,14 +1085,17 @@ class XiaoMusicDevice:
     def check_play_next(self):
         # 当前歌曲不在当前播放列表
         if self.cur_music not in self._play_list:
+            self.log.info(f"当前歌曲 {self.cur_music} 不在当前播放列表")
             return True
 
         # 当前没我在播放的歌曲
         if self.cur_music == "":
+            self.log.info("当前没我在播放的歌曲")
             return True
         else:
             # 当前播放的歌曲不存在了
             if not self.xiaomusic.is_music_exist(self.cur_music):
+                self.log.info(f"当前播放的歌曲 {self.cur_music} 不存在了")
                 return True
         return False
 
