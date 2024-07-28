@@ -136,6 +136,7 @@ class Config:
     remove_id3tag: bool = (
         os.getenv("XIAOMUSIC_REMOVE_ID3TAG", "false").lower() == "true"
     )
+    delay_sec: int = int(os.getenv("XIAOMUSIC_DELAY_SEC", 3))  # 下一首歌延迟播放秒数
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):

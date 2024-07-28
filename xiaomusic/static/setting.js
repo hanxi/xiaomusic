@@ -68,9 +68,8 @@ $(function(){
 
     // 初始化显示
     for (const key in data) {
-      if (data.hasOwnProperty(key)) {
         const $element = $("#" + key);
-        if ($element.length && data[key] !== '') {
+        if ($element.length) {
           if (data[key] === true) {
             $element.val('true');
           } else if (data[key] === false) {
@@ -79,7 +78,6 @@ $(function(){
             $element.val(data[key]);
           }
         }
-      }
     }
 
     autoSelectOne();

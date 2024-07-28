@@ -918,7 +918,7 @@ class XiaoMusicDevice:
         self.cur_music = name
         self.log.info(f"cur_music {self.cur_music}")
         sec, url = await self.xiaomusic.get_music_sec_url(name)
-        await self.group_force_stop_xiaoai()
+        # await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
         results = await self.group_player_play(url)
         if all(ele is None for ele in results):
@@ -933,6 +933,7 @@ class XiaoMusicDevice:
         # 取消组内所有的下一首歌曲的定时器
         self.cancel_group_next_timer()
         # 设置下一首歌曲的播放定时器
+        sec = sec + self.config.delay_sec
         await self.set_next_music_timeout(sec)
 
     async def do_tts(self, value):
@@ -941,7 +942,7 @@ class XiaoMusicDevice:
             self.log.info("do_tts no value")
             return
 
-        await self.group_force_stop_xiaoai()
+        # await self.group_force_stop_xiaoai()
         await self.text_to_speech(value)
 
         # 最大等8秒
