@@ -24,6 +24,11 @@ jobs:
       - name: Publish package distributions to PyPI
         run: pdm publish
 
+      - run: npx changelogithub
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
   build-image:
     runs-on: ubuntu-latest
     #needs: release-pypi
