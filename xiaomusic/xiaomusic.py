@@ -1142,6 +1142,7 @@ class XiaoMusicDevice:
         async def _do_next():
             await asyncio.sleep(self._timeout)
             try:
+                self.log.info("定时器时间到了")
                 await self.play_next()
             except Exception as e:
                 self.log.error(f"Execption {e}")

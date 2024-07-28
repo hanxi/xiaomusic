@@ -84,13 +84,18 @@ def main():
         "format": f"%(asctime)s [{__version__}] [%(levelname)s] %(filename)s:%(lineno)d: %(message)s",
         "datefmt": "[%X]",
     }
-    LOGGING_CONFIG["handlers"]["access"] = {
+    LOGGING_CONFIG["handlers"]["access_file"] = {
         "level": "INFO",
         "class": "logging.handlers.RotatingFileHandler",
         "formatter": "access",
         "filename": config.log_file,
         "maxBytes": 10 * 1024 * 1024,
         "backupCount": 1,
+    }
+    LOGGING_CONFIG["handlers"]["access_console"] = {
+        "level": "INFO",
+        "class": "logging.StreamHandler",
+        "formatter": "access",
     }
     uvicorn.run(
         HttpApp,
