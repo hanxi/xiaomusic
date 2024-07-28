@@ -78,24 +78,60 @@ def main():
     xiaomusic = XiaoMusic(config)
     HttpInit(xiaomusic)
 
-    from uvicorn.config import LOGGING_CONFIG
-
-    LOGGING_CONFIG["formatters"]["access"] = {
-        "format": f"%(asctime)s [{__version__}] [%(levelname)s] %(filename)s:%(lineno)d: %(message)s",
-        "datefmt": "[%X]",
-    }
-    LOGGING_CONFIG["handlers"]["access_file"] = {
-        "level": "INFO",
-        "class": "logging.handlers.RotatingFileHandler",
-        "formatter": "access",
-        "filename": config.log_file,
-        "maxBytes": 10 * 1024 * 1024,
-        "backupCount": 1,
-    }
-    LOGGING_CONFIG["handlers"]["access_console"] = {
-        "level": "INFO",
-        "class": "logging.StreamHandler",
-        "formatter": "access",
+    LOGGING_CONFIG = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "default": {
+                "format": f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s",
+                "datefmt": "[%X]",
+                "use_colors": False,
+            },
+            "access": {
+                "format": f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s",
+                "datefmt": "[%X]",
+            },
+        },
+        "handlers": {
+            "default": {
+                "formatter": "default",
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stderr",
+            },
+            "access": {
+                "formatter": "access",
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stdout",
+            },
+            "file": {
+                "level": "INFO",
+                "class": "logging.handlers.RotatingFileHandler",
+                "formatter": "access",
+                "filename": config.log_file,
+                "maxBytes": 10 * 1024 * 1024,
+                "backupCount": 1,
+            },
+        },
+        "loggers": {
+            "uvicorn": {
+                "handlers": [
+                    "default",
+                    "file",
+                ],
+                "level": "INFO",
+            },
+            "uvicorn.error": {
+                "level": "INFO",
+            },
+            "uvicorn.access": {
+                "handlers": [
+                    "access",
+                    "file",
+                ],
+                "level": "INFO",
+                "propagate": False,
+            },
+        },
     }
     uvicorn.run(
         HttpApp,
