@@ -29,9 +29,11 @@ log = None
 @asynccontextmanager
 async def app_lifespan(app):
     if xiaomusic is not None:
-        task = asyncio.create_task(xiaomusic.run_forever())
-        yield
-        task.cancel()
+        asyncio.create_task(xiaomusic.run_forever())
+        try:
+            yield
+        except Exception as e:
+            log.exception(f"Execption {e}")
 
 
 security = HTTPBasic()
