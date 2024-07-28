@@ -37,7 +37,7 @@ services:
 ```yaml
 docker run -p 8090:8090 \
     -v ./music:/app/music \
-    -v ./conf:/app/conf
+    -v ./conf:/app/conf \
     hanxi/xiaomusic
 ```
 
