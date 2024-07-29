@@ -934,6 +934,9 @@ class XiaoMusicDevice:
         self.log.info(f"【{name}】已经开始播放了")
 
         # 设置下一首歌曲的播放定时器
+        if sec <= 1:
+            self.log.info(f"【{name}】不会设置下一首歌的定时器")
+            return
         sec = sec + self.config.delay_sec
         await self.set_next_music_timeout(sec)
 
@@ -1134,9 +1137,6 @@ class XiaoMusicDevice:
 
     # 设置下一首歌曲的播放定时器
     async def set_next_music_timeout(self, sec):
-        if sec <= 0:
-            return
-
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info("旧定时器已取消")
