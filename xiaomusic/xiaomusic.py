@@ -62,6 +62,7 @@ class XiaoMusic:
         self._all_radio = {}  # 电台列表
         self.music_list = {}  # 播放列表 key 为目录名, value 为 play_list
         self.devices = {}  # key 为 did
+        self.running_task = []
 
         # 初始化配置
         self.init_config()
@@ -309,10 +310,10 @@ class XiaoMusic:
 
     def get_filename(self, name):
         if name not in self.all_music:
-            self.log.debug(f"get_filename not in. name:{name}")
+            self.log.info(f"get_filename not in. name:{name}")
             return ""
         filename = self.all_music[name]
-        self.log.debug(f"try get_filename. filename:{filename}")
+        self.log.info(f"try get_filename. filename:{filename}")
         if os.path.exists(filename):
             return filename
         return ""
@@ -343,6 +344,7 @@ class XiaoMusic:
     async def get_music_sec_url(self, name):
         sec = 0
         url = self.get_music_url(name)
+        self.log.info(f"get_music_sec_url. name:{name} url:{url}")
         if self.is_web_radio_music(name):
             self.log.info("电台不会有播放时长")
             return 0, url
@@ -354,6 +356,7 @@ class XiaoMusic:
             self.log.info(f"网络歌曲 {name} : {origin_url} {url} 的时长 {sec} 秒")
         else:
             filename = self.get_filename(name)
+            self.log.info(f"get_music_sec_url. name:{name} filename:{filename}")
             duration = await get_local_music_duration(filename)
             sec = math.ceil(duration)
             self.log.info(f"本地歌曲 {name} : {filename} {url} 的时长 {sec} 秒")
@@ -365,7 +368,7 @@ class XiaoMusic:
     def get_music_url(self, name):
         if self.is_web_music(name):
             url = self.all_music[name]
-            self.log.debug(f"get_music_url web music. name:{name}, url:{url}")
+            self.log.info(f"get_music_url web music. name:{name}, url:{url}")
             return url
 
         filename = self.get_filename(name)
@@ -383,7 +386,7 @@ class XiaoMusic:
             filename = filename[len(self.config.music_path) :]
         if filename.startswith("/"):
             filename = filename[1:]
-        self.log.debug(f"get_music_url local music. name:{name}, filename:{filename}")
+        self.log.info(f"get_music_url local music. name:{name}, filename:{filename}")
         encoded_name = urllib.parse.quote(filename)
         return f"http://{self.hostname}:{self.public_port}/music/{encoded_name}"
 
@@ -504,6 +507,19 @@ class XiaoMusic:
             await func(did=did, arg1=oparg)
         except Exception as e:
             self.log.exception(f"Execption {e}")
+
+    def append_running_task(self, task):
+        self.running_task.append(task)
+
+    async def cancel_all_tasks(self):
+        if len(self.running_task) == 0:
+            self.log.info("cancel_all_tasks no task")
+            return
+        for task in self.running_task:
+            self.log.info(f"cancel_all_tasks {task}")
+            task.cancel()
+        await asyncio.gather(*self.running_task, return_exceptions=True)
+        self.running_task = []
 
     async def check_replay(self, did):
         return await self.devices[did].check_replay()
@@ -916,7 +932,7 @@ class XiaoMusicDevice:
             self.log.info(f"播放 {name} 失败")
             await asyncio.sleep(1)
             if self.isplaying() and self._last_cmd != "stop":
-                await self._play_next()
+               await self._play_next()
             return
 
         self.log.info(f"【{name}】已经开始播放了")
@@ -1125,21 +1141,19 @@ class XiaoMusicDevice:
 
     # 设置下一首歌曲的播放定时器
     async def set_next_music_timeout(self, sec):
-        if self._next_timer:
-            self._next_timer.cancel()
-            self.log.info("旧定时器已取消")
-
+        self.cancel_next_timer()
         self._timeout = sec
 
         async def _do_next():
             await asyncio.sleep(self._timeout)
             try:
                 self.log.info("定时器时间到了")
-                await self.play_next()
+                self._next_timer = None
+                await self._play_next()
             except Exception as e:
                 self.log.error(f"Execption {e}")
 
-        self._next_timer = asyncio.ensure_future(_do_next())
+        self._next_timer = asyncio.create_task(_do_next())
         self.log.info(f"{sec} 秒后将会播放下一首歌曲")
 
     async def set_volume(self, volume: int):
@@ -1179,10 +1193,8 @@ class XiaoMusicDevice:
         self._playing = False
         if arg1 != "notts":
             await self.do_tts(self.config.stop_tts_msg)
-        if self._next_timer:
-            self._next_timer.cancel()
-            self._next_timer = None
-            self.log.info("定时器已取消")
+        # 取消组内所有的下一首歌曲的定时器
+        self.cancel_group_next_timer()
         await self.group_force_stop_xiaoai()
         self.log.info("stop now")
 
@@ -1207,13 +1219,14 @@ class XiaoMusicDevice:
             except Exception as e:
                 self.log.exception(f"Execption {e}")
 
-        self._stop_timer = asyncio.ensure_future(_do_stop())
+        self._stop_timer = asyncio.create_task(_do_stop())
         await self.do_tts(f"收到,{minute}分钟后将关机")
 
     def cancel_next_timer(self):
         if self._next_timer:
             self._next_timer.cancel()
-            self.log.info("下一曲定时器已取消")
+            self.log.info(f"下一曲定时器已取消 {self.device_id}")
+            self._next_timer = None
 
     def cancel_group_next_timer(self):
         devices = self.xiaomusic.get_group_devices(self.group_name)
@@ -1228,10 +1241,12 @@ class XiaoMusicDevice:
         self.log.info("in cancel_all_timer")
         if self._next_timer:
             self._next_timer.cancel()
+            self._next_timer = None
             self.log.info("cancel_all_timer _next_timer.cancel")
 
         if self._stop_timer:
             self._stop_timer.cancel()
+            self._stop_timer = None
             self.log.info("cancel_all_timer _stop_timer.cancel")
 
     @classmethod

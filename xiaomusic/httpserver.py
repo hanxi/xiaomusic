@@ -170,7 +170,9 @@ async def do_cmd(data: DidCmd):
         return {"ret": "Did not exist"}
 
     if len(cmd) > 0:
-        asyncio.create_task(xiaomusic.do_check_cmd(did=did, query=cmd))
+        await xiaomusic.cancel_all_tasks()
+        task = asyncio.create_task(xiaomusic.do_check_cmd(did=did, query=cmd))
+        xiaomusic.append_running_task(task)
         return {"ret": "OK"}
     return {"ret": "Unknow cmd"}
 
