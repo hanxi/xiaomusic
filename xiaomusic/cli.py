@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import signal
+import subprocess
 
 import uvicorn
 
@@ -142,15 +143,6 @@ def main():
     except Exception as e:
         print(f"Execption {e}")
 
-    def run_gate():
-        uvicorn.run(
-            "gate:app",
-            host="0.0.0.0",
-            port=config.port,
-            log_config=LOGGING_CONFIG,
-            workers=2,
-        )
-
     def run_server():
         xiaomusic = XiaoMusic(config)
         HttpInit(xiaomusic)
@@ -160,10 +152,6 @@ def main():
             port=config.port + 1,
             log_config=LOGGING_CONFIG,
         )
-
-    # thread = threading.Thread(target=run_server)
-    # thread.start()
-    # run_gate()
 
     command = [
         "uvicorn",
@@ -176,11 +164,11 @@ def main():
         str(config.port),
     ]
 
-    # process = subprocess.Popen(command)
+    process = subprocess.Popen(command)
     def signal_handler(sig, frame):
         print("主进程收到退出信号，准备退出...")
-        # process.terminate()  # 终止子进程
-        # process.wait()  # 等待子进程退出
+        process.terminate()  # 终止子进程
+        process.wait()  # 等待子进程退出
         print("子进程已退出")
         os._exit(0)  # 退出主进程
 
