@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 import argparse
+import json
+import os
+import signal
 
 import uvicorn
 
@@ -75,9 +78,6 @@ def main():
     options = parser.parse_args()
     config = Config.from_options(options)
 
-    xiaomusic = XiaoMusic(config)
-    HttpInit(xiaomusic)
-
     LOGGING_CONFIG = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -133,12 +133,61 @@ def main():
             },
         },
     }
-    uvicorn.run(
-        HttpApp,
-        host=["::", "0.0.0.0"],
-        port=config.port,
-        log_config=LOGGING_CONFIG,
-    )
+
+    try:
+        filename = config.getsettingfile()
+        with open(filename) as f:
+            data = json.loads(f.read())
+            config.update_config(data)
+    except Exception as e:
+        print(f"Execption {e}")
+
+    def run_gate():
+        uvicorn.run(
+            "gate:app",
+            host="0.0.0.0",
+            port=config.port,
+            log_config=LOGGING_CONFIG,
+            workers=2,
+        )
+
+    def run_server():
+        xiaomusic = XiaoMusic(config)
+        HttpInit(xiaomusic)
+        uvicorn.run(
+            HttpApp,
+            host="127.0.0.1",
+            port=config.port + 1,
+            log_config=LOGGING_CONFIG,
+        )
+
+    # thread = threading.Thread(target=run_server)
+    # thread.start()
+    # run_gate()
+
+    command = [
+        "uvicorn",
+        "xiaomusic.gate:app",
+        "--workers",
+        "4",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(config.port),
+    ]
+
+    # process = subprocess.Popen(command)
+    def signal_handler(sig, frame):
+        print("主进程收到退出信号，准备退出...")
+        # process.terminate()  # 终止子进程
+        # process.wait()  # 等待子进程退出
+        print("子进程已退出")
+        os._exit(0)  # 退出主进程
+
+    # 捕获主进程的退出信号
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    run_server()
 
 
 if __name__ == "__main__":
