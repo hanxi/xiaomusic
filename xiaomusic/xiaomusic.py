@@ -925,7 +925,7 @@ class XiaoMusicDevice:
         self.cur_music = name
         self.log.info(f"cur_music {self.cur_music}")
         sec, url = await self.xiaomusic.get_music_sec_url(name)
-        # await self.group_force_stop_xiaoai()
+        await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
         results = await self.group_player_play(url)
         if all(ele is None for ele in results):
