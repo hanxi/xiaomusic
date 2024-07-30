@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import asyncio
 import copy
 import difflib
-import io
 import logging
 import mimetypes
 import os
@@ -16,7 +16,6 @@ from collections.abc import AsyncIterator
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
 
-import aiofiles
 import aiohttp
 import mutagen
 from mutagen.id3 import ID3
@@ -241,14 +240,13 @@ async def get_web_music_duration(url):
 
 # 获取文件播放时长
 async def get_local_music_duration(filename):
+    loop = asyncio.get_event_loop()
     duration = 0
     try:
-        async with aiofiles.open(filename, "rb") as f:
-            buffer = io.BytesIO(await f.read())
         if is_mp3(filename):
-            m = mutagen.mp3.MP3(buffer)
+            m = await loop.run_in_executor(None, mutagen.mp3.MP3, filename)
         else:
-            m = mutagen.File(buffer)
+            m = await loop.run_in_executor(None, mutagen.File, filename)
         if m and m.info:
             duration = m.info.length
     except Exception as e:

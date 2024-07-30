@@ -30,10 +30,10 @@ log = None
 async def app_lifespan(app):
     if xiaomusic is not None:
         asyncio.create_task(xiaomusic.run_forever())
-        try:
-            yield
-        except Exception as e:
-            log.exception(f"Execption {e}")
+    try:
+        yield
+    except Exception as e:
+        log.exception(f"Execption {e}")
 
 
 security = HTTPBasic()

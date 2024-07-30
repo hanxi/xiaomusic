@@ -84,15 +84,11 @@ class XiaoMusic:
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"Startup OK. {debug_config}")
 
-        if self.conf_path == self.music_path:
+        if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
 
     def init_config(self):
         self.music_path = self.config.music_path
-        self.conf_path = self.config.conf_path
-        # 兼容旧配置空的情况
-        if not self.conf_path:
-            self.conf_path = "conf"
         self.download_path = self.config.download_path
         if not self.download_path:
             self.download_path = self.music_path
@@ -720,16 +716,9 @@ class XiaoMusic:
     def getconfig(self):
         return self.config
 
-    # 获取设置文件
-    def getsettingfile(self):
-        if not os.path.exists(self.conf_path):
-            os.makedirs(self.conf_path)
-        filename = os.path.join(self.conf_path, "setting.json")
-        return filename
-
     def try_init_setting(self):
         try:
-            filename = self.getsettingfile()
+            filename = self.config.getsettingfile()
             with open(filename) as f:
                 data = json.loads(f.read())
                 self.update_config_from_setting(data)
@@ -751,8 +740,7 @@ class XiaoMusic:
 
     # 配置文件落地
     def do_saveconfig(self, data):
-        # 默认暂时配置保存到 music 目录下
-        filename = self.getsettingfile()
+        filename = self.config.getsettingfile()
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 

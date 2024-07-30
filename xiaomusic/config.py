@@ -219,3 +219,13 @@ class Config:
             if converted_value is not None:
                 setattr(self, k, converted_value)
         self.init_keyword()
+
+    # 获取设置文件
+    def getsettingfile(self):
+        # 兼容旧配置空的情况
+        if not self.conf_path:
+            self.conf_path = "conf"
+        if not os.path.exists(self.conf_path):
+            os.makedirs(self.conf_path)
+        filename = os.path.join(self.conf_path, "setting.json")
+        return filename
