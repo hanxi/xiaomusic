@@ -315,7 +315,9 @@ range_pattern = re.compile(r"bytes=(\d+)-(\d*)")
 @app.get("/music/{file_path:path}")
 async def music_file(request: Request, file_path: str):
     absolute_path = os.path.abspath(config.music_path)
-    absolute_file_path = os.path.join(absolute_path, file_path)
+    absolute_file_path = os.path.normpath(os.path.join(absolute_path, file_path))
+    if not absolute_file_path.startswith(absolute_path):
+        raise HTTPException(status_code=404, detail="File not found")
     if not os.path.exists(absolute_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
