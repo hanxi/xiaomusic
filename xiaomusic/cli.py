@@ -180,11 +180,12 @@ def main():
     # 捕获主进程的退出信号
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+    port = int(config.port)
     if config.enable_gate:
         run_gate()
-        run_server(config.port + 1)
+        run_server(port + 1)
     else:
-        run_server(config.port)
+        run_server(port)
 
 
 if __name__ == "__main__":

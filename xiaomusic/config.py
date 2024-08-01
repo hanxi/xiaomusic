@@ -137,7 +137,7 @@ class Config:
         os.getenv("XIAOMUSIC_REMOVE_ID3TAG", "false").lower() == "true"
     )
     delay_sec: int = int(os.getenv("XIAOMUSIC_DELAY_SEC", 3))  # 下一首歌延迟播放秒数
-    enable_gate: bool = os.getenv("XIAOMUSIC_ENABLE_GATE", "true").lower() == "true"
+    enable_gate: bool = os.getenv("XIAOMUSIC_ENABLE_GATE", "false").lower() == "true"
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):

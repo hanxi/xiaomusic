@@ -127,6 +127,12 @@ var vConsole = new window.VConsole();
           <option value="false">false</option>
         </select>
 
+        <label for="enable_gate">开启网关(重启生效):</label>
+        <select id="enable_gate">
+          <option value="true">true</option>
+          <option value="false" selected>false</option>
+        </select>
+
         <label for="public_port">外网访问端口(0表示跟监听端口一致):</label>
         <input id="public_port" type="number" value="0"></input>
 
