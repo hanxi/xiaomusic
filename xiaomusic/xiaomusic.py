@@ -932,7 +932,7 @@ class XiaoMusicDevice:
             self.log.info(f"播放 {name} 失败")
             await asyncio.sleep(1)
             if self.isplaying() and self._last_cmd != "stop":
-               await self._play_next()
+                await self._play_next()
             return
 
         self.log.info(f"【{name}】已经开始播放了")

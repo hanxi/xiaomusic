@@ -1,6 +1,8 @@
 import asyncio
 import json
+import mimetypes
 import os
+import re
 import secrets
 import shutil
 import tempfile
@@ -8,12 +10,14 @@ from contextlib import asynccontextmanager
 from dataclasses import asdict
 from typing import Annotated
 
+import aiofiles
 from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.background import BackgroundTask
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse, Response
 
 from xiaomusic import __version__
 from xiaomusic.utils import (
@@ -78,14 +82,6 @@ def reset_http_server():
         app.dependency_overrides[verification] = no_verification
     else:
         app.dependency_overrides = {}
-
-    # 更新 music 链接
-    app.router.routes = [route for route in app.router.routes if route.path != "/music"]
-    app.mount(
-        "/music",
-        StaticFiles(directory=config.music_path, follow_symlink=True),
-        name="music",
-    )
 
 
 def HttpInit(_xiaomusic):
@@ -170,9 +166,12 @@ async def do_cmd(data: DidCmd):
         return {"ret": "Did not exist"}
 
     if len(cmd) > 0:
-        await xiaomusic.cancel_all_tasks()
-        task = asyncio.create_task(xiaomusic.do_check_cmd(did=did, query=cmd))
-        xiaomusic.append_running_task(task)
+        try:
+            await xiaomusic.cancel_all_tasks()
+            task = asyncio.create_task(xiaomusic.do_check_cmd(did=did, query=cmd))
+            xiaomusic.append_running_task(task)
+        except Exception as e:
+            log.warning(f"Execption {e}")
         return {"ret": "OK"}
     return {"ret": "Unknow cmd"}
 
@@ -295,3 +294,64 @@ async def debug_play_by_music_url(request: Request):
         return await xiaomusic.debug_play_by_music_url(arg1=data_dict)
     except json.JSONDecodeError as err:
         raise HTTPException(status_code=400, detail="Invalid JSON") from err
+
+
+async def file_iterator(file_path, start, end):
+    async with aiofiles.open(file_path, mode="rb") as file:
+        await file.seek(start)
+        chunk_size = 1024
+        while start <= end:
+            read_size = min(chunk_size, end - start + 1)
+            data = await file.read(read_size)
+            if not data:
+                break
+            start += len(data)
+            yield data
+
+
+range_pattern = re.compile(r"bytes=(\d+)-(\d*)")
+
+
+@app.get("/music/{file_path:path}")
+async def music_file(request: Request, file_path: str):
+    absolute_path = os.path.abspath(config.music_path)
+    absolute_file_path = os.path.join(absolute_path, file_path)
+    if not os.path.exists(absolute_file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    file_size = os.path.getsize(absolute_file_path)
+    range_start, range_end = 0, file_size - 1
+
+    range_header = request.headers.get("Range")
+    log.info(f"music_file range_header {range_header}")
+    if range_header:
+        range_match = range_pattern.match(range_header)
+        if range_match:
+            range_start = int(range_match.group(1))
+        if range_match.group(2):
+            range_end = int(range_match.group(2))
+
+        log.info(f"music_file in range {absolute_file_path}")
+
+    log.info(f"music_file {range_start} {range_end} {absolute_file_path}")
+    headers = {
+        "Content-Range": f"bytes {range_start}-{range_end}/{file_size}",
+        "Accept-Ranges": "bytes",
+    }
+    mime_type, _ = mimetypes.guess_type(file_path)
+    if mime_type is None:
+        mime_type = "application/octet-stream"
+    return StreamingResponse(
+        file_iterator(absolute_file_path, range_start, range_end),
+        headers=headers,
+        status_code=206 if range_header else 200,
+        media_type=mime_type,
+    )
+
+
+@app.options("/music/{file_path:path}")
+async def music_options():
+    headers = {
+        "Accept-Ranges": "bytes",
+    }
+    return Response(headers=headers)
