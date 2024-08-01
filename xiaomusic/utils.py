@@ -141,9 +141,7 @@ def _append_files_result(result, root, joinpath, files, support_extension):
         result[dir_name].append(os.path.join(joinpath, file))
 
 
-def traverse_music_directory(
-    directory, depth=10, exclude_dirs=None, support_extension=None
-):
+def traverse_music_directory(directory, depth, exclude_dirs, support_extension):
     result = {}
     for root, dirs, files in os.walk(directory, followlinks=True):
         # 忽略排除的目录
@@ -247,10 +245,9 @@ async def get_local_music_duration(filename):
             m = await loop.run_in_executor(None, mutagen.mp3.MP3, filename)
         else:
             m = await loop.run_in_executor(None, mutagen.File, filename)
-        if m and m.info:
-            duration = m.info.length
+        duration = m.info.length
     except Exception as e:
-        logging.error(f"Error getting local music duration: {e}")
+        logging.error(f"Error getting local music {filename} duration: {e}")
     return duration
 
 
