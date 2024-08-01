@@ -53,15 +53,17 @@ $(function(){
             .prop('selected', value === did);
         $("#did").append(option);
 
-        if (cur_device.play_type == PLAY_TYPE_ALL) {
-          $("#play_type_all").css('background-color', '#b1a8f3');
-          $("#play_type_all").text('✔️ 全部循环');
-        } else if (cur_device.play_type == PLAY_TYPE_ONE) {
-          $("#play_type_one").css('background-color', '#b1a8f3');
-          $("#play_type_one").text('✔️ 单曲循环');
-        } else if (cur_device.play_type == PLAY_TYPE_RND) {
-          $("#play_type_rnd").css('background-color', '#b1a8f3');
-          $("#play_type_rnd").text('✔️ 随机播放');
+        if (value === did) {
+          if (cur_device.play_type == PLAY_TYPE_ALL) {
+            $("#play_type_all").css('background-color', '#b1a8f3');
+            $("#play_type_all").text('✔️ 全部循环');
+          } else if (cur_device.play_type == PLAY_TYPE_ONE) {
+            $("#play_type_one").css('background-color', '#b1a8f3');
+            $("#play_type_one").text('✔️ 单曲循环');
+          } else if (cur_device.play_type == PLAY_TYPE_RND) {
+            $("#play_type_rnd").css('background-color', '#b1a8f3');
+            $("#play_type_rnd").text('✔️ 随机播放');
+          }
         }
       }
     });
@@ -72,6 +74,7 @@ $(function(){
       localStorage.setItem('cur_did', did);
       window.did = did;
       console.log('cur_did', did);
+      location.reload();
     })
   });
 
