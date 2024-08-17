@@ -153,39 +153,15 @@ def main():
             log_config=LOGGING_CONFIG,
         )
 
-    process = None
-
-    def run_gate():
-        command = [
-            "uvicorn",
-            "xiaomusic.gate:app",
-            "--workers",
-            "4",
-            "--host",
-            "0.0.0.0",
-            "--port",
-            str(config.port),
-        ]
-        global process
-        process = subprocess.Popen(command)
-
     def signal_handler(sig, frame):
         print("主进程收到退出信号，准备退出...")
-        if process is not None:
-            process.terminate()  # 终止子进程
-            process.wait()  # 等待子进程退出
-            print("子进程已退出")
         os._exit(0)  # 退出主进程
 
     # 捕获主进程的退出信号
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     port = int(config.port)
-    if config.enable_gate:
-        run_gate()
-        run_server(port + 1)
-    else:
-        run_server(port)
+    run_server(port)
 
 
 if __name__ == "__main__":
