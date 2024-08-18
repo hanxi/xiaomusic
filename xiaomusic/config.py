@@ -74,7 +74,7 @@ class Config:
     music_path: str = os.getenv(
         "XIAOMUSIC_MUSIC_PATH", "music"
     )  # 只能是music目录下的子目录
-    download_path: str = os.getenv("XIAOMUSIC_DOWNLOAD_PATH", "")
+    download_path: str = os.getenv("XIAOMUSIC_DOWNLOAD_PATH", "music/download")
     conf_path: str = os.getenv("XIAOMUSIC_CONF_PATH", "conf")
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))  # 监听端口
