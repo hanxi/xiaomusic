@@ -12,7 +12,7 @@
   "public_port": 0,
   "proxy": null,
   "search_prefix": "bilisearch:",
-  "ffmpeg_location": "./ffmpeg/bin",
+  "ffmpeg_location": "./ffmpeg/bin/ffmpeg",
   "active_cmd": "play,set_random_play,playlocal,play_music_list,stop",
   "exclude_dirs": "@eaDir",
   "music_path_depth": 10,
@@ -77,5 +77,6 @@
   },
   "enable_force_stop": false,
   "devices": {},
-  "group_list": ""
+  "group_list": "",
+  "convert_to_mp3": false
 }

@@ -12,6 +12,7 @@ import re
 import shutil
 import string
 import tempfile
+import subprocess
 from collections.abc import AsyncIterator
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
