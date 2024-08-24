@@ -45,6 +45,8 @@ from xiaomusic.utils import (
     traverse_music_directory,
 )
 
+from xiaomusic.convert_to_mp3 import Convert_To_MP3
+
 
 class XiaoMusic:
     def __init__(self, config: Config):
@@ -64,6 +66,12 @@ class XiaoMusic:
         self.devices = {}  # key 为 did
         self.running_task = []
 
+        # 在程序启动时调用清理函数
+        self.cleanup_old_temp_files()
+
+        self.convert_to_mp3 = self.config.convert_to_mp3
+        self.ffmpeg_location = self.config.ffmpeg_location
+        self.music_path = self.config.music_path
         # 初始化配置
         self.init_config()
 
@@ -107,6 +115,7 @@ class XiaoMusic:
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
         self.music_path_depth = self.config.music_path_depth
         self.remove_id3tag = self.config.remove_id3tag
+        self.convert_to_mp3 = self.config.convert_to_mp3
 
     def update_devices(self):
         self.device_id_did = {}  # key 为 device_id
@@ -318,6 +327,23 @@ class XiaoMusic:
             return filename
         return ""
 
+    def cleanup_old_temp_files(self):
+        """
+        清理在 /tmp 目录下旧的临时 MP3 文件。
+        """
+        temp_dir = '/tmp'  # 临时文件存储的目录
+        file_ext = '.mp3'   # 临时文件的扩展名
+        try:
+            for filename in os.listdir(temp_dir):
+                if filename.endswith(file_ext):
+                    file_path = os.path.join(temp_dir, filename)
+                    # 如果文件是超过一天的旧文件，则删除它
+                    if (time.time() - os.path.getmtime(file_path)) > 86400:
+                        os.remove(file_path)
+                        self.log.info(f"Deleted old temporary file: {file_path}")
+        except Exception as e:
+            self.log.error(f"Failed to cleanup old temp files: {e}")
+
     # 判断本地音乐是否存在，网络歌曲不判断
     def is_music_exist(self, name):
         if name not in self.all_music:
@@ -381,15 +407,37 @@ class XiaoMusic:
             else:
                 self.log.info("No ID3 tag remove needed")
 
+        # 如果开启了MP3转换功能，且文件不是MP3格式，则进行转换
+        if self.convert_to_mp3 and not is_mp3(filename):
+            self.log.info(f"convert_to_mp3 is enabled. Checking file: {filename}")
+            temp_mp3_file = self.convert_file_to_mp3(filename)
+            if temp_mp3_file:
+                # 转换成功后，修改文件名为music_path/tmp下的相对路径
+                relative_path = os.path.relpath(temp_mp3_file, self.config.music_path)
+                self.log.info(f"Converted file: {temp_mp3_file} to {relative_path}")
+                filename = relative_path
+            else:
+                self.log.warning(f"Failed to convert file to MP3 format: {filename}")
+                return ""  # 转换失败，返回空字符串表示无法获取播放URL
+
+        # 构造音乐文件的URL
         filename = filename.replace("\\", "/")
         if filename.startswith(self.config.music_path):
-            filename = filename[len(self.config.music_path) :]
+            filename = filename[len(self.config.music_path):]
         if filename.startswith("/"):
             filename = filename[1:]
-        self.log.info(f"get_music_url local music. name:{name}, filename:{filename}")
         encoded_name = urllib.parse.quote(filename)
         return f"http://{self.hostname}:{self.public_port}/music/{encoded_name}"
 
+    def convert_file_to_mp3(self, input_file):
+        """
+        Convert the file to MP3 format using convert_to_mp3.py.
+        """
+        # 创建 Convert_To_MP3 类的实例，只传递 config 对象
+        converter = Convert_To_MP3(self.config)
+        # 调用静态方法 convert_to_mp3，并传递所需的文件路径和 ffmpeg 位置
+        return converter.convert_to_mp3(input_file, self.ffmpeg_location, self.music_path)
+ 
     # 获取目录下所有歌曲,生成随机播放列表
     def _gen_all_music_list(self):
         self.all_music = {}
@@ -404,7 +452,7 @@ class XiaoMusic:
             if len(files) == 0:
                 continue
             if dir_name == os.path.basename(self.music_path):
-                dir_name = "其他"
+                dir_name = "默认"
             if self.music_path != self.download_path and dir_name == os.path.basename(
                 self.download_path
             ):
