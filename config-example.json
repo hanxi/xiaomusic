@@ -12,7 +12,7 @@
   "public_port": 0,
   "proxy": null,
   "search_prefix": "bilisearch:",
-  "ffmpeg_location": "./ffmpeg/bin/ffmpeg",
+  "ffmpeg_location": "./ffmpeg/bin",
   "active_cmd": "play,set_random_play,playlocal,play_music_list,stop",
   "exclude_dirs": "@eaDir",
   "music_path_depth": 10,

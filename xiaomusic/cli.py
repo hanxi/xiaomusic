@@ -3,7 +3,6 @@ import argparse
 import json
 import os
 import signal
-import subprocess
 
 import uvicorn
 

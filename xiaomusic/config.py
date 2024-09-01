@@ -83,7 +83,7 @@ class Config:
     search_prefix: str = os.getenv(
         "XIAOMUSIC_SEARCH", "bilisearch:"
     )  # "bilisearch:" or "ytsearch:"
-    ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin/ffmpeg")
+    ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
     active_cmd: str = os.getenv(
         "XIAOMUSIC_ACTIVE_CMD", "play,set_random_play,playlocal,play_music_list,stop"
     )
@@ -136,9 +136,7 @@ class Config:
     remove_id3tag: bool = (
         os.getenv("XIAOMUSIC_REMOVE_ID3TAG", "false").lower() == "true"
     )
-    convert_to_mp3: bool = (
-        os.getenv("CONVERT_TO_MP3", "false").lower() == "true"
-    )
+    convert_to_mp3: bool = os.getenv("CONVERT_TO_MP3", "false").lower() == "true"
     delay_sec: int = int(os.getenv("XIAOMUSIC_DELAY_SEC", 3))  # 下一首歌延迟播放秒数
 
     def append_keyword(self, keys, action):

@@ -11,8 +11,8 @@ import random
 import re
 import shutil
 import string
-import tempfile
 import subprocess
+import tempfile
 from collections.abc import AsyncIterator
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
@@ -331,3 +331,35 @@ def remove_id3_tags(file_path):
         change = True
 
     return change
+
+
+def convert_file_to_mp3(input_file: str, ffmpeg_location: str, music_path: str) -> str:
+    """
+    Convert the music file to MP3 format and return the path of the temporary MP3 file.
+    """
+    # 指定临时文件的目录为 music_path 目录下的 tmp 文件夹
+    temp_dir = os.path.join(music_path, "tmp")
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)  # 确保目录存在
+
+    out_file_name = os.path.splitext(os.path.basename(input_file))[0]
+    out_file_path = os.path.join(temp_dir, f"{out_file_name}.mp3")
+
+    command = [
+        os.path.join(ffmpeg_location, "ffmpeg"),
+        "-i",
+        input_file,
+        "-f",
+        "mp3",
+        "-y",
+        out_file_path,
+    ]
+
+    try:
+        subprocess.run(command, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error during conversion: {e}")
+        return None
+
+    relative_path = os.path.relpath(out_file_path, music_path)
+    return relative_path
