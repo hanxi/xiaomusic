@@ -21,11 +21,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pdm-project/setup-pdm@v3
-
-      - name: Publish package distributions to PyPI
-        run: pdm publish
-
       - uses: actions/setup-node@v3
         with:
           node-version: 16.x
@@ -34,6 +29,11 @@ jobs:
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - uses: pdm-project/setup-pdm@v3
+
+      - name: Publish package distributions to PyPI
+        run: pdm publish
 
   build-image:
     runs-on: ubuntu-latest
