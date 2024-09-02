@@ -1,3 +1,17 @@
+## v0.3.27 (2024-09-02)
+
+### Feat
+
+- Add feature as requested in issue #143
+
+### Fix
+
+- 默认下载目录修改
+
+### Refactor
+
+- 处理 code review 问题'
+
 ## v0.3.26 (2024-08-17)
 
 ### Feat
