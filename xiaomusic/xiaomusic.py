@@ -224,7 +224,7 @@ class XiaoMusic:
             self.log.error(f"{self.mi_token_home} file not exist")
             return None
 
-        with open(self.mi_token_home) as f:
+        with open(self.mi_token_home,encoding="utf-8") as f:
             user_data = json.loads(f.read())
         user_id = user_data.get("userId")
         service_token = user_data.get("micoapi")[1]
@@ -752,7 +752,7 @@ class XiaoMusic:
     def try_init_setting(self):
         try:
             filename = self.config.getsettingfile()
-            with open(filename) as f:
+            with open(filename,encoding="utf-8") as f:
                 data = json.loads(f.read())
                 self.update_config_from_setting(data)
         except FileNotFoundError:

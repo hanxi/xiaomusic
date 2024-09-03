@@ -136,7 +136,7 @@ def main():
 
     try:
         filename = config.getsettingfile()
-        with open(filename) as f:
+        with open(filename,encoding="utf-8") as f:
             data = json.loads(f.read())
             config.update_config(data)
     except Exception as e:
