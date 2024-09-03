@@ -191,10 +191,7 @@ def is_mp3(url):
 
 
 def is_m4a(url):
-    mt = mimetypes.guess_type(url)
-    if mt and mt[0] == "audio/m4a":
-        return True
-    return False
+    return url.endswith(".m4a")
 
 
 async def _get_web_music_duration(session, url, start=0, end=500):
