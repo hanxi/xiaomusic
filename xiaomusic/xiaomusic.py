@@ -454,6 +454,8 @@ class XiaoMusic:
 
         self.music_list["全部"] = list(self.all_music.keys())
 
+        self._append_custom_play_list()
+
         # 歌单排序
         for _, play_list in self.music_list.items():
             play_list.sort(key=custom_sort_key)
@@ -461,6 +463,16 @@ class XiaoMusic:
         # 更新每个设备的歌单
         for device in self.devices.values():
             device.update_playlist()
+
+    def _append_custom_play_list(self):
+        if not self.config.custom_play_list_json:
+            return
+
+        try:
+            custom_play_list = json.loads(self.config.custom_play_list_json)
+            self.music_list["收藏"] = list(custom_play_list["收藏"])
+        except Exception as e:
+            self.log.exception(f"Execption {e}")
 
     # 给歌单里补充网络歌单
     def _append_music_list(self):
@@ -714,6 +726,47 @@ class XiaoMusic:
     async def stop_after_minute(self, did="", arg1=0, **kwargs):
         minute = int(arg1)
         return await self.devices[did].stop_after_minute(minute)
+
+    # 添加歌曲到收藏列表
+    async def add_to_favorites(self, did="", arg1="", **kwargs):
+        name = arg1 if arg1 else self.playingmusic(did)
+        if not name:
+            return
+
+        favorites = self.music_list.get("收藏", [])
+        if name in favorites:
+            return
+
+        favorites.append(name)
+        self.save_favorites(favorites)
+
+    # 从收藏列表中移除
+    async def del_from_favorites(self, did="", arg1="", **kwargs):
+        name = arg1 if arg1 else self.playingmusic(did)
+        if not name:
+            return
+
+        favorites = self.music_list.get("收藏", [])
+        if name not in favorites:
+            return
+
+        favorites.remove(name)
+        self.save_favorites(favorites)
+
+    def save_favorites(self, favorites):
+        self.music_list["收藏"] = favorites
+        custom_play_list = {}
+        if self.config.custom_play_list_json:
+            custom_play_list = json.loads(self.config.custom_play_list_json)
+        custom_play_list["收藏"] = favorites
+        self.config.custom_play_list_json = json.dumps(
+            custom_play_list, ensure_ascii=False
+        )
+        self.save_cur_config()
+
+        # 更新每个设备的歌单
+        for device in self.devices.values():
+            device.update_playlist()
 
     # 获取音量
     async def get_volume(self, did="", **kwargs):

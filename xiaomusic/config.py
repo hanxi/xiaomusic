@@ -22,6 +22,8 @@ def default_key_word_dict():
         "分钟后关机": "stop_after_minute",
         "播放列表": "play_music_list",
         "刷新列表": "gen_music_list",
+        "加入收藏": "add_to_favorites",
+        "取消收藏": "del_from_favorites",
     }
 
 
@@ -50,6 +52,8 @@ def default_key_match_order():
         "关机",
         "刷新列表",
         "播放列表",
+        "加入收藏",
+        "取消收藏",
     ]
 
 
@@ -96,6 +100,7 @@ class Config:
     httpauth_password: str = os.getenv("XIAOMUSIC_HTTPAUTH_PASSWORD", "")
     music_list_url: str = os.getenv("XIAOMUSIC_MUSIC_LIST_URL", "")
     music_list_json: str = os.getenv("XIAOMUSIC_MUSIC_LIST_JSON", "")
+    custom_play_list_json: str = os.getenv("XIAOMUSIC_CUSTOM_PLAY_LIST_JSON", "")
     disable_download: bool = (
         os.getenv("XIAOMUSIC_DISABLE_DOWNLOAD", "false").lower() == "true"
     )
@@ -153,6 +158,7 @@ class Config:
 
     def init_keyword(self):
         self.key_match_order = default_key_match_order()
+        self.key_word_dict = default_key_word_dict()
         self.append_keyword(self.keywords_playlocal, "playlocal")
         self.append_keyword(self.keywords_play, "play")
         self.append_keyword(self.keywords_stop, "stop")

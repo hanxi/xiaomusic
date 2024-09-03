@@ -12,6 +12,9 @@ $(function(){
   append_op_button_name("下一首");
   append_op_button_name("关机");
 
+  append_op_button_name("加入收藏");
+  append_op_button_name("取消收藏");
+
   $container.append($("<hr>"));
 
   append_op_button_name("10分钟后关机");
