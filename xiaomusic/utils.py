@@ -194,7 +194,7 @@ def is_m4a(url):
     return url.endswith(".m4a")
 
 
-async def _get_web_music_duration(session, url, start=0, end=500):
+async def _get_web_music_duration(session, url, ffmpeg_location, start=0, end=500):
     duration = 0
     headers = {"Range": f"bytes={start}-{end}"}
     async with session.get(url, headers=headers) as response:
@@ -205,7 +205,7 @@ async def _get_web_music_duration(session, url, start=0, end=500):
             if is_mp3(url):
                 m = mutagen.mp3.MP3(tmp)
             elif is_m4a(url):
-                return get_duration_by_ffprobe(tmp)
+                return get_duration_by_ffprobe(tmp, ffmpeg_location)
             else:
                 m = mutagen.File(tmp)
             duration = m.info.length
@@ -214,7 +214,7 @@ async def _get_web_music_duration(session, url, start=0, end=500):
     return duration
 
 
-async def get_web_music_duration(url):
+async def get_web_music_duration(url, ffmpeg_location="./ffmpeg/bin"):
     duration = 0
     try:
         parsed_url = urlparse(url)
@@ -234,10 +234,12 @@ async def get_web_music_duration(url):
         # 设置总超时时间为3秒
         timeout = aiohttp.ClientTimeout(total=3)
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            duration = await _get_web_music_duration(session, url, start=0, end=500)
+            duration = await _get_web_music_duration(
+                session, url, ffmpeg_location, start=0, end=500
+            )
             if duration <= 0:
                 duration = await _get_web_music_duration(
-                    session, url, start=0, end=3000
+                    session, url, ffmpeg_location, start=0, end=3000
                 )
     except Exception as e:
         logging.error(f"Error get_web_music_duration: {e}")
@@ -245,14 +247,14 @@ async def get_web_music_duration(url):
 
 
 # 获取文件播放时长
-async def get_local_music_duration(filename):
+async def get_local_music_duration(filename, ffmpeg_location="./ffmpeg/bin"):
     loop = asyncio.get_event_loop()
     duration = 0
     try:
         if is_mp3(filename):
             m = await loop.run_in_executor(None, mutagen.mp3.MP3, filename)
         elif is_m4a(filename):
-            duration = get_duration_by_ffprobe(filename)
+            duration = get_duration_by_ffprobe(filename, ffmpeg_location)
             return duration
         else:
             m = await loop.run_in_executor(None, mutagen.File, filename)
@@ -262,27 +264,33 @@ async def get_local_music_duration(filename):
     return duration
 
 
-def get_duration_by_ffprobe(file_path):
+def get_duration_by_ffprobe(file_path, ffmpeg_location):
     # 使用 ffprobe 获取文件的元数据，并以 JSON 格式输出
     result = subprocess.run(
-        [   os.path.join(os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin"),"ffprobe"),
-            "-v", "error",  # 只输出错误信息，避免混杂在其他输出中
-            "-show_entries", "format=duration",  # 仅显示时长
-            "-of", "json",  # 以 JSON 格式输出
-            file_path
+        [
+            os.path.join(ffmpeg_location, "ffprobe"),
+            "-v",
+            "error",  # 只输出错误信息，避免混杂在其他输出中
+            "-show_entries",
+            "format=duration",  # 仅显示时长
+            "-of",
+            "json",  # 以 JSON 格式输出
+            file_path,
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        universal_newlines=True
+        text=True,
     )
 
     # 解析 JSON 输出
     ffprobe_output = json.loads(result.stdout)
 
     # 获取时长
-    duration = float(ffprobe_output['format']['duration'])
+    duration = float(ffprobe_output["format"]["duration"])
 
     return duration
+
+
 def get_random(length):
     return "".join(random.sample(string.ascii_letters + string.digits, length))
 
