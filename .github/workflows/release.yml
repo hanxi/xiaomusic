@@ -17,13 +17,14 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          registry-url: https://registry.npmjs.org/
+          node-version: lts/*
 
       - run: npx changelogithub
         continue-on-error: true
