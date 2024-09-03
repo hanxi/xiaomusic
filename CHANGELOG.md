@@ -1,3 +1,17 @@
+## v0.3.28 (2024-09-03)
+
+### Feat
+
+- 新增歌曲收藏功能 #87
+
+### Fix
+
+- docker下minetypes无法判断m4a
+
+### Refactor
+
+- ffmpeg_location 从配置里读取
+
 ## v0.3.27 (2024-09-02)
 
 ### Feat
