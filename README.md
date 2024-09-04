@@ -368,6 +368,6 @@ services:
 
 ## 赞赏
 
-- 爱发电 <https://afdian.net/a/imhanxi>
+- 爱发电 <https://afdian.com/a/imhanxi>
 - 点个 Star ⭐
 - 谢谢 ❤️
