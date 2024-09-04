@@ -172,7 +172,9 @@ pdm run xiaomusic.py
 - m4a
 
 > 本地音乐会搜索目录下上面格式的文件，下载的歌曲是 mp3 格式的。
-> 已知 L05B L05C 不支持 flac 格式。
+> 已知 L05B L05C LX06 L16A 不支持 flac 格式。
+> 如果格式不能播放可以打开【转换为MP3】和【触屏版兼容模式】选项。具体见 <https://github.com/hanxi/xiaomusic/issues/153#issuecomment-2328168689>
+
 
 ## 在 Docker 里使用
 
