@@ -45,7 +45,7 @@ docker run -p 8090:8090 \
 
 启动成功后，在 web 页面可以配置其他参数，带有 `*` 号的配置是必须要配置的，其他的用不上时不用修改。初次配置时需要在页面上输入小米账号和密码保存后才能获取到设备列表。
 
-### ✨✨✨ 修改默认8090端口映射 ✨✨✨
+### 修改默认8090端口映射
 
 如果需要修改 8090 端口为其他端口，比如 5678，需要这样配，3个数字都需要是 5678 。见 <https://github.com/hanxi/xiaomusic/issues/19>
 
@@ -80,7 +80,7 @@ services:
   \  /  | |  / _` |  / _ \  | |\/| | | | | | / __| | |  / __|
   /  \  | | | (_| | | (_) | | |  | | | |_| | \__ \ | | | (__
  /_/\_\ |_|  \__,_|  \___/  |_|  |_|  \__,_| |___/ |_|  \___|
-          XiaoMusic v0.1.92 by: github.com/hanxi
+          XiaoMusic v0.3.28 by: github.com/hanxi
 
 usage: xiaomusic [-h] [--port PORT] [--hardware HARDWARE] [--account ACCOUNT]
                  [--password PASSWORD] [--cookie COOKIE] [--verbose]
