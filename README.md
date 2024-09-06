@@ -59,6 +59,7 @@ services:
       - 5678:5678
     volumes:
       - ./music:/app/music
+      - ./conf:/app/conf
     environment:
       XIAOMUSIC_PORT: 5678
 ```
@@ -125,6 +126,12 @@ pdm run xiaomusic.py
 如果是开发前端界面，可以通过 <http://localhost:8090/docs>
 查看有什么接口。目前的 web 控制台非常简陋，欢迎有兴趣的朋友帮忙实现一个漂亮的前端，需要什么接口可以随时提需求。
 
+### 本地编译 Docker Image
+
+```shell
+docker build -t xiaomusic .
+```
+
 ### 支持口令
 
 - **播放歌曲**
@@ -177,116 +184,6 @@ pdm run xiaomusic.py
 > 如果格式不能播放可以打开【转换为MP3】和【触屏版兼容模式】选项。具体见 <https://github.com/hanxi/xiaomusic/issues/153#issuecomment-2328168689>
 
 
-## 在 Docker 里使用
-
-```shell
-docker run -e MI_USER='your-xiaomi-account' \
-    -e MI_PASS='your-xiaomi-password' \
-    -e MI_DID='your-xiaomi-speaker-mid' \
-    -e MI_HARDWARE='L07A' \
-    -e XIAOMUSIC_PROXY='proxy-for-yt-dlp' \
-    -e XIAOMUSIC_HOSTNAME=192.168.2.5 \
-    -e XIAOMUSIC_SEARCH='bilisearch:' \
-    -p 8090:8090 \
-    -v ./music:/app/music hanxi/xiaomusic
-```
-
-- XIAOMUSIC_SEARCH 可以配置为 'bilisearch:' 表示歌曲从哔哩哔哩下载;
-    - 配置为 'ytsearch:' 表示歌曲从 youtube 下载。
-- XIAOMUSIC_PROXY 用于配置代理，默认为空;
-    - 当 XIAOMUSIC_SEARCH 配置为 'ytsearch:' 时在国内需要用到。
-- MI_HARDWARE 是小米音箱的型号，默认为'L07A'
-- 注意端口必须映射为与容器内一致， XIAOMUSIC_HOSTNAME 需要设置为宿主机的 IP 地址，否则小爱无法正常播放。
-- 可以把 /app/music 目录映射到本地，用于保存下载的歌曲。
-
-XIAOMUSIC_PROXY 参数格式参考 yt-dlp 文档说明:
-```
-Use the specified HTTP/HTTPS/SOCKS proxy. To
-enable SOCKS proxy, specify a proper scheme,
-e.g. socks5://user:pass@127.0.0.1:1080/.
-Pass in an empty string (--proxy "") for
-direct connection
-```
-
-见 <https://github.com/hanxi/xiaomusic/issues/2> 和 <https://github.com/hanxi/xiaomusic/issues/11>
-
-### 本地编译Docker Image
-
-```shell
-docker build -t xiaomusic .
-```
-
-### docker compose 示例
-
-使用哔哩哔哩下载歌曲:
-
-```yaml
-version: '3'
-
-services:
-  xiaomusic:
-    image: hanxi/xiaomusic
-    container_name: xiaomusic
-    restart: unless-stopped
-    ports:
-      - 8090:8090
-    volumes:
-      - ./music:/app/music
-    environment:
-      MI_USER: '小米账号'
-      MI_PASS: '小米密码'
-      MI_DID: 00000
-      MI_HARDWARE: 'L07A'
-      XIAOMUSIC_SEARCH: 'bilisearch:'
-      XIAOMUSIC_HOSTNAME: '192.168.2.5'
-```
-
-
-使用 youtobe 下载歌曲:
-
-```yaml
-version: '3'
-
-services:
-  xiaomusic:
-    image: hanxi/xiaomusic
-    container_name: xiaomusic
-    restart: unless-stopped
-    ports:
-      - 8090:8090
-    volumes:
-      - ./music:/app/music
-    environment:
-      MI_USER: '小米账号'
-      MI_PASS: '小米密码'
-      MI_DID: 00000
-      MI_HARDWARE: 'L07A'
-      XIAOMUSIC_SEARCH: 'ytsearch:'
-      XIAOMUSIC_PROXY: 'http://192.168.2.5:8080'
-      XIAOMUSIC_HOSTNAME: '192.168.2.5'
-```
-
-如果想让 setting.json 文件不存储到 music 目录，可以这样配，下面的示例会把 setting.json 文件放到容器的 /app/conf 目录且映射到本地的 ./conf 目录：
-
-```yaml
-services:
-  xiaomusic:
-    image: hanxi/xiaomusic
-    container_name: xiaomusic
-    restart: unless-stopped
-    ports:
-      - 8090:8090
-    volumes:
-      - ./music:/app/music
-      - ./conf:/app/conf
-    environment:
-      MI_USER: '小米账号'
-      MI_PASS: '小米密码'
-      XIAOMUSIC_HOSTNAME: 'docker 主机 ip'
-      XIAOMUSIC_CONF_PATH: '/app/conf'
-```
-
-
 ## 简易的控制面板
 
 浏览器进入 <http://192.168.2.5:8090>
@@ -302,16 +199,18 @@ services:
     - 配置网络歌单
     - 日志文件下载
 
-采用新的设置页面之后，必须在启动前配置的环境变量只剩下:
-- MI_USER
-- MI_PASS
-- XIAOMUSIC_HOSTNAME
+采用新的设置页面之后，没有必须在启动前配置的环境变量了，除非是改默认的 8090 端口才需要配置环境变量。
 
-其他的这些可以在网页里配置:
-- MI_DID
-- MI_HARDWARE
-- XIAOMUSIC_SEARCH
-- XIAOMUSIC_PROXY
+后台的 XIAOMUSIC_PROXY 参数格式参考 yt-dlp 文档说明:
+```
+Use the specified HTTP/HTTPS/SOCKS proxy. To
+enable SOCKS proxy, specify a proper scheme,
+e.g. socks5://user:pass@127.0.0.1:1080/.
+Pass in an empty string (--proxy "") for
+direct connection
+```
+
+见 <https://github.com/hanxi/xiaomusic/issues/2> 和 <https://github.com/hanxi/xiaomusic/issues/11>
 
 ## 网络歌单功能
 
