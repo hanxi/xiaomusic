@@ -82,7 +82,7 @@ services:
   \  /  | |  / _` |  / _ \  | |\/| | | | | | / __| | |  / __|
   /  \  | | | (_| | | (_) | | |  | | | |_| | \__ \ | | | (__
  /_/\_\ |_|  \__,_|  \___/  |_|  |_|  \__,_| |___/ |_|  \___|
-          XiaoMusic v0.3.28 by: github.com/hanxi
+          XiaoMusic v0.3.29 by: github.com/hanxi
 
 usage: xiaomusic [-h] [--port PORT] [--hardware HARDWARE] [--account ACCOUNT]
                  [--password PASSWORD] [--cookie COOKIE] [--verbose]
@@ -161,7 +161,7 @@ docker build -t xiaomusic .
 
 > 如果你的设备支持播放，请反馈给我添加到支持列表里，谢谢。
 > 目前应该所有设备类型都已经支持播放，有问题随时反馈。
-> 其他触屏版不能播放可以设置 XIAOMUSIC_USE_MUSIC_API 为 true 试试。
+> 其他触屏版不能播放可以设置【触屏版兼容模式】选项为 true 试试。
 
 ## 支持音乐格式
 
