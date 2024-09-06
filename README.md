@@ -108,16 +108,7 @@ options:
 
 - 使用 install_dependencies.sh 下载依赖
 - 使用 pdm 安装环境
-- 参考 [xiaogpt](https://github.com/yihong0618/xiaogpt) 设置好环境变量
-
-```shell
-export MI_USER="xxxxx"
-export MI_PASS="xxxx"
-export MI_DID=00000
-export XIAOMUSIC_SEARCH='bilisearch:'
-```
-
-然后启动即可。默认监听了端口 8090 , 使用其他端口自行修改。
+- 默认监听了端口 8090 , 使用其他端口自行修改。
 
 ```shell
 pdm run xiaomusic.py
