@@ -235,6 +235,10 @@ direct connection
 - XIAOMUSIC_PUBLIC_PORT 用于设置外网端口，对应后台的 【外网访问端口】，当使用反向代理时可以设置为外网端口，XIAOMUSIC_HOSTNAME 设为外网IP或者域名即可。
 - XIAOMUSIC_DOWNLOAD_PATH 变量可以配置下载目录，默认为空，表示使用 music 目录为下载目录，对应后台的 【音乐下载目录】。设置这个目录必须是 music 的子目录，否则刷新列表后会找不到歌曲。具体见 <https://github.com/hanxi/xiaomusic/issues/98>
 
+### ⚠️ 安全提醒
+
+- 如果配置了公网访问 xiaomusic ，请一定要开启密码登陆，并设置复杂的密码。且不要在公共场所的 WiFi 环境下使用，否则可能造成小米账号密码泄露。
+
 ## 高级篇
 
 - 自定义口令功能 <https://github.com/hanxi/xiaomusic/issues/105>
