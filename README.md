@@ -199,16 +199,7 @@ docker build -t xiaomusic .
 
 采用新的设置页面之后，没有必须在启动前配置的环境变量了，除非是改默认的 8090 端口才需要配置环境变量。
 
-后台的 XIAOMUSIC_PROXY 参数格式参考 yt-dlp 文档说明:
-```
-Use the specified HTTP/HTTPS/SOCKS proxy. To
-enable SOCKS proxy, specify a proper scheme,
-e.g. socks5://user:pass@127.0.0.1:1080/.
-Pass in an empty string (--proxy "") for
-direct connection
-```
-
-见 <https://github.com/hanxi/xiaomusic/issues/2> 和 <https://github.com/hanxi/xiaomusic/issues/11>
+后台的 
 
 ## 网络歌单功能
 
@@ -234,6 +225,8 @@ direct connection
 - XIAOMUSIC_FUZZY_MATCH_CUTOFF 设置模糊搜索匹配的最低相似度阈值（默认0.6，可以配0到1直接的小数），越小越模糊，越大越精准，对应后台的 【模糊匹配阈值】。具体见 <https://github.com/hanxi/xiaomusic/issues/52>
 - XIAOMUSIC_PUBLIC_PORT 用于设置外网端口，对应后台的 【外网访问端口】，当使用反向代理时可以设置为外网端口，XIAOMUSIC_HOSTNAME 设为外网IP或者域名即可。
 - XIAOMUSIC_DOWNLOAD_PATH 变量可以配置下载目录，默认为空，表示使用 music 目录为下载目录，对应后台的 【音乐下载目录】。设置这个目录必须是 music 的子目录，否则刷新列表后会找不到歌曲。具体见 <https://github.com/hanxi/xiaomusic/issues/98>
+- XIAOMUSIC_PROXY 用于配置国内使用 youtube 源下载歌曲时使用的代理，参数格式参考 yt-dlp 文档说明。 见 <https://github.com/hanxi/xiaomusic/issues/2> 和 <https://github.com/hanxi/xiaomusic/issues/11>
+
 
 ### ⚠️ 安全提醒
 
