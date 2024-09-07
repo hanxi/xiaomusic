@@ -45,7 +45,7 @@ docker run -p 8090:8090 \
 
 启动成功后，在 web 页面可以配置其他参数，带有 `*` 号的配置是必须要配置的，其他的用不上时不用修改。初次配置时需要在页面上输入小米账号和密码保存后才能获取到设备列表。
 
-> 目前安装步骤已经是最简化了，如果还是嫌安装麻烦，可以微信或者 QQ 约我远程安装，我一般周末和晚上才有时间，收个辛苦费 50 元一次，安装失败不收费。
+> 目前安装步骤已经是最简化了，如果还是嫌安装麻烦，可以微信或者 QQ 约我远程安装，我一般周末和晚上才有时间，收个辛苦费 :moneybag: 50 元一次，安装失败不收费。
 
 ### 修改默认8090端口映射
 
@@ -228,7 +228,7 @@ docker build -t xiaomusic .
 - XIAOMUSIC_PROXY 用于配置国内使用 youtube 源下载歌曲时使用的代理，参数格式参考 yt-dlp 文档说明。 见 <https://github.com/hanxi/xiaomusic/issues/2> 和 <https://github.com/hanxi/xiaomusic/issues/11>
 
 
-### ⚠️ 安全提醒
+### :warning: 安全提醒
 
 - 如果配置了公网访问 xiaomusic ，请一定要开启密码登陆，并设置复杂的密码。且不要在公共场所的 WiFi 环境下使用，否则可能造成小米账号密码泄露。
 
@@ -264,6 +264,6 @@ docker build -t xiaomusic .
 
 ## 赞赏
 
-- 爱发电 <https://afdian.com/a/imhanxi>
-- 点个 Star ⭐
-- 谢谢 ❤️
+- :moneybag: 爱发电 <https://afdian.com/a/imhanxi>
+- 点个 Star :star:
+- 谢谢 :heart:
