@@ -130,6 +130,17 @@ $(function(){
     sendcmd(cmd);
   });
 
+  $("#web_play").on("click", () => {
+    const music_name = $("#music_name").val();
+    $.get(`/musicinfo?name=${music_name}`, function(data, status) {
+      console.log(data);
+      if (data.ret == "OK") {
+        const music = new Audio(data.url);
+        music.play();
+      }
+    });
+  });
+
   $("#del_music").on("click", () => {
     var del_music_name = $("#music_name").val();
     if (confirm(`确定删除歌曲 ${del_music_name} 吗？`)) {

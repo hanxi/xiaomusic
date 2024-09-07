@@ -205,6 +205,16 @@ async def musiclist(Verifcation=Depends(verification)):
     return xiaomusic.get_music_list()
 
 
+@app.get("/musicinfo")
+async def musicinfo(name: str, Verifcation=Depends(verification)):
+    url = xiaomusic.get_music_url(name)
+    return {
+        "ret": "OK",
+        "name": name,
+        "url": url,
+    }
+
+
 @app.get("/curplaylist")
 async def curplaylist(did: str = "", Verifcation=Depends(verification)):
     if not xiaomusic.did_exist(did):
