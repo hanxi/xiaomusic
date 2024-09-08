@@ -41,7 +41,9 @@ docker run -p 8090:8090 \
     hanxi/xiaomusic
 ```
 
-其中 conf 目录为配置文件存放目录，music 目录为音乐存放目录，建议分开配置为不同的目录。上面配置的 /xiaomusic/music 和 /xiaomusic/conf 是 docker 主机里的 /xiaomusic 目录下的，可以修改为其他目录。如果报错找不到 /xiaomusic/music 目录，可以先执行 `mkdir -p /xiaomusic/{music,conf}` 命令新建目录。
+其中 conf 目录为配置文件存放目录，music 目录为音乐存放目录，建议分开配置为不同的目录。
+
+> 上面配置的 /xiaomusic/music 和 /xiaomusic/conf 是 docker 主机里的 /xiaomusic 目录下的，可以修改为其他目录。如果报错找不到 /xiaomusic/music 目录，可以先执行 `mkdir -p /xiaomusic/{music,conf}` 命令新建目录。
 
 启动成功后，在 web 页面可以配置其他参数，带有 `*` 号的配置是必须要配置的，其他的用不上时不用修改。初次配置时需要在页面上输入小米账号和密码保存后才能获取到设备列表。
 
