@@ -17,7 +17,16 @@
 
 ## 最简配置运行
 
-已经支持在 web 页面配置其他参数，docker compose 配置如下：
+已经支持在 web 页面配置其他参数，docker 启动命令如下:
+
+```bash
+docker run -p 8090:8090 \
+    -v /xiaomusic/music:/app/music \
+    -v /xiaomusic/conf:/app/conf \
+    hanxi/xiaomusic
+```
+
+对应的 docker compose 配置如下：
 
 ```yaml
 services:
@@ -32,20 +41,11 @@ services:
       - /xiaomusic/conf:/app/conf
 ```
 
-对应的 docker 启动命令如下:
-
-```bash
-docker run -p 8090:8090 \
-    -v /xiaomusic/music:/app/music \
-    -v /xiaomusic/conf:/app/conf \
-    hanxi/xiaomusic
-```
-
 其中 conf 目录为配置文件存放目录，music 目录为音乐存放目录，建议分开配置为不同的目录。
 
 > 上面配置的 /xiaomusic/music 和 /xiaomusic/conf 是 docker 主机里的 /xiaomusic 目录下的，可以修改为其他目录。如果报错找不到 /xiaomusic/music 目录，可以先执行 `mkdir -p /xiaomusic/{music,conf}` 命令新建目录。
 
-启动成功后，在 web 页面可以配置其他参数，带有 `*` 号的配置是必须要配置的，其他的用不上时不用修改。初次配置时需要在页面上输入小米账号和密码保存后才能获取到设备列表。
+docker 和 docker compose 二选一即可，启动成功后，在 web 页面可以配置其他参数，带有 `*` 号的配置是必须要配置的，其他的用不上时不用修改。初次配置时需要在页面上输入小米账号和密码保存后才能获取到设备列表。
 
 > 目前安装步骤已经是最简化了，如果还是嫌安装麻烦，可以微信或者 QQ 约我远程安装，我一般周末和晚上才有时间，收个辛苦费 :moneybag: 50 元一次，安装失败不收费。
 
