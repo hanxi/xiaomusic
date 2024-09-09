@@ -1227,7 +1227,7 @@ class XiaoMusicDevice:
             }
             response = await self.xiaomusic.mina_service.mina_request('/music/search', params)
             audio_id = response['data']['songList'][5]['audioID']  # QQ音乐为搜索结果的第6首歌
-            self.log.info(f"_get_audio_id. name: {name} songId:{audio_id}")
+            self.log.debug(f"_get_audio_id. name: {name} songId:{audio_id}")
         except Exception as e:
             self.log.error(f"_get_audio_id {e}")
         finally:
