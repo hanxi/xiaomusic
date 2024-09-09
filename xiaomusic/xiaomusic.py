@@ -1189,20 +1189,22 @@ class XiaoMusicDevice:
     # 同一组设备播放
     async def group_player_play(self, url):
         device_id_list = self.xiaomusic.get_group_device_id_list(self.group_name)
-        tasks = [self.play_one_url(device_id, url) for device_id in device_id_list]
+        name = self.cur_music
+        tasks = [self.play_one_url(device_id, url, name) for device_id in device_id_list]
         results = await asyncio.gather(*tasks)
         self.log.info(f"group_player_play {url} {device_id_list} {results}")
         return results
 
-    async def play_one_url(self, device_id, url):
+    async def play_one_url(self, device_id, url, name):
         ret = None
         try:
+            audio_id = await self._get_audio_id(name)
             if self.config.use_music_api:
                 ret = await self.xiaomusic.mina_service.play_by_music_url(
-                    device_id, url
+                    device_id, url, audio_id=audio_id
                 )
                 self.log.info(
-                    f"play_one_url play_by_music_url device_id:{device_id} ret:{ret} url:{url}"
+                    f"play_one_url play_by_music_url device_id:{device_id} ret:{ret} url:{url} audio_id:{audio_id}"
                 )
             else:
                 ret = await self.xiaomusic.mina_service.play_by_url(device_id, url)
@@ -1213,6 +1215,23 @@ class XiaoMusicDevice:
             self.log.exception(f"Execption {e}")
         return ret
 
+    async def _get_audio_id(self, name):
+        audio_id = 1582971365183456177
+        try:
+            params = {
+                "query": name,
+                "queryType": 1,
+                "offset": 0,
+                "count": 6,
+                "timestamp": int(time.time_ns() / 1000)
+            }
+            response = await self.xiaomusic.mina_service.mina_request('/music/search', params)
+            audio_id = response['data']['songList'][5]['audioID']  # QQ音乐为搜索结果的第6首歌
+            self.log.info(f"_get_audio_id. name: {name} songId:{audio_id}")
+        except Exception as e:
+            self.log.error(f"_get_audio_id {e}")
+        finally:
+            return str(audio_id)
     # 设置下一首歌曲的播放定时器
     async def set_next_music_timeout(self, sec):
         self.cancel_next_timer()
