@@ -1001,7 +1001,7 @@ class XiaoMusicDevice:
         sec, url = await self.xiaomusic.get_music_sec_url(name)
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
-        results = await self.group_player_play(url)
+        results = await self.group_player_play(url, name)
         if all(ele is None for ele in results):
             self.log.info(f"播放 {name} 失败")
             await asyncio.sleep(1)
@@ -1187,9 +1187,8 @@ class XiaoMusicDevice:
             self.log.exception(f"Execption {e}")
 
     # 同一组设备播放
-    async def group_player_play(self, url):
+    async def group_player_play(self, url, name=""):
         device_id_list = self.xiaomusic.get_group_device_id_list(self.group_name)
-        name = self.cur_music
         tasks = [self.play_one_url(device_id, url, name) for device_id in device_id_list]
         results = await asyncio.gather(*tasks)
         self.log.info(f"group_player_play {url} {device_id_list} {results}")
@@ -1227,7 +1226,7 @@ class XiaoMusicDevice:
             }
             response = await self.xiaomusic.mina_service.mina_request('/music/search', params)
             audio_id = response['data']['songList'][5]['audioID']  # QQ音乐为搜索结果的第6首歌
-            self.log.info(f"_get_audio_id. name: {name} songId:{audio_id}")
+            self.log.debug(f"_get_audio_id. name: {name} songId:{audio_id}")
         except Exception as e:
             self.log.error(f"_get_audio_id {e}")
         finally:
