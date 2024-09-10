@@ -1,6 +1,9 @@
 $(function(){
   $container=$("#cmds");
 
+  append_op_button_name("加入收藏");
+  append_op_button_name("取消收藏");
+
   const PLAY_TYPE_ONE = 0; // 单曲循环
   const PLAY_TYPE_ALL = 1; // 全部循环
   const PLAY_TYPE_RND = 2; // 随机播放
@@ -8,12 +11,11 @@ $(function(){
   append_op_button("play_type_one", "单曲循环", "单曲循环");
   append_op_button("play_type_rnd", "随机播放", "随机播放");
 
-  append_op_button_name("刷新列表");
-  append_op_button_name("下一首");
+  append_op_button_name("上一首");
   append_op_button_name("关机");
+  append_op_button_name("下一首");
 
-  append_op_button_name("加入收藏");
-  append_op_button_name("取消收藏");
+  append_op_button_name("刷新列表");
 
   $container.append($("<hr>"));
 
@@ -100,8 +102,7 @@ $(function(){
         const selectedValue = $(this).val();
         localStorage.setItem('cur_playlist', selectedValue);
         $('#music_name').empty();
-        const sorted_musics = data[selectedValue].sort(custom_sort_key);
-        $.each(sorted_musics, function(index, item) {
+        $.each(data[selectedValue], function(index, item) {
           $('#music_name').append($('<option></option>').val(item).text(item));
         });
       });
@@ -273,23 +274,4 @@ $(function(){
       }
     });
   }
-
-  function custom_sort_key(a, b) {
-    // 使用正则表达式提取数字前缀
-    const numericPrefixA = a.match(/^(\d+)/) ? parseInt(a.match(/^(\d+)/)[1], 10) : null;
-    const numericPrefixB = b.match(/^(\d+)/) ? parseInt(b.match(/^(\d+)/)[1], 10) : null;
-
-    // 如果两个键都有数字前缀，则按数字大小排序
-    if (numericPrefixA !== null && numericPrefixB !== null) {
-      return numericPrefixA - numericPrefixB;
-    }
-
-    // 如果一个键有数字前缀而另一个没有，则有数字前缀的键排在前面
-    if (numericPrefixA !== null) return -1;
-    if (numericPrefixB !== null) return 1;
-
-    // 如果两个键都没有数字前缀，则按照常规字符串排序
-    return a.localeCompare(b);
-  }
-
 });
