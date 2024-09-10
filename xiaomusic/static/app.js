@@ -98,6 +98,7 @@ $(function(){
 
       $('#music_list').change(function() {
         const selectedValue = $(this).val();
+        localStorage.setItem('cur_playlist', selectedValue);
         $('#music_name').empty();
         const sorted_musics = data[selectedValue].sort(custom_sort_key);
         $.each(sorted_musics, function(index, item) {
@@ -108,10 +109,17 @@ $(function(){
       $('#music_list').trigger('change');
 
       // 获取当前播放列表
-      $.get(`curplaylist?did=${did}`, function(data, status) {
-        if (data != "") {
-          $('#music_list').val(data);
+      $.get(`curplaylist?did=${did}`, function(playlist, status) {
+        if (playlist != "") {
+          $('#music_list').val(playlist);
           $('#music_list').trigger('change');
+        } else {
+          // 使用本地记录的
+          playlist = localStorage.getItem('cur_playlist');
+          if (data.includes(playlist)) {
+            $('#music_list').val(playlist);
+            $('#music_list').trigger('change');
+          }
         }
       })
     })

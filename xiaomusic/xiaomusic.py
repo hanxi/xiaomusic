@@ -453,6 +453,9 @@ class XiaoMusic:
             self.log.exception(f"Execption {e}")
 
         self.music_list["全部"] = list(self.all_music.keys())
+        self.music_list["所有歌曲"] = [
+            name for name in self.all_music.keys() if name not in self._all_radio
+        ]
 
         self._append_custom_play_list()
 
@@ -1189,7 +1192,9 @@ class XiaoMusicDevice:
     # 同一组设备播放
     async def group_player_play(self, url, name=""):
         device_id_list = self.xiaomusic.get_group_device_id_list(self.group_name)
-        tasks = [self.play_one_url(device_id, url, name) for device_id in device_id_list]
+        tasks = [
+            self.play_one_url(device_id, url, name) for device_id in device_id_list
+        ]
         results = await asyncio.gather(*tasks)
         self.log.info(f"group_player_play {url} {device_id_list} {results}")
         return results
@@ -1222,15 +1227,19 @@ class XiaoMusicDevice:
                 "queryType": 1,
                 "offset": 0,
                 "count": 6,
-                "timestamp": int(time.time_ns() / 1000)
+                "timestamp": int(time.time_ns() / 1000),
             }
-            response = await self.xiaomusic.mina_service.mina_request('/music/search', params)
-            audio_id = response['data']['songList'][5]['audioID']  # QQ音乐为搜索结果的第6首歌
+            response = await self.xiaomusic.mina_service.mina_request(
+                "/music/search", params
+            )
+            audio_id = response["data"]["songList"][5][
+                "audioID"
+            ]  # QQ音乐为搜索结果的第6首歌
             self.log.debug(f"_get_audio_id. name: {name} songId:{audio_id}")
         except Exception as e:
             self.log.error(f"_get_audio_id {e}")
-        finally:
-            return str(audio_id)
+        return str(audio_id)
+
     # 设置下一首歌曲的播放定时器
     async def set_next_music_timeout(self, sec):
         self.cancel_next_timer()
