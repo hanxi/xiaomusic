@@ -839,6 +839,11 @@ class XiaoMusic:
 
     # 把当前配置落地
     def save_cur_config(self):
+        for did in self.config.devices.keys():
+            deviceobj = self.devices.get(did)
+            self.log.info(deviceobj.device)
+            if deviceobj is not None:
+                self.config.devices[did] = deviceobj.device
         data = asdict(self.config)
         self.do_saveconfig(data)
         self.log.info("save_cur_config ok")
@@ -1000,6 +1005,8 @@ class XiaoMusicDevice:
 
         self._playing = True
         self.cur_music = name
+        self.device.cur_music = name
+
         self.log.info(f"cur_music {self.cur_music}")
         sec, url = await self.xiaomusic.get_music_sec_url(name)
         await self.group_force_stop_xiaoai()
@@ -1020,6 +1027,7 @@ class XiaoMusicDevice:
             return
         sec = sec + self.config.delay_sec
         await self.set_next_music_timeout(sec)
+        self.xiaomusic.save_cur_config()
 
     async def do_tts(self, value):
         self.log.info(f"try do_tts value:{value}")
@@ -1285,6 +1293,7 @@ class XiaoMusicDevice:
     async def play_music_list(self, list_name, music_name):
         self._last_cmd = "play_music_list"
         self._cur_play_list = list_name
+        self.device.cur_playlist = list_name
         self._play_list = self.xiaomusic.music_list[list_name]
         self.log.info(f"开始播放列表{list_name}")
         await self._play(music_name)
