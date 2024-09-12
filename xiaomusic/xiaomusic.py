@@ -965,7 +965,11 @@ class XiaoMusicDevice:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
             if self.config.enable_remote_play:
-                url = await get_play_url(name);
+                self.xiaomusic.all_music[name] =await get_play_url(name);
+                if name not in self._play_list:
+                    self._play_list.append(name)
+                    self.log.info(f"add_download_music add_music {name}")
+                    self.log.debug(self._play_list)                            
             else:
                 await self.download(search_key, name)
                 self.log.info(f"正在下载中 {search_key} {name}")
