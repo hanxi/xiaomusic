@@ -964,12 +964,33 @@ class XiaoMusicDevice:
             if self.config.disable_download:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
-            await self.download(search_key, name)
-            self.log.info(f"正在下载中 {search_key} {name}")
-            await self._download_proc.wait()
-            # 把文件插入到播放列表里
-            self.add_download_music(name)
+            if self.config.enable_remote_play:
+                url = await get_play_url(name);
+            else:
+                await self.download(search_key, name)
+                self.log.info(f"正在下载中 {search_key} {name}")
+                await self._download_proc.wait()
+                # 把文件插入到播放列表里
+                self.add_download_music(name)
         await self._playmusic(name)
+
+    async def get_play_url(self, search_key, name):
+        sbp_args = (
+            "yt-dlp",
+            f"{self.config.search_prefix}{search_key}",
+            "-x",
+            "--audio-format",
+            "mp3",
+            "--get-url",
+            "--no-playlist",
+        )
+
+        if self.config.proxy:
+            sbp_args += ("--proxy", f"{self.config.proxy}")
+
+        cmd = " ".join(sbp_args)
+        self.log.info(f"getUrl cmd: {cmd}")
+        return await asyncio.create_subprocess_exec(*sbp_args)
 
     # 下一首
     async def play_next(self):
