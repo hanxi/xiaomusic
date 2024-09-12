@@ -254,12 +254,16 @@ docker build -t xiaomusic .
 - [MiService](https://github.com/yihong0618/MiService)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [awesome-xiaoai](https://github.com/zzz6519003/awesome-xiaoai)
+- 微信小程序: XIAO晓音
+- 所有帮忙调试和测试的朋友
+- 所有反馈问题和建议的朋友
+
+### 其他教程
+
 - [NAS部署教程](https://post.m.smzdm.com/p/avpe7n99/)
 - [群晖部署教程](https://post.m.smzdm.com/p/a7px7dol/)
 - [QNAS部署教程](https://post.smzdm.com/p/a5xz5x63/)
 - [视频教程](https://www.bilibili.com/video/BV1ZZpweHEtT/)
-- 所有帮忙调试和测试的朋友
-- 所有反馈问题和建议的朋友
 
 ## Star History
 
