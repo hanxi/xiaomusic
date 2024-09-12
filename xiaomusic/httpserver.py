@@ -144,10 +144,14 @@ def playingmusic(did: str = "", Verifcation=Depends(verification)):
 
     is_playing = xiaomusic.isplaying(did)
     cur_music = xiaomusic.playingmusic(did)
+    # 播放进度
+    offset,duration = xiaomusic.get_offset_duration(did)
     return {
         "ret": "OK",
         "is_playing": is_playing,
         "cur_music": cur_music,
+        "offset": offset,
+        "duration": duration,
     }
 
 

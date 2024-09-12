@@ -805,6 +805,9 @@ class XiaoMusic:
         self.log.debug(f"playingmusic. cur_music:{cur_music}")
         return cur_music
 
+    def get_offset_duration(self, did):
+        return self.devices[did].get_offset_duration()
+
     # 当前是否正在播放歌曲
     def isplaying(self, did):
         return self.devices[did].isplaying()
@@ -865,6 +868,8 @@ class XiaoMusic:
 
     # 重新初始化
     async def reinit(self, **kwargs):
+        for handler in self.log.handlers:
+            handler.close()
         self.setup_logger()
         await self.init_all_data(self.session)
         self._gen_all_music_list()
@@ -923,6 +928,10 @@ class XiaoMusicDevice:
         self._next_timer = None
         self._timeout = 0
         self._playing = False
+        # 播放进度
+        self._start_time = 0
+        self._duration = 0
+
         # 关机定时器
         self._stop_timer = None
         self._last_cmd = None
@@ -930,6 +939,13 @@ class XiaoMusicDevice:
 
     def get_cur_music(self):
         return self.device.cur_music
+
+    def get_offset_duration(self):
+        if not self._playing:
+            return -1, -1
+        offset = time.time() - self._start_time
+        duration = self._duration
+        return offset, duration
 
     # 初始化播放列表
     def update_playlist(self):
@@ -1056,6 +1072,8 @@ class XiaoMusicDevice:
             self.log.info(f"【{name}】不会设置下一首歌的定时器")
             return
         sec = sec + self.config.delay_sec
+        self._start_time = time.time()
+        self._duration = sec
         await self.set_next_music_timeout(sec)
         self.xiaomusic.save_cur_config()
 
