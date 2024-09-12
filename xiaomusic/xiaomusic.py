@@ -865,6 +865,8 @@ class XiaoMusic:
 
     # 重新初始化
     async def reinit(self, **kwargs):
+        for handler in self.log.handlers:
+            handler.close()
         self.setup_logger()
         await self.init_all_data(self.session)
         self._gen_all_music_list()
