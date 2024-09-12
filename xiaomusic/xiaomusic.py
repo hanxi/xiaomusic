@@ -964,11 +964,11 @@ class XiaoMusicDevice:
             if self.config.disable_download:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
-            if self.config.enable_remote_play:
-                self.xiaomusic.all_music[name] =await get_play_url(name);
+            if True:
+                self.xiaomusic.all_music[name] = await self.get_play_url(name);
                 if name not in self._play_list:
                     self._play_list.append(name)
-                    self.log.info(f"add_download_music add_music {name}")
+                    self.log.info(f"add_url_music {name}")
                     self.log.debug(self._play_list)                            
             else:
                 await self.download(search_key, name)
@@ -978,10 +978,10 @@ class XiaoMusicDevice:
                 self.add_download_music(name)
         await self._playmusic(name)
 
-    async def get_play_url(self, search_key, name):
+    async def get_play_url(self, name):
         sbp_args = (
             "yt-dlp",
-            f"{self.config.search_prefix}{search_key}",
+            f"{self.config.search_prefix}{name}",
             "-x",
             "--audio-format",
             "mp3",
@@ -994,7 +994,27 @@ class XiaoMusicDevice:
 
         cmd = " ".join(sbp_args)
         self.log.info(f"getUrl cmd: {cmd}")
-        return await asyncio.create_subprocess_exec(*sbp_args)
+        # url = await asyncio.create_subprocess_exec(*sbp_args)
+        # self.log.debug(url)
+        # return url 
+        # 创建子进程并捕获 stdout
+        process = await asyncio.create_subprocess_exec(
+            *sbp_args,
+            stdout=asyncio.subprocess.PIPE,  # 捕获标准输出
+            stderr=asyncio.subprocess.PIPE   # 可选：捕获标准错误输出
+        )
+
+        # 读取标准输出并解码为字符串
+        stdout, stderr = await process.communicate()
+
+        # 解码输出为字符串
+        url = stdout.decode().strip()
+
+        if stderr:
+            self.log.error(f"Error: {stderr.decode().strip()}")
+
+        self.log.debug(f"Downloaded URL: {url}")
+        return url
 
     # 下一首
     async def play_next(self):
