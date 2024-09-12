@@ -5,7 +5,7 @@
 groups = ["default", "dev", "lint"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:0a0b1f63fdd9dd2c4ca2a777f12d294126a880631c1b3d48108d1df283ba14a8"
+content_hash = "sha256:d78c6aed8ee11387663e36ade149f06fd493f984e253a1936163f85542ab5a52"
 
 [[metadata.targets]]
 requires_python = "==3.10.12"
@@ -462,6 +462,18 @@ files = [
     {file = "frozenlist-1.4.1-cp312-cp312-win_amd64.whl", hash = "sha256:64536573d0a2cb6e625cf309984e2d873979709f2cf22839bf2d61790b448ad5"},
     {file = "frozenlist-1.4.1-py3-none-any.whl", hash = "sha256:04ced3e6a46b4cfffe20f9ae482818e34eba9b5fb0ce4056e4cc9b6e212d09b7"},
     {file = "frozenlist-1.4.1.tar.gz", hash = "sha256:c037a86e8513059a2613aaba4d817bb90b9d9b6b69aace3ce9c877e8c8ed402b"},
+]
+
+[[package]]
+name = "ga4mp"
+version = "2.0.4"
+requires_python = ">=3.6,<4.0"
+summary = "Google Analytics 4 Measurement Protocol Python Module"
+groups = ["default"]
+marker = "python_full_version == \"3.10.12\""
+files = [
+    {file = "ga4mp-2.0.4-py3-none-any.whl", hash = "sha256:11e5072b33a93917bbfcf5b44ee48d21e45124ef18e2a0f1275e1529df340de8"},
+    {file = "ga4mp-2.0.4.tar.gz", hash = "sha256:2fdcf275e643c5c3ab2c3a03e82edc3551109f7e9175b3604aea8c8e015c15ad"},
 ]
 
 [[package]]

@@ -17,6 +17,7 @@ from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiNAService
 
 from xiaomusic import __version__
+from xiaomusic.analytics import Analytics
 from xiaomusic.config import (
     KEY_WORD_ARG_BEFORE_DICT,
     Config,
@@ -83,6 +84,10 @@ class XiaoMusic:
 
         # 更新设备列表
         self.update_devices()
+
+        # 启动统计
+        self.analytics = Analytics(self.log)
+        self.analytics.send_startup_event()
 
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"Startup OK. {debug_config}")
@@ -172,6 +177,7 @@ class XiaoMusic:
                     # sleep to avoid too many request
                     # self.log.debug(f"Sleep {d}, timestamp: {self.last_timestamp}")
                     await asyncio.sleep(1 - d)
+                self.analytics.send_daily_event()
 
     async def init_all_data(self, session):
         await self.login_miboy(session)
@@ -1066,6 +1072,7 @@ class XiaoMusicDevice:
             return
 
         self.log.info(f"【{name}】已经开始播放了")
+        self.xiaomusic.analytics.send_play_event(name, sec)
 
         # 设置下一首歌曲的播放定时器
         if sec <= 1:
