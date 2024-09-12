@@ -23,6 +23,9 @@ $(function(){
   append_op_button_name("30分钟后关机");
   append_op_button_name("60分钟后关机");
 
+  var offset = 0;
+  var duration = 0;
+
   // 拉取现有配置
   $.get("/getsetting", function(data, status) {
     console.log(data, status);
@@ -271,7 +274,26 @@ $(function(){
         } else {
           $("#playering-music").text(`【空闲中】 ${data.cur_music}`);
         }
+        offset = data.offset;
+        duration = data.duration;
       }
     });
   }
+  setInterval(()=>{
+      if (duration > 0) {
+        offset++;
+        $("#progress").val(offset / duration * 100);
+        $("#play-time").text(`${formatTime(offset)}/${formatTime(duration)}`)
+      }else{
+        $("#play-time").text(`${formatTime(0)}/${formatTime(0)}`)
+      }
+    },1000)
+  function formatTime(seconds) {
+    var minutes = Math.floor(seconds / 60);
+    var remainingSeconds =Math.floor(seconds % 60);
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
 });
+
+
+
