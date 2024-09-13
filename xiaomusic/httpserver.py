@@ -6,6 +6,7 @@ import re
 import secrets
 import shutil
 import tempfile
+import urllib.parse
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from typing import Annotated
@@ -145,7 +146,7 @@ def playingmusic(did: str = "", Verifcation=Depends(verification)):
     is_playing = xiaomusic.isplaying(did)
     cur_music = xiaomusic.playingmusic(did)
     # 播放进度
-    offset,duration = xiaomusic.get_offset_duration(did)
+    offset, duration = xiaomusic.get_offset_duration(did)
     return {
         "ret": "OK",
         "is_playing": is_playing,
@@ -293,9 +294,9 @@ def downloadlog(Verifcation=Depends(verification)):
 async def playurl(did: str, url: str, Verifcation=Depends(verification)):
     if not xiaomusic.did_exist(did):
         return {"ret": "Did not exist"}
-
-    log.info(f"playurl did: {did} url: {url}")
-    return await xiaomusic.play_url(did=did, arg1=url)
+    decoded_url = urllib.parse.unquote(url)
+    log.info(f"playurl did: {did} url: {decoded_url}")
+    return await xiaomusic.play_url(did=did, arg1=decoded_url)
 
 
 @app.post("/debug_play_by_music_url")

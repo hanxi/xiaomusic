@@ -72,4 +72,3 @@ class Analytics:
         event.set_event_param(name="sec", value=sec)
         event_list = [event]
         self.gtag.send(events=event_list)
-

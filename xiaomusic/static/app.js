@@ -175,7 +175,8 @@ $(function(){
 
   $("#playurl").on("click", () => {
     var url = $("#music-url").val();
-    $.get(`/playurl?url=${url}&did=${did}`, function(data, status) {
+    const encoded_url = encodeURIComponent(url);
+    $.get(`/playurl?url=${encoded_url}&did=${did}`, function(data, status) {
       console.log(data);
     });
   });
