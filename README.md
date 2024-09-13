@@ -121,6 +121,17 @@ pdm run xiaomusic.py
 如果是开发前端界面，可以通过 <http://localhost:8090/docs>
 查看有什么接口。目前的 web 控制台非常简陋，欢迎有兴趣的朋友帮忙实现一个漂亮的前端，需要什么接口可以随时提需求。
 
+### 代码提交规范
+
+提交前请执行
+
+```
+pdm fmt
+pdm lint --fix
+```
+
+用于检查代码和格式化代码。
+
 ### 本地编译 Docker Image
 
 ```shell
