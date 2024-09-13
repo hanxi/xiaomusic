@@ -1306,9 +1306,13 @@ class XiaoMusicDevice:
             response = await self.xiaomusic.mina_service.mina_request(
                 "/music/search", params
             )
-            audio_id = response["data"]["songList"][5][
-                "audioID"
-            ]  # QQ音乐为搜索结果的第6首歌
+            for song in response["data"]["songList"]:
+                if song["originName"] == "QQ音乐":
+                    audio_id = song["audioID"]
+                    break
+            # 没找到QQ音乐的歌曲，取第一个
+            if audio_id == 1582971365183456177:
+                audio_id = response["data"]["songList"][0]["audioID"]
             self.log.debug(f"_get_audio_id. name: {name} songId:{audio_id}")
         except Exception as e:
             self.log.error(f"_get_audio_id {e}")
