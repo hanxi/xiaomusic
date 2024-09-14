@@ -60,7 +60,7 @@ class Analytics:
 
     def send_play_event(self, name, sec):
         try:
-            self._send_play_event()
+            self._send_play_event(name, sec)
         except Exception as e:
             self.log.warning(f"analytics send_play_event failed {e}")
             self.init()
