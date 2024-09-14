@@ -272,6 +272,8 @@ docker build -t xiaomusic .
 
 ### 其他教程
 
+> 下面教程可能比较旧，只供参考
+
 - [NAS部署教程](https://post.m.smzdm.com/p/avpe7n99/)
 - [群晖部署教程](https://post.m.smzdm.com/p/a7px7dol/)
 - [QNAS部署教程](https://post.smzdm.com/p/a5xz5x63/)
