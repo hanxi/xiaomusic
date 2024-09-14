@@ -20,10 +20,7 @@
 已经支持在 web 页面配置其他参数，docker 启动命令如下:
 
 ```bash
-docker run -p 8090:8090 \
-    -v /xiaomusic/music:/app/music \
-    -v /xiaomusic/conf:/app/conf \
-    hanxi/xiaomusic
+docker run -p 8090:8090 -v /xiaomusic/music:/app/music -v /xiaomusic/conf:/app/conf hanxi/xiaomusic
 ```
 
 对应的 docker compose 配置如下：
