@@ -16,6 +16,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from starlette.background import BackgroundTask
 from starlette.responses import FileResponse, Response
@@ -29,7 +30,11 @@ from xiaomusic.utils import (
 xiaomusic = None
 config = None
 log = None
-
+origins = [
+    "http://localhost",
+    "http://localhost:5678",
+    "http://localhost:5173",
+]
 
 @asynccontextmanager
 async def app_lifespan(app):
@@ -74,7 +79,13 @@ app = FastAPI(
     lifespan=app_lifespan,
     version=__version__,
 )
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # 允许访问的源
+    allow_credentials=True,  # 支持 cookie
+    allow_methods=["*"],  # 允许使用的请求方法
+    allow_headers=["*"]  # 允许携带的 Headers
+)
 
 def reset_http_server():
     log.info(f"disable_httpauth:{config.disable_httpauth}")
