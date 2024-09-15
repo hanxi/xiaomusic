@@ -147,6 +147,12 @@ var vConsole = new window.VConsole();
           <option value="false" selected>false</option>
         </select>
 
+        <label for="continue_play">启用继续播放(可能导致兼容性问题及歌曲无法完整播放):</label>
+        <select id="continue_play">
+          <option value="true">true</option>
+          <option value="false" selected>false</option>
+        </select>
+
         <label for="public_port">外网访问端口(0表示跟监听端口一致):</label>
         <input id="public_port" type="number" value="0"></input>
 

@@ -115,6 +115,7 @@ class XiaoMusic:
         self.music_path_depth = self.config.music_path_depth
         self.remove_id3tag = self.config.remove_id3tag
         self.convert_to_mp3 = self.config.convert_to_mp3
+        self.continue_play = self.config.continue_play
 
     def update_devices(self):
         self.device_id_did = {}  # key 为 device_id
@@ -1178,9 +1179,14 @@ class XiaoMusicDevice:
     # 继续播放被打断的歌曲
     async def check_replay(self):
         if self.isplaying() and not self.isdownloading():
-            # 继续播放歌曲
-            self.log.info("现在继续播放歌曲")
-            await self._play()
+            if not self.config.continue_play:
+                # 重新播放歌曲
+                self.log.info("现在重新播放歌曲")
+                await self._play()
+            else:
+                self.log.info(
+                    f"继续播放歌曲. self.config.continue_play:{self.config.continue_play}"
+                )
         else:
             self.log.info(
                 f"不会继续播放歌曲. isplaying:{self.isplaying()} isdownloading:{self.isdownloading()}"
@@ -1277,7 +1283,14 @@ class XiaoMusicDevice:
         ret = None
         try:
             audio_id = await self._get_audio_id(name)
-            if self.config.use_music_api:
+            if self.config.continue_play:
+                ret = await self.xiaomusic.mina_service.play_by_music_url(
+                    device_id, url, _type=1, audio_id=audio_id
+                )
+                self.log.info(
+                    f"play_one_url continue_play device_id:{device_id} ret:{ret} url:{url} audio_id:{audio_id}"
+                )
+            elif self.config.use_music_api:
                 ret = await self.xiaomusic.mina_service.play_by_music_url(
                     device_id, url, audio_id=audio_id
                 )
@@ -1295,6 +1308,8 @@ class XiaoMusicDevice:
 
     async def _get_audio_id(self, name):
         audio_id = 1582971365183456177
+        if not (self.config.use_music_api or self.config.continue_play):
+            return str(audio_id)
         try:
             params = {
                 "query": name,
