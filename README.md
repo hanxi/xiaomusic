@@ -285,3 +285,4 @@ docker build -t xiaomusic .
 - :moneybag: 爱发电 <https://afdian.com/a/imhanxi>
 - 点个 Star :star:
 - 谢谢 :heart:
+- ![喝杯奶茶](https://github.com/user-attachments/assets/7863e361-7e61-48a7-bd71-8f8f609f11b4)
