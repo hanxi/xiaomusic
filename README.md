@@ -275,6 +275,10 @@ docker build -t xiaomusic .
 - [群晖部署教程](https://post.m.smzdm.com/p/a7px7dol/)
 - [QNAS部署教程](https://post.smzdm.com/p/a5xz5x63/)
 - [视频教程](https://www.bilibili.com/video/BV1ZZpweHEtT/)
+- [TechHive](https://mp.weixin.qq.com/s/4a41muFtPaFKtHeZYu795w)
+- [弹个AI](https://mp.weixin.qq.com/s/sIsKxB7Y8b83AhnvaWiMog)
+- [简单免费！教你用绿联NAS联动小爱音箱，私人音乐库也能语音点播](https://post.m.smzdm.com/p/a8pldgg7/)
+
 
 ## Star History
 
