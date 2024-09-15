@@ -184,6 +184,8 @@ async def do_cmd(data: DidCmd, Verifcation=Depends(verification)):
 async def getsetting(need_device_list: bool = False, Verifcation=Depends(verification)):
     config = xiaomusic.getconfig()
     data = asdict(config)
+    data["password"] = "******"
+    data["httpauth_password"] = "******"
     if need_device_list:
         device_list = await xiaomusic.getalldevices()
         log.info(f"getsetting device_list: {device_list}")
@@ -198,6 +200,11 @@ async def savesetting(request: Request, Verifcation=Depends(verification)):
         data = json.loads(data_json.decode("utf-8"))
         debug_data = deepcopy_data_no_sensitive_info(data)
         log.info(f"saveconfig: {debug_data}")
+        config = xiaomusic.getconfig()
+        if data["password"] == "******" or data["password"] == "":
+            data["password"] = config.password
+        if data["httpauth_password"] == "******" or data["httpauth_password"] == "":
+            data["httpauth_password"] = config.httpauth_password
         await xiaomusic.saveconfig(data)
         reset_http_server()
         return "save success"
