@@ -24,16 +24,19 @@ label {
   width: 300px;
 }
 input,select {
-  margin: 10px;
-  width: 300px;
+  margin-left: 5%;
+  margin-right: 5%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 90%;
+  max-width: 400px;
   height: 40px;
 }
 
 .rows {
   display: flex;
   flex-direction: column;
-  margin-left: 20px;
-  margin-right: 20px;
+  justify-content: center;
 }
 
 footer {
@@ -44,8 +47,12 @@ footer {
 }
 
  textarea{
-  margin: 10px;
-  width: 300px;
+  margin-left: 5%;
+  margin-right: 5%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 90%;
+  max-width: 400px;
   height: 200px;
 }
 
@@ -76,4 +83,10 @@ footer {
   text-align: center;
   text-decoration: none;
   display: inline-block;
+}
+
+.qrcode {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
 }

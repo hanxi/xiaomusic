@@ -49,20 +49,15 @@ var vConsole = new window.VConsole();
 
         <label for="hostname">*XIAOMUSIC_HOSTNAME(IP或域名):</label>
         <input id="hostname" type="text"></input>
-
+      </div>
+      <hr>
+      <div class="rows">
         <label for="verbose">是否开启调试日志:</label>
         <select id="verbose">
           <option value="true" selected>true</option>
           <option value="false">false</option>
         </select>
 
-        <div>
-          <button class="save-button">保存</button>
-          <button onclick="location.href='/';">返回首页</button>
-        </div>
-      </div>
-      <hr>
-      <div class="rows">
         <label for="group_list">设备分组配置:</label>
         <input id="group_list" type="text" placeholder="did1:组名1,did2:组名1,did3:组名2"></input>
 
@@ -177,17 +172,24 @@ var vConsole = new window.VConsole();
       </div>
     </div>
     <hr>
+
     <button onclick="location.href='/';">返回首页</button>
     <button id="get_music_list">获取歌单</button>
     <button class="save-button">保存</button>
+    <hr>
+
     <a class="button" href="/downloadlog" download="xiaomusic.txt">下载日志文件</a>
     <button onclick="location.href='/docs';">查看接口文档</button>
+    <a class="button" href="/static/m3u.html" target="_blank">m3u文件转换</a>
     <hr>
 
-    <a href="/static/m3u.html" target="_blank">m3u文件转换工具</a>
-    <hr>
-    <a href="/static/debug.html" target="_blank">调试工具</a>
+    <a class="button" href="/static/debug.html" target="_blank">调试工具</a>
+    <a class="button" href="https://afdian.com/a/imhanxi" target="_blank">💰 爱发电</a>
+    <a class="button" href="https://github.com/hanxi/xiaomusic" target="_blank">点个 Star ⭐</a>
 
+    <div class="rows">
+      <img class="qrcode" src="/static/qrcode.png" alt="请涵曦喝奶茶🧋">
+    </div>
     <footer>
       <p>Powered by <a href="https://github.com/hanxi/xiaomusic" target="_blank">xiaomusic</a></p>
     </footer>
