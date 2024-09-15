@@ -145,6 +145,9 @@ class Config:
     )
     convert_to_mp3: bool = os.getenv("CONVERT_TO_MP3", "false").lower() == "true"
     delay_sec: int = int(os.getenv("XIAOMUSIC_DELAY_SEC", 3))  # 下一首歌延迟播放秒数
+    continue_play: bool = (
+        os.getenv("XIAOMUSIC_CONTINUE_PLAY", "false").lower() == "true"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
