@@ -87,7 +87,6 @@ class XiaoMusic:
 
         # 启动统计
         self.analytics = Analytics(self.log)
-        self.analytics.send_startup_event()
 
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"Startup OK. {debug_config}")
@@ -178,7 +177,7 @@ class XiaoMusic:
                     # sleep to avoid too many request
                     # self.log.debug(f"Sleep {d}, timestamp: {self.last_timestamp}")
                     await asyncio.sleep(1 - d)
-                self.analytics.send_daily_event()
+                await self.analytics.send_daily_event()
 
     async def init_all_data(self, session):
         await self.login_miboy(session)
@@ -522,6 +521,7 @@ class XiaoMusic:
             self.log.exception(f"Execption {e}")
 
     async def run_forever(self):
+        await self.analytics.send_startup_event()
         async with ClientSession() as session:
             self.session = session
             await self.init_all_data(session)
@@ -1073,7 +1073,7 @@ class XiaoMusicDevice:
             return
 
         self.log.info(f"【{name}】已经开始播放了")
-        self.xiaomusic.analytics.send_play_event(name, sec)
+        await self.xiaomusic.analytics.send_play_event(name, sec)
 
         # 设置下一首歌曲的播放定时器
         if sec <= 1:
