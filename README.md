@@ -263,7 +263,7 @@ docker build -t xiaomusic .
 - [MiService](https://github.com/yihong0618/MiService)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [awesome-xiaoai](https://github.com/zzz6519003/awesome-xiaoai)
-- 微信小程序: XIAO晓音
+- [微信小程序: XIAO晓音](https://github.com/F-loat/xiaoplayer)
 - 所有帮忙调试和测试的朋友
 - 所有反馈问题和建议的朋友
 
