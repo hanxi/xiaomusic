@@ -147,12 +147,7 @@ $(function(){
     $.get(`/musicinfo?name=${music_name}`, function(data, status) {
       console.log(data);
       if (data.ret == "OK") {
-        if (window.currentMusic) {
-          window.currentMusic.pause();
-          window.currentMusic.currentTime = 0;
-        }
-        window.currentMusic = new Audio(data.url);
-        window.currentMusic.play();
+        $('audio').attr('src',data.url);
       }
     });
   });
@@ -248,8 +243,15 @@ $(function(){
     });
   }
 
-  // 监听输入框的输入事件
-  $("#music-name").on('input', function() {
+	// 监听输入框的输入事件
+	function debounce(func, delay) {
+		let timeout;
+		return function(...args) {
+			clearTimeout(timeout);
+			timeout = setTimeout(() => func.apply(this, args), delay);
+		};
+	}
+  $("#music-name").on('input', debounce(function() {
     var inputValue = $(this).val();
     // 发送Ajax请求
     $.ajax({
@@ -268,7 +270,7 @@ $(function(){
         });
       }
     });
-  });
+    },300));
 
   function get_playing_music() {
     $.get(`/playingmusic?did=${did}`, function(data, status) {
