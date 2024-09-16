@@ -147,8 +147,12 @@ $(function(){
     $.get(`/musicinfo?name=${music_name}`, function(data, status) {
       console.log(data);
       if (data.ret == "OK") {
-        const music = new Audio(data.url);
-        music.play();
+        if (window.currentMusic) {
+          window.currentMusic.pause();
+          window.currentMusic.currentTime = 0;
+        }
+        window.currentMusic = new Audio(data.url);
+        window.currentMusic.play();
       }
     });
   });
