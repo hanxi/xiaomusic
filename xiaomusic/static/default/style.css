@@ -1,0 +1,92 @@
+.button {
+  line-height: 50px;
+  font-size: 14px;
+}
+button, .button {
+  margin: 10px;
+  width: 100px;
+  height: 50px;
+  border: none;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 10px;
+  background-color: #008CBA;
+}
+button:active, .button:active {
+  font-weight:bold;
+  background-color: #007CBA;
+  transform: translateY(2px);
+}
+label {
+  margin-left: 10px;
+  width: 300px;
+}
+input,select {
+  margin-left: 5%;
+  margin-right: 5%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 90%;
+  max-width: 400px;
+  height: 40px;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+footer {
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  padding: 10px 0;
+}
+
+ textarea{
+  margin-left: 5%;
+  margin-right: 5%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 90%;
+  max-width: 400px;
+  height: 200px;
+}
+
+.custom-checkbox {
+  display: inline-block;
+  margin: 10px;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle; /* 确保与标签垂直居中对齐 */
+}
+
+.checkbox-label {
+  display: inline-block;
+  width: 260px;
+  background-color: #fff;
+  border: 0px solid #ccc;
+  border-radius: 3px;
+  position: relative;
+  cursor: pointer;
+  vertical-align: middle; /* 确保与复选框垂直居中对齐 */
+  margin-left: 1px; /* 给复选框和标签之间一些距离，如果需要的话 */
+}
+
+.text {
+  margin: 10px;
+  width: 150px;
+  height: 50px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.qrcode {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+}
