@@ -1,90 +1,37 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width">
-    <title>小爱音箱操控面板</title>
-    <script src="/static/jquery-3.7.1.min.js?version=1726415744"></script>
-    <script src="/static/app.js?version=1726415744"></script>
-    <link rel="stylesheet" type="text/css" href="/static/style.css?version=1726415744">
+<html lang="en">
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments)};
-    gtag('js', new Date());
-    gtag('config', 'G-Z09NC1K7ZW');
-    </script>
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小爱音箱操控面板</title>
+</head>
 
-    <!--
-<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
-<script>
-var vConsole = new window.VConsole();
-</script>
--->
-
-  </head>
-  <body>
-    <h2>小爱音箱操控面板
-      (<a  id="version" href="https://github.com/hanxi/xiaomusic/blob/main/CHANGELOG.md">
-        版本未知
-      </a>)
-    </h2>
-    <hr>
-
-    <div class="rows">
-      <select id="did">
-      </select>
+<body>
+  <div class="container_wrapper">
+    <div class="logo">
+      <img src="/static/xiaoai.png" alt="">
     </div>
-
-    <div id="cmds">
-    <a class="button" href="/static/setting.html">设置</a>
+    <div class="desc">
+      <h1>谁家灯火夜通明</h1>
+      <p class="call">小爱同学？</p>
+      <p class="answer">哎，我在</p>
     </div>
-    <hr>
-
-    <div style="margin: 20px;">
-      <div style="display: flex; align-items: center;">
-        <svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#8e43e7" style="height: 48px; width: 48px;"><path d="M550.826667 154.666667a47.786667 47.786667 0 0 0-19.84 4.48L298.666667 298.666667H186.453333A80 80 0 0 0 106.666667 378.453333v267.093334A80 80 0 0 0 186.453333 725.333333H298.666667l232.32 139.52a47.786667 47.786667 0 0 0 19.84 4.48A46.506667 46.506667 0 0 0 597.333333 822.826667V201.173333a46.506667 46.506667 0 0 0-46.506666-46.506666zM554.666667 822.826667c0 3.413333-3.84 3.84-3.84 3.84L320 688.853333l-9.6-6.186666H186.453333A37.12 37.12 0 0 1 149.333333 645.546667V378.453333A37.12 37.12 0 0 1 186.453333 341.333333h123.946667l10.24-6.186666 229.546667-137.6s3.84 0 3.84 3.84zM667.52 346.026667a21.333333 21.333333 0 0 0 0 30.293333 192 192 0 0 1 0 271.36 21.333333 21.333333 0 0 0 0 30.293333 21.333333 21.333333 0 0 0 30.293333 0 234.666667 234.666667 0 0 0 0-331.946666 21.333333 21.333333 0 0 0-30.293333 0z"></path><path d="M804.48 219.52a21.333333 21.333333 0 0 0-30.293333 30.293333 370.986667 370.986667 0 0 1 0 524.373334 21.333333 21.333333 0 0 0 0 30.293333 21.333333 21.333333 0 0 0 30.293333 0 414.08 414.08 0 0 0 0-584.96z"></path></svg>
-        <input id="volume" type="range"></input>
-      </div>
+    <div class="options">
+      <!-- 选择主题 /static/[theme] -->
+      <a href="/static/default/index.html" class="href">默认主题</a>
+      <a href="/static/pure/index.html" class="href">Pure主题</a>
+      <a href="https://afdian.com/a/imhanxi" target="_blank">爱发电</a>
+      <a href="https://github.com/hanxi/xiaomusic" target="_blank">GitHub</a>
     </div>
-    <hr>
-    <div class="rows">
-      <datalist id="autocomplete-list"></datalist>
-      <input id="music-name" type="text" placeholder="请输入搜索关键词(如:MV高清版 周杰伦 七里香)" list="autocomplete-list"></input>
-      <input id="music-filename" type="text" placeholder="请输入保存为的文件名称(如:周杰伦七里香)"></input>
-      <div style="display: flex; align-items: center">
-        <progress id="progress" value="0" max="100" style="width: 270px"></progress>
-        <div id="play-time" style="margin-left: 10px">00:00/00:00</div>
-      </div>
-      <div>
-        <button id="play">播放</button>
-        <div id="playering-music" class="text"></div>
-      </div>
-    </div>
+  </div>
+  <footer>
+    power by <a href="https://github.com/hanxi/xiaomusic">XiaoMusic</a>
+  </footer>
+  <style>
+    @font-face{ font-family: "得意黑 斜体"; font-weight: 400; src: url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/gJk2ny0v51vn.woff2") format("woff2"), url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/e2C1wSBHH86h.woff") format("woff"); font-display: swap;} @font-face{ font-family: "阿里妈妈数黑体 Bold"; font-weight: 700; src: url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/4DWYdFK3dz5J.woff2") format("woff2"), url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/V7EBEKlNSdxC.woff") format("woff"); font-display: swap;} body{ background-color: rgb(47, 44, 67); height: 100%; overflow: hidden;} .container_wrapper{ display: flex; justify-content: center; align-items: center; height: 90vh; cursor: default;} h1{ font-weight: bold; color: #a2a9af; width: 600px; font-family: '得意黑 斜体', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; font-size: 2.5em; border-bottom: 1px solid #a2a9af;} .container_wrapper .logo img{ width: 140px; height: auto; filter: drop-shadow(10px 10px 10px rgba(0, 0, 0, 0.5));} .desc{ text-align: center; color: #fff; margin: auto 30px; backdrop-filter: blur(5px);} .desc p{ font-size: 1.2em; margin: 0; padding: 0; font-family: '阿里妈妈数黑体 Bold'; font-weight: 800;} p.call{ letter-spacing: 0.4em; font-size: 2.2em; line-height: 1.5; font-style: normal;} p.answer{ letter-spacing: 0.23em; line-height: 1.5; font-style: normal; color: #a2a9af; margin-top: 10px;} .desc p::before, .desc p::after{ font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; font-size: 1.5em; color: #4c5870;} .desc p::before{ content: "“";} .desc p::after{ content: "”";} .options{ display: flex; flex-direction: column;} .options a{ color: #a2a9af; text-decoration: none; font-size: 1.1em; position: relative; display: inline; margin: 10px auto;} .options a::before{ content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background-color: #ebedec; transform-origin: bottom right; transform: scaleX(0); transition: transform 0.3s ease;} .options a:hover::before{ transform-origin: bottom left; transform: scaleX(1);} .options a:hover{ color:#ebedec;} footer{ display: flex; justify-content: center; color: #4c5870;} footer a{ color:inherit; text-decoration: none; margin: auto 10px;}
+  </style>
+</body>
 
-    <hr>
-    <div class="rows">
-      <label for="music_list">播放列表:</label>
-      <select id="music_list"></select>
-      <label for="music_name">歌曲:</label>
-      <select id="music_name"></select>
-      <div>
-      <button id="play_music_list">播放列表歌曲</button>
-      <button id="del_music">删除选中歌曲</button>
-      <button id="web_play">网页播放</button>
-      </div>
-      <audio autoplay></audio>
-    </div>
-
-    <hr>
-    <div class="rows">
-      <input id="music-url" type="text" value="https://lhttp.qtfm.cn/live/4915/64k.mp3"></input>
-      <button id="playurl">播放链接</button>
-    </div>
-
-    <footer>
-      <p>Powered by <a href="https://github.com/hanxi/xiaomusic" target="_blank">xiaomusic</a></p>
-    </footer>
-  </body>
 </html>

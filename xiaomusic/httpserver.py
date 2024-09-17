@@ -30,7 +30,6 @@ xiaomusic = None
 config = None
 log = None
 
-
 @asynccontextmanager
 async def app_lifespan(app):
     if xiaomusic is not None:
@@ -74,7 +73,6 @@ app = FastAPI(
     lifespan=app_lifespan,
     version=__version__,
 )
-
 
 def reset_http_server():
     log.info(f"disable_httpauth:{config.disable_httpauth}")
