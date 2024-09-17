@@ -1005,7 +1005,9 @@ class XiaoMusicDevice:
             self.device.play_type == PLAY_TYPE_ALL
             or self.device.play_type == PLAY_TYPE_RND
             or name == ""
-            or (name not in self._play_list)
+            or (
+                (name not in self._play_list) and self.device.play_type != PLAY_TYPE_ONE
+            )
         ):
             name = self.get_next_music()
         self.log.info(f"_play_next. name:{name}, cur_music:{self.get_cur_music()}")
