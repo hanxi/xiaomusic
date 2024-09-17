@@ -16,13 +16,12 @@ def get_html_files(directory):
 
 def update_html_version(html_files, version):
     """
-    更新HTML文件中所有以 /static/ 开头的CSS和JS文件引用的版本号。
+    更新HTML文件中所有以 ./ 开头的CSS和JS文件引用的版本号。
 
     :param html_files: 需要更新的HTML文件路径的列表。
     :param version: 新的版本号字符串。
     """
-    pattern = re.compile(r'(/static/.*(css|js))\?version=[^"]*"')
-    # pattern = re.compile(r'(/static/.*html)\?version=[^"]*"')
+    pattern = re.compile(r'(\./.*(css|js))\?version=[^"]*"')
 
     for html_file in html_files:
         if not html_file.exists():
@@ -48,7 +47,7 @@ if __name__ == "__main__":
     t = str(int(time.time()))
 
     # 指定目录
-    html_directory = "xiaomusic/static"  # 修改为实际的HTML文件目录路径
+    html_directory = "xiaomusic/static/default"  # 修改为实际的HTML文件目录路径
 
     # 获取HTML文件列表
     html_files_to_update = get_html_files(html_directory)

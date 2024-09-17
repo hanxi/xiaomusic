@@ -6,6 +6,16 @@
   <link rel="icon" href="/favicon.ico">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>小爱音箱操控面板</title>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'G-Z09NC1K7ZW');
+  </script>
+
 </head>
 
 <body>
@@ -30,7 +40,21 @@
     power by <a href="https://github.com/hanxi/xiaomusic">XiaoMusic</a>
   </footer>
   <style>
-    @font-face{ font-family: "得意黑 斜体"; font-weight: 400; src: url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/gJk2ny0v51vn.woff2") format("woff2"), url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/e2C1wSBHH86h.woff") format("woff"); font-display: swap;} @font-face{ font-family: "阿里妈妈数黑体 Bold"; font-weight: 700; src: url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/4DWYdFK3dz5J.woff2") format("woff2"), url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/V7EBEKlNSdxC.woff") format("woff"); font-display: swap;} body{ background-color: rgb(47, 44, 67); height: 100%; overflow: hidden;} .container_wrapper{ display: flex; justify-content: center; align-items: center; height: 90vh; cursor: default;} h1{ font-weight: bold; color: #a2a9af; width: 600px; font-family: '得意黑 斜体', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; font-size: 2.5em; border-bottom: 1px solid #a2a9af;} .container_wrapper .logo img{ width: 140px; height: auto; filter: drop-shadow(10px 10px 10px rgba(0, 0, 0, 0.5));} .desc{ text-align: center; color: #fff; margin: auto 30px; backdrop-filter: blur(5px);} .desc p{ font-size: 1.2em; margin: 0; padding: 0; font-family: '阿里妈妈数黑体 Bold'; font-weight: 800;} p.call{ letter-spacing: 0.4em; font-size: 2.2em; line-height: 1.5; font-style: normal;} p.answer{ letter-spacing: 0.23em; line-height: 1.5; font-style: normal; color: #a2a9af; margin-top: 10px;} .desc p::before, .desc p::after{ font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; font-size: 1.5em; color: #4c5870;} .desc p::before{ content: "“";} .desc p::after{ content: "”";} .options{ display: flex; flex-direction: column;} .options a{ color: #a2a9af; text-decoration: none; font-size: 1.1em; position: relative; display: inline; margin: 10px auto;} .options a::before{ content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background-color: #ebedec; transform-origin: bottom right; transform: scaleX(0); transition: transform 0.3s ease;} .options a:hover::before{ transform-origin: bottom left; transform: scaleX(1);} .options a:hover{ color:#ebedec;} footer{ display: flex; justify-content: center; color: #4c5870;} footer a{ color:inherit; text-decoration: none; margin: auto 10px;}
+    @font-face{ font-family: "得意黑 斜体"; font-weight: 400; src: url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/gJk2ny0v51vn.woff2") format("woff2"), url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/e2C1wSBHH86h.woff") format("woff"); font-display: swap;} @font-face{ font-family: "阿里妈妈数黑体 Bold"; font-weight: 700; src: url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/4DWYdFK3dz5J.woff2") format("woff2"), url("//at.alicdn.com/wf/webfont/603VmyqiyGMz/V7EBEKlNSdxC.woff") format("woff"); font-display: swap;} body{ background-color: rgb(47, 44, 67); height: 100%; overflow: hidden;}
+    .container_wrapper{display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; height: 90vh; cursor: default;}
+    h1{ font-weight: bold; color: #a2a9af; max-width: 600px; font-family: '得意黑 斜体', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; font-size: 2.5em; border-bottom: 1px solid #a2a9af;}
+    .container_wrapper .logo img{ width: 140px; height: auto; filter: drop-shadow(10px 10px 10px rgba(0, 0, 0, 0.5));}
+    .desc{ text-align: center; color: #fff; margin: auto 30px; backdrop-filter: blur(5px);}
+    .desc p{ font-size: 1.2em; margin: 0; padding: 0; font-family: '阿里妈妈数黑体 Bold'; font-weight: 800;}
+    p.call{ letter-spacing: 0.4em; font-size: 2.2em; line-height: 1.5; font-style: normal;}
+    p.answer{ letter-spacing: 0.23em; line-height: 1.5; font-style: normal; color: #a2a9af; margin-top: 10px;}
+    .desc p::before, .desc p::after{ font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; font-size: 1.5em; color: #4c5870;}
+    .desc p::before{ content: "“";} .desc p::after{ content: "”";}
+    .options{ display: flex; flex-direction: column;}
+    .options a{ color: #a2a9af; text-decoration: none; font-size: 1.1em; position: relative; display: inline; margin: 10px auto;}
+    .options a::before{ content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background-color: #ebedec; transform-origin: bottom right; transform: scaleX(0); transition: transform 0.3s ease;}
+    .options a:hover::before{ transform-origin: bottom left; transform: scaleX(1);} .options a:hover{ color:#ebedec;}
+    footer{ display: flex; justify-content: center; color: #4c5870;} footer a{ color:inherit; text-decoration: none; margin: auto 10px;}
   </style>
 </body>
 
