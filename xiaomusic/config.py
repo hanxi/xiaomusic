@@ -148,6 +148,7 @@ class Config:
     continue_play: bool = (
         os.getenv("XIAOMUSIC_CONTINUE_PLAY", "false").lower() == "true"
     )
+    pull_ask_sec: int = int(os.getenv("XIAOMUSIC_PULL_ASK_SEC", "1"))
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):

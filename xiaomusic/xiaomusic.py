@@ -158,9 +158,9 @@ class XiaoMusic:
     async def poll_latest_ask(self):
         async with ClientSession() as session:
             while True:
-                # self.log.debug(
-                #    f"Listening new message, timestamp: {self.last_timestamp}"
-                # )
+                self.log.debug(
+                    f"Listening new message, timestamp: {self.last_timestamp}"
+                )
                 session._cookie_jar = self.cookie_jar
 
                 # 拉取所有音箱的对话记录
@@ -171,13 +171,17 @@ class XiaoMusic:
                 await asyncio.gather(*tasks)
 
                 start = time.perf_counter()
-                # self.log.debug(f"Polling_event, timestamp: {self.last_timestamp}")
                 await self.polling_event.wait()
-                if (d := time.perf_counter() - start) < 1:
-                    # sleep to avoid too many request
-                    # self.log.debug(f"Sleep {d}, timestamp: {self.last_timestamp}")
-                    await asyncio.sleep(1 - d)
-                await self.analytics.send_daily_event()
+                if self.config.pull_ask_sec <= 1:
+                    if (d := time.perf_counter() - start) < 1:
+                        await asyncio.sleep(1 - d)
+                else:
+                    sleep_sec = 0
+                    while True:
+                        await asyncio.sleep(1)
+                        sleep_sec = sleep_sec + 1
+                        if sleep_sec >= self.config.pull_ask_sec:
+                            break
 
     async def init_all_data(self, session):
         await self.login_miboy(session)
@@ -520,8 +524,17 @@ class XiaoMusic:
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
+    async def analytics_task_daily(self):
+        while True:
+            await self.analytics.send_daily_event()
+            await asyncio.sleep(3600)
+
     async def run_forever(self):
         await self.analytics.send_startup_event()
+        analytics_task = asyncio.create_task(self.analytics_task_daily())
+        assert (
+            analytics_task is not None
+        )  # to keep the reference to task, do not remove this
         async with ClientSession() as session:
             self.session = session
             await self.init_all_data(session)
