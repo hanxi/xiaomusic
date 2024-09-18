@@ -259,6 +259,7 @@ docker build -t xiaomusic .
 - [PDM](https://pdm.fming.dev/latest/)
 - [xiaogpt](https://github.com/yihong0618/xiaogpt)
 - [MiService](https://github.com/yihong0618/MiService)
+- [实现原理](https://github.com/yihong0618/gitblog/issues/258)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [awesome-xiaoai](https://github.com/zzz6519003/awesome-xiaoai)
 - [微信小程序: XIAO晓音](https://github.com/F-loat/xiaoplayer)

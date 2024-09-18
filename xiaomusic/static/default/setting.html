@@ -3,9 +3,9 @@
   <head>
     <meta name="viewport" content="width=device-width">
     <title>小爱音箱操控面板</title>
-    <script src="./jquery-3.7.1.min.js?version=1726592892"></script>
-    <script src="./setting.js?version=1726592892"></script>
-    <link rel="stylesheet" type="text/css" href="./style.css?version=1726592892">
+    <script src="./jquery-3.7.1.min.js?version=1726615031"></script>
+    <script src="./setting.js?version=1726615031"></script>
+    <link rel="stylesheet" type="text/css" href="./style.css?version=1726615031">
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
@@ -142,14 +142,20 @@ var vConsole = new window.VConsole();
           <option value="false" selected>false</option>
         </select>
 
-        <label for="continue_play">启用继续播放(可能导致兼容性问题及歌曲无法完整播放):</label>
+        <label for="continue_play">启用继续播放(可能导致兼容性问题):</label>
         <select id="continue_play">
           <option value="true">true</option>
           <option value="false" selected>false</option>
         </select>
 
+        <label for="port">监听端口(修改后需要重启):</label>
+        <input id="port" type="number" value="8090"></input>
+
         <label for="public_port">外网访问端口(0表示跟监听端口一致):</label>
         <input id="public_port" type="number" value="0"></input>
+
+        <label for="pull_ask_sec">获取对话记录间隔(秒):</label>
+        <input id="pull_ask_sec" type="number" value="1"></input>
 
         <label for="delay_sec">下一首歌延迟播放秒数:</label>
         <input id="delay_sec" type="number" value="3"></input>

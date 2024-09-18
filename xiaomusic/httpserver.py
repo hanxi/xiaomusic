@@ -13,6 +13,7 @@ from typing import Annotated
 
 import aiofiles
 from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
@@ -29,6 +30,7 @@ from xiaomusic.utils import (
 xiaomusic = None
 config = None
 log = None
+
 
 @asynccontextmanager
 async def app_lifespan(app):
@@ -73,6 +75,15 @@ app = FastAPI(
     lifespan=app_lifespan,
     version=__version__,
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 允许访问的源
+    allow_credentials=False,  # 支持 cookie
+    allow_methods=["*"],  # 允许使用的请求方法
+    allow_headers=["*"],  # 允许携带的 Headers
+)
+
 
 def reset_http_server():
     log.info(f"disable_httpauth:{config.disable_httpauth}")

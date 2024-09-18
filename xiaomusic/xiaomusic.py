@@ -158,9 +158,9 @@ class XiaoMusic:
     async def poll_latest_ask(self):
         async with ClientSession() as session:
             while True:
-                # self.log.debug(
-                #    f"Listening new message, timestamp: {self.last_timestamp}"
-                # )
+                self.log.debug(
+                    f"Listening new message, timestamp: {self.last_timestamp}"
+                )
                 session._cookie_jar = self.cookie_jar
 
                 # 拉取所有音箱的对话记录
@@ -171,13 +171,17 @@ class XiaoMusic:
                 await asyncio.gather(*tasks)
 
                 start = time.perf_counter()
-                # self.log.debug(f"Polling_event, timestamp: {self.last_timestamp}")
                 await self.polling_event.wait()
-                if (d := time.perf_counter() - start) < 1:
-                    # sleep to avoid too many request
-                    # self.log.debug(f"Sleep {d}, timestamp: {self.last_timestamp}")
-                    await asyncio.sleep(1 - d)
-                await self.analytics.send_daily_event()
+                if self.config.pull_ask_sec <= 1:
+                    if (d := time.perf_counter() - start) < 1:
+                        await asyncio.sleep(1 - d)
+                else:
+                    sleep_sec = 0
+                    while True:
+                        await asyncio.sleep(1)
+                        sleep_sec = sleep_sec + 1
+                        if sleep_sec >= self.config.pull_ask_sec:
+                            break
 
     async def init_all_data(self, session):
         await self.login_miboy(session)
@@ -520,8 +524,17 @@ class XiaoMusic:
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
+    async def analytics_task_daily(self):
+        while True:
+            await self.analytics.send_daily_event()
+            await asyncio.sleep(3600)
+
     async def run_forever(self):
         await self.analytics.send_startup_event()
+        analytics_task = asyncio.create_task(self.analytics_task_daily())
+        assert (
+            analytics_task is not None
+        )  # to keep the reference to task, do not remove this
         async with ClientSession() as session:
             self.session = session
             await self.init_all_data(session)
@@ -536,6 +549,11 @@ class XiaoMusic:
                 query = new_record.get("query", "").strip()
                 did = new_record.get("did", "").strip()
                 await self.do_check_cmd(did, query, False)
+                answers = new_record.get("answers", [{}])
+                if answers:
+                    answer = answers[0].get("tts", {}).get("text", "").strip()
+                    await self.reset_timer_when_answer(len(answer), did)
+                    self.log.debug(f"query:{query} did:{did} answer:{answer}")
 
     # 匹配命令
     async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
@@ -551,6 +569,10 @@ class XiaoMusic:
             await func(did=did, arg1=oparg)
         except Exception as e:
             self.log.exception(f"Execption {e}")
+
+    # 重置计时器
+    async def reset_timer_when_answer(self, answer_length, did):
+        await self.devices[did].reset_timer_when_answer(answer_length)
 
     def append_running_task(self, task):
         self.running_task.append(task)
@@ -938,6 +960,7 @@ class XiaoMusicDevice:
         # 播放进度
         self._start_time = 0
         self._duration = 0
+        self._paused_time = 0
 
         # 关机定时器
         self._stop_timer = None
@@ -948,9 +971,9 @@ class XiaoMusicDevice:
         return self.device.cur_music
 
     def get_offset_duration(self):
-        if not self._playing:
+        if not self.isplaying():
             return -1, -1
-        offset = time.time() - self._start_time
+        offset = time.time() - self._start_time - self._paused_time
         duration = self._duration
         return offset, duration
 
@@ -1084,6 +1107,7 @@ class XiaoMusicDevice:
         sec = sec + self.config.delay_sec
         self._start_time = time.time()
         self._duration = sec
+        self._paused_time = 0
         await self.set_next_music_timeout(sec)
         self.xiaomusic.save_cur_config()
 
@@ -1334,6 +1358,19 @@ class XiaoMusicDevice:
         except Exception as e:
             self.log.error(f"_get_audio_id {e}")
         return str(audio_id)
+
+    # 重置计时器
+    async def reset_timer_when_answer(self, answer_length):
+        if not (self.isplaying() and self.config.continue_play):
+            return
+        pause_time = answer_length / 5 + 1
+        offset, duration = self.get_offset_duration()
+        self._paused_time += pause_time
+        new_time = duration - offset + pause_time
+        await self.set_next_music_timeout(new_time)
+        self.log.info(
+            f"reset_timer 延长定时器. answer_length:{answer_length} pause_time:{pause_time}"
+        )
 
     # 设置下一首歌曲的播放定时器
     async def set_next_music_timeout(self, sec):
