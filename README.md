@@ -13,6 +13,7 @@
 
 <https://github.com/hanxi/xiaomusic>
 
+> [!TIP]
 > 初次安装遇到问题请查阅 FAQ: <https://github.com/hanxi/xiaomusic/issues/99> 上是否已经有解决办法。
 
 ## 最简配置运行
@@ -40,10 +41,12 @@ services:
 
 其中 conf 目录为配置文件存放目录，music 目录为音乐存放目录，建议分开配置为不同的目录。
 
+> [!NOTE]
 > 上面配置的 /xiaomusic/music 和 /xiaomusic/conf 是 docker 主机里的 /xiaomusic 目录下的，可以修改为其他目录。如果报错找不到 /xiaomusic/music 目录，可以先执行 `mkdir -p /xiaomusic/{music,conf}` 命令新建目录。
 
 docker 和 docker compose 二选一即可，启动成功后，在 web 页面可以配置其他参数，带有 `*` 号的配置是必须要配置的，其他的用不上时不用修改。初次配置时需要在页面上输入小米账号和密码保存后才能获取到设备列表。
 
+> [!NOTE]
 > 目前安装步骤已经是最简化了，如果还是嫌安装麻烦，可以微信或者 QQ 约我远程安装，我一般周末和晚上才有时间，收个辛苦费 :moneybag: 50 元一次，安装失败不收费。
 
 ### 修改默认8090端口映射
@@ -154,6 +157,7 @@ docker build -t xiaomusic .
 - 播放本地歌曲+歌名
 - 播放列表第几个+列表名，具体见： <https://github.com/hanxi/xiaomusic/issues/158>
 
+> [!TIP]
 > 隐藏玩法: 对小爱同学说播放歌曲小猪佩奇的故事，会播放小猪佩奇的故事。
 
 ## 已测试支持的设备
@@ -177,6 +181,7 @@ docker build -t xiaomusic .
 
 型号与产品名称对照可以在这里查询 <https://home.miot-spec.com/s/xiaomi.wifispeaker>
 
+> [!NOTE]
 > 如果你的设备支持播放，请反馈给我添加到支持列表里，谢谢。
 > 目前应该所有设备类型都已经支持播放，有问题随时反馈。
 > 其他触屏版不能播放可以设置【触屏版兼容模式】选项为 true 试试。见 <https://github.com/hanxi/xiaomusic/issues/30>
@@ -190,6 +195,7 @@ docker build -t xiaomusic .
 - ogg
 - m4a
 
+> [!NOTE]
 > 本地音乐会搜索目录下上面格式的文件，下载的歌曲是 mp3 格式的。
 > 已知 L05B L05C LX06 L16A 不支持 flac 格式。
 > 如果格式不能播放可以打开【转换为MP3】和【触屏版兼容模式】选项。具体见 <https://github.com/hanxi/xiaomusic/issues/153#issuecomment-2328168689>
@@ -241,7 +247,8 @@ docker build -t xiaomusic .
 
 ### :warning: 安全提醒
 
-- 如果配置了公网访问 xiaomusic ，请一定要开启密码登陆，并设置复杂的密码。且不要在公共场所的 WiFi 环境下使用，否则可能造成小米账号密码泄露。
+> [!IMPORTANT]
+> 如果配置了公网访问 xiaomusic ，请一定要开启密码登陆，并设置复杂的密码。且不要在公共场所的 WiFi 环境下使用，否则可能造成小米账号密码泄露。
 
 ## 高级篇
 
@@ -271,6 +278,7 @@ docker build -t xiaomusic .
 
 ### 其他教程
 
+> [!NOTE]
 > 下面教程可能比较旧，只供参考
 
 - [NAS部署教程](https://post.m.smzdm.com/p/avpe7n99/)
