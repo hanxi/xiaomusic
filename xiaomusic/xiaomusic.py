@@ -32,6 +32,7 @@ from xiaomusic.const import (
     PLAY_TYPE_TTS,
     SUPPORT_MUSIC_TYPE,
 )
+from xiaomusic.crontab import Crontab
 from xiaomusic.plugin import PluginManager
 from xiaomusic.utils import (
     convert_file_to_mp3,
@@ -72,6 +73,9 @@ class XiaoMusic:
 
         # 初始化日志
         self.setup_logger()
+
+        # 计划任务
+        self.crontab = Crontab(self.log)
 
         # 尝试从设置里加载配置
         self.try_init_setting()
@@ -532,6 +536,7 @@ class XiaoMusic:
             await asyncio.sleep(3600)
 
     async def run_forever(self):
+        self.crontab.start()
         await self.analytics.send_startup_event()
         analytics_task = asyncio.create_task(self.analytics_task_daily())
         assert (
@@ -896,6 +901,9 @@ class XiaoMusic:
         joined_keywords = "/".join(self.config.key_match_order)
         self.log.info(f"语音控制已启动, 用【{joined_keywords}】开头来控制")
         self.log.debug(f"key_word_dict: {self.config.key_word_dict}")
+
+        # 重新加载计划任务
+        self.crontab.reload_config(self)
 
     # 重新初始化
     async def reinit(self, **kwargs):

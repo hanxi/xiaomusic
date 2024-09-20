@@ -149,6 +149,7 @@ class Config:
         os.getenv("XIAOMUSIC_CONTINUE_PLAY", "false").lower() == "true"
     )
     pull_ask_sec: int = int(os.getenv("XIAOMUSIC_PULL_ASK_SEC", "1"))
+    crontab_json: str = os.getenv("XIAOMUSIC_CRONTAB_JSON", "")  # 定时任务
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
