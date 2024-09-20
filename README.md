@@ -152,6 +152,7 @@ docker build -t xiaomusic .
 - 取消收藏
 - 播放列表收藏
 - 播放本地歌曲+歌名
+- 播放列表第几个+列表名，具体见： <https://github.com/hanxi/xiaomusic/issues/158>
 
 > 隐藏玩法: 对小爱同学说播放歌曲小猪佩奇的故事，会播放小猪佩奇的故事。
 
