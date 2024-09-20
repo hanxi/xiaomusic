@@ -104,6 +104,8 @@ class XiaoMusic:
             os.makedirs(self.download_path)
 
         self.hostname = self.config.hostname
+        if not self.hostname.startswith(("http://", "https://")):
+            self.hostname = f"http://{self.hostname}"  # 默认 http
         self.port = self.config.port
         self.public_port = self.config.public_port
         if self.public_port == 0:
@@ -420,7 +422,7 @@ class XiaoMusic:
         self.log.info(f"get_music_url local music. name:{name}, filename:{filename}")
 
         encoded_name = urllib.parse.quote(filename)
-        return f"http://{self.hostname}:{self.public_port}/music/{encoded_name}"
+        return f"{self.hostname}:{self.public_port}/music/{encoded_name}"
 
     # 获取目录下所有歌曲,生成随机播放列表
     def _gen_all_music_list(self):
