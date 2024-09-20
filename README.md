@@ -46,7 +46,7 @@ services:
 
 docker 和 docker compose 二选一即可，启动成功后，在 web 页面可以配置其他参数，带有 `*` 号的配置是必须要配置的，其他的用不上时不用修改。初次配置时需要在页面上输入小米账号和密码保存后才能获取到设备列表。
 
-> [!NOTE]
+> [!TIP]
 > 目前安装步骤已经是最简化了，如果还是嫌安装麻烦，可以微信或者 QQ 约我远程安装，我一般周末和晚上才有时间，收个辛苦费 :moneybag: 50 元一次，安装失败不收费。
 
 ### 修改默认8090端口映射
@@ -72,7 +72,8 @@ services:
 
 遇到问题可以去 web 设置页面底部点击【下载日志文件】按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
 
-> 目前除了 XIAOMUSIC_PORT 只能在启动前配置，其他参数都可以在 web 网页里配置。
+> [!IMPORTANT]
+> XIAOMUSIC_PORT 也可以在后台配置，对应的是监听端口。
 
 ## pip 方式安装运行
 
@@ -222,6 +223,7 @@ docker build -t xiaomusic .
 
 可以配置一个 json 格式的歌单，支持电台和歌曲，也可以直接用别人分享的链接，同时配备了 m3u 文件格式转换工具，可以很方便的把 m3u 电台文件转换成网络歌单格式的 json 文件，具体用法见  <https://github.com/hanxi/xiaomusic/issues/78>
 
+> [!NOTE]
 > 欢迎有想法的朋友们制作更多的歌单转换工具。
 
 ## 更多其他可选配置
@@ -243,7 +245,6 @@ docker build -t xiaomusic .
 - XIAOMUSIC_PUBLIC_PORT 用于设置外网端口，对应后台的 【外网访问端口】，当使用反向代理时可以设置为外网端口，XIAOMUSIC_HOSTNAME 设为外网IP或者域名即可。
 - XIAOMUSIC_DOWNLOAD_PATH 变量可以配置下载目录，默认为空，表示使用 music 目录为下载目录，对应后台的 【音乐下载目录】。设置这个目录必须是 music 的子目录，否则刷新列表后会找不到歌曲。具体见 <https://github.com/hanxi/xiaomusic/issues/98>
 - XIAOMUSIC_PROXY 用于配置国内使用 youtube 源下载歌曲时使用的代理，参数格式参考 yt-dlp 文档说明。 见 <https://github.com/hanxi/xiaomusic/issues/2> 和 <https://github.com/hanxi/xiaomusic/issues/11>
-
 
 ### :warning: 安全提醒
 
