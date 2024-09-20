@@ -402,3 +402,41 @@ def convert_file_to_mp3(input_file: str, ffmpeg_location: str, music_path: str) 
 
     relative_path = os.path.relpath(out_file_path, music_path)
     return relative_path
+
+
+chinese_to_arabic = {
+    "零": 0,
+    "一": 1,
+    "二": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+    "十": 10,
+    "百": 100,
+    "千": 1000,
+    "万": 10000,
+    "亿": 100000000,
+}
+
+
+def chinese_to_number(chinese):
+    result = 0
+    unit = 1
+    num = 0
+    for char in reversed(chinese):
+        if char in chinese_to_arabic:
+            val = chinese_to_arabic[char]
+            if val >= 10:
+                if val > unit:
+                    unit = val
+                else:
+                    unit *= val
+            else:
+                num += val * unit
+        result += num
+        num = 0
+    return result

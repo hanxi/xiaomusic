@@ -25,6 +25,7 @@ def default_key_word_dict():
         "刷新列表": "gen_music_list",
         "加入收藏": "add_to_favorites",
         "取消收藏": "del_from_favorites",
+        "播放列表第": "play_music_list_index",
     }
 
 
@@ -53,6 +54,7 @@ def default_key_match_order():
         "随机播放",
         "关机",
         "刷新列表",
+        "播放列表第",
         "播放列表",
         "加入收藏",
         "取消收藏",
@@ -91,7 +93,8 @@ class Config:
     )  # "bilisearch:" or "ytsearch:"
     ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
     active_cmd: str = os.getenv(
-        "XIAOMUSIC_ACTIVE_CMD", "play,set_random_play,playlocal,play_music_list,stop"
+        "XIAOMUSIC_ACTIVE_CMD",
+        "play,set_random_play,playlocal,play_music_list,play_music_list_index,stop_after_minute,stop",
     )
     exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir")
     music_path_depth: int = int(os.getenv("XIAOMUSIC_MUSIC_PATH_DEPTH", "10"))

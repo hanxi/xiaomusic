@@ -35,6 +35,7 @@ from xiaomusic.const import (
 from xiaomusic.crontab import Crontab
 from xiaomusic.plugin import PluginManager
 from xiaomusic.utils import (
+    chinese_to_number,
     convert_file_to_mp3,
     custom_sort_key,
     deepcopy_data_no_sensitive_info,
@@ -740,6 +741,30 @@ class XiaoMusic:
         if len(parts) > 1:
             music_name = parts[1]
         await self.devices[did].play_music_list(list_name, music_name)
+
+    # 播放一个播放列表里第几个
+    async def play_music_list_index(self, did="", arg1="", **kwargs):
+        patternarg = r"^([零一二三四五六七八九十百千万亿]+)个(.*)"
+        # 匹配参数
+        matcharg = re.match(patternarg, arg1)
+        if not matcharg:
+            return await self.play_music_list(did, arg1)
+
+        chinese_index = matcharg.groups()[0]
+        list_name = matcharg.groups()[1]
+        list_name = self._find_real_music_list_name(list_name)
+        if list_name not in self.music_list:
+            await self.do_tts(did, f"播放列表{list_name}不存在")
+            return
+
+        index = chinese_to_number(chinese_index)
+        play_list = self.music_list[list_name]
+        if 0 <= index - 1 < len(play_list):
+            music_name = play_list[index - 1]
+            self.log.info(f"即将播放 ${arg1} 里的第 ${index} 个: ${music_name}")
+            await self.devices[did].play_music_list(list_name, music_name)
+            return
+        await self.do_tts(did, f"播放列表{list_name}中找不到第${index}个")
 
     # 播放
     async def play(self, did="", arg1="", **kwargs):
