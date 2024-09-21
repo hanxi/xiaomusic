@@ -113,7 +113,7 @@ $(function(){
       $('#music_list').trigger('change');
 
       // 获取当前播放列表
-      $.get(`curplaylist?did=${did}`, function(playlist, status) {
+      $.get(`/curplaylist?did=${did}`, function(playlist, status) {
         if (playlist != "") {
           $('#music_list').val(playlist);
           $('#music_list').trigger('change');
