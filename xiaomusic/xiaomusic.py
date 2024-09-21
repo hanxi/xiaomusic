@@ -1030,21 +1030,21 @@ class XiaoMusicDevice:
 
     # 初始化播放列表
     def update_playlist(self):
+        # 没有重置 list 且非初始化
         if self.device.cur_playlist == "当前" and len(self._play_list) > 0:
-            # 没有重置 list 且非初始化
-            return
+            list_name = "当前"
         else:  # 调用了播放列表功能，cur_playlist 为新列表名称
-            pass
+            if self.device.cur_playlist not in self.xiaomusic.music_list:
+                self.device.cur_playlist = "全部"
 
-        if self.device.cur_playlist not in self.xiaomusic.music_list:
-            self.device.cur_playlist = "全部"
+            list_name = self.device.cur_playlist
+            self._play_list = copy.copy(self.xiaomusic.music_list[list_name])
 
-        list_name = self.device.cur_playlist
-        self._play_list = copy.copy(self.xiaomusic.music_list[list_name])
         if self.device.play_type == PLAY_TYPE_RND:
             random.shuffle(self._play_list)
             self.log.info(f"随机打乱 {list_name} {list2str(self._play_list, self.config.verbose)}")
         else:
+            self._play_list = sorted(self._play_list)
             self.log.info(f"没打乱 {list_name} {list2str(self._play_list, self.config.verbose)}")
 
     # 播放歌曲
