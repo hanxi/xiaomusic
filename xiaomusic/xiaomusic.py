@@ -52,6 +52,13 @@ from xiaomusic.utils import (
 )
 
 
+def list2str(li, verbose=False):
+    if len(li) > 5 and not verbose:
+        return f"{li[:2]} ... {li[-2:]} with len: {len(li)}"
+    else:
+        return f"{li}"
+
+
 class XiaoMusic:
     def __init__(self, config: Config):
         self.config = config
@@ -667,20 +674,27 @@ class XiaoMusic:
         self.log.info(f"未匹配到指令 {query} {ctrl_panel}")
         return (None, None)
 
-    def find_real_music_name(self, name):
+    def find_real_music_name(self, name, n=100):
         if not self.config.enable_fuzzy_match:
             self.log.debug("没开启模糊匹配")
             return name
 
         all_music_list = list(self.all_music.keys())
-        real_name = find_best_match(
-            name, all_music_list, cutoff=self.config.fuzzy_match_cutoff
+        real_names = find_best_match(
+            name, all_music_list, cutoff=self.config.fuzzy_match_cutoff, n=n,
         )
-        if real_name:
-            self.log.info(f"根据【{name}】找到歌曲【{real_name}】")
-            return real_name
+        if real_names:
+            if n > 1:
+                # 扩大范围再找，最后保留随机 n 个
+                real_names = find_best_match(
+                    name, all_music_list, cutoff=self.config.fuzzy_match_cutoff, n=n * 2,
+                )
+                random.shuffle(real_names)
+                real_names = real_names[:n]
+            self.log.info(f"根据【{name}】找到歌曲【{real_names}】")
+            return real_names
         self.log.info(f"没找到歌曲【{name}】")
-        return name
+        return []
 
     def did_exist(self, did):
         return did in self.devices
@@ -728,7 +742,7 @@ class XiaoMusic:
         # 模糊搜一个播放列表
         real_name = find_best_match(
             list_name, self.music_list, cutoff=self.config.fuzzy_match_cutoff
-        )
+        )[0]
         if real_name:
             self.log.info(f"根据【{list_name}】找到播放列表【{real_name}】")
             list_name = real_name
@@ -1006,6 +1020,8 @@ class XiaoMusicDevice:
         self._duration = 0
         self._paused_time = 0
 
+        self._play_list = []
+
         # 关机定时器
         self._stop_timer = None
         self._last_cmd = None
@@ -1023,23 +1039,29 @@ class XiaoMusicDevice:
 
     # 初始化播放列表
     def update_playlist(self):
-        if self.device.cur_playlist not in self.xiaomusic.music_list:
-            self.device.cur_playlist = "全部"
+        # 没有重置 list 且非初始化
+        if self.device.cur_playlist == "当前" and len(self._play_list) > 0:
+            list_name = "当前"
+        else:  # 调用了播放列表功能，cur_playlist 为新列表名称
+            if self.device.cur_playlist not in self.xiaomusic.music_list:
+                self.device.cur_playlist = "全部"
 
-        list_name = self.device.cur_playlist
-        self._play_list = copy.copy(self.xiaomusic.music_list[list_name])
+            list_name = self.device.cur_playlist
+            self._play_list = copy.copy(self.xiaomusic.music_list[list_name])
+
         if self.device.play_type == PLAY_TYPE_RND:
             random.shuffle(self._play_list)
-            self.log.info(f"随机打乱 {list_name} {self._play_list}")
+            self.log.info(f"随机打乱 {list_name} {list2str(self._play_list, self.config.verbose)}")
         else:
-            self.log.info(f"没打乱 {list_name} {self._play_list}")
+            self._play_list = sorted(self._play_list)
+            self.log.info(f"没打乱 {list_name} {list2str(self._play_list, self.config.verbose)}")
 
     # 播放歌曲
     async def play(self, name="", search_key=""):
         self._last_cmd = "play"
-        return await self._play(name=name, search_key=search_key)
+        return await self._play(name=name, search_key=search_key, update_cur=True)
 
-    async def _play(self, name="", search_key=""):
+    async def _play(self, name="", search_key="", exact=False, update_cur=False):
         if search_key == "" and name == "":
             if self.check_play_next():
                 await self._play_next()
@@ -1049,8 +1071,20 @@ class XiaoMusicDevice:
         self.log.info(f"play. search_key:{search_key} name:{name}")
 
         # 本地歌曲不存在时下载
-        name = self.xiaomusic.find_real_music_name(name)
-        if not self.xiaomusic.is_music_exist(name):
+        if exact:
+            names = self.xiaomusic.find_real_music_name(name, n=1)
+        else:
+            names = self.xiaomusic.find_real_music_name(name)
+        if len(names) > 0:
+            if update_cur and len(names) > 1:  # 大于一首歌才更新
+                self._play_list = names
+                self.device.cur_playlist = "当前"
+                self.update_playlist()
+            elif update_cur:  # 只有一首歌，append
+                self._play_list = self._play_list + names
+            name = names[0]
+            self.log.debug(f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}")
+        elif not self.xiaomusic.is_music_exist(name):
             if self.config.disable_download:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
@@ -1081,7 +1115,7 @@ class XiaoMusicDevice:
         if name == "":
             await self.do_tts("本地没有歌曲")
             return
-        await self._play(name)
+        await self._play(name, exact=True)
 
     # 上一首
     async def play_prev(self):
@@ -1101,7 +1135,7 @@ class XiaoMusicDevice:
         if name == "":
             await self.do_tts("本地没有歌曲")
             return
-        await self._play(name)
+        await self._play(name, exact=True)
 
     # 播放本地歌曲
     async def playlocal(self, name):
@@ -1116,8 +1150,17 @@ class XiaoMusicDevice:
         self.log.info(f"playlocal. name:{name}")
 
         # 本地歌曲不存在时下载
-        name = self.xiaomusic.find_real_music_name(name)
-        if not self.xiaomusic.is_music_exist(name):
+        names = self.xiaomusic.find_real_music_name(name)
+        if len(names) > 0:
+            if len(names) > 1:  # 大于一首歌才更新
+                self._play_list = names
+                self.device.cur_playlist = "当前"
+                self.update_playlist()
+            else:  # 只有一首歌，append
+                self._play_list = self._play_list + names
+            name = names[0]
+            self.log.debug(f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}")
+        elif not self.xiaomusic.is_music_exist(name):
             await self.do_tts(f"本地不存在歌曲{name}")
             return
         await self._playmusic(name)
@@ -1464,7 +1507,7 @@ class XiaoMusicDevice:
         self.device.cur_playlist = list_name
         self.update_playlist()
         self.log.info(f"开始播放列表{list_name}")
-        await self._play(music_name)
+        await self._play(music_name, exact=True)
 
     async def stop(self, arg1=""):
         self._last_cmd = "stop"
