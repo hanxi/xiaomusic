@@ -1050,9 +1050,9 @@ class XiaoMusicDevice:
     # 播放歌曲
     async def play(self, name="", search_key=""):
         self._last_cmd = "play"
-        return await self._play(name=name, search_key=search_key)
+        return await self._play(name=name, search_key=search_key, update_cur=True)
 
-    async def _play(self, name="", search_key="", exact=False):
+    async def _play(self, name="", search_key="", exact=False, update_cur=False):
         if search_key == "" and name == "":
             if self.check_play_next():
                 await self._play_next()
@@ -1067,11 +1067,10 @@ class XiaoMusicDevice:
         else:
             names = self.xiaomusic.find_real_music_name(name)
         if len(names) > 0:
-            self._play_list = names
-            self.device.cur_playlist = "当前"
-            if self.device.play_type == PLAY_TYPE_RND:
-                random.shuffle(self._play_list)
-                self.log.info(f"随机打乱 {list2str(self._play_list, self.config.verbose)}")
+            if update_cur:
+                self._play_list = names
+                self.device.cur_playlist = "当前"
+                self.update_playlist()
             name = names[0]
             self.log.debug(f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}")
         elif not self.xiaomusic.is_music_exist(name):
@@ -1144,9 +1143,7 @@ class XiaoMusicDevice:
         if len(names) > 0:
             self._play_list = names
             self.device.cur_playlist = "当前"
-            if self.device.play_type == PLAY_TYPE_RND:
-                random.shuffle(self._play_list)
-                self.log.info(f"随机打乱 {list2str(self._play_list, self.config.verbose)}")
+            self.update_playlist()
             name = names[0]
             self.log.debug(f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}")
         elif not self.xiaomusic.is_music_exist(name):
