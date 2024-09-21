@@ -390,6 +390,7 @@ def convert_file_to_mp3(input_file: str, ffmpeg_location: str, music_path: str) 
         input_file,
         "-f",
         "mp3",
+        "-vn",
         "-y",
         out_file_path,
     ]
