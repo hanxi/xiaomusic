@@ -255,7 +255,7 @@ $(function(){
     var inputValue = $(this).val();
     // 发送Ajax请求
     $.ajax({
-      url: "searchmusic", // 服务器端处理脚本
+      url: "/searchmusic", // 服务器端处理脚本
       type: "GET",
       dataType: "json",
       data: {
