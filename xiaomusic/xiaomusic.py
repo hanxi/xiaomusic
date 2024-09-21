@@ -41,6 +41,7 @@ from xiaomusic.utils import (
     deepcopy_data_no_sensitive_info,
     find_best_match,
     fuzzyfinder,
+    get_audio_metadata,
     get_local_music_duration,
     get_web_music_duration,
     is_mp3,
@@ -68,6 +69,7 @@ class XiaoMusic:
         self.music_list = {}  # 播放列表 key 为目录名, value 为 play_list
         self.devices = {}  # key 为 did
         self.running_task = []
+        self.all_music_tags = {}  # 歌曲额外信息
 
         # 初始化配置
         self.init_config()
@@ -389,6 +391,9 @@ class XiaoMusic:
             self.log.warning(f"获取歌曲时长失败 {name} {url}")
         return sec, url
 
+    def get_music_tags(self, name):
+        return self.all_music_tags.get(name, {})
+
     def get_music_url(self, name):
         if self.is_web_music(name):
             url = self.all_music[name]
@@ -432,6 +437,7 @@ class XiaoMusic:
     # 获取目录下所有歌曲,生成随机播放列表
     def _gen_all_music_list(self):
         self.all_music = {}
+        self.all_music_tags = {}
         all_music_by_dir = {}
         local_musics = traverse_music_directory(
             self.music_path,
@@ -455,6 +461,7 @@ class XiaoMusic:
                 filename = os.path.basename(file)
                 (name, _) = os.path.splitext(filename)
                 self.all_music[name] = file
+                self.all_music_tags[name] = get_audio_metadata(file)
                 all_music_by_dir[dir_name][name] = True
                 self.log.debug(f"_gen_all_music_list {name}:{dir_name}:{file}")
 
@@ -516,6 +523,8 @@ class XiaoMusic:
                     if (not name) or (not url):
                         continue
                     self.all_music[name] = url
+                    # TODO: 网络歌曲获取歌曲额外信息
+                    # self.all_music_tags[name] = get_audio_metadata(url)
                     one_music_list.append(name)
 
                     # 处理电台列表

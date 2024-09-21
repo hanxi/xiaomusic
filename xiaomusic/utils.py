@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import copy
 import difflib
 import json
@@ -20,8 +21,13 @@ from urllib.parse import urlparse
 
 import aiohttp
 import mutagen
-from mutagen.id3 import ID3
+from mutagen.flac import FLAC
+from mutagen.id3 import APIC, ID3
+from mutagen.monkeysaudio import MonkeysAudio
 from mutagen.mp3 import MP3
+from mutagen.mp4 import MP4
+from mutagen.oggvorbis import OggVorbis
+from mutagen.wave import WAVE
 from requests.utils import cookiejar_from_dict
 
 from xiaomusic.const import SUPPORT_MUSIC_TYPE
@@ -441,3 +447,131 @@ def chinese_to_number(chinese):
         result += num
         num = 0
     return result
+
+
+def get_audio_metadata(file_path):
+    if file_path.endswith(".mp3"):
+        return get_mp3_metadata(file_path)
+    elif file_path.endswith(".flac"):
+        return get_flac_metadata(file_path)
+    elif file_path.endswith(".wav"):
+        return get_wav_metadata(file_path)
+    elif file_path.endswith(".ape"):
+        return get_ape_metadata(file_path)
+    elif file_path.endswith(".ogg"):
+        return get_ogg_metadata(file_path)
+    elif file_path.endswith(".m4a"):
+        return get_m4a_metadata(file_path)
+    else:
+        raise ValueError("Unsupported file type")
+
+
+def get_mp3_metadata(file_path):
+    audio = MP3(file_path, ID3=ID3)
+    tags = audio.tags
+    if tags is None:
+        return None
+
+    metadata = {
+        "title": tags.get("TIT2", [""])[0] if "TIT2" in tags else "",
+        "artist": tags.get("TPE1", [""])[0] if "TPE1" in tags else "",
+        "album": tags.get("TALB", [""])[0] if "TALB" in tags else "",
+        "year": tags.get("TDRC", [""])[0] if "TDRC" in tags else "",
+        "genre": tags.get("TCON", [""])[0] if "TCON" in tags else "",
+        "picture": "",
+        "lyrics": "",
+    }
+
+    for tag in tags.values():
+        if isinstance(tag, APIC):
+            metadata["picture"] = base64.b64encode(tag.data).decode("utf-8")
+            break
+
+    lyrics = tags.getall("USLT")
+    if lyrics:
+        metadata["lyrics"] = lyrics[0]
+
+    return metadata
+
+
+def get_flac_metadata(file_path):
+    audio = FLAC(file_path)
+    metadata = {
+        "title": audio.get("title", [""])[0],
+        "artist": audio.get("artist", [""])[0],
+        "album": audio.get("album", [""])[0],
+        "year": audio.get("date", [""])[0],
+        "genre": audio.get("genre", [""])[0],
+        "picture": "",
+        "lyrics": "",
+    }
+
+    if audio.pictures:
+        picture = audio.pictures[0]
+        metadata["picture"] = base64.b64encode(picture.data).decode("utf-8")
+
+    if "lyrics" in audio:
+        metadata["lyrics"] = audio["lyrics"][0]
+
+    return metadata
+
+
+def get_wav_metadata(file_path):
+    audio = WAVE(file_path)
+    metadata = {
+        "title": audio.get("TIT2", [""])[0],
+        "artist": audio.get("TPE1", [""])[0],
+        "album": audio.get("TALB", [""])[0],
+        "year": audio.get("TDRC", [""])[0],
+        "genre": audio.get("TCON", [""])[0],
+        "picture": "",
+        "lyrics": "",
+    }
+    return metadata
+
+
+def get_ape_metadata(file_path):
+    audio = MonkeysAudio(file_path)
+    metadata = {
+        "title": audio.get("TIT2", [""])[0],
+        "artist": audio.get("TPE1", [""])[0],
+        "album": audio.get("TALB", [""])[0],
+        "year": audio.get("TDRC", [""])[0],
+        "genre": audio.get("TCON", [""])[0],
+        "picture": "",
+        "lyrics": "",
+    }
+    return metadata
+
+
+def get_ogg_metadata(file_path):
+    audio = OggVorbis(file_path)
+    metadata = {
+        "title": audio.get("title", [""])[0],
+        "artist": audio.get("artist", [""])[0],
+        "album": audio.get("album", [""])[0],
+        "year": audio.get("date", [""])[0],
+        "genre": audio.get("genre", [""])[0],
+        "picture": "",
+        "lyrics": "",
+    }
+    return metadata
+
+
+def get_m4a_metadata(file_path):
+    audio = MP4(file_path)
+    metadata = {
+        "title": audio.tags.get("\xa9nam", [""])[0],
+        "artist": audio.tags.get("\xa9ART", [""])[0],
+        "album": audio.tags.get("\xa9alb", [""])[0],
+        "year": audio.tags.get("\xa9day", [""])[0],
+        "genre": audio.tags.get("\xa9gen", [""])[0],
+        "picture": "",
+        "lyrics": "",
+    }
+
+    if "covr" in audio.tags:
+        cover = audio.tags["covr"][0]
+        metadata["picture"] = base64.b64encode(cover).decode("utf-8")
+
+    return metadata
