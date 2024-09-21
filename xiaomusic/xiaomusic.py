@@ -1067,10 +1067,12 @@ class XiaoMusicDevice:
         else:
             names = self.xiaomusic.find_real_music_name(name)
         if len(names) > 0:
-            if update_cur:
+            if update_cur and len(names) > 1:  # 大于一首歌才更新
                 self._play_list = names
                 self.device.cur_playlist = "当前"
                 self.update_playlist()
+            elif update_cur:  # 只有一首歌，append
+                self._play_list = self._play_list + names
             name = names[0]
             self.log.debug(f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}")
         elif not self.xiaomusic.is_music_exist(name):
@@ -1141,9 +1143,12 @@ class XiaoMusicDevice:
         # 本地歌曲不存在时下载
         names = self.xiaomusic.find_real_music_name(name)
         if len(names) > 0:
-            self._play_list = names
-            self.device.cur_playlist = "当前"
-            self.update_playlist()
+            if len(names) > 1:  # 大于一首歌才更新
+                self._play_list = names
+                self.device.cur_playlist = "当前"
+                self.update_playlist()
+            else:  # 只有一首歌，append
+                self._play_list = self._play_list + names
             name = names[0]
             self.log.debug(f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}")
         elif not self.xiaomusic.is_music_exist(name):
