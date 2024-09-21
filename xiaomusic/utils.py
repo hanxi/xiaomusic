@@ -88,13 +88,29 @@ def fuzzyfinder(user_input, collection):
     return [lower_collection[match] for match in matches]
 
 
-def find_best_match(user_input, collection, cutoff=0.6):
+# 关键词检测
+def keyword_detection(user_input, str_list, n):
+    # 过滤包含关键字的字符串
+    matched = [item for item in str_list if user_input in item]
+    
+    # 如果 n 是 -1，如果 n 大于匹配的数量，返回所有匹配的结果
+    if n == -1 or n > len(matched):
+        return matched
+    
+    # 随机选择 n 个匹配的结果
+    return random.sample(matched, n)
+
+
+def find_best_match(user_input, collection, cutoff=0.6, n=1):
     lower_collection = {item.lower(): item for item in collection}
     user_input = user_input.lower()
-    matches = difflib.get_close_matches(
-        user_input, lower_collection.keys(), n=1, cutoff=cutoff
-    )
-    return lower_collection[matches[0]] if matches else None
+    matches = keyword_detection(user_input, lower_collection.keys(), n=n)
+    if len(matches) <= 1:
+        # 如果没有准确关键词匹配，开始模糊匹配
+        matches = difflib.get_close_matches(
+            user_input, lower_collection.keys(), n=n, cutoff=cutoff
+        )
+    return [lower_collection[match] for match in matches]
 
 
 # 歌曲排序
