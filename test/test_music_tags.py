@@ -21,8 +21,9 @@ async def test_one_music(filename):
     # 获取播放时长
     try:
         metadata = get_audio_metadata(filename)
+        print(metadata.title, metadata.album)
         if metadata:
-            lyrics = metadata.get("lyrics")
+            lyrics = metadata.lyrics
             if lyrics:
                 print(f"歌曲 : {filename} 的 {lyrics}")
     except Exception as e:
@@ -37,6 +38,9 @@ async def main(directory):
     for _, files in local_musics.items():
         for file in files:
             await test_one_music(file)
+            pass
+
+    await test_one_music("./music/一生何求.mp3")
 
 
 if __name__ == "__main__":

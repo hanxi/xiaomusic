@@ -491,20 +491,20 @@ def chinese_to_number(chinese):
 
 
 def get_audio_metadata(file_path):
+    ret = Metadata()
     if file_path.endswith(".mp3"):
-        return get_mp3_metadata(file_path)
+        ret = get_mp3_metadata(file_path)
     elif file_path.endswith(".flac"):
-        return get_flac_metadata(file_path)
+        ret = get_flac_metadata(file_path)
     elif file_path.endswith(".wav"):
-        return get_wav_metadata(file_path)
+        ret = get_wav_metadata(file_path)
     elif file_path.endswith(".ape"):
-        return get_ape_metadata(file_path)
+        ret = get_ape_metadata(file_path)
     elif file_path.endswith(".ogg"):
-        return get_ogg_metadata(file_path)
+        ret = get_ogg_metadata(file_path)
     elif file_path.endswith(".m4a"):
-        return get_m4a_metadata(file_path)
-    else:
-        raise ValueError("Unsupported file type")
+        ret = get_m4a_metadata(file_path)
+    return ret
 
 
 @dataclass
@@ -524,12 +524,28 @@ def get_mp3_metadata(file_path):
     if tags is None:
         return Metadata()
 
+    # 处理编码
+    def get_tag_value(tags, k):
+        if k not in tags:
+            return ""
+        v = tags[k]
+        if isinstance(v, mutagen.id3.TextFrame) and not isinstance(
+            v, mutagen.id3.TimeStampTextFrame
+        ):
+            old_ts = "".join(v.text)
+            if v.encoding == mutagen.id3.Encoding.LATIN1:
+                bs = old_ts.encode("latin1")
+                ts = bs.decode("GBK", errors="ignore")
+                return ts
+            return old_ts
+        return v
+
     metadata = Metadata(
-        title=tags.get("TIT2", [""])[0] if "TIT2" in tags else "",
-        artist=tags.get("TPE1", [""])[0] if "TPE1" in tags else "",
-        album=tags.get("TALB", [""])[0] if "TALB" in tags else "",
-        year=tags.get("TDRC", [""])[0] if "TDRC" in tags else "",
-        genre=tags.get("TCON", [""])[0] if "TCON" in tags else "",
+        title=get_tag_value(tags, "TIT2"),
+        artist=get_tag_value(tags, "TPE1"),
+        album=get_tag_value(tags, "TALB"),
+        year=get_tag_value(tags, "TDRC"),
+        genre=get_tag_value(tags, "TCON"),
     )
 
     for tag in tags.values():
