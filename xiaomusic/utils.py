@@ -85,13 +85,9 @@ def validate_proxy(proxy_str: str) -> bool:
 
 
 # 模糊搜索
-def fuzzyfinder(user_input, collection):
-    lower_collection = {item.lower(): item for item in collection}
-    user_input = user_input.lower()
-    matches = difflib.get_close_matches(
-        user_input, lower_collection.keys(), n=10, cutoff=0.1
-    )
-    return [lower_collection[match] for match in matches]
+def fuzzyfinder(user_input, collection, extra_search_index=None):
+    return find_best_match(user_input, collection, cutoff=0.1, n=10,
+                           extra_search_index=extra_search_index)
 
 
 # 关键词检测
@@ -112,18 +108,31 @@ def keyword_detection(user_input, str_list, n):
     return random.sample(matched, n), remains
 
 
-def find_best_match(user_input, collection, cutoff=0.6, n=1):
-    lower_collection = {item.lower(): item for item in collection}
-    user_input = user_input.lower()
-    matches, remains = keyword_detection(user_input, lower_collection.keys(), n=n)
+def real_search(prompt, candidates, cutoff, n):
+    matches, remains = keyword_detection(prompt, candidates, n=n)
     if len(matches) < n:
         # 如果没有准确关键词匹配，开始模糊匹配
         matches += difflib.get_close_matches(
-            user_input, lower_collection.keys(), n=n, cutoff=cutoff
+            prompt, remains, n=n, cutoff=cutoff
         )
-    return [lower_collection[match] for match in matches[:n]]
+    return matches
 
 
+def find_best_match(user_input, collection, cutoff=0.6, n=1, extra_search_index=None):
+    lower_collection = {item.lower(): item for item in collection}
+    user_input = user_input.lower()
+    matches = real_search(user_input, lower_collection.keys(), cutoff, n)
+    cur_matched_collection = [lower_collection[match] for match in matches]
+    if len(matches) >= n or extra_search_index is None:
+        return cur_matched_collection[:n]
+
+    # 如果数量不满足，继续搜索
+    lower_extra_search_index = {k.lower():v for k, v in extra_search_index.items()}
+    matches = real_search(user_input, lower_extra_search_index.keys(), cutoff, n)
+    cur_matched_collection += [lower_extra_search_index[match] for match in matches]
+    return cur_matched_collection[:n]
+    
+    
 # 歌曲排序
 def custom_sort_key(s):
     # 使用正则表达式分别提取字符串的数字前缀和数字后缀
@@ -596,3 +605,10 @@ def get_m4a_metadata(file_path):
         metadata["picture"] = base64.b64encode(cover).decode("utf-8")
 
     return metadata
+
+
+def list2str(li, verbose=False):
+    if len(li) > 5 and not verbose:
+        return f"{li[:2]} ... {li[-2:]} with len: {len(li)}"
+    else:
+        return f"{li}"

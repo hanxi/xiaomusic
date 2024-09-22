@@ -12,6 +12,7 @@ import urllib.parse
 from dataclasses import asdict
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from collections import OrderedDict
 
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiNAService
@@ -49,14 +50,8 @@ from xiaomusic.utils import (
     parse_str_to_dict,
     remove_id3_tags,
     traverse_music_directory,
+    list2str,
 )
-
-
-def list2str(li, verbose=False):
-    if len(li) > 5 and not verbose:
-        return f"{li[:2]} ... {li[-2:]} with len: {len(li)}"
-    else:
-        return f"{li}"
 
 
 class XiaoMusic:
@@ -77,6 +72,7 @@ class XiaoMusic:
         self.devices = {}  # key 为 did
         self.running_task = []
         self.all_music_tags = {}  # 歌曲额外信息
+        self._extra_index_search = {}
 
         # 初始化配置
         self.init_config()
@@ -474,22 +470,25 @@ class XiaoMusic:
 
         # self.log.debug(self.all_music)
 
-        self.music_list = {}
-        for dir_name, musics in all_music_by_dir.items():
-            self.music_list[dir_name] = list(musics.keys())
-            # self.log.debug("dir_name:%s, list:%s", dir_name, self.music_list[dir_name])
-
-        try:
-            self._append_music_list()
-        except Exception as e:
-            self.log.exception(f"Execption {e}")
-
+        self.music_list = OrderedDict({"临时搜索列表": []})
+        # 全部，所有，自定义歌单（收藏）
         self.music_list["全部"] = list(self.all_music.keys())
         self.music_list["所有歌曲"] = [
             name for name in self.all_music.keys() if name not in self._all_radio
         ]
-
         self._append_custom_play_list()
+
+        # 网络歌单
+        try:
+            # NOTE: 函数内会更新 self.all_music, self._music_list；重建 self._all_radio
+            self._append_music_list()
+        except Exception as e:
+            self.log.exception(f"Execption {e}")
+
+        # 文件夹歌单
+        for dir_name, musics in all_music_by_dir.items():
+            self.music_list[dir_name] = list(musics.keys())
+            # self.log.debug("dir_name:%s, list:%s", dir_name, self.music_list[dir_name])
 
         # 歌单排序
         for _, play_list in self.music_list.items():
@@ -498,6 +497,13 @@ class XiaoMusic:
         # 更新每个设备的歌单
         for device in self.devices.values():
             device.update_playlist()
+
+        # 重建索引
+        self._extra_index_search = {}
+        for k, v in self.all_music.items():
+            # 如果不是 url，则增加索引
+            if not (v.startswith("http") or v.startswith("https")):
+                self._extra_index_search[v] = k
 
     def _append_custom_play_list(self):
         if not self.config.custom_play_list_json:
@@ -682,12 +688,14 @@ class XiaoMusic:
         all_music_list = list(self.all_music.keys())
         real_names = find_best_match(
             name, all_music_list, cutoff=self.config.fuzzy_match_cutoff, n=n,
+            extra_search_index=self._extra_index_search,
         )
         if real_names:
             if n > 1:
                 # 扩大范围再找，最后保留随机 n 个
                 real_names = find_best_match(
                     name, all_music_list, cutoff=self.config.fuzzy_match_cutoff, n=n * 2,
+                    extra_search_index=self._extra_index_search,
                 )
                 random.shuffle(real_names)
                 real_names = real_names[:n]
@@ -739,9 +747,10 @@ class XiaoMusic:
             self.log.debug("没开启模糊匹配")
             return list_name
 
-        # 模糊搜一个播放列表
+        # 模糊搜一个播放列表（只需要一个，不需要 extra index）
         real_name = find_best_match(
-            list_name, self.music_list, cutoff=self.config.fuzzy_match_cutoff
+            list_name, self.music_list, cutoff=self.config.fuzzy_match_cutoff,
+            n=1,
         )[0]
         if real_name:
             self.log.info(f"根据【{list_name}】找到播放列表【{real_name}】")
@@ -871,7 +880,7 @@ class XiaoMusic:
     # 搜索音乐
     def searchmusic(self, name):
         all_music_list = list(self.all_music.keys())
-        search_list = fuzzyfinder(name, all_music_list)
+        search_list = fuzzyfinder(name, all_music_list, self._extra_index_search)
         self.log.debug(f"searchmusic. name:{name} search_list:{search_list}")
         return search_list
 
@@ -1038,23 +1047,29 @@ class XiaoMusicDevice:
         return offset, duration
 
     # 初始化播放列表
-    def update_playlist(self):
+    def update_playlist(self, reorder=True):
         # 没有重置 list 且非初始化
-        if self.device.cur_playlist == "当前" and len(self._play_list) > 0:
-            list_name = "当前"
-        else:  # 调用了播放列表功能，cur_playlist 为新列表名称
-            if self.device.cur_playlist not in self.xiaomusic.music_list:
-                self.device.cur_playlist = "全部"
-
-            list_name = self.device.cur_playlist
-            self._play_list = copy.copy(self.xiaomusic.music_list[list_name])
-
-        if self.device.play_type == PLAY_TYPE_RND:
-            random.shuffle(self._play_list)
-            self.log.info(f"随机打乱 {list_name} {list2str(self._play_list, self.config.verbose)}")
+        if self.device.cur_playlist == "临时搜索列表" and len(self._play_list) > 0:
+            # 更新总播放列表，为了UI显示
+            self.xiaomusic.music_list['临时搜索列表'] = copy.copy(self._play_list)
+        elif (self.device.cur_playlist == "临时搜索列表" and len(self._play_list) == 0
+            ) or (self.device.cur_playlist not in self.xiaomusic.music_list):
+            self.device.cur_playlist = "全部"
         else:
-            self._play_list = sorted(self._play_list)
-            self.log.info(f"没打乱 {list_name} {list2str(self._play_list, self.config.verbose)}")
+            pass  # 指定了已知的播放列表名称
+
+        list_name = self.device.cur_playlist
+        self._play_list = copy.copy(self.xiaomusic.music_list[list_name])
+
+        if reorder:
+            if self.device.play_type == PLAY_TYPE_RND:
+                random.shuffle(self._play_list)
+                self.log.info(f"随机打乱 {list_name} {list2str(self._play_list, self.config.verbose)}")
+            else:
+                self._play_list = sorted(self._play_list)
+                self.log.info(f"没打乱 {list_name} {list2str(self._play_list, self.config.verbose)}")
+        else:
+            self.log.info(f"更新 {list_name} {list2str(self._play_list, self.config.verbose)}")
 
     # 播放歌曲
     async def play(self, name="", search_key=""):
@@ -1078,10 +1093,12 @@ class XiaoMusicDevice:
         if len(names) > 0:
             if update_cur and len(names) > 1:  # 大于一首歌才更新
                 self._play_list = names
-                self.device.cur_playlist = "当前"
+                self.device.cur_playlist = "临时搜索列表"
                 self.update_playlist()
             elif update_cur:  # 只有一首歌，append
                 self._play_list = self._play_list + names
+                self.device.cur_playlist = "临时搜索列表"
+                self.update_playlist(reorder=False)
             name = names[0]
             self.log.debug(f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}")
         elif not self.xiaomusic.is_music_exist(name):
@@ -1154,10 +1171,12 @@ class XiaoMusicDevice:
         if len(names) > 0:
             if len(names) > 1:  # 大于一首歌才更新
                 self._play_list = names
-                self.device.cur_playlist = "当前"
+                self.device.cur_playlist = "临时搜索列表"
                 self.update_playlist()
             else:  # 只有一首歌，append
                 self._play_list = self._play_list + names
+                self.device.cur_playlist = "临时搜索列表"
+                self.update_playlist(reorder=False)
             name = names[0]
             self.log.debug(f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}")
         elif not self.xiaomusic.is_music_exist(name):
