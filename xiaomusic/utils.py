@@ -119,7 +119,7 @@ def find_best_match(user_input, collection, cutoff=0.6, n=1):
     if len(matches) < n:
         # 如果没有准确关键词匹配，开始模糊匹配
         matches += difflib.get_close_matches(
-            user_input, lower_collection.keys(), n=n, cutoff=cutoff
+            user_input, remains, n=n, cutoff=cutoff
         )
     return [lower_collection[match] for match in matches[:n]]
 
