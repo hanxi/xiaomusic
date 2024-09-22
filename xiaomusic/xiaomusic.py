@@ -50,14 +50,8 @@ from xiaomusic.utils import (
     parse_str_to_dict,
     remove_id3_tags,
     traverse_music_directory,
+    list2str,
 )
-
-
-def list2str(li, verbose=False):
-    if len(li) > 5 and not verbose:
-        return f"{li[:2]} ... {li[-2:]} with len: {len(li)}"
-    else:
-        return f"{li}"
 
 
 class XiaoMusic:

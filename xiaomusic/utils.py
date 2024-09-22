@@ -596,3 +596,10 @@ def get_m4a_metadata(file_path):
         metadata["picture"] = base64.b64encode(cover).decode("utf-8")
 
     return metadata
+
+
+def list2str(li, verbose=False):
+    if len(li) > 5 and not verbose:
+        return f"{li[:2]} ... {li[-2:]} with len: {len(li)}"
+    else:
+        return f"{li}"
