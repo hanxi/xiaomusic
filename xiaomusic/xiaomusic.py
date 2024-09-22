@@ -879,8 +879,14 @@ class XiaoMusic:
         return search_list
 
     # 获取播放列表
-    def get_music_list(self):
-        return self.music_list
+    def get_music_list(self, convert_to_basename=True):
+        if convert_to_basename:
+            basename_list = {}
+            for k, v in self.music_list.items():
+                basename_list[k] = [os.path.basename(vi) for vi in v]
+            return basename_list
+        else:
+            return self.music_list
 
     # 获取当前的播放列表
     def get_cur_play_list(self, did):
