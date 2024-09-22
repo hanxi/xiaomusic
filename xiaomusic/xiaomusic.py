@@ -72,6 +72,7 @@ class XiaoMusic:
         self.devices = {}  # key 为 did
         self.running_task = []
         self.all_music_tags = {}  # 歌曲额外信息
+        self._extra_index_search = {}
 
         # 初始化配置
         self.init_config()
@@ -479,6 +480,7 @@ class XiaoMusic:
 
         # 网络歌单
         try:
+            # NOTE: 函数内会更新 self.all_music, self._music_list；重建 self._all_radio
             self._append_music_list()
         except Exception as e:
             self.log.exception(f"Execption {e}")
@@ -495,6 +497,13 @@ class XiaoMusic:
         # 更新每个设备的歌单
         for device in self.devices.values():
             device.update_playlist()
+
+        # 重建索引
+        self._extra_index_search = {}
+        for k, v in self.all_music.items():
+            # 如果不是 url，则增加索引
+            if not (v.startswith("http") or v.startswith("https")):
+                self._extra_index_search[v] = k
 
     def _append_custom_play_list(self):
         if not self.config.custom_play_list_json:
@@ -679,12 +688,14 @@ class XiaoMusic:
         all_music_list = list(self.all_music.keys())
         real_names = find_best_match(
             name, all_music_list, cutoff=self.config.fuzzy_match_cutoff, n=n,
+            extra_search_index=self._extra_index_search,
         )
         if real_names:
             if n > 1:
                 # 扩大范围再找，最后保留随机 n 个
                 real_names = find_best_match(
                     name, all_music_list, cutoff=self.config.fuzzy_match_cutoff, n=n * 2,
+                    extra_search_index=self._extra_index_search,
                 )
                 random.shuffle(real_names)
                 real_names = real_names[:n]
@@ -736,9 +747,10 @@ class XiaoMusic:
             self.log.debug("没开启模糊匹配")
             return list_name
 
-        # 模糊搜一个播放列表
+        # 模糊搜一个播放列表（只需要一个，不需要 extra index）
         real_name = find_best_match(
-            list_name, self.music_list, cutoff=self.config.fuzzy_match_cutoff
+            list_name, self.music_list, cutoff=self.config.fuzzy_match_cutoff,
+            n=1,
         )[0]
         if real_name:
             self.log.info(f"根据【{list_name}】找到播放列表【{real_name}】")
@@ -868,7 +880,7 @@ class XiaoMusic:
     # 搜索音乐
     def searchmusic(self, name):
         all_music_list = list(self.all_music.keys())
-        search_list = fuzzyfinder(name, all_music_list)
+        search_list = fuzzyfinder(name, all_music_list, self._extra_index_search)
         self.log.debug(f"searchmusic. name:{name} search_list:{search_list}")
         return search_list
 
