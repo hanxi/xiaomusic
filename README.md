@@ -235,6 +235,7 @@ docker build -t xiaomusic .
 - XIAOMUSIC_HTTPAUTH_USERNAME 配置 web 控制台用户，对应后台的 【web控制台账户】
 - XIAOMUSIC_HTTPAUTH_PASSWORD 配置 web 控制台密码，对应后台的 【web控制台密码】
 - XIAOMUSIC_CONF_PATH 用来存放配置文件的目录，对应后台的 【配置文件目录】，记得把目录映射到主机，默认为 `/app/config` ，具体见 <https://github.com/hanxi/xiaomusic/issues/74>
+- XIAOMUSIC_TAG_CACHE_DIR 用来音乐 tag 缓存，默认为空（不缓存）
 - XIAOMUSIC_DISABLE_DOWNLOAD 设为 true 时关闭下载功能，对应后台的 【关闭下载功能】，见 <https://github.com/hanxi/xiaomusic/issues/82>
 - XIAOMUSIC_USE_MUSIC_API 设为 true 时使用 player_play_music 接口播放音乐，对应后台的 【触屏版兼容模式】，用于兼容不能播放的型号，如果发现需要设置这个选项的时候请告知我加一下设备型号，方便以后不用设置。 见 <https://github.com/hanxi/xiaomusic/issues/30>
 - XIAOMUSIC_KEYWORDS_PLAY 用来播放歌曲的口令前缀，对应后台的 【播放歌曲口令】，默认是 "播放歌曲,放歌曲" ，可以用英文逗号分割配置多个

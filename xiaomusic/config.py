@@ -84,6 +84,7 @@ class Config:
     )  # 只能是music目录下的子目录
     download_path: str = os.getenv("XIAOMUSIC_DOWNLOAD_PATH", "music/download")
     conf_path: str = os.getenv("XIAOMUSIC_CONF_PATH", "conf")
+    tag_cache_dir: str = os.getenv("XIAOMUSIC_TAG_CACHE_DIR", None)
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))  # 监听端口
     public_port: int = int(os.getenv("XIAOMUSIC_PUBLIC_PORT", 0))  # 歌曲访问端口
@@ -245,4 +246,14 @@ class Config:
         if not os.path.exists(self.conf_path):
             os.makedirs(self.conf_path)
         filename = os.path.join(self.conf_path, "setting.json")
+        return filename
+
+    @property
+    def tag_cache_path(self):
+        if self.tag_cache_dir is None:
+            return None
+        
+        if not os.path.exists(self.tag_cache_dir):
+            os.makedirs(self.tag_cache_dir)
+        filename = os.path.join(self.tag_cache_dir, "tag_cache.json")
         return filename

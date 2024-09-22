@@ -7,6 +7,7 @@
   "music_path": "music",
   "download_path": "",
   "conf_path": null,
+  "tag_cache_dir": null,
   "hostname": "192.168.2.5",
   "port": 8090,
   "public_port": 0,
