@@ -157,6 +157,7 @@ docker build -t xiaomusic .
 - 播放列表收藏
 - 播放本地歌曲+歌名
 - 播放列表第几个+列表名，具体见： <https://github.com/hanxi/xiaomusic/issues/158>
+- 播放歌曲+关键词，会搜索关键词作为临时搜索列表播放，比如播放歌曲林俊杰，会播放所有林俊杰的歌。
 
 > [!TIP]
 > 隐藏玩法: 对小爱同学说播放歌曲小猪佩奇的故事，会播放小猪佩奇的故事。
@@ -185,7 +186,7 @@ docker build -t xiaomusic .
 > [!NOTE]
 > 如果你的设备支持播放，请反馈给我添加到支持列表里，谢谢。
 > 目前应该所有设备类型都已经支持播放，有问题随时反馈。
-> 其他触屏版不能播放可以设置【触屏版兼容模式】选项为 true 试试。见 <https://github.com/hanxi/xiaomusic/issues/30>
+> 其他触屏版不能播放可以设置【型号兼容模式】选项为 true 试试。见 <https://github.com/hanxi/xiaomusic/issues/30>
 
 ## 支持音乐格式
 
@@ -199,7 +200,7 @@ docker build -t xiaomusic .
 > [!NOTE]
 > 本地音乐会搜索目录下上面格式的文件，下载的歌曲是 mp3 格式的。
 > 已知 L05B L05C LX06 L16A 不支持 flac 格式。
-> 如果格式不能播放可以打开【转换为MP3】和【触屏版兼容模式】选项。具体见 <https://github.com/hanxi/xiaomusic/issues/153#issuecomment-2328168689>
+> 如果格式不能播放可以打开【转换为MP3】和【型号兼容模式】选项。具体见 <https://github.com/hanxi/xiaomusic/issues/153#issuecomment-2328168689>
 
 
 ## 简易的控制面板
@@ -232,12 +233,12 @@ docker build -t xiaomusic .
 - XIAOMUSIC_EXCLUDE_DIRS 配置歌曲目录里需要忽略的目录，对应后台的 【忽略目录】
 - XIAOMUSIC_MUSIC_PATH_DEPTH 配置歌曲目录搜索深度，对应后台的 【目录深度】，具体见 <https://github.com/hanxi/xiaomusic/issues/76>
 - XIAOMUSIC_DISABLE_HTTPAUTH 配置成 false 表示开启密码访问web控制台，对应后台的 【关闭密码验证】，具体见 <https://github.com/hanxi/xiaomusic/issues/47>
-- XIAOMUSIC_HTTPAUTH_USERNAME 配置 web 控制台用户，对应后台的 【web控制台账户】
-- XIAOMUSIC_HTTPAUTH_PASSWORD 配置 web 控制台密码，对应后台的 【web控制台密码】
+- XIAOMUSIC_HTTPAUTH_USERNAME 配置 web 控制台用户，对应后台的 【控制台账户】
+- XIAOMUSIC_HTTPAUTH_PASSWORD 配置 web 控制台密码，对应后台的 【控制台密码】
 - XIAOMUSIC_CONF_PATH 用来存放配置文件的目录，对应后台的 【配置文件目录】，记得把目录映射到主机，默认为 `/app/config` ，具体见 <https://github.com/hanxi/xiaomusic/issues/74>
-- XIAOMUSIC_TAG_CACHE_DIR 用来音乐 tag 缓存，默认为空（不缓存）
+- XIAOMUSIC_CACHE_DIR 用来音乐 tag 缓存，默认为 `/app/cache`，对应后台的 【缓存文件目录】。
 - XIAOMUSIC_DISABLE_DOWNLOAD 设为 true 时关闭下载功能，对应后台的 【关闭下载功能】，见 <https://github.com/hanxi/xiaomusic/issues/82>
-- XIAOMUSIC_USE_MUSIC_API 设为 true 时使用 player_play_music 接口播放音乐，对应后台的 【触屏版兼容模式】，用于兼容不能播放的型号，如果发现需要设置这个选项的时候请告知我加一下设备型号，方便以后不用设置。 见 <https://github.com/hanxi/xiaomusic/issues/30>
+- XIAOMUSIC_USE_MUSIC_API 设为 true 时使用 player_play_music 接口播放音乐，对应后台的 【型号兼容模式】，用于兼容不能播放的型号，如果发现需要设置这个选项的时候请告知我加一下设备型号，方便以后不用设置。 见 <https://github.com/hanxi/xiaomusic/issues/30>
 - XIAOMUSIC_KEYWORDS_PLAY 用来播放歌曲的口令前缀，对应后台的 【播放歌曲口令】，默认是 "播放歌曲,放歌曲" ，可以用英文逗号分割配置多个
 - XIAOMUSIC_KEYWORDS_STOP 用来关机的口令，对应后台的 【停止口令】，默认是 "关机,暂停,停止" ，可以用英文逗号分割配置多个。
 - XIAOMUSIC_KEYWORDS_PLAYLOCAL 用来播放本地歌曲的口令前缀，对应后台的 【播放本地歌曲口令】，本地找不到时不会下载歌曲，默认是 "播放本地歌曲,本地播放歌曲" ，可以用英文逗号分割配置多个。
