@@ -339,6 +339,14 @@ async def playurl(did: str, url: str, Verifcation=Depends(verification)):
     return await xiaomusic.play_url(did=did, arg1=decoded_url)
 
 
+@app.post("/refreshmusictag")
+async def refreshmusictag(Verifcation=Depends(verification)):
+    xiaomusic.refresh_music_tag()
+    return {
+        "ret": "OK",
+    }
+
+
 @app.post("/debug_play_by_music_url")
 async def debug_play_by_music_url(request: Request, Verifcation=Depends(verification)):
     try:

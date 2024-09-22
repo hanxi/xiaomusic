@@ -396,7 +396,7 @@ class XiaoMusic:
         return sec, url
 
     def get_music_tags(self, name):
-        return self.all_music_tags.get(name, Metadata())
+        return self.all_music_tags.get(name, asdict(Metadata()))
 
     def get_music_url(self, name):
         if self.is_web_music(name):
@@ -445,25 +445,28 @@ class XiaoMusic:
             # 清空 cache
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump({}, f, ensure_ascii=False, indent=2)
-            self.log.info(f"刷新：已清空 tag cache")
+            self.log.info("刷新：已清空 tag cache")
         else:
-            self.log.info(f"刷新：tag cache 未启用")
-        #TODO: 优化性能？
+            self.log.info("刷新：tag cache 未启用")
+        # TODO: 优化性能？
         self._gen_all_music_list()
-        self.log.debug(f"刷新：已重建 tag cache")
+        self.log.debug("刷新：已重建 tag cache")
 
     def try_load_from_tag_cache(self) -> dict:
         filename = self.config.tag_cache_path
         tag_cache = {}
-        if filename is not None:
-            if os.path.exists(filename):
-                with open(filename, "r", encoding="utf-8") as f:
-                    tag_cache = json.load(f)
-                self.log.info(f"已从【{filename}】加载 tag cache")
+        try:
+            if filename is not None:
+                if os.path.exists(filename):
+                    with open(filename, encoding="utf-8") as f:
+                        tag_cache = json.load(f)
+                    self.log.info(f"已从【{filename}】加载 tag cache")
+                else:
+                    self.log.info(f"【{filename}】tag cache 已启用，但文件不存在")
             else:
-                self.log.info(f"【{filename}】tag cache 已启用，但文件不存在")
-        else:
-            self.log.info(f"加载：tag cache 未启用")
+                self.log.info("加载：tag cache 未启用")
+        except Exception as e:
+            self.log.exception(f"Execption {e}")
         return tag_cache
 
     def try_save_tag_cache(self):
@@ -473,8 +476,8 @@ class XiaoMusic:
                 json.dump(self.all_music_tags, f, ensure_ascii=False, indent=2)
             self.log.info(f"保存：tag cache 已保存到【{filename}】")
         else:
-            self.log.info(f"保存：tag cache 未启用")
-        
+            self.log.info("保存：tag cache 未启用")
+
     # 获取目录下所有歌曲,生成随机播放列表
     def _gen_all_music_list(self):
         self.all_music = {}
@@ -503,9 +506,7 @@ class XiaoMusic:
                 (name, _) = os.path.splitext(filename)
                 self.all_music[name] = file
                 if name not in self.all_music_tags:
-                    self.all_music_tags[name] = {
-                        k: str(v) for k, v in get_audio_metadata(file).items()}
-                    print(f"加载 {name} tag")
+                    self.all_music_tags[name] = get_audio_metadata(file)
                 all_music_by_dir[dir_name][name] = True
                 self.log.debug(f"_gen_all_music_list {name}:{dir_name}:{file}")
 

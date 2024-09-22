@@ -16,12 +16,10 @@
     gtag('config', 'G-Z09NC1K7ZW');
     </script>
 
-    <!--
 <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
 <script>
 var vConsole = new window.VConsole();
 </script>
--->
 
   </head>
   <body>
@@ -69,6 +67,10 @@ var vConsole = new window.VConsole();
 
         <label for="conf_path">配置文件目录:</label>
         <input id="conf_path" type="text"></input>
+
+
+        <label for="cache_dir">缓存文件目录:</label>
+        <input id="cache_dir" type="text"></input>
 
         <label for="ffmpeg_location">ffmpeg路径:</label>
         <input id="ffmpeg_location" type="text" value="./ffmpeg/bin"></input>
@@ -181,9 +183,12 @@ var vConsole = new window.VConsole();
     </div>
     <hr>
 
-    <button onclick="location.href='/';">返回首页</button>
-    <button id="get_music_list">获取歌单</button>
+    <button onclick="location.href='/static/default/index.html';">返回首页</button>
     <button class="save-button">保存</button>
+    <hr>
+
+    <button id="get_music_list">获取歌单</button>
+    <button id="refresh_music_tag">刷新tag</button>
     <hr>
 
     <a class="button" href="/downloadlog" download="xiaomusic.txt">下载日志文件</a>

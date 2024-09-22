@@ -16,7 +16,7 @@ import string
 import subprocess
 import tempfile
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
 
@@ -504,7 +504,7 @@ def get_audio_metadata(file_path):
         ret = get_ogg_metadata(file_path)
     elif file_path.endswith(".m4a"):
         ret = get_m4a_metadata(file_path)
-    return ret
+    return {k: str(v) for k, v in asdict(ret).items()}
 
 
 @dataclass

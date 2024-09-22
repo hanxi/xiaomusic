@@ -137,4 +137,21 @@ $(function(){
       }
     });
   });
+
+  $("#refresh_music_tag").on("click", () => {
+    $.ajax({
+      type: "POST",
+      url: "/refreshmusictag",
+      contentType: "application/json",
+      success: (res) => {
+        console.log(res);
+        alert(res.ret);
+      },
+      error: (res) => {
+        console.log(res);
+        alert(res);
+      }
+    });
+  });
+
 });
