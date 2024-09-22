@@ -12,7 +12,7 @@ from dataclasses import asdict
 from typing import Annotated
 
 import aiofiles
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -239,6 +239,25 @@ async def musicinfo(
     if musictag:
         info["tags"] = xiaomusic.get_music_tags(name)
     return info
+
+
+@app.get("/musicinfos")
+async def musicinfos(
+    name: list[str] = Query(None),
+    musictag: bool = False,
+    Verifcation=Depends(verification),
+):
+    ret = []
+    for music_name in name:
+        url = xiaomusic.get_music_url(music_name)
+        info = {
+            "name": music_name,
+            "url": url,
+        }
+        if musictag:
+            info["tags"] = xiaomusic.get_music_tags(music_name)
+        ret.append(info)
+    return ret
 
 
 @app.get("/curplaylist")

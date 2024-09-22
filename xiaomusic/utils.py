@@ -16,6 +16,7 @@ import string
 import subprocess
 import tempfile
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse
 
@@ -28,13 +29,12 @@ from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 from mutagen.oggvorbis import OggVorbis
 from mutagen.wave import WAVE
+from opencc import OpenCC
 from requests.utils import cookiejar_from_dict
 
 from xiaomusic.const import SUPPORT_MUSIC_TYPE
-from opencc import OpenCC
 
-
-cc = OpenCC('t2s')  # convert from Traditional Chinese to Simplified Chinese
+cc = OpenCC("t2s")  # convert from Traditional Chinese to Simplified Chinese
 
 
 ### HELP FUNCTION ###
@@ -90,8 +90,9 @@ def validate_proxy(proxy_str: str) -> bool:
 
 # 模糊搜索
 def fuzzyfinder(user_input, collection, extra_search_index=None):
-    return find_best_match(user_input, collection, cutoff=0.1, n=10,
-                           extra_search_index=extra_search_index)
+    return find_best_match(
+        user_input, collection, cutoff=0.1, n=10, extra_search_index=extra_search_index
+    )
 
 
 def traditional_to_simple(to_convert: str):
@@ -107,11 +108,11 @@ def keyword_detection(user_input, str_list, n):
             matched.append(item)
         else:
             remains.append(item)
-    
+
     # 如果 n 是 -1，如果 n 大于匹配的数量，返回所有匹配的结果
     if n == -1 or n > len(matched):
         return matched, remains
-    
+
     # 随机选择 n 个匹配的结果
     return random.sample(matched, n), remains
 
@@ -120,14 +121,14 @@ def real_search(prompt, candidates, cutoff, n):
     matches, remains = keyword_detection(prompt, candidates, n=n)
     if len(matches) < n:
         # 如果没有准确关键词匹配，开始模糊匹配
-        matches += difflib.get_close_matches(
-            prompt, remains, n=n, cutoff=cutoff
-        )
+        matches += difflib.get_close_matches(prompt, remains, n=n, cutoff=cutoff)
     return matches
 
 
 def find_best_match(user_input, collection, cutoff=0.6, n=1, extra_search_index=None):
-    lower_collection = {traditional_to_simple(item.lower()): item for item in collection}
+    lower_collection = {
+        traditional_to_simple(item.lower()): item for item in collection
+    }
     user_input = traditional_to_simple(user_input.lower())
     matches = real_search(user_input, lower_collection.keys(), cutoff, n)
     cur_matched_collection = [lower_collection[match] for match in matches]
@@ -141,8 +142,8 @@ def find_best_match(user_input, collection, cutoff=0.6, n=1, extra_search_index=
     matches = real_search(user_input, lower_extra_search_index.keys(), cutoff, n)
     cur_matched_collection += [lower_extra_search_index[match] for match in matches]
     return cur_matched_collection[:n]
-    
-    
+
+
 # 歌曲排序
 def custom_sort_key(s):
     # 使用正则表达式分别提取字符串的数字前缀和数字后缀
@@ -506,113 +507,112 @@ def get_audio_metadata(file_path):
         raise ValueError("Unsupported file type")
 
 
+@dataclass
+class Metadata:
+    title: str = ""
+    artist: str = ""
+    album: str = ""
+    year: str = ""
+    genre: str = ""
+    picture: str = ""
+    lyrics: str = ""
+
+
 def get_mp3_metadata(file_path):
     audio = MP3(file_path, ID3=ID3)
     tags = audio.tags
     if tags is None:
-        return None
+        return Metadata()
 
-    metadata = {
-        "title": tags.get("TIT2", [""])[0] if "TIT2" in tags else "",
-        "artist": tags.get("TPE1", [""])[0] if "TPE1" in tags else "",
-        "album": tags.get("TALB", [""])[0] if "TALB" in tags else "",
-        "year": tags.get("TDRC", [""])[0] if "TDRC" in tags else "",
-        "genre": tags.get("TCON", [""])[0] if "TCON" in tags else "",
-        "picture": "",
-        "lyrics": "",
-    }
+    metadata = Metadata(
+        title=tags.get("TIT2", [""])[0] if "TIT2" in tags else "",
+        artist=tags.get("TPE1", [""])[0] if "TPE1" in tags else "",
+        album=tags.get("TALB", [""])[0] if "TALB" in tags else "",
+        year=tags.get("TDRC", [""])[0] if "TDRC" in tags else "",
+        genre=tags.get("TCON", [""])[0] if "TCON" in tags else "",
+    )
 
     for tag in tags.values():
         if isinstance(tag, APIC):
-            metadata["picture"] = base64.b64encode(tag.data).decode("utf-8")
+            metadata.picture = base64.b64encode(tag.data).decode("utf-8")
             break
 
     lyrics = tags.getall("USLT")
     if lyrics:
-        metadata["lyrics"] = lyrics[0]
+        metadata.lyrics = lyrics[0]
 
     return metadata
 
 
 def get_flac_metadata(file_path):
     audio = FLAC(file_path)
-    metadata = {
-        "title": audio.get("title", [""])[0],
-        "artist": audio.get("artist", [""])[0],
-        "album": audio.get("album", [""])[0],
-        "year": audio.get("date", [""])[0],
-        "genre": audio.get("genre", [""])[0],
-        "picture": "",
-        "lyrics": "",
-    }
+    metadata = Metadata(
+        title=audio.get("title", [""])[0],
+        artist=audio.get("artist", [""])[0],
+        album=audio.get("album", [""])[0],
+        year=audio.get("date", [""])[0],
+        genre=audio.get("genre", [""])[0],
+    )
 
     if audio.pictures:
         picture = audio.pictures[0]
-        metadata["picture"] = base64.b64encode(picture.data).decode("utf-8")
+        metadata.picture = base64.b64encode(picture.data).decode("utf-8")
 
     if "lyrics" in audio:
-        metadata["lyrics"] = audio["lyrics"][0]
+        metadata.lyrics = audio["lyrics"][0]
 
     return metadata
 
 
 def get_wav_metadata(file_path):
     audio = WAVE(file_path)
-    metadata = {
-        "title": audio.get("TIT2", [""])[0],
-        "artist": audio.get("TPE1", [""])[0],
-        "album": audio.get("TALB", [""])[0],
-        "year": audio.get("TDRC", [""])[0],
-        "genre": audio.get("TCON", [""])[0],
-        "picture": "",
-        "lyrics": "",
-    }
+    metadata = Metadata(
+        title=audio.get("TIT2", [""])[0],
+        artist=audio.get("TPE1", [""])[0],
+        album=audio.get("TALB", [""])[0],
+        year=audio.get("TDRC", [""])[0],
+        genre=audio.get("TCON", [""])[0],
+    )
     return metadata
 
 
 def get_ape_metadata(file_path):
     audio = MonkeysAudio(file_path)
-    metadata = {
-        "title": audio.get("TIT2", [""])[0],
-        "artist": audio.get("TPE1", [""])[0],
-        "album": audio.get("TALB", [""])[0],
-        "year": audio.get("TDRC", [""])[0],
-        "genre": audio.get("TCON", [""])[0],
-        "picture": "",
-        "lyrics": "",
-    }
+    metadata = Metadata(
+        title=audio.get("TIT2", [""])[0],
+        artist=audio.get("TPE1", [""])[0],
+        album=audio.get("TALB", [""])[0],
+        year=audio.get("TDRC", [""])[0],
+        genre=audio.get("TCON", [""])[0],
+    )
     return metadata
 
 
 def get_ogg_metadata(file_path):
     audio = OggVorbis(file_path)
-    metadata = {
-        "title": audio.get("title", [""])[0],
-        "artist": audio.get("artist", [""])[0],
-        "album": audio.get("album", [""])[0],
-        "year": audio.get("date", [""])[0],
-        "genre": audio.get("genre", [""])[0],
-        "picture": "",
-        "lyrics": "",
-    }
+    metadata = Metadata(
+        title=audio.get("title", [""])[0],
+        artist=audio.get("artist", [""])[0],
+        album=audio.get("album", [""])[0],
+        year=audio.get("date", [""])[0],
+        genre=audio.get("genre", [""])[0],
+    )
     return metadata
 
 
 def get_m4a_metadata(file_path):
     audio = MP4(file_path)
-    metadata = {
-        "title": audio.tags.get("\xa9nam", [""])[0],
-        "artist": audio.tags.get("\xa9ART", [""])[0],
-        "album": audio.tags.get("\xa9alb", [""])[0],
-        "year": audio.tags.get("\xa9day", [""])[0],
-        "genre": audio.tags.get("\xa9gen", [""])[0],
-        "picture": "",
-        "lyrics": "",
-    }
+    metadata = Metadata(
+        title=audio.tags.get("\xa9nam", [""])[0],
+        artist=audio.tags.get("\xa9ART", [""])[0],
+        album=audio.tags.get("\xa9alb", [""])[0],
+        year=audio.tags.get("\xa9day", [""])[0],
+        genre=audio.tags.get("\xa9gen", [""])[0],
+    )
 
     if "covr" in audio.tags:
         cover = audio.tags["covr"][0]
-        metadata["picture"] = base64.b64encode(cover).decode("utf-8")
+        metadata.picture = base64.b64encode(cover).decode("utf-8")
 
     return metadata
 

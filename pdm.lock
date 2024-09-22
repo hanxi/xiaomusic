@@ -5,7 +5,7 @@
 groups = ["default", "dev", "lint"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:743f0a2ac59e1902f4f5389375ec5df7e2469502b0dff7cef40d391febd1ad92"
+content_hash = "sha256:d7209c5b89041122b16847a761d8f522ea404543d50b859fb283f9061d4e9f36"
 
 [[metadata.targets]]
 requires_python = "==3.10.12"
@@ -755,6 +755,17 @@ marker = "python_full_version == \"3.10.12\""
 files = [
     {file = "mutagen-1.47.0-py3-none-any.whl", hash = "sha256:edd96f50c5907a9539d8e5bba7245f62c9f520aef333d13392a79a4f70aca719"},
     {file = "mutagen-1.47.0.tar.gz", hash = "sha256:719fadef0a978c31b4cf3c956261b3c58b6948b32023078a2117b1de09f0fc99"},
+]
+
+[[package]]
+name = "opencc-python-reimplemented"
+version = "0.1.7"
+summary = "OpenCC made with Python"
+groups = ["default"]
+marker = "python_full_version == \"3.10.12\""
+files = [
+    {file = "opencc-python-reimplemented-0.1.7.tar.gz", hash = "sha256:4f777ea3461a25257a7b876112cfa90bb6acabc6dfb843bf4d11266e43579dee"},
+    {file = "opencc_python_reimplemented-0.1.7-py2.py3-none-any.whl", hash = "sha256:41b3b92943c7bed291f448e9c7fad4b577c8c2eae30fcfe5a74edf8818493aa6"},
 ]
 
 [[package]]
