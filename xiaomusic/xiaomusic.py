@@ -13,7 +13,6 @@ from collections import OrderedDict
 from dataclasses import asdict
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-import threading
 
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiNAService
@@ -74,7 +73,7 @@ class XiaoMusic:
         self.devices = {}  # key 为 did
         self.running_task = []
         self.all_music_tags = {}  # 歌曲额外信息
-        self._tag_generation_task = []
+        self._tag_generation_task = False
         self._extra_index_search = {}
 
         # 初始化配置
@@ -483,28 +482,28 @@ class XiaoMusic:
             self.log.info("保存：tag cache 未启用")
 
     def ensure_single_thread_for_tag(self):
-        if len(self._tag_generation_task) > 0:
-            if self._tag_generation_task[0].is_alive():
-                self.log.info(f"tag 更新中，请等待")
-                return False
-            else:
-                self._tag_generation_task.pop(0).join()
-        return True
+        if self._tag_generation_task:
+            self.log.info(f"tag 更新中，请等待")
+        return not self._tag_generation_task
 
     def try_gen_all_music_tag(self, only_items: dict = None):
         if self.ensure_single_thread_for_tag():
-            thread = threading.Thread(target=self._gen_all_music_tag, args=(only_items,))
-            self._tag_generation_task.append(thread)
-            thread.start()
-            self.log.info("启动后台重建 tag cache")
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.ensure_future(self._gen_all_music_tag(only_items))
+                self.log.info("启动后台构建 tag cache")
+            else:
+                self.log.info("协程时间循环未启动")
 
-    def _gen_all_music_tag(self, only_items: dict = None):
+    async def _gen_all_music_tag(self, only_items: dict = None):
+        self._tag_generation_task = True
         if only_items is None:
             only_items = self.all_music  # 默认更新全部
             
         all_music_tags = self.try_load_from_tag_cache()
         all_music_tags.update(self.all_music_tags)  # 保证最新
         for name, file_or_url in only_items.items():
+            await asyncio.sleep(0)
             if name not in all_music_tags:
                 try:
                     if self.is_web_music(name):
@@ -520,6 +519,7 @@ class XiaoMusic:
         self.all_music_tags = all_music_tags
         # 刷新 tag cache
         self.try_save_tag_cache()
+        self._tag_generation_task = False
         self.log.info(f"tag 更新完成")
 
     # 获取目录下所有歌曲,生成随机播放列表
@@ -643,6 +643,7 @@ class XiaoMusic:
             await asyncio.sleep(3600)
 
     async def run_forever(self):
+        self.try_gen_all_music_tag()  # 事件循环开始后调用一次
         self.crontab.start()
         await self.analytics.send_startup_event()
         analytics_task = asyncio.create_task(self.analytics_task_daily())
