@@ -13,6 +13,7 @@ from collections import OrderedDict
 from dataclasses import asdict
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+import threading
 
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiNAService
@@ -73,6 +74,7 @@ class XiaoMusic:
         self.devices = {}  # key 为 did
         self.running_task = []
         self.all_music_tags = {}  # 歌曲额外信息
+        self._tag_generation_task = []
         self._extra_index_search = {}
 
         # 初始化配置
@@ -440,6 +442,8 @@ class XiaoMusic:
 
     # 给前端调用
     def refresh_music_tag(self):
+        if not self.ensure_single_thread_for_tag():
+            return
         filename = self.config.tag_cache_path
         if filename is not None:
             # 清空 cache
@@ -449,8 +453,8 @@ class XiaoMusic:
         else:
             self.log.info("刷新：tag cache 未启用")
         # TODO: 优化性能？
-        self._gen_all_music_list()
-        self.log.debug("刷新：已重建 tag cache")
+        self.try_gen_all_music_tag()
+        self.log.info("刷新：已启动重建 tag cache")
 
     def try_load_from_tag_cache(self) -> dict:
         filename = self.config.tag_cache_path
@@ -478,10 +482,49 @@ class XiaoMusic:
         else:
             self.log.info("保存：tag cache 未启用")
 
+    def ensure_single_thread_for_tag(self):
+        if len(self._tag_generation_task) > 0:
+            if self._tag_generation_task[0].is_alive():
+                self.log.info(f"tag 更新中，请等待")
+                return False
+            else:
+                self._tag_generation_task.pop(0).join()
+        return True
+
+    def try_gen_all_music_tag(self, only_items: dict = None):
+        if self.ensure_single_thread_for_tag():
+            thread = threading.Thread(target=self._gen_all_music_tag, args=(only_items,))
+            self._tag_generation_task.append(thread)
+            thread.start()
+            self.log.info("启动后台重建 tag cache")
+
+    def _gen_all_music_tag(self, only_items: dict = None):
+        if only_items is None:
+            only_items = self.all_music  # 默认更新全部
+            
+        all_music_tags = self.try_load_from_tag_cache()
+        all_music_tags.update(self.all_music_tags)  # 保证最新
+        for name, file_or_url in only_items.items():
+            if name not in all_music_tags:
+                try:
+                    if self.is_web_music(name):
+                        # TODO: 网络歌曲获取歌曲额外信息
+                        pass
+                    elif os.path.exists(file_or_url):
+                        all_music_tags[name] = get_audio_metadata(file_or_url)
+                    else:
+                        self.log.info(f"{name}/{file_or_url} 无法更新 tag")
+                except BaseException as e:
+                    self.log.info(f"{e} {file_or_url} error {type(file_or_url)}!")
+        # 全部更新结束后，一次性赋值
+        self.all_music_tags = all_music_tags
+        # 刷新 tag cache
+        self.try_save_tag_cache()
+        self.log.info(f"tag 更新完成")
+
     # 获取目录下所有歌曲,生成随机播放列表
     def _gen_all_music_list(self):
         self.all_music = {}
-        self.all_music_tags = self.try_load_from_tag_cache()
         all_music_by_dir = {}
         local_musics = traverse_music_directory(
             self.music_path,
@@ -505,8 +548,6 @@ class XiaoMusic:
                 filename = os.path.basename(file)
                 (name, _) = os.path.splitext(filename)
                 self.all_music[name] = file
-                if name not in self.all_music_tags:
-                    self.all_music_tags[name] = get_audio_metadata(file)
                 all_music_by_dir[dir_name][name] = True
                 self.log.debug(f"_gen_all_music_list {name}:{dir_name}:{file}")
 
@@ -547,8 +588,8 @@ class XiaoMusic:
             if not (v.startswith("http") or v.startswith("https")):
                 self._extra_index_search[v] = k
 
-        # 刷新 tag cache
-        self.try_save_tag_cache()
+        # all_music 更新，重建 tag
+        self.try_gen_all_music_tag()
 
     def _append_custom_play_list(self):
         if not self.config.custom_play_list_json:
@@ -581,9 +622,6 @@ class XiaoMusic:
                     if (not name) or (not url):
                         continue
                     self.all_music[name] = url
-                    # TODO: 网络歌曲获取歌曲额外信息
-                    # if name not in self.all_music_tags:
-                    #     self.all_music_tags[name] = get_audio_metadata(url)
                     one_music_list.append(name)
 
                     # 处理电台列表
@@ -1395,7 +1433,10 @@ class XiaoMusicDevice:
 
     # 把下载的音乐加入播放列表
     def add_download_music(self, name):
-        self.xiaomusic.all_music[name] = os.path.join(self.download_path, f"{name}.mp3")
+        filepath = os.path.join(self.download_path, f"{name}.mp3")
+        self.xiaomusic.all_music[name] = filepath
+        # 应该很快，直接运行
+        self.xiaomusic._gen_all_music_tag({name: filepath})
         if name not in self._play_list:
             self._play_list.append(name)
             self.log.info(f"add_download_music add_music {name}")
