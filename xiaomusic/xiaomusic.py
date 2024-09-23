@@ -503,7 +503,7 @@ class XiaoMusic:
         all_music_tags = self.try_load_from_tag_cache()
         all_music_tags.update(self.all_music_tags)  # 保证最新
         for name, file_or_url in only_items.items():
-            await asyncio.sleep(0)
+            await asyncio.sleep(0.001)
             if name not in all_music_tags:
                 try:
                     if self.is_web_music(name):
