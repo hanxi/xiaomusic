@@ -138,6 +138,7 @@ def find_best_match(user_input, collection, cutoff=0.6, n=1, extra_search_index=
     # 如果数量不满足，继续搜索
     lower_extra_search_index = {
         traditional_to_simple(k.lower()): v for k, v in extra_search_index.items()
+        if v not in cur_matched_collection
     }
     matches = real_search(user_input, lower_extra_search_index.keys(), cutoff, n)
     cur_matched_collection += [lower_extra_search_index[match] for match in matches]
