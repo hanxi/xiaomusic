@@ -49,6 +49,13 @@ class Crontab:
 
         self.add_job(expression, job)
 
+    # 刷新播放列表任务
+    def add_job_refresh_music_list(self, expression, xiaomusic, **kwargs):
+        async def job():
+            await xiaomusic.gen_music_list()
+
+        self.add_job(expression, job)
+
     def add_job_cron(self, xiaomusic, cron):
         expression = cron["expression"]  # cron 计划格式
         name = cron["name"]  # stop, play, play_music_list, tts
