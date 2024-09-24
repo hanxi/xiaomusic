@@ -247,6 +247,7 @@ docker build -t xiaomusic .
 - XIAOMUSIC_PUBLIC_PORT 用于设置外网端口，对应后台的 【外网访问端口】，当使用反向代理时可以设置为外网端口，XIAOMUSIC_HOSTNAME 设为外网IP或者域名即可。
 - XIAOMUSIC_DOWNLOAD_PATH 变量可以配置下载目录，默认为空，表示使用 music 目录为下载目录，对应后台的 【音乐下载目录】。设置这个目录必须是 music 的子目录，否则刷新列表后会找不到歌曲。具体见 <https://github.com/hanxi/xiaomusic/issues/98>
 - XIAOMUSIC_PROXY 用于配置国内使用 youtube 源下载歌曲时使用的代理，参数格式参考 yt-dlp 文档说明。 见 <https://github.com/hanxi/xiaomusic/issues/2> 和 <https://github.com/hanxi/xiaomusic/issues/11>
+- MIIO_TTS_CMD 用于部分机型（如：`L05C`）使用 MiIO 支持 tts 能力，默认为空，命令选择见 [MiService-fork 文档](https://github.com/yihong0618/MiService)
 
 ### :warning: 安全提醒
 

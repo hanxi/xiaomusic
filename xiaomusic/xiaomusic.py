@@ -15,7 +15,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from aiohttp import ClientSession, ClientTimeout
-from miservice import MiAccount, MiNAService
+from miservice import MiAccount, MiIOService, MiNAService, miio_command
 
 from xiaomusic import __version__
 from xiaomusic.analytics import Analytics
@@ -64,6 +64,7 @@ class XiaoMusic:
         self.last_record = None
         self.cookie_jar = None
         self.mina_service = None
+        self.miio_service = None
         self.polling_event = asyncio.Event()
         self.new_record_event = asyncio.Event()
 
@@ -215,6 +216,7 @@ class XiaoMusic:
         # Forced login to refresh to refresh token
         await account.login("micoapi")
         self.mina_service = MiNAService(account)
+        self.miio_service = MiIOService(account)
 
     async def try_update_device_id(self):
         try:
@@ -1129,6 +1131,10 @@ class XiaoMusicDevice:
         self._last_cmd = None
         self.update_playlist()
 
+    @property
+    def did(self):
+        return self.xiaomusic.device_id_did[self.device_id]
+
     def get_cur_music(self):
         return self.device.cur_music
 
@@ -1504,7 +1510,17 @@ class XiaoMusicDevice:
 
     async def text_to_speech(self, value):
         try:
-            await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
+            if not self.config.miio_tts_command:
+                self.log.debug("Call MiNAService tts.")
+                await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
+            else:
+                self.log.debug("Call MiIOService tts.")
+                value = value.replace(" ", ",")  # 不能有空格
+                await miio_command(
+                    self.xiaomusic.miio_service,
+                    self.did,
+                    f"{self.config.miio_tts_command} {value}",
+                )
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
@@ -1640,6 +1656,7 @@ class XiaoMusicDevice:
         self._playing = False
         if arg1 != "notts":
             await self.do_tts(self.config.stop_tts_msg)
+        await asyncio.sleep(3)  # 等它说完
         # 取消组内所有的下一首歌曲的定时器
         self.cancel_group_next_timer()
         await self.group_force_stop_xiaoai()
