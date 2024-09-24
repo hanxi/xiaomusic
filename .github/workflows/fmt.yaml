@@ -1,0 +1,47 @@
+name: fmt
+
+on:
+  push:
+    branches:
+      - "*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v4
+      - name: install ruff
+        run: pip install ruff
+      - name: Format code
+        run: pdm fmt && pdm lint --fix
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [ -n "$(git diff)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+  
+      # Optionally, customize the user name and commit message, and can add an email as well such as Github Actions' email
+      - name: Set up Git and Commit Changes
+        run: |
+          if [ "${{ steps.check_changes.outputs.changed }}" == "true" ]; then
+            git config --local user.name "Formatter [BOT]"
+            git add .
+            git commit -m "Auto-format code 🧹🌟🤖"
+            git push
+          fi
