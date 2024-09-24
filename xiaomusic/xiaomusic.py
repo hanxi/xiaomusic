@@ -15,7 +15,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from aiohttp import ClientSession, ClientTimeout
-from miservice import MiAccount, MiNAService, MiIOService, miio_command
+from miservice import MiAccount, MiIOService, MiNAService, miio_command
 
 from xiaomusic import __version__
 from xiaomusic.analytics import Analytics
@@ -522,7 +522,7 @@ class XiaoMusic:
         # 刷新 tag cache
         self.try_save_tag_cache()
         self._tag_generation_task = False
-        self.log.info(f"tag 更新完成")
+        self.log.info("tag 更新完成")
 
     # 获取目录下所有歌曲,生成随机播放列表
     def _gen_all_music_list(self):
@@ -1509,7 +1509,7 @@ class XiaoMusicDevice:
         return False
 
     async def text_to_speech(self, value):
-        try:    
+        try:
             if not self.config.miio_tts_command:
                 self.log.debug("Call MiNAService tts.")
                 await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
@@ -1517,10 +1517,12 @@ class XiaoMusicDevice:
                 self.log.debug("Call MiIOService tts.")
                 value = value.replace(" ", ",")  # 不能有空格
                 await miio_command(
-                    self.xiaomusic.miio_service, self.did,
-                    f"{self.config.miio_tts_command} {value}")
+                    self.xiaomusic.miio_service,
+                    self.did,
+                    f"{self.config.miio_tts_command} {value}",
+                )
         except Exception as e:
-                self.log.exception(f"Execption {e}")
+            self.log.exception(f"Execption {e}")
 
     # 同一组设备播放
     async def group_player_play(self, url, name=""):
