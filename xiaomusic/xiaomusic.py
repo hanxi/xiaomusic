@@ -107,6 +107,16 @@ class XiaoMusic:
         if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
 
+    @property
+    def hostname(self):
+        if self.config.disable_httpauth:
+            return self._hostname
+        else:
+            encoded_username = urllib.parse.quote(self.config.httpauth_username)
+            encoded_password = urllib.parse.quote(self.config.httpauth_password)
+            return f"://{encoded_username}:{encoded_password}@".join(
+                self._hostname.split("://"))
+
     def init_config(self):
         self.music_path = self.config.music_path
         self.download_path = self.config.download_path
@@ -116,9 +126,9 @@ class XiaoMusic:
         if not os.path.exists(self.download_path):
             os.makedirs(self.download_path)
 
-        self.hostname = self.config.hostname
-        if not self.hostname.startswith(("http://", "https://")):
-            self.hostname = f"http://{self.hostname}"  # 默认 http
+        self._hostname = self.config.hostname
+        if not self._hostname.startswith(("http://", "https://")):
+            self._hostname = f"http://{self._hostname}"  # 默认 http
         self.port = self.config.port
         self.public_port = self.config.public_port
         if self.public_port == 0:

@@ -385,7 +385,7 @@ range_pattern = re.compile(r"bytes=(\d+)-(\d*)")
 
 
 @app.get("/music/{file_path:path}")
-async def music_file(request: Request, file_path: str):
+async def music_file(request: Request, file_path: str, Verifcation=Depends(verification)):
     absolute_path = os.path.abspath(config.music_path)
     absolute_file_path = os.path.normpath(os.path.join(absolute_path, file_path))
     if not absolute_file_path.startswith(absolute_path):
@@ -424,7 +424,7 @@ async def music_file(request: Request, file_path: str):
 
 
 @app.options("/music/{file_path:path}")
-async def music_options():
+async def music_options(Verifcation=Depends(verification)):
     headers = {
         "Accept-Ranges": "bytes",
     }
