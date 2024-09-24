@@ -25,6 +25,7 @@ from xiaomusic import __version__
 from xiaomusic.utils import (
     deepcopy_data_no_sensitive_info,
     downloadfile,
+    get_latest_version,
 )
 
 xiaomusic = None
@@ -356,6 +357,15 @@ async def debug_play_by_music_url(request: Request, Verifcation=Depends(verifica
         return await xiaomusic.debug_play_by_music_url(arg1=data_dict)
     except json.JSONDecodeError as err:
         raise HTTPException(status_code=400, detail="Invalid JSON") from err
+
+
+@app.get("/latestversion")
+async def latest_version(Verifcation=Depends(verification)):
+    version = await get_latest_version("xiaomusic")
+    if version:
+        return {"ret": "OK", "version": version}
+    else:
+        return {"ret": "Fetch version failed"}
 
 
 async def file_iterator(file_path, start, end):

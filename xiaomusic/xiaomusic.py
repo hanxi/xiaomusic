@@ -483,7 +483,7 @@ class XiaoMusic:
 
     def ensure_single_thread_for_tag(self):
         if self._tag_generation_task:
-            self.log.info(f"tag 更新中，请等待")
+            self.log.info("tag 更新中，请等待")
         return not self._tag_generation_task
 
     def try_gen_all_music_tag(self, only_items: dict = None):
@@ -499,7 +499,7 @@ class XiaoMusic:
         self._tag_generation_task = True
         if only_items is None:
             only_items = self.all_music  # 默认更新全部
-            
+
         all_music_tags = self.try_load_from_tag_cache()
         all_music_tags.update(self.all_music_tags)  # 保证最新
         for name, file_or_url in only_items.items():
@@ -520,7 +520,7 @@ class XiaoMusic:
         # 刷新 tag cache
         self.try_save_tag_cache()
         self._tag_generation_task = False
-        self.log.info(f"tag 更新完成")
+        self.log.info("tag 更新完成")
 
     # 获取目录下所有歌曲,生成随机播放列表
     def _gen_all_music_list(self):

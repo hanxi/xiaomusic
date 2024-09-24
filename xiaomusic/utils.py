@@ -137,7 +137,8 @@ def find_best_match(user_input, collection, cutoff=0.6, n=1, extra_search_index=
 
     # 如果数量不满足，继续搜索
     lower_extra_search_index = {
-        traditional_to_simple(k.lower()): v for k, v in extra_search_index.items()
+        traditional_to_simple(k.lower()): v
+        for k, v in extra_search_index.items()
         if v not in cur_matched_collection
     }
     matches = real_search(user_input, lower_extra_search_index.keys(), cutoff, n)
@@ -639,3 +640,14 @@ def list2str(li, verbose=False):
         return f"{li[:2]} ... {li[-2:]} with len: {len(li)}"
     else:
         return f"{li}"
+
+
+async def get_latest_version(package_name: str) -> str:
+    url = f"https://pypi.org/pypi/{package_name}/json"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.json()
+                return data["info"]["version"]
+            else:
+                return None
