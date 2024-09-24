@@ -429,3 +429,18 @@ async def music_options():
         "Accept-Ranges": "bytes",
     }
     return Response(headers=headers)
+
+
+@app.get("/picture/{file_path:path}")
+async def get_picture(request: Request, file_path: str):
+    absolute_path = os.path.abspath(config.picture_cache_path)
+    absolute_file_path = os.path.normpath(os.path.join(absolute_path, file_path))
+    if not absolute_file_path.startswith(absolute_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    if not os.path.exists(absolute_file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    mime_type, _ = mimetypes.guess_type(absolute_file_path)
+    if mime_type is None:
+        mime_type = "image/jpeg"
+    return FileResponse(absolute_file_path, media_type=mime_type)

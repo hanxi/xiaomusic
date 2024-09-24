@@ -4,7 +4,7 @@ from xiaomusic.const import (
     SUPPORT_MUSIC_TYPE,
 )
 from xiaomusic.utils import (
-    get_audio_metadata,
+    extract_audio_metadata,
     traverse_music_directory,
 )
 
@@ -20,12 +20,8 @@ from xiaomusic.utils import (
 async def test_one_music(filename):
     # 获取播放时长
     try:
-        metadata = get_audio_metadata(filename)
-        print(metadata.title, metadata.album)
-        if metadata:
-            lyrics = metadata.lyrics
-            if lyrics:
-                print(f"歌曲 : {filename} 的 {lyrics}")
+        metadata = extract_audio_metadata(filename, "cache/picture_cache")
+        print(metadata)
     except Exception as e:
         print(f"歌曲 : {filename} no tag {e}")
         traceback.print_exc()
@@ -34,13 +30,14 @@ async def test_one_music(filename):
 async def main(directory):
     # 获取所有歌曲文件
     local_musics = traverse_music_directory(directory, 10, [], SUPPORT_MUSIC_TYPE)
-    print(local_musics)
     for _, files in local_musics.items():
         for file in files:
-            await test_one_music(file)
+            print(file)
+            # await test_one_music(file)
             pass
 
     await test_one_music("./music/一生何求.mp3")
+    await test_one_music("./music/程响-人间烟火.flac")
 
 
 if __name__ == "__main__":

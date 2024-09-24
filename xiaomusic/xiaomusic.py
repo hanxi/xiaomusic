@@ -41,9 +41,9 @@ from xiaomusic.utils import (
     convert_file_to_mp3,
     custom_sort_key,
     deepcopy_data_no_sensitive_info,
+    extract_audio_metadata,
     find_best_match,
     fuzzyfinder,
-    get_audio_metadata,
     get_local_music_duration,
     get_web_music_duration,
     is_mp3,
@@ -399,7 +399,19 @@ class XiaoMusic:
         return sec, url
 
     def get_music_tags(self, name):
-        return self.all_music_tags.get(name, asdict(Metadata()))
+        tags = copy.copy(self.all_music_tags.get(name, asdict(Metadata())))
+        picture = tags["picture"]
+        if picture:
+            picture = picture.replace("\\", "/")
+            if picture.startswith(self.config.picture_cache_path):
+                picture = picture[len(self.config.picture_cache_path) :]
+            if picture.startswith("/"):
+                picture = picture[1:]
+            encoded_name = urllib.parse.quote(picture)
+            tags["picture"] = (
+                f"{self.hostname}:{self.public_port}/picture/{encoded_name}"
+            )
+        return tags
 
     def get_music_url(self, name):
         if self.is_web_music(name):
@@ -454,6 +466,8 @@ class XiaoMusic:
         else:
             self.log.info("刷新：tag cache 未启用")
         # TODO: 优化性能？
+        # TODO 如何安全的清空 picture_cache_path
+        self.all_music_tags = {}  # 需要清空内存残留
         self.try_gen_all_music_tag()
         self.log.info("刷新：已启动重建 tag cache")
 
@@ -512,11 +526,13 @@ class XiaoMusic:
                         # TODO: 网络歌曲获取歌曲额外信息
                         pass
                     elif os.path.exists(file_or_url):
-                        all_music_tags[name] = get_audio_metadata(file_or_url)
+                        all_music_tags[name] = extract_audio_metadata(
+                            file_or_url, self.config.picture_cache_path
+                        )
                     else:
                         self.log.info(f"{name}/{file_or_url} 无法更新 tag")
                 except BaseException as e:
-                    self.log.info(f"{e} {file_or_url} error {type(file_or_url)}!")
+                    self.log.exception(f"{e} {file_or_url} error {type(file_or_url)}!")
         # 全部更新结束后，一次性赋值
         self.all_music_tags = all_music_tags
         # 刷新 tag cache

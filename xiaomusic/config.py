@@ -255,3 +255,10 @@ class Config:
             os.makedirs(self.cache_dir)
         filename = os.path.join(self.cache_dir, "tag_cache.json")
         return filename
+
+    @property
+    def picture_cache_path(self):
+        cache_path = os.path.join(self.cache_dir, "picture_cache")
+        if not os.path.exists(cache_path):
+            os.makedirs(cache_path)
+        return cache_path
