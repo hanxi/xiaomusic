@@ -313,5 +313,5 @@ docker build -t xiaomusic .
 
 ## License
 
-[MIT](https://github.com/hanxi/xiaomusic/blob/main/LICENSE) License © 2024-PRESENT hanxi
+[MIT](https://github.com/hanxi/xiaomusic/blob/main/LICENSE) License © 2024 涵曦
 
