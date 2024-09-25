@@ -17,6 +17,7 @@ dependencies = [
     "ga4mp>=2.0.4",
     "apscheduler>=3.10.4",
     "opencc-python-reimplemented==0.1.7",
+    "pillow>=10.4.0",
 ]
 requires-python = ">=3.10,<3.12"
 readme = "README.md"
@@ -65,6 +66,7 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.
 [tool.pdm.scripts]
 lint = "ruff check ."
 fmt = "ruff format ."
+lintfmt = {composite = ["ruff check --fix .", "ruff format ."]}
 
 [tool.commitizen]
 name = "cz_conventional_commits"

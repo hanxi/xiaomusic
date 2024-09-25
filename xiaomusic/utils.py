@@ -6,6 +6,7 @@ import base64
 import copy
 import difflib
 import hashlib
+import io
 import json
 import logging
 import mimetypes
@@ -32,6 +33,7 @@ from mutagen.oggvorbis import OggVorbis
 from mutagen.wave import WAVE
 from mutagen.wavpack import WavPack
 from opencc import OpenCC
+from PIL import Image
 from requests.utils import cookiejar_from_dict
 
 from xiaomusic.const import SUPPORT_MUSIC_TYPE
@@ -449,7 +451,7 @@ def convert_file_to_mp3(input_file: str, ffmpeg_location: str, music_path: str) 
     try:
         subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
-        print(f"Error during conversion: {e}")
+        logging.exception(f"Error during conversion: {e}")
         return None
 
     relative_path = os.path.relpath(out_file_path, music_path)
@@ -557,21 +559,41 @@ def _save_picture(picture_data, save_root, file_path):
     dir_path = os.path.join(save_root, file_hash[-6:])
     os.makedirs(dir_path, exist_ok=True)
 
-    # 检测图片格式
-    if picture_data[:3] == b"\xff\xd8\xff":
-        ext = "jpg"
-    elif picture_data[:8] == b"\x89PNG\r\n\x1a\n":
-        ext = "png"
-    else:
-        ext = "bin"  # 未知格式
-
     # 保存图片
     filename = os.path.basename(file_path)
     (name, _) = os.path.splitext(filename)
-    picture_path = os.path.join(dir_path, f"{name}.{ext}")
-    with open(picture_path, "wb") as img:
-        img.write(picture_data)
+    picture_path = os.path.join(dir_path, f"{name}.jpg")
+
+    try:
+        _resize_save_image(picture_data, picture_path)
+    except Exception as e:
+        logging.exception(f"Error _resize_save_image: {e}")
     return picture_path
+
+
+def _resize_save_image(image_bytes, save_path, max_size=300):
+    # 将 bytes 转换为 PIL Image 对象
+    image = Image.open(io.BytesIO(image_bytes))
+    image = image.convert("RGB")
+
+    # 获取原始尺寸
+    original_width, original_height = image.size
+
+    # 如果图片的宽度和高度都小于 max_size，则直接保存原始图片
+    if original_width <= max_size and original_height <= max_size:
+        image.save(save_path, format="JPEG")
+        return
+
+    # 计算缩放比例，保持等比缩放
+    scaling_factor = min(max_size / original_width, max_size / original_height)
+
+    # 计算新的尺寸
+    new_width = int(original_width * scaling_factor)
+    new_height = int(original_height * scaling_factor)
+
+    resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    resized_image.save(save_path, format="JPEG")
+    return save_path
 
 
 def extract_audio_metadata(file_path, save_root):
