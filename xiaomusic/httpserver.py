@@ -399,7 +399,7 @@ def access_key_verification(file_path, key, code):
     if code is not None:
         current_code_bytes = code.encode("utf8")
         correct_code_bytes = (
-            hashlib.md5(
+            hashlib.sha256(
                 (
                     file_path + config.httpauth_username + config.httpauth_password
                 ).encode("utf-8")
