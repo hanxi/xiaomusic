@@ -419,7 +419,7 @@ range_pattern = re.compile(r"bytes=(\d+)-(\d*)")
 
 @app.get("/music/{file_path:path}")
 async def music_file(request: Request, file_path: str, key: str = "", code: str = ""):
-    if not access_key_verification(request.url.path, key, code):
+    if not access_key_verification(f"/music/{file_path}", key, code):
         raise HTTPException(status_code=404, detail="File not found")
 
     absolute_path = os.path.abspath(config.music_path)
@@ -469,7 +469,7 @@ async def music_options():
 
 @app.get("/picture/{file_path:path}")
 async def get_picture(request: Request, file_path: str, key: str = "", code: str = ""):
-    if not access_key_verification(request.url.path, key, code):
+    if not access_key_verification(f"/picture/{file_path}", key, code):
         raise HTTPException(status_code=404, detail="File not found")
 
     absolute_path = os.path.abspath(config.picture_cache_path)
