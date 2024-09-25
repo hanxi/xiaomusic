@@ -433,9 +433,9 @@ class XiaoMusic:
         tags = copy.copy(self.all_music_tags.get(name, asdict(Metadata())))
         picture = tags["picture"]
         if picture:
-            picture = picture.replace("\\", "/")
             if picture.startswith(self.config.picture_cache_path):
                 picture = picture[len(self.config.picture_cache_path) :]
+            picture = picture.replace("\\", "/")
             if picture.startswith("/"):
                 picture = picture[1:]
             encoded_name = urllib.parse.quote(picture)
@@ -473,9 +473,9 @@ class XiaoMusic:
                 self.log.warning(f"Failed to convert file to MP3 format: {filename}")
 
         # 构造音乐文件的URL
-        filename = filename.replace("\\", "/")
         if filename.startswith(self.config.music_path):
             filename = filename[len(self.config.music_path) :]
+        filename = filename.replace("\\", "/")
         if filename.startswith("/"):
             filename = filename[1:]
 
