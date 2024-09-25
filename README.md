@@ -1,4 +1,4 @@
-# xiaomusic
+# XiaoMusic: 无限听歌，解放小爱音箱
 [![GitHub License](https://img.shields.io/github/license/hanxi/xiaomusic)](https://github.com/hanxi/xiaomusic)
 [![Docker Image Version](https://img.shields.io/docker/v/hanxi/xiaomusic?sort=semver&label=docker%20image)](https://hub.docker.com/r/hanxi/xiaomusic)
 [![Docker Pulls](https://img.shields.io/docker/pulls/hanxi/xiaomusic)](https://hub.docker.com/r/hanxi/xiaomusic)
@@ -14,9 +14,9 @@
 <https://github.com/hanxi/xiaomusic>
 
 > [!TIP]
-> 初次安装遇到问题请查阅 FAQ: <https://github.com/hanxi/xiaomusic/issues/99> 上是否已经有解决办法。
+> 初次安装遇到问题请查阅 [💬 FAQ问题集合](https://github.com/hanxi/xiaomusic/issues/99) ，一般遇到的问题都已经有解决办法。
 
-## 最简配置运行
+## 👋 最简配置运行
 
 已经支持在 web 页面配置其他参数，docker 启动命令如下:
 
@@ -49,7 +49,7 @@ docker 和 docker compose 二选一即可，启动成功后，在 web 页面可�
 > [!TIP]
 > 目前安装步骤已经是最简化了，如果还是嫌安装麻烦，可以微信或者 QQ 约我远程安装，我一般周末和晚上才有时间，收个辛苦费 :moneybag: 50 元一次，安装失败不收费。
 
-### 修改默认8090端口映射
+### 🔥 修改默认8090端口映射
 
 如果需要修改 8090 端口为其他端口，比如 5678，需要这样配，3个数字都需要是 5678 。见 <https://github.com/hanxi/xiaomusic/issues/19>
 
@@ -75,7 +75,7 @@ services:
 > [!IMPORTANT]
 > XIAOMUSIC_PORT 也可以在后台配置，对应的是监听端口。
 
-## pip 方式安装运行
+## 🛠️ pip 方式安装运行
 
 ```shell
 > pip install -U xiaomusic
@@ -85,7 +85,7 @@ services:
   \  /  | |  / _` |  / _ \  | |\/| | | | | | / __| | |  / __|
   /  \  | | | (_| | | (_) | | |  | | | |_| | \__ \ | | | (__
  /_/\_\ |_|  \__,_|  \___/  |_|  |_|  \__,_| |___/ |_|  \___|
-          XiaoMusic v0.3.29 by: github.com/hanxi
+          XiaoMusic v0.3.37 by: github.com/hanxi
 
 usage: xiaomusic [-h] [--port PORT] [--hardware HARDWARE] [--account ACCOUNT]
                  [--password PASSWORD] [--cookie COOKIE] [--verbose]
@@ -109,7 +109,7 @@ options:
 
 不修改默认端口 8090 的情况下，只需要执行 `xiaomusic` 即可启动。
 
-## 开发环境运行
+## 🔩 开发环境运行
 
 - 使用 install_dependencies.sh 下载依赖
 - 使用 pdm 安装环境
@@ -122,7 +122,7 @@ pdm run xiaomusic.py
 如果是开发前端界面，可以通过 <http://localhost:8090/docs>
 查看有什么接口。目前的 web 控制台非常简陋，欢迎有兴趣的朋友帮忙实现一个漂亮的前端，需要什么接口可以随时提需求。
 
-### 代码提交规范
+### 🚦 代码提交规范
 
 提交前请执行
 
@@ -139,7 +139,7 @@ pdm lint --fix
 docker build -t xiaomusic .
 ```
 
-### 支持语音口令
+### 🤐 支持语音口令
 
 - **播放歌曲**
 - **播放歌曲**+歌名 比如：播放歌曲周杰伦晴天
@@ -188,7 +188,7 @@ docker build -t xiaomusic .
 > 目前应该所有设备类型都已经支持播放，有问题随时反馈。
 > 其他触屏版不能播放可以设置【型号兼容模式】选项为 true 试试。见 <https://github.com/hanxi/xiaomusic/issues/30>
 
-## 支持音乐格式
+## 🎵 支持音乐格式
 
 - mp3
 - flac
@@ -203,7 +203,7 @@ docker build -t xiaomusic .
 > 如果格式不能播放可以打开【转换为MP3】和【型号兼容模式】选项。具体见 <https://github.com/hanxi/xiaomusic/issues/153#issuecomment-2328168689>
 
 
-## 简易的控制面板
+## 💡 简易的控制面板
 
 浏览器进入 <http://192.168.2.5:8090>
 
@@ -220,14 +220,14 @@ docker build -t xiaomusic .
 
 采用新的设置页面之后，没有必须在启动前配置的环境变量了，除非是改默认的 8090 端口才需要配置环境变量。
 
-## 网络歌单功能
+## 🌏 网络歌单功能
 
 可以配置一个 json 格式的歌单，支持电台和歌曲，也可以直接用别人分享的链接，同时配备了 m3u 文件格式转换工具，可以很方便的把 m3u 电台文件转换成网络歌单格式的 json 文件，具体用法见  <https://github.com/hanxi/xiaomusic/issues/78>
 
 > [!NOTE]
 > 欢迎有想法的朋友们制作更多的歌单转换工具。
 
-## 更多其他可选配置
+## 🍺 更多其他可选配置
 
 - XIAOMUSIC_ACTIVE_CMD 环境变量，对应后台的 【允许唤醒的命令】，用于唤醒口令，配置成'play,random_play'，在非播放状态下，只有这两个指令（播放歌曲和随机播放）可以触发，触发后，xiaomusic进入playing状态，其他指令则可以正常触发。具体见 <https://github.com/hanxi/xiaomusic/pull/43>
 - XIAOMUSIC_EXCLUDE_DIRS 配置歌曲目录里需要忽略的目录，对应后台的 【忽略目录】
@@ -249,24 +249,24 @@ docker build -t xiaomusic .
 - XIAOMUSIC_PROXY 用于配置国内使用 youtube 源下载歌曲时使用的代理，参数格式参考 yt-dlp 文档说明。 见 <https://github.com/hanxi/xiaomusic/issues/2> 和 <https://github.com/hanxi/xiaomusic/issues/11>
 - MIIO_TTS_CMD 用于部分机型（如：`L05C`）使用 MiIO 支持 tts 能力，默认为空，命令选择见 [MiService-fork 文档](https://github.com/yihong0618/MiService)
 
-### :warning: 安全提醒
+### ⚠️ 安全提醒
 
 > [!IMPORTANT]
 > 如果配置了公网访问 xiaomusic ，请一定要开启密码登陆，并设置复杂的密码。且不要在公共场所的 WiFi 环境下使用，否则可能造成小米账号密码泄露。
 
-## 高级篇
+## 🤔 高级篇
 
 - 自定义口令功能 <https://github.com/hanxi/xiaomusic/issues/105>
 - [ ] 缺少一篇教程 [如何写自定义插件](https://github.com/hanxi/xiaomusic/issues/105)
 
-## 讨论区
+## 📢 讨论区
 
 - [点击链接加入QQ频道【xiaomusic】](https://pd.qq.com/s/e2jybz0ss)
 - [点击链接加入群聊【xiaomusic】 604526973](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=13St5PLVcTxYlWTAs_iAawazjtdD1l-a&authKey=dJWEpaT2fDBDpdUUOWj%2FLt6NS1ePBfShDfz7a6seNURi05VvVnAGQzXF%2FM%2F5HgIm&noverify=0&group_code=604526973)
 - <https://github.com/hanxi/xiaomusic/issues>
 - [微信群二维码](https://github.com/hanxi/xiaomusic/issues/86)
 
-## 感谢
+## ❤️ 感谢
 
 - [xiaomi](https://www.mi.com/)
 - [PDM](https://pdm.fming.dev/latest/)
@@ -280,7 +280,7 @@ docker build -t xiaomusic .
 - 所有帮忙调试和测试的朋友
 - 所有反馈问题和建议的朋友
 
-### 其他教程
+### 👉 其他教程
 
 > [!NOTE]
 > 下面教程可能比较旧，只供参考
@@ -293,6 +293,12 @@ docker build -t xiaomusic .
 - [弹个AI](https://mp.weixin.qq.com/s/sIsKxB7Y8b83AhnvaWiMog)
 - [简单免费！教你用绿联NAS联动小爱音箱，私人音乐库也能语音点播](https://post.m.smzdm.com/p/a8pldgg7/)
 
+## 🚨 免责声明
+
+本项目仅供学习和研究目的，不得用于任何商业活动。用户在使用本项目时应遵守所在地区的法律法规，对于违法使用所导致的后果，本项目及作者不承担任何责任。
+本项目可能存在未知的缺陷和风险（包括但不限于设备损坏和账号封禁等），使用者应自行承担使用本项目所产生的所有风险及责任。
+作者不保证本项目的准确性、完整性、及时性、可靠性，也不承担任何因使用本项目而产生的任何损失或损害责任。
+使用本项目即表示您已阅读并同意本免责声明的全部内容。
 
 ## Star History
 
@@ -304,3 +310,8 @@ docker build -t xiaomusic .
 - 点个 Star :star:
 - 谢谢 :heart:
 - ![喝杯奶茶](https://i.v2ex.co/7Q03axO5l.png)
+
+## License
+
+[MIT](https://github.com/hanxi/xiaomusic/blob/main/LICENSE) License © 2024-PRESENT hanxi
+
