@@ -1,6 +1,6 @@
 import asyncio
-import json
 import hashlib
+import json
 import mimetypes
 import os
 import re
@@ -390,37 +390,38 @@ def access_key_verification(file_path, key, code):
     if key is not None:
         current_key_bytes = key.encode("utf8")
         correct_key_bytes = (
-            config.httpauth_username + config.httpauth_password).encode("utf8")
-        is_correct_key = secrets.compare_digest(
-            correct_key_bytes, current_key_bytes
-        )
+            config.httpauth_username + config.httpauth_password
+        ).encode("utf8")
+        is_correct_key = secrets.compare_digest(correct_key_bytes, current_key_bytes)
         if is_correct_key:
             return True
 
     if code is not None:
         current_code_bytes = code.encode("utf8")
-        correct_code_bytes = hashlib.md5((
-            file_path + config.httpauth_username + config.httpauth_password
-        ).encode("utf-8")).hexdigest().encode("utf-8")
-        is_correct_code = secrets.compare_digest(
-            correct_code_bytes, current_code_bytes
+        correct_code_bytes = (
+            hashlib.md5(
+                (
+                    file_path + config.httpauth_username + config.httpauth_password
+                ).encode("utf-8")
+            )
+            .hexdigest()
+            .encode("utf-8")
         )
+        is_correct_code = secrets.compare_digest(correct_code_bytes, current_code_bytes)
         if is_correct_code:
             return True
 
     return False
-    
+
 
 range_pattern = re.compile(r"bytes=(\d+)-(\d*)")
 
 
 @app.get("/music/{file_path:path}")
-async def music_file(
-    request: Request, file_path: str, key: str = "", code: str = ""
-):    
+async def music_file(request: Request, file_path: str, key: str = "", code: str = ""):
     if not access_key_verification(request.url.path, key, code):
         raise HTTPException(status_code=404, detail="File not found")
-        
+
     absolute_path = os.path.abspath(config.music_path)
     absolute_file_path = os.path.normpath(os.path.join(absolute_path, file_path))
     if not absolute_file_path.startswith(absolute_path):
@@ -467,9 +468,7 @@ async def music_options():
 
 
 @app.get("/picture/{file_path:path}")
-async def get_picture(
-    request: Request, file_path: str, key: str = "", code: str = ""
-):
+async def get_picture(request: Request, file_path: str, key: str = "", code: str = ""):
     if not access_key_verification(request.url.path, key, code):
         raise HTTPException(status_code=404, detail="File not found")
 
