@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 import copy
+import hashlib
 import json
 import logging
 import math
@@ -106,6 +107,36 @@ class XiaoMusic:
 
         if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
+
+    def try_add_access_control_param(self, url):
+        if self.config.disable_httpauth:
+            return url
+
+        url_parts = urllib.parse.urlparse(url)
+        file_path = urllib.parse.unquote(url_parts.path)
+        correct_code = hashlib.md5(
+            (
+                file_path
+                + self.config.httpauth_username
+                + self.config.httpauth_password
+            ).encode("utf-8")
+        ).hexdigest()
+        self.log.debug(f"rewrite url: [{file_path}, {correct_code}]")
+
+        # make new url
+        parsed_get_args = dict(urllib.parse.parse_qsl(url_parts.query))
+        parsed_get_args.update({"code": correct_code})
+        encoded_get_args = urllib.parse.urlencode(parsed_get_args, doseq=True)
+        new_url = urllib.parse.ParseResult(
+            url_parts.scheme,
+            url_parts.netloc,
+            url_parts.path,
+            url_parts.params,
+            encoded_get_args,
+            url_parts.fragment,
+        ).geturl()
+
+        return new_url
 
     def init_config(self):
         self.music_path = self.config.music_path
@@ -408,8 +439,8 @@ class XiaoMusic:
             if picture.startswith("/"):
                 picture = picture[1:]
             encoded_name = urllib.parse.quote(picture)
-            tags["picture"] = (
-                f"{self.hostname}:{self.public_port}/picture/{encoded_name}"
+            tags["picture"] = self.try_add_access_control_param(
+                f"{self.hostname}:{self.public_port}/picture/{encoded_name}",
             )
         return tags
 
@@ -451,7 +482,9 @@ class XiaoMusic:
         self.log.info(f"get_music_url local music. name:{name}, filename:{filename}")
 
         encoded_name = urllib.parse.quote(filename)
-        return f"{self.hostname}:{self.public_port}/music/{encoded_name}"
+        return self.try_add_access_control_param(
+            f"{self.hostname}:{self.public_port}/music/{encoded_name}",
+        )
 
     # 给前端调用
     def refresh_music_tag(self):
