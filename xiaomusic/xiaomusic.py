@@ -114,7 +114,7 @@ class XiaoMusic:
 
         url_parts = urllib.parse.urlparse(url)
         file_path = urllib.parse.unquote(url_parts.path)
-        correct_code = hashlib.md5(
+        correct_code = hashlib.sha256(
             (
                 file_path
                 + self.config.httpauth_username
