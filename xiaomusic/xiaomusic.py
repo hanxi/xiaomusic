@@ -1266,7 +1266,7 @@ class XiaoMusicDevice:
             self.log.info(f"正在下载中 {search_key} {name}")
             await self._download_proc.wait()
             # 把文件插入到播放列表里
-            self.add_download_music(name)
+            await self.add_download_music(name)
         await self._playmusic(name)
 
     # 下一首
@@ -1488,11 +1488,11 @@ class XiaoMusicDevice:
         return self._playing
 
     # 把下载的音乐加入播放列表
-    def add_download_music(self, name):
+    async def add_download_music(self, name):
         filepath = os.path.join(self.download_path, f"{name}.mp3")
         self.xiaomusic.all_music[name] = filepath
         # 应该很快，阻塞运行
-        asyncio.run(self.xiaomusic._gen_all_music_tag({name: filepath}))
+        await self.xiaomusic._gen_all_music_tag({name: filepath})
         if name not in self._play_list:
             self._play_list.append(name)
             self.log.info(f"add_download_music add_music {name}")
