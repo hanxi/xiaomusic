@@ -1491,8 +1491,8 @@ class XiaoMusicDevice:
     def add_download_music(self, name):
         filepath = os.path.join(self.download_path, f"{name}.mp3")
         self.xiaomusic.all_music[name] = filepath
-        # 应该很快，直接运行
-        self.xiaomusic._gen_all_music_tag({name: filepath})
+        # 应该很快，阻塞运行
+        asyncio.run(self.xiaomusic._gen_all_music_tag({name: filepath}))
         if name not in self._play_list:
             self._play_list.append(name)
             self.log.info(f"add_download_music add_music {name}")
