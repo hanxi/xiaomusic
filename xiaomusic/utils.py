@@ -674,3 +674,103 @@ def extract_audio_metadata(file_path, save_root):
         metadata.artist = _get_tag_value(tags, "Artist")
 
     return asdict(metadata)
+
+
+# 下载播放列表
+async def download_playlist(config, url, dirname):
+    title = f"{dirname}/%(title)s.%(ext)s"
+    sbp_args = (
+        "yt-dlp",
+        "--yes-playlist",
+        "-x",
+        "--audio-format",
+        "mp3",
+        "--paths",
+        config.download_path,
+        "-o",
+        title,
+        "--ffmpeg-location",
+        f"{config.ffmpeg_location}",
+    )
+
+    if config.proxy:
+        sbp_args += ("--proxy", f"{config.proxy}")
+
+    sbp_args += (url,)
+
+    cmd = " ".join(sbp_args)
+    logging.info(f"download_playlist: {cmd}")
+    download_proc = await asyncio.create_subprocess_exec(*sbp_args)
+    return download_proc
+
+
+# 下载一首歌曲
+async def download_one_music(config, url, name=""):
+    title = "%(title)s.%(ext)s"
+    if name:
+        title = f"{name}.%(ext)s"
+    sbp_args = (
+        "yt-dlp",
+        "--no-playlist",
+        "-x",
+        "--audio-format",
+        "mp3",
+        "--paths",
+        config.download_path,
+        "-o",
+        title,
+        "--ffmpeg-location",
+        f"{config.ffmpeg_location}",
+    )
+
+    if config.proxy:
+        sbp_args += ("--proxy", f"{config.proxy}")
+
+    sbp_args += (url,)
+
+    cmd = " ".join(sbp_args)
+    logging.info(f"download_one_music: {cmd}")
+    download_proc = await asyncio.create_subprocess_exec(*sbp_args)
+    return download_proc
+
+
+def _longest_common_prefix(file_names):
+    if not file_names:
+        return ""
+
+    # 将第一个文件名作为初始前缀
+    prefix = file_names[0]
+
+    for file_name in file_names[1:]:
+        while not file_name.startswith(prefix):
+            # 如果当前文件名不以prefix开头，则缩短prefix
+            prefix = prefix[:-1]
+            if not prefix:
+                return ""
+
+    return prefix
+
+
+# 移除目录下文件名前缀相同的
+def remove_common_prefix(directory):
+    files = os.listdir(directory)
+
+    # 获取所有文件的前缀
+    common_prefix = _longest_common_prefix(files)
+
+    logging.info(f'Common prefix identified: "{common_prefix}"')
+
+    for filename in files:
+        if filename == common_prefix:
+            continue
+        # 检查文件名是否以共同前缀开头
+        if filename.startswith(common_prefix):
+            # 构造新的文件名
+            new_filename = filename[len(common_prefix) :]
+            # 生成完整的文件路径
+            old_file_path = os.path.join(directory, filename)
+            new_file_path = os.path.join(directory, new_filename)
+
+            # 重命名文件
+            os.rename(old_file_path, new_file_path)
+            logging.debug(f'Renamed: "{filename}" to "{new_filename}"')

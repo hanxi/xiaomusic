@@ -25,8 +25,11 @@ from starlette.responses import FileResponse, Response
 from xiaomusic import __version__
 from xiaomusic.utils import (
     deepcopy_data_no_sensitive_info,
+    download_one_music,
+    download_playlist,
     downloadfile,
     get_latest_version,
+    remove_common_prefix,
 )
 
 xiaomusic = None
@@ -367,6 +370,58 @@ async def latest_version(Verifcation=Depends(verification)):
         return {"ret": "OK", "version": version}
     else:
         return {"ret": "Fetch version failed"}
+
+
+class DownloadPlayList(BaseModel):
+    dirname: str
+    url: str
+
+
+# 下载歌单
+@app.post("/downloadplaylist")
+async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verification)):
+    try:
+        download_proc = await download_playlist(config, data.url, data.dirname)
+
+        async def check_download_proc():
+            # 等待子进程完成
+            exit_code = await download_proc.wait()
+            log.info(f"Download completed with exit code {exit_code}")
+
+            dir_path = os.path.join(config.download_path, data.dirname)
+            log.debug(f"Download dir_path: {exit_code}")
+
+            if exit_code == 0:
+                log.info("Download was successful.")
+                # 执行成功的后续逻辑:文件名处理
+                remove_common_prefix(dir_path)
+            else:
+                # 处理失败的情况
+                log.error("Download failed.")
+
+        asyncio.create_task(check_download_proc())
+        return {"ret": "OK"}
+    except Exception as e:
+        log.exception(f"Execption {e}")
+
+    return {"ret": "Failed download"}
+
+
+class DownloadOneMusic(BaseModel):
+    name: str = ""
+    url: str
+
+
+# 下载单首歌曲
+@app.post("/downloadonemusic")
+async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verification)):
+    try:
+        await download_one_music(config, data.url, data.name)
+        return {"ret": "OK"}
+    except Exception as e:
+        log.exception(f"Execption {e}")
+
+    return {"ret": "Failed download"}
 
 
 async def file_iterator(file_path, start, end):
