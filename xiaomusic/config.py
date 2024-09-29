@@ -155,6 +155,9 @@ class Config:
     )
     pull_ask_sec: int = int(os.getenv("XIAOMUSIC_PULL_ASK_SEC", "1"))
     crontab_json: str = os.getenv("XIAOMUSIC_CRONTAB_JSON", "")  # 定时任务
+    enable_yt_dlp_cookies: bool = (
+        os.getenv("XIAOMUSIC_ENABLE_YT_DLP_COOKIES", "false").lower() == "true"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
@@ -262,3 +265,10 @@ class Config:
         if not os.path.exists(cache_path):
             os.makedirs(cache_path)
         return cache_path
+
+    @property
+    def yt_dlp_cookies_path(self):
+        if not os.path.exists(self.conf_path):
+            os.makedirs(self.conf_path)
+        cookies_path = os.path.join(self.conf_path, "yt-dlp-cookie.txt")
+        return cookies_path

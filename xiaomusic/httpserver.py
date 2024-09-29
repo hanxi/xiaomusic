@@ -13,7 +13,16 @@ from dataclasses import asdict
 from typing import Annotated
 
 import aiofiles
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -389,15 +398,9 @@ async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verificat
             log.info(f"Download completed with exit code {exit_code}")
 
             dir_path = os.path.join(config.download_path, data.dirname)
-            log.debug(f"Download dir_path: {exit_code}")
-
-            if exit_code == 0:
-                log.info("Download was successful.")
-                # 执行成功的后续逻辑:文件名处理
-                remove_common_prefix(dir_path)
-            else:
-                # 处理失败的情况
-                log.error("Download failed.")
+            log.debug(f"Download dir_path: {dir_path}")
+            # 可能只是部分失败，都需要整理下载目录
+            remove_common_prefix(dir_path)
 
         asyncio.create_task(check_download_proc())
         return {"ret": "OK"}
@@ -422,6 +425,18 @@ async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verificat
         log.exception(f"Execption {e}")
 
     return {"ret": "Failed download"}
+
+
+# 上传 yt-dlp cookies
+@app.post("/uploadytdlpcookie")
+async def upload_yt_dlp_cookie(file: UploadFile = File(...)):
+    with open(config.yt_dlp_cookies_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return {
+        "ret": "OK",
+        "filename": file.filename,
+        "file_location": config.yt_dlp_cookies_path,
+    }
 
 
 async def file_iterator(file_path, start, end):

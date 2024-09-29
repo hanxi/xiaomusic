@@ -61,7 +61,13 @@ include = ["**/*.py", "**/*.pyi", "**/pyproject.toml"]
 convention = "google"
 
 [tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.params.Depends",
+    "fastapi.Query",
+    "fastapi.params.Query",
+    "fastapi.File"
+]
 
 [tool.pdm.scripts]
 lint = "ruff check ."

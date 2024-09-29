@@ -154,4 +154,31 @@ $(function(){
     });
   });
 
+  $("#upload_yt_dlp_cookie").on("click", () => {
+    var fileInput = document.getElementById('yt_dlp_cookies_file');
+    var file = fileInput.files[0]; // 获取文件对象
+    if (file) {
+      var formData = new FormData();
+      formData.append("file", file);
+      $.ajax({
+        url: "/uploadytdlpcookie",
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(res) {
+          console.log(res);
+          alert("上传成功");
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+          console.log(res);
+          alert("上传失败");
+        }
+      });
+    } else {
+        alert("请选择一个文件");
+    }
+  });
+
+
 });

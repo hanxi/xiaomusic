@@ -696,6 +696,9 @@ async def download_playlist(config, url, dirname):
     if config.proxy:
         sbp_args += ("--proxy", f"{config.proxy}")
 
+    if config.enable_yt_dlp_cookies:
+        sbp_args += ("--cookies", f"{config.yt_dlp_cookies_path}")
+
     sbp_args += (url,)
 
     cmd = " ".join(sbp_args)
@@ -725,6 +728,9 @@ async def download_one_music(config, url, name=""):
 
     if config.proxy:
         sbp_args += ("--proxy", f"{config.proxy}")
+
+    if config.enable_yt_dlp_cookies:
+        sbp_args += ("--cookies", f"{config.yt_dlp_cookies_path}")
 
     sbp_args += (url,)
 

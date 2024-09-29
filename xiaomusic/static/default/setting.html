@@ -4,9 +4,9 @@
     <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width">
     <title>小爱音箱操控面板</title>
-    <script src="./jquery-3.7.1.min.js?version=1727434231"></script>
-    <script src="./setting.js?version=1727434231"></script>
-    <link rel="stylesheet" type="text/css" href="./style.css?version=1727434231">
+    <script src="./jquery-3.7.1.min.js?version=1727575583"></script>
+    <script src="./setting.js?version=1727575583"></script>
+    <link rel="stylesheet" type="text/css" href="./style.css?version=1727575583">
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
@@ -177,6 +177,12 @@ var vConsole = new window.VConsole();
         <label for="keywords_stop">停止口令:</label>
         <input id="keywords_stop" type="text" value="关机,暂停,停止,停止播放"></input>
 
+        <label for="enable_yt_dlp_cookies">启用yt-dlp-cookies(需要先上传yt-dlp-cookies.txt文件):</label>
+        <select id="enable_yt_dlp_cookies">
+          <option value="true">true</option>
+          <option value="false" selected>false</option>
+        </select>
+
         <label for="music_list_url">歌单地址:</label>
         <input id="music_list_url" type="text" value="https://gist.githubusercontent.com/hanxi/dda82d964a28f8110f8fba81c3ff8314/raw/example.json"></input>
 
@@ -196,6 +202,13 @@ var vConsole = new window.VConsole();
     <button id="get_music_list">获取歌单</button>
     <button id="refresh_music_tag">刷新tag</button>
     <a class="button" href="/downloadlog" download="xiaomusic.txt">下载日志文件</a>
+    <hr>
+
+    <div class="rows">
+      <label for="yt_dlp_cookies_file">上传yt_dlp_cookies.txt文件:<a href="https://github.com/hanxi/xiaomusic/issues/210" target="_blank">文档</a></label>
+      <input id="yt_dlp_cookies_file" name="file" type="file">
+      <button id="upload_yt_dlp_cookie">上传</button>
+    </div>
     <hr>
 
     <button onclick="location.href='/docs';">查看接口文档</button>

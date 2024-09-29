@@ -1462,6 +1462,9 @@ class XiaoMusicDevice:
         if self.config.proxy:
             sbp_args += ("--proxy", f"{self.config.proxy}")
 
+        if self.config.yt_dlp_cookies:
+            sbp_args += ("--cookies", f"{self.config.yt_dlp_cookies}")
+
         cmd = " ".join(sbp_args)
         self.log.info(f"download cmd: {cmd}")
         self._download_proc = await asyncio.create_subprocess_exec(*sbp_args)
