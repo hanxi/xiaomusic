@@ -161,9 +161,10 @@ class Config:
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
-            self.key_word_dict[key] = action
-            if key not in self.key_match_order:
-                self.key_match_order.append(key)
+            if key:
+                self.key_word_dict[key] = action
+                if key not in self.key_match_order:
+                    self.key_match_order.append(key)
 
     def append_user_keyword(self):
         for k, v in self.user_key_word_dict.items():
