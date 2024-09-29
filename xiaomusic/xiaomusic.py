@@ -1462,8 +1462,8 @@ class XiaoMusicDevice:
         if self.config.proxy:
             sbp_args += ("--proxy", f"{self.config.proxy}")
 
-        if self.config.yt_dlp_cookies:
-            sbp_args += ("--cookies", f"{self.config.yt_dlp_cookies}")
+        if self.config.enable_yt_dlp_cookies:
+            sbp_args += ("--cookies", f"{self.config.yt_dlp_cookies_path}")
 
         cmd = " ".join(sbp_args)
         self.log.info(f"download cmd: {cmd}")
