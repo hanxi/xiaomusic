@@ -98,6 +98,8 @@ services:
 > [!TIP]
 > 隐藏玩法: 对小爱同学说播放歌曲小猪佩奇的故事，会先下载小猪佩奇的故事，然后再播放小猪佩奇的故事。
 
+更多功能见 [📝 文档汇总](https://github.com/hanxi/xiaomusic/issues/211)
+
 ## 🛠️ pip 方式安装运行
 
 ```shell
