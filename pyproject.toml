@@ -18,6 +18,7 @@ dependencies = [
     "apscheduler>=3.10.4",
     "opencc-python-reimplemented==0.1.7",
     "pillow>=10.4.0",
+    "python-multipart>=0.0.12",
 ]
 requires-python = ">=3.10,<3.12"
 readme = "README.md"
@@ -61,7 +62,13 @@ include = ["**/*.py", "**/*.pyi", "**/pyproject.toml"]
 convention = "google"
 
 [tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.params.Depends",
+    "fastapi.Query",
+    "fastapi.params.Query",
+    "fastapi.File"
+]
 
 [tool.pdm.scripts]
 lint = "ruff check ."

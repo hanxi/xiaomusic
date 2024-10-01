@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh">
+	<head>
+		<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+		<title>歌曲下载工具</title>
+    <link rel="stylesheet" type="text/css" href="./style.css?version=1727575583">
+    <script src="./jquery-3.7.1.min.js?version=1727575583"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments)};
+    gtag('js', new Date());
+    gtag('config', 'G-Z09NC1K7ZW');
+    </script>
+
+	</head>
+	<body>
+
+		<h1>歌曲下载工具</h1>
+
+		<div class="rows">
+			<!-- 歌单的输入 -->
+			<label for="playlistUrl">输入歌单 URL:</label>
+			<input type="text" id="playlistUrl" value="https://m.bilibili.com/video/BV1WUsDezE88">
+
+			<label for="dirname">输入歌单名字:</label>
+			<input type="text" id="dirname" placeholder="流行歌曲">
+
+			<button id="downloadPlaylistBtn">下载歌单</button>
+
+    </div>
+
+		<hr>
+
+		<div class="rows">
+
+			<!-- 单曲的输入 -->
+			<label for="songUrl">输入歌曲 URL:</label>
+			<input type="text" id="songUrl" value="https://m.bilibili.com/video/BV1qD4y1U7fs">
+
+			<label for="songName">输入歌曲名字:</label>
+			<input type="text" id="songName" placeholder="歌曲名">
+
+			<button id="downloadSongBtn">下载单曲</button>
+		</div>
+
+
+		<script>
+		// 下载歌单
+		$('#downloadPlaylistBtn').click(function() {
+			var playlistUrl = $('#playlistUrl').val();
+			var dirname = $('#dirname').val();
+
+			if (!playlistUrl || !dirname) {
+				alert('请填写完整的歌单 URL 和歌单名字');
+				return;
+			}
+
+      var data = {
+				dirname: dirname,
+				url: playlistUrl
+			};
+      $.ajax({
+        type: "POST",
+        url: "/downloadplaylist",
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        success: (msg) => {
+					alert('歌单下载请求已发送!');
+					console.log(response);
+        },
+        error: (msg) => {
+					alert('歌单下载请求失败，请重试。');
+        }
+      });
+    });
+
+		// 下载单曲
+		$('#downloadSongBtn').click(function() {
+			var songName = $('#songName').val();
+			var songUrl = $('#songUrl').val();
+
+			if (!songUrl || !songName) {
+				alert('请填写完整的歌曲 URL 和歌曲名字');
+				return;
+			}
+
+      var data = {
+				name: songName,
+				url: songUrl
+			};
+      $.ajax({
+        type: "POST",
+        url: "/downloadonemusic",
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        success: (msg) => {
+					alert('单曲下载请求已发送!');
+					console.log(response);
+        },
+        error: (msg) => {
+					alert('单曲下载请求失败，请重试。');
+        }
+      });
+		});
+		</script>
+
+	</body>
+</html>
+

@@ -433,9 +433,9 @@ class XiaoMusic:
         tags = copy.copy(self.all_music_tags.get(name, asdict(Metadata())))
         picture = tags["picture"]
         if picture:
-            picture = picture.replace("\\", "/")
             if picture.startswith(self.config.picture_cache_path):
                 picture = picture[len(self.config.picture_cache_path) :]
+            picture = picture.replace("\\", "/")
             if picture.startswith("/"):
                 picture = picture[1:]
             encoded_name = urllib.parse.quote(picture)
@@ -473,9 +473,9 @@ class XiaoMusic:
                 self.log.warning(f"Failed to convert file to MP3 format: {filename}")
 
         # 构造音乐文件的URL
-        filename = filename.replace("\\", "/")
         if filename.startswith(self.config.music_path):
             filename = filename[len(self.config.music_path) :]
+        filename = filename.replace("\\", "/")
         if filename.startswith("/"):
             filename = filename[1:]
 
@@ -1266,7 +1266,7 @@ class XiaoMusicDevice:
             self.log.info(f"正在下载中 {search_key} {name}")
             await self._download_proc.wait()
             # 把文件插入到播放列表里
-            self.add_download_music(name)
+            await self.add_download_music(name)
         await self._playmusic(name)
 
     # 下一首
@@ -1462,6 +1462,9 @@ class XiaoMusicDevice:
         if self.config.proxy:
             sbp_args += ("--proxy", f"{self.config.proxy}")
 
+        if self.config.enable_yt_dlp_cookies:
+            sbp_args += ("--cookies", f"{self.config.yt_dlp_cookies_path}")
+
         cmd = " ".join(sbp_args)
         self.log.info(f"download cmd: {cmd}")
         self._download_proc = await asyncio.create_subprocess_exec(*sbp_args)
@@ -1488,11 +1491,11 @@ class XiaoMusicDevice:
         return self._playing
 
     # 把下载的音乐加入播放列表
-    def add_download_music(self, name):
+    async def add_download_music(self, name):
         filepath = os.path.join(self.download_path, f"{name}.mp3")
         self.xiaomusic.all_music[name] = filepath
-        # 应该很快，直接运行
-        self.xiaomusic._gen_all_music_tag({name: filepath})
+        # 应该很快，阻塞运行
+        await self.xiaomusic._gen_all_music_tag({name: filepath})
         if name not in self._play_list:
             self._play_list.append(name)
             self.log.info(f"add_download_music add_music {name}")

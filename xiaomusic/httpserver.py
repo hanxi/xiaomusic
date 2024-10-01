@@ -13,7 +13,16 @@ from dataclasses import asdict
 from typing import Annotated
 
 import aiofiles
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -25,8 +34,11 @@ from starlette.responses import FileResponse, Response
 from xiaomusic import __version__
 from xiaomusic.utils import (
     deepcopy_data_no_sensitive_info,
+    download_one_music,
+    download_playlist,
     downloadfile,
     get_latest_version,
+    remove_common_prefix,
 )
 
 xiaomusic = None
@@ -367,6 +379,64 @@ async def latest_version(Verifcation=Depends(verification)):
         return {"ret": "OK", "version": version}
     else:
         return {"ret": "Fetch version failed"}
+
+
+class DownloadPlayList(BaseModel):
+    dirname: str
+    url: str
+
+
+# 下载歌单
+@app.post("/downloadplaylist")
+async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verification)):
+    try:
+        download_proc = await download_playlist(config, data.url, data.dirname)
+
+        async def check_download_proc():
+            # 等待子进程完成
+            exit_code = await download_proc.wait()
+            log.info(f"Download completed with exit code {exit_code}")
+
+            dir_path = os.path.join(config.download_path, data.dirname)
+            log.debug(f"Download dir_path: {dir_path}")
+            # 可能只是部分失败，都需要整理下载目录
+            remove_common_prefix(dir_path)
+
+        asyncio.create_task(check_download_proc())
+        return {"ret": "OK"}
+    except Exception as e:
+        log.exception(f"Execption {e}")
+
+    return {"ret": "Failed download"}
+
+
+class DownloadOneMusic(BaseModel):
+    name: str = ""
+    url: str
+
+
+# 下载单首歌曲
+@app.post("/downloadonemusic")
+async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verification)):
+    try:
+        await download_one_music(config, data.url, data.name)
+        return {"ret": "OK"}
+    except Exception as e:
+        log.exception(f"Execption {e}")
+
+    return {"ret": "Failed download"}
+
+
+# 上传 yt-dlp cookies
+@app.post("/uploadytdlpcookie")
+async def upload_yt_dlp_cookie(file: UploadFile = File(...)):
+    with open(config.yt_dlp_cookies_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return {
+        "ret": "OK",
+        "filename": file.filename,
+        "file_location": config.yt_dlp_cookies_path,
+    }
 
 
 async def file_iterator(file_path, start, end):
