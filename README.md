@@ -295,6 +295,7 @@ docker build -t xiaomusic .
 - [TechHive](https://mp.weixin.qq.com/s/4a41muFtPaFKtHeZYu795w)
 - [弹个AI](https://mp.weixin.qq.com/s/sIsKxB7Y8b83AhnvaWiMog)
 - [简单免费！教你用绿联NAS联动小爱音箱，私人音乐库也能语音点播](https://post.m.smzdm.com/p/a8pldgg7/)
+- [飞牛教程](https://mp.weixin.qq.com/s?t=pages/image_detail&__biz=MzkxODc1NDMwOA==&mid=2247483725&idx=1&sn=2d615f14733b9bf989557fa766b4e1fc)
 
 ## 🚨 免责声明
 
