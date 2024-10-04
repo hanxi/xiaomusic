@@ -26,7 +26,7 @@ import aiohttp
 import mutagen
 from mutagen.asf import ASF
 from mutagen.flac import FLAC
-from mutagen.id3 import ID3, Encoding, TextFrame, TimeStampTextFrame
+from mutagen.id3 import APIC, ID3, Encoding, TextFrame, TimeStampTextFrame
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 from mutagen.oggvorbis import OggVorbis
@@ -609,9 +609,11 @@ def extract_audio_metadata(file_path, save_root):
         metadata.album = _get_tag_value(tags, "TALB")
         metadata.year = _get_tag_value(tags, "TDRC")
         metadata.genre = _get_tag_value(tags, "TCON")
-        if "APIC:" in tags:
-            metadata.picture = _save_picture(tags["APIC:"].data, save_root, file_path)
         metadata.lyrics = _get_alltag_value(tags, "USLT")
+        for tag in tags.values():
+            if isinstance(tag, APIC):
+                metadata.picture = _save_picture(tag.data, save_root, file_path)
+                break
 
     elif isinstance(audio, FLAC):
         metadata.title = _get_tag_value(tags, "TITLE")
