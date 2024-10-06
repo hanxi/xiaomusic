@@ -203,6 +203,14 @@ async def do_cmd(data: DidCmd, Verifcation=Depends(verification)):
     return {"ret": "Unknow cmd"}
 
 
+@app.get("/cmdstatus")
+async def cmd_status(Verifcation=Depends(verification)):
+    finish = await xiaomusic.is_task_finish()
+    if finish:
+        return {"ret": "OK", "status": "finish"}
+    return {"ret": "OK", "status": "running"}
+
+
 @app.get("/getsetting")
 async def getsetting(need_device_list: bool = False, Verifcation=Depends(verification)):
     config = xiaomusic.getconfig()

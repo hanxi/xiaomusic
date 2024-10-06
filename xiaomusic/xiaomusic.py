@@ -753,6 +753,14 @@ class XiaoMusic:
         await asyncio.gather(*self.running_task, return_exceptions=True)
         self.running_task = []
 
+    async def is_task_finish(self):
+        if len(self.running_task) == 0:
+            return True
+        task = self.running_task[0]
+        if task and task.done():
+            return True
+        return False
+
     async def check_replay(self, did):
         return await self.devices[did].check_replay()
 
@@ -869,6 +877,7 @@ class XiaoMusic:
     # 设置为刷新列表
     async def gen_music_list(self, **kwargs):
         self._gen_all_music_list()
+        self.log.info("gen_music_list ok")
 
     # 删除歌曲
     def del_music(self, name):
