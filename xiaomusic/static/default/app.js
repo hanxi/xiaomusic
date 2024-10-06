@@ -248,6 +248,18 @@ $(function(){
     });
   });
 
+  function check_status_refresh_music_list(retries) {
+    $.get("/cmdstatus", function(data) {
+      if (data.status === "finish") {
+        refresh_music_list();
+      } else if (retries > 0) {
+        setTimeout(function() {
+          check_status_refresh_music_list(retries - 1);
+        }, 1000); // 等待1秒后重试
+      }
+    });
+  }
+
   function sendcmd(cmd) {
     $.ajax({
       type: "POST",
@@ -256,7 +268,7 @@ $(function(){
       data: JSON.stringify({did: did, cmd: cmd}),
       success: () => {
         if (cmd == "刷新列表") {
-          setTimeout(refresh_music_list, 3000);
+          check_status_refresh_music_list(3); // 最多重试3次
         }
         if (["全部循环", "单曲循环", "随机播放"].includes(cmd)) {
           location.reload();
