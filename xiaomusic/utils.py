@@ -463,6 +463,11 @@ def convert_file_to_mp3(input_file: str, config) -> str:
         log.info(f"File {input_file} = {out_file_path} . Skipping convert_file_to_mp3.")
         return None
 
+    absolute_music_path = os.path.abspath(music_path)
+    if not input_absolute_path.startswith(absolute_music_path):
+        log.error(f"Invalid input file path: {input_file}")
+        return None
+
     # 检查目标文件是否存在
     if os.path.exists(out_file_path):
         log.info(f"File {out_file_path} already exists. Skipping convert_file_to_mp3.")
@@ -471,7 +476,7 @@ def convert_file_to_mp3(input_file: str, config) -> str:
     command = [
         os.path.join(config.ffmpeg_location, "ffmpeg"),
         "-i",
-        input_file,
+        input_absolute_path,
         "-f",
         "mp3",
         "-vn",
