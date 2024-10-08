@@ -24,7 +24,7 @@ from fastapi import (
     status,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -33,12 +33,16 @@ from starlette.responses import FileResponse, Response
 
 from xiaomusic import __version__
 from xiaomusic.utils import (
+    convert_file_to_mp3,
     deepcopy_data_no_sensitive_info,
     download_one_music,
     download_playlist,
     downloadfile,
     get_latest_version,
+    is_mp3,
     remove_common_prefix,
+    remove_id3_tags,
+    try_add_access_control_param,
 )
 
 xiaomusic = None
@@ -506,6 +510,26 @@ async def music_file(request: Request, file_path: str, key: str = "", code: str 
         raise HTTPException(status_code=404, detail="File not found")
     if not os.path.exists(absolute_file_path):
         raise HTTPException(status_code=404, detail="File not found")
+
+    # 移除MP3 ID3 v2标签和填充，减少播放前延迟
+    if config.remove_id3tag and is_mp3(file_path):
+        log.info(f"remove_id3tag:{config.remove_id3tag}, is_mp3:True ")
+        temp_mp3_file = remove_id3_tags(absolute_file_path, config)
+        if temp_mp3_file:
+            log.info(f"ID3 tag removed {absolute_file_path} to {temp_mp3_file}")
+            url = try_add_access_control_param(config, f"/music/{temp_mp3_file}")
+            return RedirectResponse(url=url)
+        else:
+            log.info(f"No ID3 tag remove needed: {absolute_file_path}")
+
+    if config.convert_to_mp3 and not is_mp3(file_path):
+        temp_mp3_file = convert_file_to_mp3(absolute_file_path, config)
+        if temp_mp3_file:
+            log.info(f"Converted file: {absolute_file_path} to {temp_mp3_file}")
+            url = try_add_access_control_param(config, f"/music/{temp_mp3_file}")
+            return RedirectResponse(url=url)
+        else:
+            log.warning(f"Failed to convert file to MP3 format: {absolute_file_path}")
 
     file_size = os.path.getsize(absolute_file_path)
     range_start, range_end = 0, file_size - 1

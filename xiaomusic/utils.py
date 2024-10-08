@@ -17,6 +17,7 @@ import shutil
 import string
 import subprocess
 import tempfile
+import urllib.parse
 from collections.abc import AsyncIterator
 from dataclasses import asdict, dataclass
 from http.cookies import SimpleCookie
@@ -37,6 +38,8 @@ from PIL import Image
 from requests.utils import cookiejar_from_dict
 
 from xiaomusic.const import SUPPORT_MUSIC_TYPE
+
+log = logging.getLogger(__package__)
 
 cc = OpenCC("t2s")  # convert from Traditional Chinese to Simplified Chinese
 
@@ -263,7 +266,7 @@ async def _get_web_music_duration(session, url, ffmpeg_location, start=0, end=50
                 m = mutagen.File(tmp)
             duration = m.info.length
         except Exception as e:
-            logging.error(f"Error _get_web_music_duration: {e}")
+            log.error(f"Error _get_web_music_duration: {e}")
     return duration
 
 
@@ -295,7 +298,7 @@ async def get_web_music_duration(url, ffmpeg_location="./ffmpeg/bin"):
                     session, url, ffmpeg_location, start=0, end=3000
                 )
     except Exception as e:
-        logging.error(f"Error get_web_music_duration: {e}")
+        log.error(f"Error get_web_music_duration: {e}")
     return duration, url
 
 
@@ -313,7 +316,7 @@ async def get_local_music_duration(filename, ffmpeg_location="./ffmpeg/bin"):
             m = await loop.run_in_executor(None, mutagen.File, filename)
         duration = m.info.length
     except Exception as e:
-        logging.error(f"Error getting local music {filename} duration: {e}")
+        log.error(f"Error getting local music {filename} duration: {e}")
     return duration
 
 
@@ -397,48 +400,76 @@ def no_padding(info):
     return 0
 
 
-def remove_id3_tags(file_path):
-    audio = MP3(file_path, ID3=ID3)
-    change = False
+def get_temp_dir(music_path: str):
+    # 指定临时文件的目录为 music_path 目录下的 tmp 文件夹
+    temp_dir = os.path.join(music_path, "tmp")
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)  # 确保目录存在
+    return temp_dir
+
+
+def remove_id3_tags(input_file: str, config) -> str:
+    music_path = config.music_path
+    temp_dir = get_temp_dir(music_path)
+
+    # 构造新文件的路径
+    out_file_name = os.path.splitext(os.path.basename(input_file))[0]
+    out_file_path = os.path.join(temp_dir, f"{out_file_name}.mp3")
+    relative_path = os.path.relpath(out_file_path, music_path)
+
+    # 路径相同的情况
+    input_absolute_path = os.path.abspath(input_file)
+    output_absolute_path = os.path.abspath(out_file_path)
+    if input_absolute_path == output_absolute_path:
+        log.info(f"File {input_file} = {out_file_path} . Skipping remove_id3_tags.")
+        return None
+
+    # 检查目标文件是否存在
+    if os.path.exists(out_file_path):
+        log.info(f"File {out_file_path} already exists. Skipping remove_id3_tags.")
+        return relative_path
+
+    audio = MP3(input_file, ID3=ID3)
 
     # 检查是否存在ID3 v2.3或v2.4标签
     if audio.tags and (
         audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0)
     ):
-        # 构造新文件的路径
-        new_file_path = file_path + ".bak"
-
-        # 备份原始文件为新文件
-        shutil.copy(file_path, new_file_path)
-
+        # 拷贝文件
+        shutil.copy(input_file, out_file_path)
+        outaudio = MP3(out_file_path, ID3=ID3)
         # 删除ID3标签
-        audio.delete()
-
-        # 删除padding
-        audio.save(padding=no_padding)
-
+        outaudio.delete()
         # 保存修改后的文件
-        audio.save()
+        outaudio.save(padding=no_padding)
+        log.info(f"File {out_file_path} remove_id3_tags ok.")
+        return relative_path
 
-        change = True
-
-    return change
+    return relative_path
 
 
-def convert_file_to_mp3(input_file: str, ffmpeg_location: str, music_path: str) -> str:
-    """
-    Convert the music file to MP3 format and return the path of the temporary MP3 file.
-    """
-    # 指定临时文件的目录为 music_path 目录下的 tmp 文件夹
-    temp_dir = os.path.join(music_path, "tmp")
-    if not os.path.exists(temp_dir):
-        os.makedirs(temp_dir)  # 确保目录存在
+def convert_file_to_mp3(input_file: str, config) -> str:
+    music_path = config.music_path
+    temp_dir = get_temp_dir(music_path)
 
     out_file_name = os.path.splitext(os.path.basename(input_file))[0]
     out_file_path = os.path.join(temp_dir, f"{out_file_name}.mp3")
+    relative_path = os.path.relpath(out_file_path, music_path)
+
+    # 路径相同的情况
+    input_absolute_path = os.path.abspath(input_file)
+    output_absolute_path = os.path.abspath(out_file_path)
+    if input_absolute_path == output_absolute_path:
+        log.info(f"File {input_file} = {out_file_path} . Skipping convert_file_to_mp3.")
+        return None
+
+    # 检查目标文件是否存在
+    if os.path.exists(out_file_path):
+        log.info(f"File {out_file_path} already exists. Skipping convert_file_to_mp3.")
+        return relative_path
 
     command = [
-        os.path.join(ffmpeg_location, "ffmpeg"),
+        os.path.join(config.ffmpeg_location, "ffmpeg"),
         "-i",
         input_file,
         "-f",
@@ -451,10 +482,10 @@ def convert_file_to_mp3(input_file: str, ffmpeg_location: str, music_path: str) 
     try:
         subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
-        logging.exception(f"Error during conversion: {e}")
+        log.exception(f"Error during conversion: {e}")
         return None
 
-    relative_path = os.path.relpath(out_file_path, music_path)
+    log.info(f"File {input_file} to {out_file_path} convert_file_to_mp3 ok.")
     return relative_path
 
 
@@ -567,7 +598,7 @@ def _save_picture(picture_data, save_root, file_path):
     try:
         _resize_save_image(picture_data, picture_path)
     except Exception as e:
-        logging.exception(f"Error _resize_save_image: {e}")
+        log.exception(f"Error _resize_save_image: {e}")
     return picture_path
 
 
@@ -704,7 +735,7 @@ async def download_playlist(config, url, dirname):
     sbp_args += (url,)
 
     cmd = " ".join(sbp_args)
-    logging.info(f"download_playlist: {cmd}")
+    log.info(f"download_playlist: {cmd}")
     download_proc = await asyncio.create_subprocess_exec(*sbp_args)
     return download_proc
 
@@ -737,7 +768,7 @@ async def download_one_music(config, url, name=""):
     sbp_args += (url,)
 
     cmd = " ".join(sbp_args)
-    logging.info(f"download_one_music: {cmd}")
+    log.info(f"download_one_music: {cmd}")
     download_proc = await asyncio.create_subprocess_exec(*sbp_args)
     return download_proc
 
@@ -766,7 +797,7 @@ def remove_common_prefix(directory):
     # 获取所有文件的前缀
     common_prefix = _longest_common_prefix(files)
 
-    logging.info(f'Common prefix identified: "{common_prefix}"')
+    log.info(f'Common prefix identified: "{common_prefix}"')
 
     for filename in files:
         if filename == common_prefix:
@@ -781,4 +812,33 @@ def remove_common_prefix(directory):
 
             # 重命名文件
             os.rename(old_file_path, new_file_path)
-            logging.debug(f'Renamed: "{filename}" to "{new_filename}"')
+            log.debug(f'Renamed: "{filename}" to "{new_filename}"')
+
+
+def try_add_access_control_param(config, url):
+    if config.disable_httpauth:
+        return url
+
+    url_parts = urllib.parse.urlparse(url)
+    file_path = urllib.parse.unquote(url_parts.path)
+    correct_code = hashlib.sha256(
+        (file_path + config.httpauth_username + config.httpauth_password).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+    log.debug(f"rewrite url: [{file_path}, {correct_code}]")
+
+    # make new url
+    parsed_get_args = dict(urllib.parse.parse_qsl(url_parts.query))
+    parsed_get_args.update({"code": correct_code})
+    encoded_get_args = urllib.parse.urlencode(parsed_get_args, doseq=True)
+    new_url = urllib.parse.ParseResult(
+        url_parts.scheme,
+        url_parts.netloc,
+        url_parts.path,
+        url_parts.params,
+        encoded_get_args,
+        url_parts.fragment,
+    ).geturl()
+
+    return new_url

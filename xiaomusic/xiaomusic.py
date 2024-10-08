@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
 import copy
-import hashlib
 import json
 import logging
 import math
@@ -39,7 +38,6 @@ from xiaomusic.plugin import PluginManager
 from xiaomusic.utils import (
     Metadata,
     chinese_to_number,
-    convert_file_to_mp3,
     custom_sort_key,
     deepcopy_data_no_sensitive_info,
     extract_audio_metadata,
@@ -47,12 +45,11 @@ from xiaomusic.utils import (
     fuzzyfinder,
     get_local_music_duration,
     get_web_music_duration,
-    is_mp3,
     list2str,
     parse_cookie_string,
     parse_str_to_dict,
-    remove_id3_tags,
     traverse_music_directory,
+    try_add_access_control_param,
 )
 
 
@@ -108,36 +105,6 @@ class XiaoMusic:
         if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
 
-    def try_add_access_control_param(self, url):
-        if self.config.disable_httpauth:
-            return url
-
-        url_parts = urllib.parse.urlparse(url)
-        file_path = urllib.parse.unquote(url_parts.path)
-        correct_code = hashlib.sha256(
-            (
-                file_path
-                + self.config.httpauth_username
-                + self.config.httpauth_password
-            ).encode("utf-8")
-        ).hexdigest()
-        self.log.debug(f"rewrite url: [{file_path}, {correct_code}]")
-
-        # make new url
-        parsed_get_args = dict(urllib.parse.parse_qsl(url_parts.query))
-        parsed_get_args.update({"code": correct_code})
-        encoded_get_args = urllib.parse.urlencode(parsed_get_args, doseq=True)
-        new_url = urllib.parse.ParseResult(
-            url_parts.scheme,
-            url_parts.netloc,
-            url_parts.path,
-            url_parts.params,
-            encoded_get_args,
-            url_parts.fragment,
-        ).geturl()
-
-        return new_url
-
     def init_config(self):
         self.music_path = self.config.music_path
         self.download_path = self.config.download_path
@@ -158,8 +125,6 @@ class XiaoMusic:
         self.active_cmd = self.config.active_cmd.split(",")
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
         self.music_path_depth = self.config.music_path_depth
-        self.remove_id3tag = self.config.remove_id3tag
-        self.convert_to_mp3 = self.config.convert_to_mp3
         self.continue_play = self.config.continue_play
 
     def update_devices(self):
@@ -439,7 +404,8 @@ class XiaoMusic:
             if picture.startswith("/"):
                 picture = picture[1:]
             encoded_name = urllib.parse.quote(picture)
-            tags["picture"] = self.try_add_access_control_param(
+            tags["picture"] = try_add_access_control_param(
+                self.config,
                 f"{self.hostname}:{self.public_port}/picture/{encoded_name}",
             )
         return tags
@@ -451,26 +417,6 @@ class XiaoMusic:
             return url
 
         filename = self.get_filename(name)
-        # 移除MP3 ID3 v2标签和填充，减少播放前延迟
-        if self.remove_id3tag and is_mp3(filename):
-            self.log.info(f"remove_id3tag:{self.remove_id3tag}, is_mp3:True ")
-            change = remove_id3_tags(filename)
-            if change:
-                self.log.info("ID3 tag removed, orgin mp3 file saved as bak")
-            else:
-                self.log.info("No ID3 tag remove needed")
-
-        # 如果开启了MP3转换功能，且文件不是MP3格式，则进行转换
-        if self.convert_to_mp3 and not is_mp3(filename):
-            self.log.info(f"convert_to_mp3 is enabled. Checking file: {filename}")
-            temp_mp3_file = convert_file_to_mp3(
-                filename, self.config.ffmpeg_location, self.config.music_path
-            )
-            if temp_mp3_file:
-                self.log.info(f"Converted file: {filename} to {temp_mp3_file}")
-                filename = temp_mp3_file
-            else:
-                self.log.warning(f"Failed to convert file to MP3 format: {filename}")
 
         # 构造音乐文件的URL
         if filename.startswith(self.config.music_path):
@@ -482,7 +428,8 @@ class XiaoMusic:
         self.log.info(f"get_music_url local music. name:{name}, filename:{filename}")
 
         encoded_name = urllib.parse.quote(filename)
-        return self.try_add_access_control_param(
+        return try_add_access_control_param(
+            self.config,
             f"{self.hostname}:{self.public_port}/music/{encoded_name}",
         )
 

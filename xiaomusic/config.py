@@ -98,7 +98,7 @@ class Config:
         "XIAOMUSIC_ACTIVE_CMD",
         "play,set_random_play,playlocal,play_music_list,play_music_list_index,stop_after_minute,stop",
     )
-    exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir")
+    exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir,tmp")
     music_path_depth: int = int(os.getenv("XIAOMUSIC_MUSIC_PATH_DEPTH", "10"))
     disable_httpauth: bool = (
         os.getenv("XIAOMUSIC_DISABLE_HTTPAUTH", "true").lower() == "true"
