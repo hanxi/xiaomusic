@@ -499,13 +499,13 @@ def access_key_verification(file_path, key, code):
 range_pattern = re.compile(r"bytes=(\d+)-(\d*)")
 
 
-def safe_redirect(config, url):
+def safe_redirect(url):
     url = try_add_access_control_param(config, url)
     url = url.replace("\\", "")
     if not urllib.parse.urlparse(url).netloc and not urllib.parse.urlparse(url).scheme:
-        RedirectResponse(url=url)
-        return True
-    return False
+        log.debug(f"redirect to {url}")
+        return RedirectResponse(url=url)
+    return None
 
 
 @app.get("/music/{file_path:path}")
@@ -526,8 +526,9 @@ async def music_file(request: Request, file_path: str, key: str = "", code: str 
         temp_mp3_file = remove_id3_tags(absolute_file_path, config)
         if temp_mp3_file:
             log.info(f"ID3 tag removed {absolute_file_path} to {temp_mp3_file}")
-            if safe_redirect(f"/music/{temp_mp3_file}"):
-                return
+            redirect = safe_redirect(f"/music/{temp_mp3_file}")
+            if redirect:
+                return redirect
         else:
             log.info(f"No ID3 tag remove needed: {absolute_file_path}")
 
@@ -535,8 +536,9 @@ async def music_file(request: Request, file_path: str, key: str = "", code: str 
         temp_mp3_file = convert_file_to_mp3(absolute_file_path, config)
         if temp_mp3_file:
             log.info(f"Converted file: {absolute_file_path} to {temp_mp3_file}")
-            if safe_redirect(f"/music/{temp_mp3_file}"):
-                return
+            redirect = safe_redirect(f"/music/{temp_mp3_file}")
+            if redirect:
+                return redirect
         else:
             log.warning(f"Failed to convert file to MP3 format: {absolute_file_path}")
 
