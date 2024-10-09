@@ -281,34 +281,55 @@ $(function(){
   }
 
 	// 监听输入框的输入事件
-	function debounce(func, delay) {
+  function debounce(func, delay) {
 		let timeout;
 		return function(...args) {
 			clearTimeout(timeout);
 			timeout = setTimeout(() => func.apply(this, args), delay);
 		};
 	}
-  $("#music-name").on('input', debounce(function() {
-    var inputValue = $(this).val();
-    // 发送Ajax请求
-    $.ajax({
-      url: "/searchmusic", // 服务器端处理脚本
-      type: "GET",
-      dataType: "json",
-      data: {
-        name: inputValue
-      },
-      success: function(data) {
-        // 清空datalist
-        $("#autocomplete-list").empty();
-        // 添加新的option元素
-        $.each(data, function(i, item) {
-          $('<option>').val(item).appendTo("#autocomplete-list");
-        });
-      }
-    });
-    },300));
 
+  const searchInput = document.getElementById('search');
+  const musicSelect = document.getElementById('music-name');
+
+  searchInput.addEventListener('input', debounce(function() {
+    const query = searchInput.value.trim();
+
+    if (query.length === 0) {
+      musicSelect.innerHTML = '';
+      return;
+    }
+
+    fetch(`/searchmusic?name=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        musicSelect.innerHTML = ''; // 清空现有选项
+
+        // 添加用户输入作为一个选项
+        const userOption = document.createElement('option');
+        userOption.value = query;
+        userOption.textContent = `使用关键词联网搜索: ${query}`;
+        musicSelect.appendChild(userOption);
+
+        if (data.length === 0) {
+          const option = document.createElement('option');
+          option.textContent = '没有匹配的结果';
+          option.disabled = true;
+          musicSelect.appendChild(option);
+        } else {
+          data.forEach(song => {
+            const option = document.createElement('option');
+            option.value = song
+            option.textContent = song
+            musicSelect.appendChild(option);
+          });
+        }
+      })
+      .catch(error => {
+          console.error('Error fetching data:', error);
+      });
+  }, 300));
+	
   function get_playing_music() {
     $.get(`/playingmusic?did=${did}`, function(data, status) {
       console.log(data);
