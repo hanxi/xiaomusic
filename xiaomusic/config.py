@@ -158,6 +158,9 @@ class Config:
     enable_yt_dlp_cookies: bool = (
         os.getenv("XIAOMUSIC_ENABLE_YT_DLP_COOKIES", "false").lower() == "true"
     )
+    get_ask_by_mina: bool = (
+        os.getenv("XIAOMUSIC_GET_ASK_BY_MINA", "false").lower() == "true"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):

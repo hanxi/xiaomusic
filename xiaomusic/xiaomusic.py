@@ -26,6 +26,7 @@ from xiaomusic.config import (
 )
 from xiaomusic.const import (
     COOKIE_TEMPLATE,
+    GET_ASK_BY_MINA,
     LATEST_ASK_API,
     PLAY_TYPE_ALL,
     PLAY_TYPE_ONE,
@@ -175,10 +176,15 @@ class XiaoMusic:
                 session._cookie_jar = self.cookie_jar
 
                 # 拉取所有音箱的对话记录
-                tasks = [
-                    self.get_latest_ask_from_xiaoai(session, device_id)
-                    for device_id in self.device_id_did
-                ]
+                tasks = []
+                for device_id in self.device_id_did:
+                    hardware = self.get_hardward(device_id)
+                    if hardware in GET_ASK_BY_MINA or self.config.get_ask_by_mina:
+                        tasks.append(self.get_latest_ask_by_mina(device_id))
+                    else:
+                        tasks.append(
+                            self.get_latest_ask_from_xiaoai(session, device_id)
+                        )
                 await asyncio.gather(*tasks)
 
                 start = time.perf_counter()
@@ -315,6 +321,38 @@ class XiaoMusic:
             else:
                 return self._get_last_query(device_id, data)
 
+    async def get_latest_ask_by_mina(self, device_id):
+        try:
+            did = self.get_did(device_id)
+            response = await self.mina_service.ubus_request(
+                device_id, "nlp_result_get", "mibrain", {}
+            )
+            self.log.debug(
+                f"get_latest_ask_by_mina device_id:{device_id} did:{did} response:{response}"
+            )
+            if d := response.get("data", {}).get("info", {}):
+                result = json.loads(d).get("result", [])
+                if result and len(result) > 0:
+                    answers = (
+                        json.loads(result[0]["nlp"])
+                        .get("response", {})
+                        .get("answer", [{}])
+                    )
+                    if answers:
+                        query = answers[0].get("intention", {}).get("query", "").strip()
+                        timestamp = result[0]["timestamp"]
+                        answer = answers[0].get("content", {}).get("to_speak")
+                        last_record = {
+                            "time": timestamp,
+                            "did": did,
+                            "query": query,
+                            "answer": answer,
+                        }
+                        self._check_last_query(last_record)
+        except Exception as e:
+            self.log.exception(f"get_latest_ask_by_mina {e}")
+        return
+
     def _get_last_query(self, device_id, data):
         did = self.get_did(device_id)
         self.log.debug(f"_get_last_query device_id:{device_id} did:{did} data:{data}")
@@ -323,15 +361,26 @@ class XiaoMusic:
             if not records:
                 return
             last_record = records[0]
-            timestamp = last_record.get("time")
-            # 首次用当前时间初始化
-            if did not in self.last_timestamp:
-                self.last_timestamp[did] = int(time.time() * 1000)
-            if timestamp > self.last_timestamp[did]:
-                self.last_timestamp[did] = timestamp
-                last_record["did"] = did
-                self.last_record = last_record
-                self.new_record_event.set()
+            last_record["did"] = did
+            answers = last_record.get("answers", [{}])
+            if answers:
+                answer = answers[0].get("tts", {}).get("text", "").strip()
+                last_record["answer"] = answer
+            self._check_last_query(last_record)
+
+    def _check_last_query(self, last_record):
+        did = last_record["did"]
+        timestamp = last_record.get("time")
+        query = last_record.get("query", "").strip()
+        self.log.debug(f"获取到最后一条对话记录：{query} {timestamp}")
+
+        # 首次用当前时间初始化
+        if did not in self.last_timestamp:
+            self.last_timestamp[did] = int(time.time() * 1000)
+        if timestamp > self.last_timestamp[did]:
+            self.last_timestamp[did] = timestamp
+            self.last_record = last_record
+            self.new_record_event.set()
 
     def get_filename(self, name):
         if name not in self.all_music:
@@ -662,6 +711,7 @@ class XiaoMusic:
                 query = new_record.get("query", "").strip()
                 did = new_record.get("did", "").strip()
                 await self.do_check_cmd(did, query, False)
+                answer = new_record.get("answer")
                 answers = new_record.get("answers", [{}])
                 if answers:
                     answer = answers[0].get("tts", {}).get("text", "").strip()
