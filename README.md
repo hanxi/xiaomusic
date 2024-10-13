@@ -182,6 +182,7 @@ docker build -t xiaomusic .
 | L05C | [小米小爱音箱Play 增强版](https://home.mi.com/baike/index.html#/detail?model=xiaomi.wifispeaker.l05c)   |
 | L09A | [小米音箱Art](https://home.mi.com/webapp/content/baike/product/index.html?model=xiaomi.wifispeaker.l09a) |
 | LX04 X10A X08A | 已经支持的触屏版 |
+| M01/XMYX01JY | 小米小爱音箱HD (获取对话记录的接口比较特殊) |
 
 型号与产品名称对照可以在这里查询 <https://home.miot-spec.com/s/xiaomi.wifispeaker>
 

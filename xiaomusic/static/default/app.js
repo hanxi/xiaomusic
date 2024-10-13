@@ -117,8 +117,7 @@ $(function(){
     });
   });
 
-  // 拉取播放列表
-  function refresh_music_list() {
+  function _refresh_music_list(callback) {
     $('#music_list').empty();
     $.get("/musiclist", function(data, status) {
       console.log(data, status);
@@ -151,13 +150,35 @@ $(function(){
           }
         }
       })
+      callback();
     })
+  }
 
-    // 每3秒获取下正在播放的音乐
-    get_playing_music();
-    setInterval(() => {
+  // 拉取播放列表
+  function refresh_music_list() {
+    // 刷新列表时清空并临时禁用搜索框
+    const searchInput = document.getElementById('search');
+    const oriPlaceHolder = searchInput.placeholder
+    const oriValue = searchInput.value
+    const inputEvent = new Event('input', { bubbles: true });
+    searchInput.value = '';
+    // 分发事件，让其他控件改变状态
+    searchInput.dispatchEvent(inputEvent);
+    searchInput.disabled = true;
+    searchInput.placeholder = '请等待...';
+
+    _refresh_music_list(() => {
+      // 刷新完成再启用
+      searchInput.disabled = false;
+      searchInput.value = oriValue
+      searchInput.dispatchEvent(inputEvent);
+      searchInput.placeholder = oriPlaceHolder;
+      // 每3秒获取下正在播放的音乐
       get_playing_music();
-    }, 3000);
+      setInterval(() => {
+        get_playing_music();
+      }, 3000);
+    });
   }
 
   $("#play_music_list").on("click", () => {
@@ -281,33 +302,94 @@ $(function(){
   }
 
 	// 监听输入框的输入事件
-	function debounce(func, delay) {
+  function debounce(func, delay) {
 		let timeout;
 		return function(...args) {
 			clearTimeout(timeout);
 			timeout = setTimeout(() => func.apply(this, args), delay);
 		};
 	}
-  $("#music-name").on('input', debounce(function() {
-    var inputValue = $(this).val();
-    // 发送Ajax请求
-    $.ajax({
-      url: "/searchmusic", // 服务器端处理脚本
-      type: "GET",
-      dataType: "json",
-      data: {
-        name: inputValue
-      },
-      success: function(data) {
-        // 清空datalist
-        $("#autocomplete-list").empty();
-        // 添加新的option元素
-        $.each(data, function(i, item) {
-          $('<option>').val(item).appendTo("#autocomplete-list");
-        });
+
+  const searchInput = document.getElementById('search');
+  const musicSelect = document.getElementById('music-name');
+  const musicSelectLabel = document.getElementById('music-name-label');
+
+  searchInput.addEventListener('input', debounce(function() {
+    const query = searchInput.value.trim();
+
+    if (query.length === 0) {
+      musicSelect.innerHTML = '';
+      musicSelect.style.display = 'none'
+      musicSelectLabel.style.display = 'none'
+      return;
+    }
+
+    musicSelect.style.display = 'block'
+    musicSelectLabel.style.display = 'block'
+    fetch(`/searchmusic?name=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        musicSelect.innerHTML = ''; // 清空现有选项
+
+        // 找到的优先显示
+        if (data.length > 0) {
+          data.forEach(song => {
+            const option = document.createElement('option');
+            option.value = song
+            option.textContent = song
+            musicSelect.appendChild(option);
+          });
+        }
+
+        // 添加用户输入作为一个选项
+        const userOption = document.createElement('option');
+        userOption.value = query;
+        userOption.textContent = `使用关键词联网搜索: ${query}`;
+        musicSelect.appendChild(userOption);
+
+        // 提示没找到
+        if (data.length === 0) {
+          const option = document.createElement('option');
+          option.textContent = '没有匹配的结果';
+          option.disabled = true;
+          musicSelect.appendChild(option);
+        }
+      })
+      .catch(error => {
+          console.error('Error fetching data:', error);
+      });
+  }, 300));
+
+  // 动态显示保存文件名输入框
+  const musicNameSelect = document.getElementById('music-name');
+  const musicFilenameInput = document.getElementById('music-filename');
+  function updateInputVisibility() {
+    const selectedOption = musicNameSelect.options[musicNameSelect.selectedIndex];
+    var startsWithKeyword;
+    if (musicNameSelect.options.length === 0) {
+      startsWithKeyword = false;
+    } else {
+      startsWithKeyword = selectedOption.text.startsWith('使用关键词联网搜索:');
+    }
+    
+    if (startsWithKeyword) {
+      musicFilenameInput.style.display = 'block';
+      musicFilenameInput.placeholder = '请输入保存为的文件名称(默认:' + selectedOption.value + ')';
+    } else {
+      musicFilenameInput.style.display = 'none';
+    }
+  }
+  // 观察元素修改
+  const observer = new MutationObserver((mutationsList) => {
+    for (const mutation of mutationsList) {
+      if (mutation.type === 'childList') {
+        updateInputVisibility()
       }
-    });
-    },300));
+    }
+  });
+  observer.observe(musicNameSelect, { childList: true });
+  // 监听用户输入
+  musicNameSelect.addEventListener('change', updateInputVisibility);
 
   function get_playing_music() {
     $.get(`/playingmusic?did=${did}`, function(data, status) {

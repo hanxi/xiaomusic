@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
 import copy
-import hashlib
 import json
 import logging
 import math
@@ -27,6 +26,7 @@ from xiaomusic.config import (
 )
 from xiaomusic.const import (
     COOKIE_TEMPLATE,
+    GET_ASK_BY_MINA,
     LATEST_ASK_API,
     PLAY_TYPE_ALL,
     PLAY_TYPE_ONE,
@@ -39,7 +39,6 @@ from xiaomusic.plugin import PluginManager
 from xiaomusic.utils import (
     Metadata,
     chinese_to_number,
-    convert_file_to_mp3,
     custom_sort_key,
     deepcopy_data_no_sensitive_info,
     extract_audio_metadata,
@@ -47,12 +46,11 @@ from xiaomusic.utils import (
     fuzzyfinder,
     get_local_music_duration,
     get_web_music_duration,
-    is_mp3,
     list2str,
     parse_cookie_string,
     parse_str_to_dict,
-    remove_id3_tags,
     traverse_music_directory,
+    try_add_access_control_param,
 )
 
 
@@ -108,36 +106,6 @@ class XiaoMusic:
         if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
 
-    def try_add_access_control_param(self, url):
-        if self.config.disable_httpauth:
-            return url
-
-        url_parts = urllib.parse.urlparse(url)
-        file_path = urllib.parse.unquote(url_parts.path)
-        correct_code = hashlib.sha256(
-            (
-                file_path
-                + self.config.httpauth_username
-                + self.config.httpauth_password
-            ).encode("utf-8")
-        ).hexdigest()
-        self.log.debug(f"rewrite url: [{file_path}, {correct_code}]")
-
-        # make new url
-        parsed_get_args = dict(urllib.parse.parse_qsl(url_parts.query))
-        parsed_get_args.update({"code": correct_code})
-        encoded_get_args = urllib.parse.urlencode(parsed_get_args, doseq=True)
-        new_url = urllib.parse.ParseResult(
-            url_parts.scheme,
-            url_parts.netloc,
-            url_parts.path,
-            url_parts.params,
-            encoded_get_args,
-            url_parts.fragment,
-        ).geturl()
-
-        return new_url
-
     def init_config(self):
         self.music_path = self.config.music_path
         self.download_path = self.config.download_path
@@ -158,8 +126,6 @@ class XiaoMusic:
         self.active_cmd = self.config.active_cmd.split(",")
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
         self.music_path_depth = self.config.music_path_depth
-        self.remove_id3tag = self.config.remove_id3tag
-        self.convert_to_mp3 = self.config.convert_to_mp3
         self.continue_play = self.config.continue_play
 
     def update_devices(self):
@@ -210,10 +176,20 @@ class XiaoMusic:
                 session._cookie_jar = self.cookie_jar
 
                 # 拉取所有音箱的对话记录
-                tasks = [
-                    self.get_latest_ask_from_xiaoai(session, device_id)
-                    for device_id in self.device_id_did
-                ]
+                tasks = []
+                for device_id in self.device_id_did:
+                    # 首次用当前时间初始化
+                    did = self.get_did(device_id)
+                    if did not in self.last_timestamp:
+                        self.last_timestamp[did] = int(time.time() * 1000)
+
+                    hardware = self.get_hardward(device_id)
+                    if hardware in GET_ASK_BY_MINA or self.config.get_ask_by_mina:
+                        tasks.append(self.get_latest_ask_by_mina(device_id))
+                    else:
+                        tasks.append(
+                            self.get_latest_ask_from_xiaoai(session, device_id)
+                        )
                 await asyncio.gather(*tasks)
 
                 start = time.perf_counter()
@@ -350,6 +326,38 @@ class XiaoMusic:
             else:
                 return self._get_last_query(device_id, data)
 
+    async def get_latest_ask_by_mina(self, device_id):
+        try:
+            did = self.get_did(device_id)
+            response = await self.mina_service.ubus_request(
+                device_id, "nlp_result_get", "mibrain", {}
+            )
+            self.log.debug(
+                f"get_latest_ask_by_mina device_id:{device_id} did:{did} response:{response}"
+            )
+            if d := response.get("data", {}).get("info", {}):
+                result = json.loads(d).get("result", [{}])
+                if result and len(result) > 0 and result[0].get("nlp"):
+                    answers = (
+                        json.loads(result[0]["nlp"])
+                        .get("response", {})
+                        .get("answer", [{}])
+                    )
+                    if answers:
+                        query = answers[0].get("intention", {}).get("query", "").strip()
+                        timestamp = result[0]["timestamp"] * 1000
+                        answer = answers[0].get("content", {}).get("to_speak")
+                        last_record = {
+                            "time": timestamp,
+                            "did": did,
+                            "query": query,
+                            "answer": answer,
+                        }
+                        self._check_last_query(last_record)
+        except Exception as e:
+            self.log.exception(f"get_latest_ask_by_mina {e}")
+        return
+
     def _get_last_query(self, device_id, data):
         did = self.get_did(device_id)
         self.log.debug(f"_get_last_query device_id:{device_id} did:{did} data:{data}")
@@ -358,15 +366,23 @@ class XiaoMusic:
             if not records:
                 return
             last_record = records[0]
-            timestamp = last_record.get("time")
-            # 首次用当前时间初始化
-            if did not in self.last_timestamp:
-                self.last_timestamp[did] = int(time.time() * 1000)
-            if timestamp > self.last_timestamp[did]:
-                self.last_timestamp[did] = timestamp
-                last_record["did"] = did
-                self.last_record = last_record
-                self.new_record_event.set()
+            last_record["did"] = did
+            answers = last_record.get("answers", [{}])
+            if answers:
+                answer = answers[0].get("tts", {}).get("text", "").strip()
+                last_record["answer"] = answer
+            self._check_last_query(last_record)
+
+    def _check_last_query(self, last_record):
+        did = last_record["did"]
+        timestamp = last_record.get("time")
+        query = last_record.get("query", "").strip()
+        self.log.debug(f"获取到最后一条对话记录：{query} {timestamp}")
+
+        if timestamp > self.last_timestamp[did]:
+            self.last_timestamp[did] = timestamp
+            self.last_record = last_record
+            self.new_record_event.set()
 
     def get_filename(self, name):
         if name not in self.all_music:
@@ -439,7 +455,8 @@ class XiaoMusic:
             if picture.startswith("/"):
                 picture = picture[1:]
             encoded_name = urllib.parse.quote(picture)
-            tags["picture"] = self.try_add_access_control_param(
+            tags["picture"] = try_add_access_control_param(
+                self.config,
                 f"{self.hostname}:{self.public_port}/picture/{encoded_name}",
             )
         return tags
@@ -451,26 +468,6 @@ class XiaoMusic:
             return url
 
         filename = self.get_filename(name)
-        # 移除MP3 ID3 v2标签和填充，减少播放前延迟
-        if self.remove_id3tag and is_mp3(filename):
-            self.log.info(f"remove_id3tag:{self.remove_id3tag}, is_mp3:True ")
-            change = remove_id3_tags(filename)
-            if change:
-                self.log.info("ID3 tag removed, orgin mp3 file saved as bak")
-            else:
-                self.log.info("No ID3 tag remove needed")
-
-        # 如果开启了MP3转换功能，且文件不是MP3格式，则进行转换
-        if self.convert_to_mp3 and not is_mp3(filename):
-            self.log.info(f"convert_to_mp3 is enabled. Checking file: {filename}")
-            temp_mp3_file = convert_file_to_mp3(
-                filename, self.config.ffmpeg_location, self.config.music_path
-            )
-            if temp_mp3_file:
-                self.log.info(f"Converted file: {filename} to {temp_mp3_file}")
-                filename = temp_mp3_file
-            else:
-                self.log.warning(f"Failed to convert file to MP3 format: {filename}")
 
         # 构造音乐文件的URL
         if filename.startswith(self.config.music_path):
@@ -482,7 +479,8 @@ class XiaoMusic:
         self.log.info(f"get_music_url local music. name:{name}, filename:{filename}")
 
         encoded_name = urllib.parse.quote(filename)
-        return self.try_add_access_control_param(
+        return try_add_access_control_param(
+            self.config,
             f"{self.hostname}:{self.public_port}/music/{encoded_name}",
         )
 
@@ -715,6 +713,7 @@ class XiaoMusic:
                 query = new_record.get("query", "").strip()
                 did = new_record.get("did", "").strip()
                 await self.do_check_cmd(did, query, False)
+                answer = new_record.get("answer")
                 answers = new_record.get("answers", [{}])
                 if answers:
                     answer = answers[0].get("tts", {}).get("text", "").strip()
@@ -838,8 +837,8 @@ class XiaoMusic:
             extra_search_index=self._extra_index_search,
         )
         if real_names:
-            if n > 1:
-                # 扩大范围再找，最后保留随机 n 个
+            if n > 1 and name not in real_names:
+                # 模糊匹配模式，扩大范围再找，最后保留随机 n 个
                 real_names = find_best_match(
                     name,
                     all_music_list,
@@ -849,6 +848,9 @@ class XiaoMusic:
                 )
                 random.shuffle(real_names)
                 real_names = real_names[:n]
+            elif name in real_names:
+                # 可以精确匹配，限制只返回一个（保证网页端播放可用）
+                real_names = [name]
             self.log.info(f"根据【{name}】找到歌曲【{real_names}】")
             return real_names
         self.log.info(f"没找到歌曲【{name}】")

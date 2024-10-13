@@ -24,6 +24,7 @@ def default_key_word_dict():
         "播放列表": "play_music_list",
         "刷新列表": "gen_music_list",
         "加入收藏": "add_to_favorites",
+        "收藏歌曲": "add_to_favorites",
         "取消收藏": "del_from_favorites",
         "播放列表第": "play_music_list_index",
     }
@@ -57,6 +58,7 @@ def default_key_match_order():
         "播放列表第",
         "播放列表",
         "加入收藏",
+        "收藏歌曲",
         "取消收藏",
     ]
 
@@ -98,7 +100,7 @@ class Config:
         "XIAOMUSIC_ACTIVE_CMD",
         "play,set_random_play,playlocal,play_music_list,play_music_list_index,stop_after_minute,stop",
     )
-    exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir")
+    exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir,tmp")
     music_path_depth: int = int(os.getenv("XIAOMUSIC_MUSIC_PATH_DEPTH", "10"))
     disable_httpauth: bool = (
         os.getenv("XIAOMUSIC_DISABLE_HTTPAUTH", "true").lower() == "true"
@@ -157,6 +159,9 @@ class Config:
     crontab_json: str = os.getenv("XIAOMUSIC_CRONTAB_JSON", "")  # 定时任务
     enable_yt_dlp_cookies: bool = (
         os.getenv("XIAOMUSIC_ENABLE_YT_DLP_COOKIES", "false").lower() == "true"
+    )
+    get_ask_by_mina: bool = (
+        os.getenv("XIAOMUSIC_GET_ASK_BY_MINA", "false").lower() == "true"
     )
 
     def append_keyword(self, keys, action):
