@@ -181,4 +181,7 @@ $(function(){
   });
 
 
+  $("#clear_cache").on("click", () => {
+    localStorage.clear();
+  });
 });

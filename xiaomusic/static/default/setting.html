@@ -4,9 +4,9 @@
     <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width">
     <title>小爱音箱操控面板</title>
-    <script src="./jquery-3.7.1.min.js?version=1728752616"></script>
-    <script src="./setting.js?version=1728752616"></script>
-    <link rel="stylesheet" type="text/css" href="./style.css?version=1728752616">
+    <script src="./jquery-3.7.1.min.js?version=1728855027"></script>
+    <script src="./setting.js?version=1728855027"></script>
+    <link rel="stylesheet" type="text/css" href="./style.css?version=1728855027">
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
@@ -201,20 +201,22 @@ var vConsole = new window.VConsole();
     </div>
     <hr>
 
-    <button onclick="location.href='/static/default/index.html';">返回首页</button>
-    <button class="save-button">保存</button>
-    <hr>
-
-    <button id="get_music_list">获取歌单</button>
-    <button id="refresh_music_tag">刷新tag</button>
-    <a class="button" href="/downloadlog" download="xiaomusic.txt">下载日志文件</a>
-    <hr>
-
     <div class="rows">
       <label for="yt_dlp_cookies_file">上传yt_dlp_cookies.txt文件:<a href="https://github.com/hanxi/xiaomusic/issues/210" target="_blank">文档</a></label>
       <input id="yt_dlp_cookies_file" name="file" type="file">
       <button id="upload_yt_dlp_cookie">上传</button>
     </div>
+    <hr>
+
+    <button onclick="location.href='/static/default/index.html';">返回首页</button>
+    <button id="get_music_list">获取歌单</button>
+    <button class="save-button">保存</button>
+    <hr>
+
+    <button id="refresh_music_tag">刷新tag</button>
+    <button id="clear_cache">清空缓存</button>
+    <a class="button" href="/downloadlog" download="xiaomusic.txt">下载日志文件</a>
+
     <hr>
 
     <button onclick="location.href='/docs';">查看接口文档</button>
