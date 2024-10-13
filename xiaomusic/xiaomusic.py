@@ -178,6 +178,11 @@ class XiaoMusic:
                 # 拉取所有音箱的对话记录
                 tasks = []
                 for device_id in self.device_id_did:
+                    # 首次用当前时间初始化
+                    did = self.get_did(device_id)
+                    if did not in self.last_timestamp:
+                        self.last_timestamp[did] = int(time.time() * 1000)
+
                     hardware = self.get_hardward(device_id)
                     if hardware in GET_ASK_BY_MINA or self.config.get_ask_by_mina:
                         tasks.append(self.get_latest_ask_by_mina(device_id))
@@ -331,8 +336,8 @@ class XiaoMusic:
                 f"get_latest_ask_by_mina device_id:{device_id} did:{did} response:{response}"
             )
             if d := response.get("data", {}).get("info", {}):
-                result = json.loads(d).get("result", [])
-                if result and len(result) > 0:
+                result = json.loads(d).get("result", [{}])
+                if result and len(result) > 0 and result[0].get("nlp"):
                     answers = (
                         json.loads(result[0]["nlp"])
                         .get("response", {})
@@ -340,7 +345,7 @@ class XiaoMusic:
                     )
                     if answers:
                         query = answers[0].get("intention", {}).get("query", "").strip()
-                        timestamp = result[0]["timestamp"]
+                        timestamp = result[0]["timestamp"] * 1000
                         answer = answers[0].get("content", {}).get("to_speak")
                         last_record = {
                             "time": timestamp,
@@ -374,9 +379,6 @@ class XiaoMusic:
         query = last_record.get("query", "").strip()
         self.log.debug(f"获取到最后一条对话记录：{query} {timestamp}")
 
-        # 首次用当前时间初始化
-        if did not in self.last_timestamp:
-            self.last_timestamp[did] = int(time.time() * 1000)
         if timestamp > self.last_timestamp[did]:
             self.last_timestamp[did] = timestamp
             self.last_record = last_record
