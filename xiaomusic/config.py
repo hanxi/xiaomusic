@@ -24,6 +24,7 @@ def default_key_word_dict():
         "播放列表": "play_music_list",
         "刷新列表": "gen_music_list",
         "加入收藏": "add_to_favorites",
+        "收藏歌曲": "add_to_favorites",
         "取消收藏": "del_from_favorites",
         "播放列表第": "play_music_list_index",
     }
@@ -57,6 +58,7 @@ def default_key_match_order():
         "播放列表第",
         "播放列表",
         "加入收藏",
+        "收藏歌曲",
         "取消收藏",
     ]
 
