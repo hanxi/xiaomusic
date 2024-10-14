@@ -24,11 +24,11 @@ from fastapi import (
     status,
 )
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
-from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
-from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel
 from starlette.background import BackgroundTask
 from starlette.responses import FileResponse, Response
@@ -96,7 +96,7 @@ app = FastAPI(
     version=__version__,
     docs_url=None,
     redoc_url=None,
-    openapi_url = None,
+    openapi_url=None,
 )
 
 app.add_middleware(
