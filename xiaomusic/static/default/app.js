@@ -344,7 +344,7 @@ $(function(){
         // 添加用户输入作为一个选项
         const userOption = document.createElement('option');
         userOption.value = query;
-        userOption.textContent = `使用关键词联网搜索: ${query}`;
+        userOption.textContent = `使用关键词播放: ${query}`;
         musicSelect.appendChild(userOption);
 
         // 提示没找到
