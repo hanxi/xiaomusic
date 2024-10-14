@@ -115,13 +115,20 @@ def keyword_detection(user_input, str_list, n):
             matched.append(item)
         else:
             remains.append(item)
-
+    
+    matched = sorted(
+        matched,
+        key=lambda s: difflib.SequenceMatcher(None, s, user_input).ratio(),
+        reverse=True  # 降序排序，越相似的越靠前
+    )
+    
     # 如果 n 是 -1，如果 n 大于匹配的数量，返回所有匹配的结果
     if n == -1 or n > len(matched):
         return matched, remains
 
-    # 随机选择 n 个匹配的结果
-    return random.sample(matched, n), remains
+    # 选择前 n 个匹配的结果
+    remains = matched[n:] + remains
+    return matched[:n], remains
 
 
 def real_search(prompt, candidates, cutoff, n):
