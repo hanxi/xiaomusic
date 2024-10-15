@@ -98,8 +98,6 @@ services:
 > [!TIP]
 > 隐藏玩法: 对小爱同学说播放歌曲小猪佩奇的故事，会先下载小猪佩奇的故事，然后再播放小猪佩奇的故事。
 
-更多功能见 [📝 文档汇总](https://github.com/hanxi/xiaomusic/issues/211)
-
 ## 🛠️ pip 方式安装运行
 
 ```shell
@@ -286,17 +284,7 @@ docker build -t xiaomusic .
 
 ### 👉 其他教程
 
-> [!NOTE]
-> 下面教程可能比较旧，只供参考
-
-- [NAS部署教程](https://post.m.smzdm.com/p/avpe7n99/)
-- [群晖部署教程](https://post.m.smzdm.com/p/a7px7dol/)
-- [QNAS部署教程](https://post.smzdm.com/p/a5xz5x63/)
-- [视频教程](https://www.bilibili.com/video/BV1ZZpweHEtT/)
-- [TechHive](https://mp.weixin.qq.com/s/4a41muFtPaFKtHeZYu795w)
-- [弹个AI](https://mp.weixin.qq.com/s/sIsKxB7Y8b83AhnvaWiMog)
-- [简单免费！教你用绿联NAS联动小爱音箱，私人音乐库也能语音点播](https://post.m.smzdm.com/p/a8pldgg7/)
-- [飞牛教程](https://mp.weixin.qq.com/s?t=pages/image_detail&__biz=MzkxODc1NDMwOA==&mid=2247483725&idx=1&sn=2d615f14733b9bf989557fa766b4e1fc)
+更多功能见 [📝 文档汇总](https://github.com/hanxi/xiaomusic/issues/211)
 
 ## 🚨 免责声明
 
