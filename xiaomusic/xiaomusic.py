@@ -602,7 +602,17 @@ class XiaoMusic:
 
         # self.log.debug(self.all_music)
 
-        self.music_list = OrderedDict({"临时搜索列表": []})
+        self.music_list = OrderedDict(
+            {
+                "临时搜索列表": [],
+                "所有歌曲": [],
+                "所有电台": [],
+                "收藏": [],
+                "全部": [],  # 包含所有歌曲和所有电台
+                "下载": [],  # 下载目录下的
+                "其他": [],  # 主目录下的
+            }
+        )
         # 全部，所有，自定义歌单（收藏）
         self.music_list["全部"] = list(self.all_music.keys())
         self.music_list["所有歌曲"] = [
