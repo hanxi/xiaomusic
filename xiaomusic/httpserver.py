@@ -11,6 +11,7 @@ import urllib.parse
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from typing import Annotated
+from fastapi import Request
 
 import aiofiles
 from fastapi import (
@@ -275,6 +276,15 @@ async def musicinfo(
     name: str, musictag: bool = False, Verifcation=Depends(verification)
 ):
     url = xiaomusic.get_music_url(name)
+
+    current_scheme = request.url.scheme
+    current_host = request.url.hostname
+    current_port = request.url.port
+    current_domain = f"{current_scheme}://{current_host}:{current_port}"
+
+    pattern = r"http://[\d\.]+:\d+"
+    url = re.sub(pattern, current_domain, url)
+    
     info = {
         "ret": "OK",
         "name": name,
@@ -282,6 +292,10 @@ async def musicinfo(
     }
     if musictag:
         info["tags"] = xiaomusic.get_music_tags(name)
+        
+    if "picture" in info["tags"]:
+        nfo["tags"]["picture"] = re.sub(pattern, current_domain, info["tags"]["picture"])
+        
     return info
 
 
