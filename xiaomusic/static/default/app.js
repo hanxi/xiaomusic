@@ -122,7 +122,8 @@ $(function(){
     $.get("/musiclist", function(data, status) {
       console.log(data, status);
       $.each(data, function(key, value) {
-        $('#music_list').append($('<option></option>').val(key).text(key));
+        let cnt = value.length;
+        $('#music_list').append($('<option></option>').val(key).text(`${key} (${cnt})`));
       });
 
       $('#music_list').change(function() {
