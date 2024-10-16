@@ -11,6 +11,7 @@ class Analytics:
         self.gtag = None
         self.current_date = None
         self.log = log
+        self.task = None
         self.init()
 
     def init(self):
@@ -27,16 +28,19 @@ class Analytics:
         self.gtag = gtag
         self.log.info("analytics init ok")
 
-    async def run_with_timeout(self, func, *args, **kwargs):
+    async def run_with_cancel(self, func, *args, **kwargs):
         try:
-            return await asyncio.wait_for(func(*args, **kwargs), 3)
-        except asyncio.TimeoutError as e:
-            self.log.warning(f"analytics run_with_timeout failed {e}")
+            if self.task:
+                self.log.warning(f"analytics run_with_cancel old : {self.task}")
+                self.task.cancel()
+            self.task = asyncio.create_task(func(*args, **kwargs))
+        except Exception as e:
+            self.log.warning(f"analytics run_with_cancel failed {e}")
             return None
 
     async def send_startup_event(self):
         try:
-            await self.run_with_timeout(self._send_startup_event)
+            await self.run_with_cancel(self._send_startup_event)
         except Exception as e:
             self.log.warning(f"analytics send_startup_event failed {e}")
             self.init()
@@ -49,7 +53,7 @@ class Analytics:
 
     async def send_daily_event(self):
         try:
-            await self.run_with_timeout(self._send_daily_event)
+            await self.run_with_cancel(self._send_daily_event)
         except Exception as e:
             self.log.warning(f"analytics send_daily_event failed {e}")
             self.init()
@@ -68,7 +72,7 @@ class Analytics:
 
     async def send_play_event(self, name, sec):
         try:
-            await self.run_with_timeout(self._send_play_event, name, sec)
+            await self.run_with_cancel(self._send_play_event, name, sec)
         except Exception as e:
             self.log.warning(f"analytics send_play_event failed {e}")
             self.init()
