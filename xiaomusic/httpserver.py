@@ -293,7 +293,7 @@ async def musicinfo(
         info["tags"] = xiaomusic.get_music_tags(name)
         
     if "picture" in info["tags"]:
-        nfo["tags"]["picture"] = re.sub(pattern, current_domain, info["tags"]["picture"])
+        info["tags"]["picture"] = re.sub(pattern, current_domain, info["tags"]["picture"])
         
     return info
 
