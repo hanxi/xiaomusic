@@ -283,7 +283,7 @@ async def musicinfo(
 
     pattern = r"http://[\d\.]+:\d+"
     url = re.sub(pattern, current_domain, url)
-    
+
     info = {
         "ret": "OK",
         "name": name,
@@ -291,10 +291,12 @@ async def musicinfo(
     }
     if musictag:
         info["tags"] = xiaomusic.get_music_tags(name)
-        
+
     if "picture" in info["tags"]:
-        info["tags"]["picture"] = re.sub(pattern, current_domain, info["tags"]["picture"])
-        
+        info["tags"]["picture"] = re.sub(
+            pattern, current_domain, info["tags"]["picture"]
+        )
+
     return info
 
 
