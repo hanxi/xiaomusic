@@ -11,7 +11,6 @@ import urllib.parse
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from typing import Annotated
-from fastapi import Request
 
 import aiofiles
 from fastapi import (
