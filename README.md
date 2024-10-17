@@ -24,12 +24,33 @@
 docker run -p 8090:8090 -v /xiaomusic/music:/app/music -v /xiaomusic/conf:/app/conf hanxi/xiaomusic
 ```
 
+国内：
+
+```bash
+docker run -p 8090:8090 -v /xiaomusic/music:/app/music -v /xiaomusic/conf:/app/conf m.daocloud.io/docker.io/hanxi/xiaomusic
+```
+
 对应的 docker compose 配置如下：
 
 ```yaml
 services:
   xiaomusic:
     image: hanxi/xiaomusic
+    container_name: xiaomusic
+    restart: unless-stopped
+    ports:
+      - 8090:8090
+    volumes:
+      - /xiaomusic/music:/app/music
+      - /xiaomusic/conf:/app/conf
+```
+
+国内：
+
+```yaml
+services:
+  xiaomusic:
+    image: m.daocloud.io/docker.io/hanxi/xiaomusic
     container_name: xiaomusic
     restart: unless-stopped
     ports:
