@@ -272,7 +272,7 @@ async def musiclist(Verifcation=Depends(verification)):
 
 @app.get("/musicinfo")
 async def musicinfo(
-    name: str, musictag: bool = False, Verifcation=Depends(verification), request: Request
+    request: Request, name: str, musictag: bool = False, Verifcation=Depends(verification)
 ):
     url = xiaomusic.get_music_url(name)
 
