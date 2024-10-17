@@ -24,7 +24,7 @@
 docker run -p 8090:8090 -v /xiaomusic/music:/app/music -v /xiaomusic/conf:/app/conf hanxi/xiaomusic
 ```
 
-国内：
+🔥 国内：
 
 ```bash
 docker run -p 8090:8090 -v /xiaomusic/music:/app/music -v /xiaomusic/conf:/app/conf m.daocloud.io/docker.io/hanxi/xiaomusic
@@ -45,7 +45,7 @@ services:
       - /xiaomusic/conf:/app/conf
 ```
 
-国内：
+🔥 国内：
 
 ```yaml
 services:
