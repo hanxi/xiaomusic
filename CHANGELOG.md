@@ -1,3 +1,15 @@
+## v0.3.41 (2024-10-17)
+
+### Feat
+
+- 设置默认时区为东八区 closed #236
+
+### Fix
+
+- 修复获取标签信息报错问题
+- remove_id3_tags return None if no id3 tag (#238)
+- bug in del_music (#237)
+
 ## v0.3.40 (2024-10-16)
 
 ### Feat
