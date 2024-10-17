@@ -416,6 +416,14 @@ def get_temp_dir(music_path: str):
 
 
 def remove_id3_tags(input_file: str, config) -> str:
+    audio = MP3(input_file, ID3=ID3)
+
+    # 检查是否存在ID3 v2.3或v2.4标签
+    if not (audio.tags and (
+        audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0)
+    )):
+        return None
+
     music_path = config.music_path
     temp_dir = get_temp_dir(music_path)
 
@@ -436,22 +444,15 @@ def remove_id3_tags(input_file: str, config) -> str:
         log.info(f"File {out_file_path} already exists. Skipping remove_id3_tags.")
         return relative_path
 
-    audio = MP3(input_file, ID3=ID3)
-
-    # 检查是否存在ID3 v2.3或v2.4标签
-    if audio.tags and (
-        audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0)
-    ):
-        # 拷贝文件
-        shutil.copy(input_file, out_file_path)
-        outaudio = MP3(out_file_path, ID3=ID3)
-        # 删除ID3标签
-        outaudio.delete()
-        # 保存修改后的文件
-        outaudio.save(padding=no_padding)
-        log.info(f"File {out_file_path} remove_id3_tags ok.")
-        return relative_path
-
+    # 开始去除（不再需要检查）
+    # 拷贝文件
+    shutil.copy(input_file, out_file_path)
+    outaudio = MP3(out_file_path, ID3=ID3)
+    # 删除ID3标签
+    outaudio.delete()
+    # 保存修改后的文件
+    outaudio.save(padding=no_padding)
+    log.info(f"File {out_file_path} remove_id3_tags ok.")
     return relative_path
 
 
