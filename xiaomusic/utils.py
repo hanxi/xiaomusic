@@ -419,9 +419,10 @@ def remove_id3_tags(input_file: str, config) -> str:
     audio = MP3(input_file, ID3=ID3)
 
     # 检查是否存在ID3 v2.3或v2.4标签
-    if not (audio.tags and (
-        audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0)
-    )):
+    if not (
+        audio.tags
+        and (audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0))
+    ):
         return None
 
     music_path = config.music_path
