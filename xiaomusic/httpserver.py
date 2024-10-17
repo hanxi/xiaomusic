@@ -272,13 +272,13 @@ async def musiclist(Verifcation=Depends(verification)):
 
 @app.get("/musicinfo")
 async def musicinfo(
-    name: str, musictag: bool = False, Verifcation=Depends(verification)
+    name: str, musictag: bool = False, request: Request, Verifcation=Depends(verification)
 ):
     url = xiaomusic.get_music_url(name)
 
-    current_scheme = Request.url.scheme
-    current_host = Request.url.hostname
-    current_port = Request.url.port
+    current_scheme = request.url.scheme
+    current_host = request.url.hostname
+    current_port = request.url.port
     current_domain = f"{current_scheme}://{current_host}:{current_port}"
 
     pattern = r"http://[\d\.]+:\d+"
