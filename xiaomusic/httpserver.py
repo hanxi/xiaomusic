@@ -294,8 +294,7 @@ async def musicinfo(
     }
     if musictag:
         info["tags"] = xiaomusic.get_music_tags(name)
-
-    if "picture" in info["tags"]:
+        if "picture" in info["tags"]:
         info["tags"]["picture"] = re.sub(
             pattern, current_domain, info["tags"]["picture"]
         )
