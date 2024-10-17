@@ -892,7 +892,7 @@ class XiaoMusic:
         self.log.info("gen_music_list ok")
 
     # 删除歌曲
-    def del_music(self, name):
+    async def del_music(self, name):
         filename = self.get_filename(name)
         if filename == "":
             self.log.info(f"${name} not exist")

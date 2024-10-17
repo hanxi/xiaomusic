@@ -333,9 +333,9 @@ class MusicItem(BaseModel):
 
 
 @app.post("/delmusic")
-def delmusic(data: MusicItem, Verifcation=Depends(verification)):
+async def delmusic(data: MusicItem, Verifcation=Depends(verification)):
     log.info(data)
-    xiaomusic.del_music(data.name)
+    await xiaomusic.del_music(data.name)
     return "success"
 
 
