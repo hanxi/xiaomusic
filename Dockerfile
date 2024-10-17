@@ -23,5 +23,6 @@ ENV XIAOMUSIC_PORT=8090
 VOLUME /app/conf
 VOLUME /app/music
 EXPOSE 8090
+ENV TZ=Asia/Shanghai
 ENV PATH=/app/.venv/bin:$PATH
 ENTRYPOINT [".venv/bin/python3","xiaomusic.py"]
