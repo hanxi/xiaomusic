@@ -593,7 +593,7 @@ def _to_utf8(v):
             return ts
         return old_ts
     elif isinstance(v, list):
-        return "".join(v)
+        return "".join(str(item) for item in v)
     return str(v)
 
 
