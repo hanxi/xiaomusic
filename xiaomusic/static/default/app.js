@@ -251,7 +251,13 @@ $(function(){
 
   $("#play").on("click", () => {
     var search_key = $("#music-name").val();
+    if (search_key == null) {
+      search_key = "";
+    }
     var filename = $("#music-filename").val();
+    if (filename == null) {
+      filename = "";
+    }
     let cmd = "播放歌曲" + search_key + "|" + filename;
     sendcmd(cmd);
   });
