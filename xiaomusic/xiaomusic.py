@@ -1187,7 +1187,6 @@ class XiaoMusicDevice:
 
         self._download_proc = None  # 下载对象
         self._next_timer = None
-        self._timeout = 0
         self._playing = False
         # 播放进度
         self._start_time = 0
@@ -1677,14 +1676,17 @@ class XiaoMusicDevice:
     # 设置下一首歌曲的播放定时器
     async def set_next_music_timeout(self, sec):
         self.cancel_next_timer()
-        self._timeout = sec
 
         async def _do_next():
-            await asyncio.sleep(self._timeout)
+            await asyncio.sleep(sec)
             try:
                 self.log.info("定时器时间到了")
-                self._next_timer = None
-                await self._play_next()
+                if self._next_timer:
+                    self._next_timer = None
+                    await self._play_next()
+                else:
+                    self.log.info("定时器时间到了但是不见了")
+
             except Exception as e:
                 self.log.error(f"Execption {e}")
 
@@ -1760,13 +1762,17 @@ class XiaoMusicDevice:
         await self.do_tts(f"收到,{minute}分钟后将关机")
 
     def cancel_next_timer(self):
+        self.log.info("cancel_next_timer")
         if self._next_timer:
             self._next_timer.cancel()
             self.log.info(f"下一曲定时器已取消 {self.device_id}")
             self._next_timer = None
+        else:
+            self.log.info("下一曲定时器不见了")
 
     def cancel_group_next_timer(self):
         devices = self.xiaomusic.get_group_devices(self.group_name)
+        self.log.info(f"cancel_group_next_timer {devices}")
         for device in devices.values():
             device.cancel_next_timer()
 
