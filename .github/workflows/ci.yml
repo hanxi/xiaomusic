@@ -28,25 +28,58 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and export to Docker
+      # We have to build each platform separately because when using multi-arch
+      # builds, only one platform is being loaded into the cache. This would
+      # prevent us from testing the other platforms.
+      - name: Build Docker image (linux/amd64)
         uses: docker/build-push-action@v6
         with:
+          platforms: linux/amd64
           context: .
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: false
           load: true
-          tags: ${{ env.TEST_TAG }}
+          tags: ${{ env.TEST_TAG }}-linux-amd64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
-      - name: Test
-        run: |
-          docker run --rm ${{ env.TEST_TAG }} -h
-
-      - name: Build and push
+      - name: Build Docker image (linux/arm64)
         uses: docker/build-push-action@v6
         with:
+          platforms: linux/arm64
           context: .
+          push: false
+          load: true
+          tags: ${{ env.TEST_TAG }}-linux-arm64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Build Docker image (linux/arm/v7)
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/arm/v7
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.TEST_TAG }}-linux-arm-v7
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      # We test all the images on amd64 host here. This uses QEMU to emulate
+      # the other platforms.
+      - run: docker run --rm ${{ TEST_TAG }}-linux-amd64 --version
+      - run: docker run --rm ${{ TEST_TAG }}-linux-arm-v7 --version
+      - run: docker run --rm ${{ TEST_TAG }}-linux-arm64-v8 --version
+
+      # This will only push the previously built images.
+      - name: Publish to Docker Hub
+        uses: docker/build-push-action@v6
+        with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
+          context: .
           push: true
           tags: ${{ env.TEST_TAG }}
+          cache-from: type=local,src=/tmp/.buildx-cache-new
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v4
