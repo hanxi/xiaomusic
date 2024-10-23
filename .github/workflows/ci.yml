@@ -67,8 +67,8 @@ jobs:
       # We test all the images on amd64 host here. This uses QEMU to emulate
       # the other platforms.
       - run: docker run --rm ${TEST_TAG}-linux-amd64 -h
+      - run: docker run --rm ${TEST_TAG}-linux-arm64 -h
       - run: docker run --rm ${TEST_TAG}-linux-arm-v7 -h
-      - run: docker run --rm ${TEST_TAG}-linux-arm64-v8 -h
 
       # This will only push the previously built images.
       - name: Publish to Docker Hub
