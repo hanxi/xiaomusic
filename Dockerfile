@@ -14,8 +14,9 @@ RUN bash install_dependencies.sh
 FROM python:3.10-slim
 
 RUN apt-get update && apt-get install -y \
-	libtiff6 \
+    libtiff6 \
     libopenjp2-7 \
+    libxcb1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
