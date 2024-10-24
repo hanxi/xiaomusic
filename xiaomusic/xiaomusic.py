@@ -829,6 +829,12 @@ class XiaoMusic:
                 continue
 
             self.log.info(f"匹配到指令. opkey:{opkey} opvalue:{opvalue} oparg:{oparg}")
+            # 自定义口令
+            if opvalue.startswith("exec#"):
+                code = opvalue.split("#", 1)[1]
+                return ("exec", code)
+            return (opvalue, "")
+
             return (opvalue, oparg)
         self.log.info(f"未匹配到指令 {query} {ctrl_panel}")
         return (None, None)
