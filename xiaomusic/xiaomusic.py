@@ -550,7 +550,7 @@ class XiaoMusic:
         all_music_tags = self.try_load_from_tag_cache()
         all_music_tags.update(self.all_music_tags)  # 保证最新
         for name, file_or_url in only_items.items():
-            await asyncio.sleep(0.001)
+            start = time.perf_counter()
             if name not in all_music_tags:
                 try:
                     if self.is_web_music(name):
@@ -564,6 +564,11 @@ class XiaoMusic:
                         self.log.info(f"{name}/{file_or_url} 无法更新 tag")
                 except BaseException as e:
                     self.log.exception(f"{e} {file_or_url} error {type(file_or_url)}!")
+            if (time.perf_counter() - start) < 1:
+                await asyncio.sleep(0.001)
+            else:
+                # 处理一首歌超过1秒，则等1秒，解决挂载网盘卡死的问题
+                await asyncio.sleep(1)
         # 全部更新结束后，一次性赋值
         self.all_music_tags = all_music_tags
         # 刷新 tag cache
