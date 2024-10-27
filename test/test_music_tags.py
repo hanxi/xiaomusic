@@ -36,8 +36,7 @@ async def main(directory):
             # await test_one_music(file)
             pass
 
-    await test_one_music("./music/4.mp3")
-    # await test_one_music("./music/4 In Love - 一千零一个愿.mp3")
+    await test_one_music("music/4 In Love - 一千零一个愿望.mp3")
     # await test_one_music("./music/程响-人间烟火.flac")
 
 
