@@ -1,6 +1,12 @@
-FROM python:3.10
+FROM python:3.10-slim
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 COPY install_dependencies.sh .
 RUN bash install_dependencies.sh
+
+RUN apt-get update && apt-get install -y \
+    libtiff6 \
+    libopenjp2-7 \
+    libxcb1 \
+    && rm -rf /var/lib/apt/lists/*
 
