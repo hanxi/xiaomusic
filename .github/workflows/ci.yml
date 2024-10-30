@@ -35,12 +35,12 @@ jobs:
           context: .
           push: false
           load: true
-          tags: ${{ env.TEST_TAG }}-${{ matrix.platform | replace('/', '-') }}
+          tags: ${{ env.TEST_TAG }}-${{ matrix.platform }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Test Docker image
-        run: docker run --rm ${{ env.TEST_TAG }}-${{ matrix.platform | replace('/', '-') }} -h
+        run: docker run --rm ${{ env.TEST_TAG }}-${{ matrix.platform }} -h
 
   publish:
     runs-on: ubuntu-latest
