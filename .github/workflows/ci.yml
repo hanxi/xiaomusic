@@ -28,6 +28,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set tags name
+        env:
+            TAGNAME: ${{ env.TEST_TAG }}-${{ matrix.platform }}
+        run: echo "TAGNAME=${TAGNAME/\//-}" >> $GITHUB_ENV
+
       - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
@@ -35,12 +40,12 @@ jobs:
           context: .
           push: false
           load: true
-          tags: ${{ env.TEST_TAG }}-${{ matrix.platform }}
+          tags: ${{ env.TAGNAME }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Test Docker image
-        run: docker run --rm ${{ env.TEST_TAG }}-${{ matrix.platform }} -h
+        run: docker run --rm ${{ env.TAGNAME }} -h
 
   publish:
     runs-on: ubuntu-latest
