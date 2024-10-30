@@ -53,7 +53,7 @@ jobs:
       - name: Publish to Docker Hub
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: ${{ matrix.platform }}
           context: .
           push: true
           tags: ${{ env.TEST_TAG }}
