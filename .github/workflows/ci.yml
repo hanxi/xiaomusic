@@ -1,21 +1,21 @@
 name: ci
-
 on:
   push:
     branches:
       - "*"
   workflow_dispatch:
-
 env:
   TEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}
-
 jobs:
-  build-image:
+  build-and-test:
     runs-on: ubuntu-latest
-    # run unless event type is pull_request
     if: github.event_name != 'pull_request'
+    strategy:
+      matrix:
+        platform: [linux/amd64, linux/arm64, linux/arm/v7]
     steps:
       - uses: actions/checkout@v3
+      
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -28,49 +28,30 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # We have to build each platform separately because when using multi-arch
-      # builds, only one platform is being loaded into the cache. This would
-      # prevent us from testing the other platforms.
-      - name: Build Docker image (linux/amd64)
+      - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64
+          platforms: ${{ matrix.platform }}
           context: .
           push: false
           load: true
-          tags: ${{ env.TEST_TAG }}-linux-amd64
+          tags: ${{ env.TEST_TAG }}-${{ matrix.platform | replace('/', '-') }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
-      - name: Build Docker image (linux/arm64)
-        uses: docker/build-push-action@v6
+      - name: Test Docker image
+        run: docker run --rm ${{ env.TEST_TAG }}-${{ matrix.platform | replace('/', '-') }} -h
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          platforms: linux/arm64
-          context: .
-          push: false
-          load: true
-          tags: ${{ env.TEST_TAG }}-linux-arm64
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker image (linux/arm/v7)
-        uses: docker/build-push-action@v6
-        with:
-          platforms: linux/arm/v7
-          context: .
-          push: false
-          load: true
-          tags: ${{ env.TEST_TAG }}-linux-arm-v7
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
-
-      # We test all the images on amd64 host here. This uses QEMU to emulate
-      # the other platforms.
-      - run: docker run --rm ${TEST_TAG}-linux-amd64 -h
-      - run: docker run --rm ${TEST_TAG}-linux-arm64 -h
-      - run: docker run --rm ${TEST_TAG}-linux-arm-v7 -h
-
-      # This will only push the previously built images.
       - name: Publish to Docker Hub
         uses: docker/build-push-action@v6
         with:
