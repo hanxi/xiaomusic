@@ -31,15 +31,13 @@ jobs:
       - name: Set tags name
         id: gen_tag_name
         env:
-            PRETAGNAME: ${{ env.TEST_TAG }}-${{ matrix.platform }}
+            IMAGE_NAME: ${{ env.TEST_TAG }}
+            PLATFORM_NAME: ${{ matrix.platform }}
         run: |
-            echo "TAGNAME=${PRETAGNAME/\//-}" >> $GITHUB_OUTPUT
-            echo ${TAGNAME}
+            echo "TAGNAME=${IMAGE_NAME}-${PLATFORM_NAME/\///-}" >> >> $GITHUB_ENV
 
       - name: Build Docker image
         uses: docker/build-push-action@v6
-        env:
-          TAGNAME: ${{ steps.gen_tag_name.outputs.TAGNAME }}
         with:
           platforms: ${{ matrix.platform }}
           context: .
