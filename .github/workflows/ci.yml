@@ -41,6 +41,7 @@ jobs:
         with:
           platforms: ${{ matrix.platform }}
           context: .
+          file: ./Dockerfile
           push: false
           load: true
           tags: ${{ env.TAGNAME }}
@@ -53,8 +54,9 @@ jobs:
       - name: Publish to Docker Hub
         uses: docker/build-push-action@v6
         with:
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64, linux/arm64, linux/arm/v7
           context: .
+          file: ./Dockerfile
           push: true
           tags: ${{ env.TEST_TAG }}
           cache-from: type=local,src=/tmp/.buildx-cache

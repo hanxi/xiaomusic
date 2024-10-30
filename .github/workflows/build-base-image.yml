@@ -39,7 +39,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}, ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:runtime
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
-          
+
       - name: Build and push builder
         uses: docker/build-push-action@v4
         with:
