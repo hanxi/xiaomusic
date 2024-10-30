@@ -34,7 +34,7 @@ jobs:
             IMAGE_NAME: ${{ env.TEST_TAG }}
             PLATFORM_NAME: ${{ matrix.platform }}
         run: |
-            echo "TAGNAME=${IMAGE_NAME}-${PLATFORM_NAME/\///-}" >> >> $GITHUB_ENV
+            echo "TAGNAME=${IMAGE_NAME}-${PLATFORM_NAME/\///-}" >> $GITHUB_ENV
 
       - name: Build Docker image
         uses: docker/build-push-action@v6
