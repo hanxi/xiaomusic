@@ -44,6 +44,8 @@ jobs:
           push: false
           load: true
           tags: ${{ env.TAGNAME }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Test Docker image
         run: docker run --rm ${{ env.TAGNAME }} -h
@@ -55,6 +57,8 @@ jobs:
           context: .
           push: true
           tags: ${{ env.TEST_TAG }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
   publish-readme:
     runs-on: ubuntu-latest
