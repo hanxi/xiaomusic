@@ -34,6 +34,7 @@ jobs:
             PRETAGNAME: ${{ env.TEST_TAG }}-${{ matrix.platform }}
         run: |
             echo "TAGNAME=${PRETAGNAME/\//-}" >> $GITHUB_OUTPUT
+            echo ${TAGNAME}
 
       - name: Build Docker image
         uses: docker/build-push-action@v6
