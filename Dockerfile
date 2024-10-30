@@ -1,4 +1,4 @@
-FROM python:3.10 AS builder
+FROM hanxi/xiaomusic:base AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 RUN pip install -U pdm
 ENV PDM_CHECK_UPDATE=false
@@ -8,8 +8,6 @@ COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/
 COPY xiaomusic.py .
 RUN pdm install --prod --no-editable
-COPY install_dependencies.sh .
-RUN bash install_dependencies.sh
 
 FROM python:3.10-slim
 
@@ -20,8 +18,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/ffmpeg /app/ffmpeg
+COPY --from=builder /app/.venv /app/.venv
 COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/
 COPY xiaomusic.py .
