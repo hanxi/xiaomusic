@@ -38,9 +38,11 @@ jobs:
 
   build-image:
     runs-on: ubuntu-latest
-    #needs: release-pypi
     # run unless event type is pull_request
     if: github.event_name != 'pull_request'
+    strategy:
+      matrix:
+        platform: [linux/amd64, linux/arm64, linux/arm/v7]
     steps:
       - uses: actions/checkout@v3
       - name: Set up QEMU
@@ -56,6 +58,6 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}, ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:latest, ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:stable
