@@ -1,4 +1,4 @@
-FROM python:3.10 AS builder
+FROM hanxi/xiaomusic:builder AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 RUN pip install -U pdm
 ENV PDM_CHECK_UPDATE=false
@@ -9,7 +9,7 @@ COPY plugins/ ./plugins/
 COPY xiaomusic.py .
 RUN pdm install --prod --no-editable
 
-FROM hanxi/xiaomusic:base
+FROM hanxi/xiaomusic:runtime
 
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv

@@ -18,11 +18,19 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push
+      - name: Build and push runtime
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./Dockerfile.base
+          file: ./Dockerfile.runtime
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}, ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:base
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}, ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:runtime
+      - name: Build and push builder
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile.builder
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}, ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:builder
