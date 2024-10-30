@@ -14,6 +14,9 @@ jobs:
   build-image:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
+    strategy:
+      matrix:
+        platform: [linux/amd64, linux/arm64, linux/arm/v7]
     steps:
       - uses: actions/checkout@v4
       - name: Set up QEMU
@@ -30,7 +33,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile.runtime
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}, ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:runtime
       - name: Build and push builder
@@ -38,6 +41,6 @@ jobs:
         with:
           context: .
           file: ./Dockerfile.builder
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}, ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:builder
