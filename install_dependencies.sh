@@ -16,6 +16,7 @@ install_from_github() {
 	mkdir -p ffmpeg/bin
 	mv $pkg/bin/ffmpeg ffmpeg/bin/
 	mv $pkg/bin/ffprobe ffmpeg/bin/
+ 	rm -rf $pkg $pkg.tar.xz
 }
 
 install_from_ffmpeg() {
@@ -26,6 +27,7 @@ install_from_ffmpeg() {
 	mkdir -p ffmpeg/bin
 	mv $pkg/*/ffmpeg ffmpeg/bin/
 	mv $pkg/*/ffprobe ffmpeg/bin/
+ 	rm -rf $pkg $pkg.tar.xz
 }
 
 # 基于架构执行不同的操作
