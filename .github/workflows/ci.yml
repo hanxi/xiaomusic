@@ -30,8 +30,8 @@ jobs:
 
       - name: Set tags name
         env:
-            TAGNAME: ${{ env.TEST_TAG }}-${{ matrix.platform }}
-        run: echo "TAGNAME=${TAGNAME/\//-}" >> $GITHUB_ENV
+            PRETAGNAME: ${{ env.TEST_TAG }}-${{ matrix.platform }}
+        run: echo "TAGNAME=${PRETAGNAME/\//-}" >> $GITHUB_ENV
 
       - name: Build Docker image
         uses: docker/build-push-action@v6
