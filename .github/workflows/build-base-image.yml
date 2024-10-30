@@ -1,6 +1,12 @@
 name: Build Docker Base Image
 
 on:
+  push:
+    paths:
+      - 'Dockerfile.builder'
+      - 'Dockerfile.runtime'
+      - 'install_dependencies.sh'
+      - '.github/workflows/build-base-image.yml'
   workflow_dispatch:
 
 jobs:
