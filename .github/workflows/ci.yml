@@ -29,12 +29,16 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set tags name
+        id: gen_tag_name
         env:
             PRETAGNAME: ${{ env.TEST_TAG }}-${{ matrix.platform }}
-        run: echo "TAGNAME=${PRETAGNAME/\//-}" >> $GITHUB_ENV
+        run: |
+            echo "TAGNAME=${PRETAGNAME/\//-}" >> $GITHUB_OUTPUT
 
       - name: Build Docker image
         uses: docker/build-push-action@v6
+        env:
+          TAGNAME: ${{ steps.gen_tag_name.outputs.TAGNAME }}
         with:
           platforms: ${{ matrix.platform }}
           context: .
