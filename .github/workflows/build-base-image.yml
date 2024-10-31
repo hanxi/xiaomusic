@@ -33,7 +33,7 @@ jobs:
           file: ./Dockerfile.runtime
           platforms: linux/amd64, linux/arm64, linux/arm/v7
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}, ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:runtime
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:runtime
 
       - name: Build and push builder
         uses: docker/build-push-action@v4
@@ -42,5 +42,5 @@ jobs:
           file: ./Dockerfile.builder
           platforms: linux/amd64, linux/arm64, linux/arm/v7
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}, ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:builder
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:builder
 
