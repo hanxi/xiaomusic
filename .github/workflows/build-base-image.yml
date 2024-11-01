@@ -7,7 +7,6 @@ on:
       - 'Dockerfile.runtime'
       - 'install_dependencies.sh'
       - '.github/workflows/build-base-image.yml'
-      - 'pyproject.toml'
   workflow_dispatch:
 
 jobs:
