@@ -56,6 +56,13 @@ class Crontab:
 
         self.add_job(expression, job)
 
+    # 设置音量任务
+    def add_job_set_volume(self, expression, xiaomusic, did, arg1, **kwargs):
+        async def job():
+            xiaomusic.set_volume(did, arg1)
+
+        self.add_job(expression, job)
+
     def add_job_cron(self, xiaomusic, cron):
         expression = cron["expression"]  # cron 计划格式
         name = cron["name"]  # stop, play, play_music_list, tts
