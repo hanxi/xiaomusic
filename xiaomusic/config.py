@@ -137,6 +137,9 @@ class Config:
     )
     keywords_play: str = os.getenv("XIAOMUSIC_KEYWORDS_PLAY", "播放歌曲,放歌曲")
     keywords_stop: str = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止,停止播放")
+    keywords_playlist: str = os.getenv(
+        "XIAOMUSIC_KEYWORDS_PLAYLIST", "播放列表,播放歌单"
+    )
     user_key_word_dict: dict[str, str] = field(
         default_factory=default_user_key_word_dict
     )
@@ -183,6 +186,7 @@ class Config:
         self.append_keyword(self.keywords_playlocal, "playlocal")
         self.append_keyword(self.keywords_play, "play")
         self.append_keyword(self.keywords_stop, "stop")
+        self.append_keyword(self.keywords_playlist, "play_music_list")
         self.append_user_keyword()
 
     def __post_init__(self) -> None:
