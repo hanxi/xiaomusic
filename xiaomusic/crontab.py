@@ -45,7 +45,7 @@ class Crontab:
     # 添加语音播放任务
     def add_job_tts(self, expression, xiaomusic, did, arg1, **kwargs):
         async def job():
-            xiaomusic.do_tts(did, arg1)
+            await xiaomusic.do_tts(did, arg1)
 
         self.add_job(expression, job)
 
@@ -59,14 +59,14 @@ class Crontab:
     # 设置音量任务
     def add_job_set_volume(self, expression, xiaomusic, did, arg1, **kwargs):
         async def job():
-            xiaomusic.set_volume(did, arg1)
+            await xiaomusic.set_volume(did, arg1)
 
         self.add_job(expression, job)
 
     def add_job_cron(self, xiaomusic, cron):
         expression = cron["expression"]  # cron 计划格式
         name = cron["name"]  # stop, play, play_music_list, tts
-        did = cron["did"]
+        did = cron.get("did", "")
         arg1 = cron.get("arg1", "")
         jobname = f"add_job_{name}"
         func = getattr(self, jobname, None)
