@@ -1,7 +1,6 @@
 import asyncio
 import hashlib
 import json
-import mimetypes
 import os
 import re
 import secrets
@@ -26,7 +25,7 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import RedirectResponse, StreamingResponse
+from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -538,7 +537,7 @@ async def music_file(request: Request, file_path: str, key: str = "", code: str 
     if not os.path.exists(absolute_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
-    # 移除MP3 ID3 v2标签和填充，减少播放前延迟
+    # 移除MP3 ID3 v2标签和填充
     if config.remove_id3tag and is_mp3(file_path):
         log.info(f"remove_id3tag:{config.remove_id3tag}, is_mp3:True ")
         temp_mp3_file = remove_id3_tags(absolute_file_path, config)
@@ -560,34 +559,7 @@ async def music_file(request: Request, file_path: str, key: str = "", code: str 
         else:
             log.warning(f"Failed to convert file to MP3 format: {absolute_file_path}")
 
-    file_size = os.path.getsize(absolute_file_path)
-    range_start, range_end = 0, file_size - 1
-
-    range_header = request.headers.get("Range")
-    log.info(f"music_file range_header {range_header}")
-    if range_header:
-        range_match = range_pattern.match(range_header)
-        if range_match:
-            range_start = int(range_match.group(1))
-        if range_match.group(2):
-            range_end = int(range_match.group(2))
-
-        log.info(f"music_file in range {absolute_file_path}")
-
-    log.info(f"music_file {range_start} {range_end} {absolute_file_path}")
-    headers = {
-        "Content-Range": f"bytes {range_start}-{range_end}/{file_size}",
-        "Accept-Ranges": "bytes",
-    }
-    mime_type, _ = mimetypes.guess_type(file_path)
-    if mime_type is None:
-        mime_type = "application/octet-stream"
-    return StreamingResponse(
-        file_iterator(absolute_file_path, range_start, range_end),
-        headers=headers,
-        status_code=206 if range_header else 200,
-        media_type=mime_type,
-    )
+    return FileResponse(absolute_file_path)
 
 
 @app.options("/music/{file_path:path}")
@@ -610,10 +582,7 @@ async def get_picture(request: Request, file_path: str, key: str = "", code: str
     if not os.path.exists(absolute_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
-    mime_type, _ = mimetypes.guess_type(absolute_file_path)
-    if mime_type is None:
-        mime_type = "image/jpeg"
-    return FileResponse(absolute_file_path, media_type=mime_type)
+    return FileResponse(absolute_file_path)
 
 
 @app.get("/docs", include_in_schema=False)
