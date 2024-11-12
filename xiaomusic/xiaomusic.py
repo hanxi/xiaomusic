@@ -1246,7 +1246,7 @@ class XiaoMusicDevice:
                     f"随机打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
                 )
             else:
-                self._play_list = sorted(self._play_list)
+                self._play_list.sort(key=custom_sort_key)
                 self.log.info(
                     f"没打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
                 )

@@ -358,7 +358,7 @@ def get_random(length):
     return "".join(random.sample(string.ascii_letters + string.digits, length))
 
 
-# 深拷贝把敏感数据设置位*
+# 深拷贝把敏感数据设置为*
 def deepcopy_data_no_sensitive_info(data, fields_to_anonymize=None):
     if fields_to_anonymize is None:
         fields_to_anonymize = [
