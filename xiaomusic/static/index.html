@@ -3,7 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" href="/favicon.ico">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" href="/static/favicon.ico">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>小爱音箱操控面板</title>
 
@@ -15,6 +16,15 @@
   gtag('js', new Date());
   gtag('config', 'G-Z09NC1K7ZW');
   </script>
+
+    <script type="text/javascript">
+    if (navigator.serviceWorker != null) {
+      navigator.serviceWorker.register('/static/sw.js')
+        .then(function(registration) {
+          console.log('Registered events at scope: ', registration.scope);
+      });
+    }
+    </script>
 
 </head>
 
