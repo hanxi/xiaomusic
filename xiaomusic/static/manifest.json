@@ -7,7 +7,7 @@
   "short_name": "小爱音箱",
   "theme_color": "#FFFFFF",
   "description": "XiaoMusic: 无限听歌，解放小爱音箱!",
-  "orientation": "any",
+  "orientation": "natural",
   "background_color": "#FFFFFF",
   "prefer_related_applications": false,
   "display_override": [
