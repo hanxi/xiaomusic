@@ -12,16 +12,12 @@ from xiaomusic.utils import validate_proxy
 # 默认口令
 def default_key_word_dict():
     return {
-        "播放歌曲": "play",
-        "播放本地歌曲": "playlocal",
-        "关机": "stop",
         "下一首": "play_next",
         "上一首": "play_prev",
         "单曲循环": "set_play_type_one",
         "全部循环": "set_play_type_all",
         "随机播放": "set_random_play",
         "分钟后关机": "stop_after_minute",
-        "播放列表": "play_music_list",
         "刷新列表": "gen_music_list",
         "加入收藏": "add_to_favorites",
         "收藏歌曲": "add_to_favorites",
@@ -47,7 +43,6 @@ KEY_WORD_ARG_BEFORE_DICT = {
 def default_key_match_order():
     return [
         "分钟后关机",
-        "播放歌曲",
         "下一首",
         "上一首",
         "单曲循环",
@@ -188,6 +183,9 @@ class Config:
         self.append_keyword(self.keywords_stop, "stop")
         self.append_keyword(self.keywords_playlist, "play_music_list")
         self.append_user_keyword()
+        self.key_match_order = [
+            x for x in self.key_match_order if x in self.key_word_dict
+        ]
 
     def __post_init__(self) -> None:
         if self.proxy:
