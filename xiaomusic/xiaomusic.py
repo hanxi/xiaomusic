@@ -75,6 +75,7 @@ class XiaoMusic:
         self.all_music_tags = {}  # 歌曲额外信息
         self._tag_generation_task = False
         self._extra_index_search = {}
+        self.custom_play_list = None
 
         # 初始化配置
         self.init_config()
@@ -623,7 +624,6 @@ class XiaoMusic:
         self.music_list["所有歌曲"] = [
             name for name in self.all_music.keys() if name not in self._all_radio
         ]
-        self._append_custom_play_list()
 
         # 网络歌单
         try:
@@ -641,9 +641,11 @@ class XiaoMusic:
         for _, play_list in self.music_list.items():
             play_list.sort(key=custom_sort_key)
 
+        # 刷新自定义歌单
+        self.refresh_custom_play_list()
+
         # 更新每个设备的歌单
-        for device in self.devices.values():
-            device.update_playlist()
+        self.update_all_playlist()
 
         # 重建索引
         self._extra_index_search = {}
@@ -655,13 +657,11 @@ class XiaoMusic:
         # all_music 更新，重建 tag
         self.try_gen_all_music_tag()
 
-    def _append_custom_play_list(self):
-        if not self.config.custom_play_list_json:
-            return
-
+    def refresh_custom_play_list(self):
         try:
-            custom_play_list = json.loads(self.config.custom_play_list_json)
-            self.music_list["收藏"] = list(custom_play_list["收藏"])
+            custom_play_list = self.get_custom_play_list()
+            for k, v in custom_play_list.items():
+                self.music_list[k] = list(v)
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
@@ -1007,12 +1007,7 @@ class XiaoMusic:
         if not name:
             return
 
-        favorites = self.music_list.get("收藏", [])
-        if name in favorites:
-            return
-
-        favorites.append(name)
-        self.save_favorites(favorites)
+        self.play_list_add_music("收藏", name)
 
     # 从收藏列表中移除
     async def del_from_favorites(self, did="", arg1="", **kwargs):
@@ -1020,27 +1015,69 @@ class XiaoMusic:
         if not name:
             return
 
-        favorites = self.music_list.get("收藏", [])
-        if name not in favorites:
-            return
+        self.play_list_del_music("收藏", name)
 
-        favorites.remove(name)
-        self.save_favorites(favorites)
+    # 更新每个设备的歌单
+    def update_all_playlist(self):
+        for device in self.devices.values():
+            device.update_playlist()
 
-    def save_favorites(self, favorites):
-        self.music_list["收藏"] = favorites
-        custom_play_list = {}
-        if self.config.custom_play_list_json:
-            custom_play_list = json.loads(self.config.custom_play_list_json)
-        custom_play_list["收藏"] = favorites
+    def get_custom_play_list(self):
+        if self.custom_play_list is None:
+            self.custom_play_list = {}
+            if self.config.custom_play_list_json:
+                self.custom_play_list = json.loads(self.config.custom_play_list_json)
+        return self.custom_play_list
+
+    def save_custom_play_list(self):
+        custom_play_list = self.get_custom_play_list()
+        self.refresh_custom_play_list()
         self.config.custom_play_list_json = json.dumps(
             custom_play_list, ensure_ascii=False
         )
         self.save_cur_config()
 
-        # 更新每个设备的歌单
-        for device in self.devices.values():
-            device.update_playlist()
+    # 新增歌单
+    def play_list_add(self, name):
+        custom_play_list = self.get_custom_play_list()
+        if name in custom_play_list:
+            return False
+        custom_play_list[name] = []
+        self.save_custom_play_list()
+        return True
+
+    # 移除歌单
+    def play_list_del(self, name):
+        custom_play_list = self.get_custom_play_list()
+        if name not in custom_play_list:
+            return False
+        custom_play_list.pop(name)
+        self.save_custom_play_list()
+        return True
+
+    # 歌单新增歌曲
+    def play_list_add_music(self, name, music_list):
+        custom_play_list = self.get_custom_play_list()
+        if name not in custom_play_list:
+            return False
+        play_list = custom_play_list[name]
+        for music_name in music_list:
+            if (music_name in self.all_music) and (music_name not in play_list):
+                play_list.append(music_name)
+        self.save_custom_play_list()
+        return True
+
+    # 歌单移除歌曲
+    def play_list_del_music(self, name, music_list):
+        custom_play_list = self.get_custom_play_list()
+        if name not in custom_play_list:
+            return False
+        play_list = custom_play_list[name]
+        for music_name in music_list:
+            if music_name in play_list:
+                play_list.pop(music_name)
+        self.save_custom_play_list()
+        return True
 
     # 获取音量
     async def get_volume(self, did="", **kwargs):

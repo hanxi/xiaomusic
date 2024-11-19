@@ -468,6 +468,51 @@ async def upload_yt_dlp_cookie(file: UploadFile = File(...)):
     }
 
 
+class PlayListObj(BaseModel):
+    name: str = ""  # 歌单名
+
+
+# 新增歌单
+@app.post("/playlistadd")
+async def playlistadd(data: PlayListObj, Verifcation=Depends(verification)):
+    ret = xiaomusic.play_list_add(data.name)
+    if ret:
+        return {"ret": "OK"}
+    return {"ret": "Add failed, may be already exist."}
+
+
+# 移除歌单
+@app.post("/playlistdel")
+async def playlistdel(data: PlayListObj, Verifcation=Depends(verification)):
+    ret = xiaomusic.play_list_del(data.name)
+    if ret:
+        return {"ret": "OK"}
+    return {"ret": "Del failed, may be not exist."}
+
+
+class PlayListMusicObj(BaseModel):
+    name: str = ""  # 歌单名
+    music_list: list[str]  # 歌曲名列表
+
+
+# 歌单新增歌曲
+@app.post("/playlistaddmusic")
+async def playlistaddmusic(data: PlayListMusicObj, Verifcation=Depends(verification)):
+    ret = xiaomusic.play_list_add_music(data.name, data.music_list)
+    if ret:
+        return {"ret": "OK"}
+    return {"ret": "Add failed, may be playlist not exist."}
+
+
+# 歌单移除歌曲
+@app.post("/playlistdelmusic")
+async def playlistdelmusic(data: PlayListMusicObj, Verifcation=Depends(verification)):
+    ret = xiaomusic.play_list_del_music(data.name, data.music_list)
+    if ret:
+        return {"ret": "OK"}
+    return {"ret": "Del failed, may be playlist not exist."}
+
+
 async def file_iterator(file_path, start, end):
     async with aiofiles.open(file_path, mode="rb") as file:
         await file.seek(start)
