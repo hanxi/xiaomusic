@@ -6,6 +6,11 @@ import os
 from dataclasses import asdict, dataclass, field
 from typing import get_type_hints
 
+from xiaomusic.const import (
+    PLAY_TYPE_ALL,
+    PLAY_TYPE_ONE,
+    PLAY_TYPE_RND,
+)
 from xiaomusic.utils import validate_proxy
 
 
@@ -161,6 +166,15 @@ class Config:
     get_ask_by_mina: bool = (
         os.getenv("XIAOMUSIC_GET_ASK_BY_MINA", "false").lower() == "true"
     )
+    play_type_one_tts_msg: str = os.getenv(
+        "XIAOMUSIC_PLAY_TYPE_ONE_TTS_MSG", "已经设置为单曲循环"
+    )
+    play_type_all_tts_msg: str = os.getenv(
+        "XIAOMUSIC_PLAY_TYPE_ALL_TTS_MSG", "已经设置为全部循环"
+    )
+    play_type_rnd_tts_msg: str = os.getenv(
+        "XIAOMUSIC_PLAY_TYPE_RND_TTS_MSG", "已经设置为随机播放"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
@@ -280,3 +294,12 @@ class Config:
             os.makedirs(self.conf_path)
         cookies_path = os.path.join(self.conf_path, "yt-dlp-cookie.txt")
         return cookies_path
+
+    def get_play_type_tts(self, play_type):
+        if play_type == PLAY_TYPE_ONE:
+            return self.play_type_one_tts_msg
+        if play_type == PLAY_TYPE_ALL:
+            return self.play_type_all_tts_msg
+        if play_type == PLAY_TYPE_RND:
+            return self.play_type_rnd_tts_msg
+        return ""

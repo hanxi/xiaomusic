@@ -31,7 +31,6 @@ from xiaomusic.const import (
     PLAY_TYPE_ALL,
     PLAY_TYPE_ONE,
     PLAY_TYPE_RND,
-    PLAY_TYPE_TTS,
     SUPPORT_MUSIC_TYPE,
 )
 from xiaomusic.crontab import Crontab
@@ -885,15 +884,18 @@ class XiaoMusic:
 
     # 设置为单曲循环
     async def set_play_type_one(self, did="", **kwargs):
-        await self.devices[did].set_play_type(PLAY_TYPE_ONE)
+        await self.set_play_type(did, PLAY_TYPE_ONE)
 
     # 设置为全部循环
     async def set_play_type_all(self, did="", **kwargs):
-        await self.devices[did].set_play_type(PLAY_TYPE_ALL)
+        await self.set_play_type(did, PLAY_TYPE_ALL)
 
     # 设置为随机播放
     async def set_random_play(self, did="", **kwargs):
-        await self.devices[did].set_play_type(PLAY_TYPE_RND)
+        await self.set_play_type(did, PLAY_TYPE_RND)
+
+    async def set_play_type(self, did="", play_type=PLAY_TYPE_RND, dotts=True):
+        await self.devices[did].set_play_type(play_type, dotts)
 
     # 设置为刷新列表
     async def gen_music_list(self, **kwargs):
@@ -1758,11 +1760,12 @@ class XiaoMusicDevice:
         self.log.info("get_volume. volume:%d", volume)
         return volume
 
-    async def set_play_type(self, play_type):
+    async def set_play_type(self, play_type, dotts=True):
         self.device.play_type = play_type
         self.xiaomusic.save_cur_config()
-        tts = PLAY_TYPE_TTS[play_type]
-        await self.do_tts(tts)
+        if dotts:
+            tts = self.config.get_play_type_tts(play_type)
+            await self.do_tts(tts)
         self.update_playlist()
 
     async def play_music_list(self, list_name, music_name):

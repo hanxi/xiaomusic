@@ -63,6 +63,14 @@ class Crontab:
 
         self.add_job(expression, job)
 
+    # 设置播放类型任务
+    def add_job_set_play_type(self, expression, xiaomusic, did, arg1, **kwargs):
+        async def job():
+            play_type = int(arg1)
+            await xiaomusic.set_play_type(did, play_type, False)
+
+        self.add_job(expression, job)
+
     def add_job_cron(self, xiaomusic, cron):
         expression = cron["expression"]  # cron 计划格式
         name = cron["name"]  # stop, play, play_music_list, tts
