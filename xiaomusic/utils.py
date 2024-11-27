@@ -526,6 +526,13 @@ def chinese_to_number(chinese):
     result = 0
     unit = 1
     num = 0
+    # 处理特殊情况：以"十"开头时，在前面加"一"
+    if chinese.startswith('十'):
+        chinese = '一' + chinese
+    
+    # 如果只有一个字符且是单位，直接返回其值
+    if len(chinese) == 1 and chinese_to_arabic[chinese] >= 10:
+        return chinese_to_arabic[chinese]
     for char in reversed(chinese):
         if char in chinese_to_arabic:
             val = chinese_to_arabic[char]
@@ -536,8 +543,8 @@ def chinese_to_number(chinese):
                     unit *= val
             else:
                 num += val * unit
-        result += num
-        num = 0
+    result += num
+  
     return result
 
 
