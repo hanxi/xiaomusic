@@ -10,6 +10,8 @@ from xiaomusic.const import (
     PLAY_TYPE_ALL,
     PLAY_TYPE_ONE,
     PLAY_TYPE_RND,
+    PLAY_TYPE_SEQ,
+    PLAY_TYPE_SIN,
 )
 from xiaomusic.utils import validate_proxy
 
@@ -21,7 +23,9 @@ def default_key_word_dict():
         "上一首": "play_prev",
         "单曲循环": "set_play_type_one",
         "全部循环": "set_play_type_all",
-        "随机播放": "set_random_play",
+        "随机播放": "set_play_type_rnd",
+        "单曲播放": "set_play_type_sin",
+        "顺序播放": "set_play_type_seq",
         "分钟后关机": "stop_after_minute",
         "刷新列表": "gen_music_list",
         "加入收藏": "add_to_favorites",
@@ -53,6 +57,8 @@ def default_key_match_order():
         "单曲循环",
         "全部循环",
         "随机播放",
+        "单曲播放",
+        "顺序播放",
         "关机",
         "刷新列表",
         "播放列表第",
@@ -98,7 +104,7 @@ class Config:
     ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
     active_cmd: str = os.getenv(
         "XIAOMUSIC_ACTIVE_CMD",
-        "play,set_random_play,playlocal,play_music_list,play_music_list_index,stop_after_minute,stop",
+        "play,set_play_type_rnd,playlocal,play_music_list,play_music_list_index,stop_after_minute,stop",
     )
     exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir,tmp")
     music_path_depth: int = int(os.getenv("XIAOMUSIC_MUSIC_PATH_DEPTH", "10"))
@@ -174,6 +180,12 @@ class Config:
     )
     play_type_rnd_tts_msg: str = os.getenv(
         "XIAOMUSIC_PLAY_TYPE_RND_TTS_MSG", "已经设置为随机播放"
+    )
+    play_type_sin_tts_msg: str = os.getenv(
+        "XIAOMUSIC_PLAY_TYPE_SIN_TTS_MSG", "已经设置为单曲播放"
+    )
+    play_type_seq_tts_msg: str = os.getenv(
+        "XIAOMUSIC_PLAY_TYPE_SEQ_TTS_MSG", "已经设置为顺序播放"
     )
 
     def append_keyword(self, keys, action):
@@ -302,4 +314,8 @@ class Config:
             return self.play_type_all_tts_msg
         if play_type == PLAY_TYPE_RND:
             return self.play_type_rnd_tts_msg
+        if play_type == PLAY_TYPE_SIN:
+            return self.play_type_sin_tts_msg
+        if play_type == PLAY_TYPE_SEQ:
+            return self.play_type_seq_tts_msg
         return ""

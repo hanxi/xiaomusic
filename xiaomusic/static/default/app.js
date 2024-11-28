@@ -4,16 +4,20 @@ $(function(){
   append_op_button_name("加入收藏");
   append_op_button_name("取消收藏");
 
-  const PLAY_TYPE_ONE = 0; // 单曲循环
-  const PLAY_TYPE_ALL = 1; // 全部循环
-  const PLAY_TYPE_RND = 2; // 随机播放
-  append_op_button("play_type_all", "全部循环", "全部循环");
-  append_op_button("play_type_one", "单曲循环", "单曲循环");
-  append_op_button("play_type_rnd", "随机播放", "随机播放");
-
   append_op_button_name("上一首");
   append_op_button_name("关机");
   append_op_button_name("下一首");
+
+  const PLAY_TYPE_ONE = 0; // 单曲循环
+  const PLAY_TYPE_ALL = 1; // 全部循环
+  const PLAY_TYPE_RND = 2; // 随机播放
+  const PLAY_TYPE_SIN = 3; // 单曲播放
+  const PLAY_TYPE_SEQ = 4; // 顺序播放
+  append_op_button("play_type_all", "全部循环", "全部循环");
+  append_op_button("play_type_one", "单曲循环", "单曲循环");
+  append_op_button("play_type_rnd", "随机播放", "随机播放");
+  append_op_button("play_type_sin", "单曲播放", "单曲播放");
+  append_op_button("play_type_seq", "顺序播放", "顺序播放");
 
   append_op_button_name("刷新列表");
 
@@ -71,6 +75,12 @@ $(function(){
           } else if (cur_device.play_type == PLAY_TYPE_RND) {
             $("#play_type_rnd").css('background-color', '#b1a8f3');
             $("#play_type_rnd").text('✔️ 随机播放');
+          } else if (cur_device.play_type == PLAY_TYPE_SIN) {
+            $("#play_type_sin").css('background-color', '#b1a8f3');
+            $("#play_type_sin").text('✔️ 单曲播放');
+          } else if (cur_device.play_type == PLAY_TYPE_SEQ) {
+            $("#play_type_seq").css('background-color', '#b1a8f3');
+            $("#play_type_seq").text('✔️ 顺序播放');
           }
         }
       }
@@ -298,7 +308,7 @@ $(function(){
         if (cmd == "刷新列表") {
           check_status_refresh_music_list(3); // 最多重试3次
         }
-        if (["全部循环", "单曲循环", "随机播放"].includes(cmd)) {
+        if (["全部循环", "单曲循环", "随机播放", "单曲播放", "顺序播放"].includes(cmd)) {
           location.reload();
         }
       },

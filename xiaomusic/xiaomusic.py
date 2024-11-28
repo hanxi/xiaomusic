@@ -31,6 +31,8 @@ from xiaomusic.const import (
     PLAY_TYPE_ALL,
     PLAY_TYPE_ONE,
     PLAY_TYPE_RND,
+    PLAY_TYPE_SEQ,
+    PLAY_TYPE_SIN,
     SUPPORT_MUSIC_TYPE,
 )
 from xiaomusic.crontab import Crontab
@@ -891,8 +893,16 @@ class XiaoMusic:
         await self.set_play_type(did, PLAY_TYPE_ALL)
 
     # 设置为随机播放
-    async def set_random_play(self, did="", **kwargs):
+    async def set_play_type_rnd(self, did="", **kwargs):
         await self.set_play_type(did, PLAY_TYPE_RND)
+
+    # 设置为单曲播放
+    async def set_play_type_sin(self, did="", **kwargs):
+        await self.set_play_type(did, PLAY_TYPE_SIN)
+
+    # 设置为顺序播放
+    async def set_play_type_seq(self, did="", **kwargs):
+        await self.set_play_type(did, PLAY_TYPE_SEQ)
 
     async def set_play_type(self, did="", play_type=PLAY_TYPE_RND, dotts=True):
         await self.devices[did].set_play_type(play_type, dotts)
@@ -1347,6 +1357,7 @@ class XiaoMusicDevice:
         if (
             self.device.play_type == PLAY_TYPE_ALL
             or self.device.play_type == PLAY_TYPE_RND
+            or self.device.play_type == PLAY_TYPE_SEQ
             or name == ""
             or (
                 (name not in self._play_list) and self.device.play_type != PLAY_TYPE_ONE
@@ -1432,6 +1443,10 @@ class XiaoMusicDevice:
 
         self.log.info(f"【{name}】已经开始播放了")
         await self.xiaomusic.analytics.send_play_event(name, sec)
+
+        if self.device.play_type == PLAY_TYPE_SIN:
+            self.log.info(f"【{name}】单曲播放时不会设置下一首歌的定时器")
+            return
 
         # 设置下一首歌曲的播放定时器
         if sec <= 1:
@@ -1585,6 +1600,12 @@ class XiaoMusicDevice:
         else:
             if direction == "next":
                 new_index = index + 1
+                if (
+                    self.device.play_type == PLAY_TYPE_SEQ
+                    and new_index >= play_list_len
+                ):
+                    self.log.info("顺序播放结束")
+                    return ""
                 if new_index >= play_list_len:
                     new_index = 0
             elif direction == "prev":
