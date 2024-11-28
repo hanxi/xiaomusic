@@ -407,14 +407,6 @@ def no_padding(info):
     return 0
 
 
-def get_temp_dir(music_path: str):
-    # 指定临时文件的目录为 music_path 目录下的 tmp 文件夹
-    temp_dir = os.path.join(music_path, "tmp")
-    if not os.path.exists(temp_dir):
-        os.makedirs(temp_dir)  # 确保目录存在
-    return temp_dir
-
-
 def remove_id3_tags(input_file: str, config) -> str:
     audio = MP3(input_file, ID3=ID3)
 
@@ -426,7 +418,7 @@ def remove_id3_tags(input_file: str, config) -> str:
         return None
 
     music_path = config.music_path
-    temp_dir = get_temp_dir(music_path)
+    temp_dir = config.temp_dir
 
     # 构造新文件的路径
     out_file_name = os.path.splitext(os.path.basename(input_file))[0]
@@ -459,7 +451,7 @@ def remove_id3_tags(input_file: str, config) -> str:
 
 def convert_file_to_mp3(input_file: str, config) -> str:
     music_path = config.music_path
-    temp_dir = get_temp_dir(music_path)
+    temp_dir = config.temp_dir
 
     out_file_name = os.path.splitext(os.path.basename(input_file))[0]
     out_file_path = os.path.join(temp_dir, f"{out_file_name}.mp3")

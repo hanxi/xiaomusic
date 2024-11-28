@@ -88,9 +88,8 @@ class Config:
     miio_tts_command: str = os.getenv("MIIO_TTS_CMD", "")
     cookie: str = ""
     verbose: bool = os.getenv("XIAOMUSIC_VERBOSE", "").lower() == "true"
-    music_path: str = os.getenv(
-        "XIAOMUSIC_MUSIC_PATH", "music"
-    )  # 只能是music目录下的子目录
+    music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")
+    temp_path: str = os.getenv("XIAOMUSIC_TEMP_PATH", "music/tmp")
     download_path: str = os.getenv("XIAOMUSIC_DOWNLOAD_PATH", "music/download")
     conf_path: str = os.getenv("XIAOMUSIC_CONF_PATH", "conf")
     cache_dir: str = os.getenv("XIAOMUSIC_CACHE_DIR", "cache")
@@ -306,6 +305,12 @@ class Config:
             os.makedirs(self.conf_path)
         cookies_path = os.path.join(self.conf_path, "yt-dlp-cookie.txt")
         return cookies_path
+
+    @property
+    def temp_dir(self):
+        if not os.path.exists(self.temp_path):
+            os.makedirs(self.temp_path)
+        return self.temp_path
 
     def get_play_type_tts(self, play_type):
         if play_type == PLAY_TYPE_ONE:
