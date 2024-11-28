@@ -99,3 +99,12 @@ footer {
     animation: blink 1s infinite;
 }
 
+.login-tips {
+  color: red;
+  font-size: 12px;
+  margin-left: 10px;
+}
+.login-tips a {
+  color: rgb(9, 105, 218);
+  text-decoration: underline;
+}

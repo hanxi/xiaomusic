@@ -16,13 +16,19 @@ $(function(){
     });
   };
 
-  function updateCheckbox(selector, mi_did, device_list) {
+  function updateCheckbox(selector, mi_did, device_list,accountPassValid) {
     // 清除现有的内容
     $(selector).empty();
 
     // 将 mi_did 字符串通过逗号分割转换为数组，以便于判断默认选中项
     var selected_dids = mi_did.split(',');
 
+    //如果device_list为空，则可能是未设置小米账号密码或者已设置密码，但是没有过小米验证，此处需要提示用户
+    if (device_list.length == 0) {
+      const loginTips = accountPassValid ? `<div class="login-tips">未发现可用的小爱设备，请检查账号密码是否输错，并关闭加速代理或在<a href="https://www.mi.com">小米官网</a>登陆过人脸或滑块验证。如仍未解决。请根据<a href="https://github.com/hanxi/xiaomusic/issues/99">FAQ</a>的内容解决问题。</div>` : `<div class="login-tips">未发现可用的小爱设备，请先在下面的输入框中设置小米的<b>账号、密码</b></div>`;
+      $(selector).append(loginTips);
+      return;
+    }
     $.each(device_list, function(index, device) {
       var did = device.miotDID;
       var hardware = device.hardware;
@@ -64,7 +70,8 @@ $(function(){
   // 拉取现有配置
   $.get("/getsetting?need_device_list=true", function(data, status) {
     console.log(data, status);
-    updateCheckbox("#mi_did", data.mi_did, data.device_list);
+    const accountPassValid = data.account && data.password;
+    updateCheckbox("#mi_did", data.mi_did, data.device_list, accountPassValid);
 
     // 初始化显示
     for (const key in data) {

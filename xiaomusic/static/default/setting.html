@@ -34,9 +34,7 @@ var vConsole = new window.VConsole();
     <hr>
 
     <div class="rows">
-      <label for="mi_did">*勾选设备(至少勾选1个):
-      <a href="https://github.com/hanxi/xiaomusic/issues/99">看不到设备列表？点我看FAQ</a>
-      </label>
+      <label for="mi_did">*勾选设备(至少勾选1个):</label>
       <div id="mi_did">
       </div>
     </div>
@@ -45,13 +43,13 @@ var vConsole = new window.VConsole();
     <div id="setting">
       <div class="rows">
         <label for="account">*小米账号:</label>
-        <input id="account" type="text" placeholder="填写小米登录账号"></input>
+        <input id="account" type="text" placeholder="填写小米登录账号" />
 
         <label for="password">*小米密码:</label>
-        <input id="password" type="password" placeholder="填写小米登录密码"></input>
+        <input id="password" type="password" placeholder="填写小米登录密码" />
 
         <label for="hostname">*XIAOMUSIC_HOSTNAME(IP或域名):</label>
-        <input id="hostname" type="text"></input>
+        <input id="hostname" type="text" />
       </div>
       <hr>
       <div class="rows">
@@ -62,37 +60,37 @@ var vConsole = new window.VConsole();
         </select>
 
         <label for="group_list">设备分组配置:<a href="https://github.com/hanxi/xiaomusic/issues/65#issuecomment-2215736529" target="_blank">文档</a></label>
-        <input id="group_list" type="text" placeholder="did1:组名1,did2:组名1,did3:组名2"></input>
+        <input id="group_list" type="text" placeholder="did1:组名1,did2:组名1,did3:组名2" />
 
         <label for="music_path">音乐目录:</label>
-        <input id="music_path" type="text" value="music"></input>
+        <input id="music_path" type="text" value="music" />
 
         <label for="download_path">音乐下载目录(必须是music的子目录):</label>
-        <input id="download_path" type="text" value='music/download'></input>
+        <input id="download_path" type="text" value='music/download' />
 
         <label for="conf_path">配置文件目录:</label>
-        <input id="conf_path" type="text"></input>
+        <input id="conf_path" type="text" />
 
         <label for="cache_dir">缓存文件目录:</label>
-        <input id="cache_dir" type="text"></input>
+        <input id="cache_dir" type="text" />
 
         <label for="temp_path">临时文件目录:</label>
-        <input id="temp_path" type="text" value="music/tmp"></input>
+        <input id="temp_path" type="text" value="music/tmp" />
 
         <label for="ffmpeg_location">ffmpeg路径:</label>
-        <input id="ffmpeg_location" type="text" value="./ffmpeg/bin"></input>
+        <input id="ffmpeg_location" type="text" value="./ffmpeg/bin" />
 
         <label for="log_file">日志路径:</label>
-        <input id="log_file" type="text" value="/tmp/xiaomusic.txt"></input>
+        <input id="log_file" type="text" value="/tmp/xiaomusic.txt" />
 
         <label for="active_cmd">允许唤醒的命令:</label>
-        <input id="active_cmd" type="text" value="play,random_play,playlocal,play_music_list,stop"></input>
+        <input id="active_cmd" type="text" value="play,random_play,playlocal,play_music_list,stop" />
 
         <label for="exclude_dirs">忽略目录(逗号分割):</label>
-        <input id="exclude_dirs" type="text" value="@eaDir,tmp"></input>
+        <input id="exclude_dirs" type="text" value="@eaDir,tmp" />
 
         <label for="music_path_depth">目录深度:</label>
-        <input id="music_path_depth" type="number" value="10"></input>
+        <input id="music_path_depth" type="number" value="10" />
 
         <label for="search_prefix">XIAOMUSIC_SEARCH(歌曲下载方式):</label>
         <select id="search_prefix">
@@ -101,7 +99,7 @@ var vConsole = new window.VConsole();
         </select>
 
         <label for="proxy">XIAOMUSIC_PROXY(ytsearch需要):</label>
-        <input id="proxy" type="text" placeholder="http://192.168.2.5:8080"></input>
+        <input id="proxy" type="text" placeholder="http://192.168.2.5:8080" />
 
         <label for="remove_id3tag">去除MP3 ID3v2和填充:</label>
         <select id="remove_id3tag">
@@ -116,7 +114,7 @@ var vConsole = new window.VConsole();
         </select>
 
         <label for="miio_tts_command">MiIO tts 指令(解决部分型号没有提示音的问题):</label>
-        <input id="miio_tts_command" type="text" placeholder="如：5 或者 5-3"></input>
+        <input id="miio_tts_command" type="text" placeholder="如：5 或者 5-3" />
 
         <label for="disable_httpauth">关闭控制台密码验证:</label>
         <select id="disable_httpauth">
@@ -124,9 +122,9 @@ var vConsole = new window.VConsole();
           <option value="false">false</option>
         </select>
         <label for="httpauth_username">控制台账户:</label>
-        <input id="httpauth_username" type="text" value=""></input>
+        <input id="httpauth_username" type="text" value="" />
         <label for="httpauth_password">控制台密码:</label>
-        <input id="httpauth_password" type="password" value=""></input>
+        <input id="httpauth_password" type="password" value="" />
 
         <label for="disable_download">关闭下载功能:</label>
         <select id="disable_download">
@@ -135,12 +133,12 @@ var vConsole = new window.VConsole();
         </select>
 
         <label for="use_music_audio_id">触屏版显示歌曲ID:</label>
-        <input id="use_music_audio_id" type="text" value="1582971365183456177"></input>
+        <input id="use_music_audio_id" type="text" value="1582971365183456177" />
         <label for="use_music_id">触屏版显示歌曲分段ID:</label>
-        <input id="use_music_id" type="text" value="355454500"></input>
+        <input id="use_music_id" type="text" value="355454500" />
 
         <label for="fuzzy_match_cutoff">模糊匹配阈值(0.1~0.9):</label>
-        <input id="fuzzy_match_cutoff" type="number" value="0.6"></input>
+        <input id="fuzzy_match_cutoff" type="number" value="0.6" />
 
         <label for="enable_fuzzy_match">开启模糊搜索:</label>
         <select id="enable_fuzzy_match">
@@ -161,38 +159,38 @@ var vConsole = new window.VConsole();
         </select>
 
         <label for="port">监听端口(修改后需要重启):</label>
-        <input id="port" type="number" value="8090"></input>
+        <input id="port" type="number" value="8090" />
 
         <label for="public_port">外网访问端口(0表示跟监听端口一致):</label>
-        <input id="public_port" type="number" value="0"></input>
+        <input id="public_port" type="number" value="0" />
 
         <label for="pull_ask_sec">获取对话记录间隔(秒):</label>
-        <input id="pull_ask_sec" type="number" value="1"></input>
+        <input id="pull_ask_sec" type="number" value="1" />
 
         <label for="delay_sec">下一首歌延迟播放秒数:</label>
-        <input id="delay_sec" type="number" value="3"></input>
+        <input id="delay_sec" type="number" value="3" />
 
         <label for="stop_tts_msg">停止提示音:</label>
-        <input id="stop_tts_msg" type="text" value="收到,再见"></input>
+        <input id="stop_tts_msg" type="text" value="收到,再见" />
         <label for="play_type_one_tts_msg">单曲循环提示音:</label>
-        <input id="play_type_one_tts_msg" type="text" value="已经设置为单曲循环"></input>
+        <input id="play_type_one_tts_msg" type="text" value="已经设置为单曲循环" />
         <label for="play_type_all_tts_msg">全部循环提示音:</label>
-        <input id="play_type_all_tts_msg" type="text" value="已经设置为全部循环"></input>
+        <input id="play_type_all_tts_msg" type="text" value="已经设置为全部循环" />
         <label for="play_type_rnd_tts_msg">随机播放提示音:</label>
-        <input id="play_type_rnd_tts_msg" type="text" value="已经设置为随机播放"></input>
+        <input id="play_type_rnd_tts_msg" type="text" value="已经设置为随机播放" />
         <label for="play_type_sin_tts_msg">单曲播放提示音:</label>
-        <input id="play_type_sin_tts_msg" type="text" value="已经设置为单曲播放"></input>
+        <input id="play_type_sin_tts_msg" type="text" value="已经设置为单曲播放" />
         <label for="play_type_seq_tts_msg">顺序播放提示音:</label>
-        <input id="play_type_seq_tts_msg" type="text" value="已经设置为顺序播放"></input>
+        <input id="play_type_seq_tts_msg" type="text" value="已经设置为顺序播放" />
 
         <label for="keywords_playlocal">播放本地歌曲口令:</label>
-        <input id="keywords_playlocal" type="text" value="播放本地歌曲,本地播放歌曲"></input>
+        <input id="keywords_playlocal" type="text" value="播放本地歌曲,本地播放歌曲" />
         <label for="keywords_play">播放歌曲口令:</label>
-        <input id="keywords_play" type="text" value="播放歌曲,放歌曲"></input>
+        <input id="keywords_play" type="text" value="播放歌曲,放歌曲" />
         <label for="keywords_playlist">播放列表口令:</label>
-        <input id="keywords_playlist" type="text" value="播放列表,播放歌单"></input>
+        <input id="keywords_playlist" type="text" value="播放列表,播放歌单" />
         <label for="keywords_stop">停止口令:</label>
-        <input id="keywords_stop" type="text" value="关机,暂停,停止,停止播放"></input>
+        <input id="keywords_stop" type="text" value="关机,暂停,停止,停止播放" />
 
         <label for="enable_yt_dlp_cookies">启用yt-dlp-cookies(需要先上传yt-dlp-cookies.txt文件):</label>
         <select id="enable_yt_dlp_cookies">
@@ -207,7 +205,7 @@ var vConsole = new window.VConsole();
         </select>
 
         <label for="music_list_url">歌单地址:</label>
-        <input id="music_list_url" type="text" value="https://gist.githubusercontent.com/hanxi/dda82d964a28f8110f8fba81c3ff8314/raw/example.json"></input>
+        <input id="music_list_url" type="text" value="https://gist.githubusercontent.com/hanxi/dda82d964a28f8110f8fba81c3ff8314/raw/example.json" />
 
         <label for="music_list_json">歌单内容:<a href="https://github.com/hanxi/xiaomusic/issues/78" target="_blank">格式文档</a></label>
         <textarea id="music_list_json" type="text"></textarea>
