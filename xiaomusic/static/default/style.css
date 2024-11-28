@@ -21,7 +21,6 @@ button:active, .button:active {
 }
 label {
   margin-left: 10px;
-  width: 300px;
 }
 input,select {
   margin-left: 5%;
