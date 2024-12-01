@@ -73,6 +73,29 @@ docker 和 docker compose 二选一即可，启动成功后，在 web 页面可�
 
 ### 🔥 修改默认8090端口映射
 
+#### 方法1： 不修改监听端口 8090
+
+【监听端口】保持为默认的 8090 不变，把【外网访问端口】改为 5678 。
+
+```yaml
+services:
+  xiaomusic:
+    image: hanxi/xiaomusic
+    container_name: xiaomusic
+    restart: unless-stopped
+    ports:
+      - 5678:8090
+    volumes:
+      - /xiaomusic/music:/app/music
+      - /xiaomusic/conf:/app/conf
+    environment:
+      XIAOMUSIC_PUBLIC_PORT: 5678
+```
+
+XIAOMUSIC_PUBLIC_PORT 对应后台设置里的【外网访问端口】，修改后可以不用重启。
+
+#### 方法2： 修改监听端口 8090 为 5678
+
 如果需要修改 8090 端口为其他端口，比如 5678，需要这样配，3个数字都需要是 5678 。见 <https://github.com/hanxi/xiaomusic/issues/19>
 
 ```yaml
@@ -95,7 +118,7 @@ services:
 遇到问题可以去 web 设置页面底部点击【下载日志文件】按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
 
 > [!IMPORTANT]
-> XIAOMUSIC_PORT 也可以在后台配置，对应的是监听端口。
+> XIAOMUSIC_PORT 也可以在后台配置，对应的是监听端口，修改后记得重启。
 
 
 ### 🤐 支持语音口令
