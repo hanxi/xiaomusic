@@ -29,7 +29,7 @@ $(function(){
 
   var offset = 0;
   var duration = 0;
-
+  let no_warning = localStorage.getItem('no-warning');
   // 拉取现有配置
   $.get("/getsetting", function(data, status) {
     console.log(data, status);
@@ -196,7 +196,16 @@ $(function(){
     var music_list = $("#music_list").val();
     var music_name = $("#music_name").val();
     let cmd = "播放列表" + music_list + "|" + music_name;
-    sendcmd(cmd);
+    if (no_warning) {
+      sendcmd(cmd);
+      return;
+    }
+    $.get(`/musicinfo?name=${music_name}`, function(data, status) {
+      console.log(data);
+      if (data.ret == "OK") {
+        validHost(data.url) && sendcmd(cmd);
+      }
+    });
   });
 
   $("#web_play").on("click", () => {
@@ -204,7 +213,7 @@ $(function(){
     $.get(`/musicinfo?name=${music_name}`, function(data, status) {
       console.log(data);
       if (data.ret == "OK") {
-        $('audio').attr('src',data.url);
+        validHost(data.url) && $('audio').attr('src',data.url);
       }
     });
   });
@@ -375,7 +384,7 @@ $(function(){
       .catch(error => {
           console.error('Error fetching data:', error);
       });
-  }, 300));
+  }, 500));
 
   // 动态显示保存文件名输入框
   const musicNameSelect = document.getElementById('music-name');
@@ -438,7 +447,41 @@ $(function(){
   }
   
   $("audio").on("error", (e) => {
-    console.log('app.js:441 e.currentTarget.error.code,e.currentTarget.error.message', 'color: #007acc;', e.currentTarget.error.code,e.currentTarget.error.message);
-    alert(e.currentTarget.error.code==4 ? "无法打开媒体文件，XIAOMUSIC_HOSTNAME地址错误，请重新设置" : "在线播放失败，请截图反馈: "+e.currentTarget.error.message);
+    console.log('网页播放出现错误: ', 'color: #007acc;', e.currentTarget.error.code,e.currentTarget.error.message);
+    alert(e.currentTarget.error.code==4 ? "无法打开媒体文件，XIAOMUSIC_HOSTNAME或端口地址错误，请重新设置" : "在线播放失败，请截图反馈: "+e.currentTarget.error.message);
   });
+  function validHost(url) {
+    //如果 localStorage 中有 no-warning 则直接返回true
+    if (no_warning) {
+      return true;
+    }
+    const local = location.host;
+    const host = new URL(url).host;
+          // 如果当前页面的Host与设置中的XIAOMUSIC_HOSTNAME、PORT一致, 不再提醒
+    if (local === host) {
+
+      localStorage.setItem('no-warning', 'true');
+      // 设置全局变量
+      no_warning = true;
+      return true;
+    }
+      // 如果当前页面的Host与设置中的XIAOMUSIC_HOSTNAME、PORT不一致
+      const validHost = document.getElementById('valid-host');
+      let validFlag = false;
+      $('#local-host').text(local);
+      $('#setting-host').text(host);
+      validHost.showModal();
+      //监听validHost的close事件
+      function _handleClose() {
+        console.log('%c提醒HOST不一致弹窗,用户已选择: ', 'color: #007acc;', validHost.returnValue);
+        if (validHost.returnValue == "no-warning") {
+          localStorage.setItem('no-warning', 'true');
+          no_warning = true;
+          validFlag = true;
+        }
+        validHost.removeEventListener('close', _handleClose)
+      }
+      validHost.addEventListener('close', _handleClose)
+      return validFlag; 
+  }
 });
