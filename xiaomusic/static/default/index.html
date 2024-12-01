@@ -94,5 +94,17 @@ var vConsole = new window.VConsole();
     <footer>
       <p>Powered by <a href="https://github.com/hanxi/xiaomusic" target="_blank">xiaomusic</a></p>
     </footer>
+    <dialog id="valid-host">
+      <form method="dialog">
+        <p>当前页面的HOST与设置中的HOST不一致，请检查是否设置错误</p>
+        <p>当前HOST: <span id="local-host"></span></p>
+        <p>设置中的HOST: <span id="setting-host"></span></p>
+        <div class="btn-list">
+        <a href="./setting.html" target="_blank">立即修改</a>
+        <button value="no-warning" type="submit">继续并不再显示</button>
+        <button value="cancle" type="submit">取消</button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>

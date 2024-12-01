@@ -108,3 +108,58 @@ footer {
   color: rgb(9, 105, 218);
   text-decoration: underline;
 }
+#valid-host {
+  padding: 20px;
+  border: none;
+  border-radius: 10px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+#valid-host::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+
+#valid-host form input {
+  width: fit-content;
+  margin: 0;
+  height: fit-content;
+}
+#valid-host p {
+  word-break: break-all;
+}
+#valid-host p span {
+  color: red;
+}
+#valid-host a, #valid-host a:visited {
+  color: rgb(9, 105, 218);;
+  text-decoration: underline;
+  display: flex;
+  align-items: center;
+}
+#valid-host a:hover {
+  color: rgb(9, 95, 198);
+}
+#valid-host .btn-list {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+#valid-host .btn-list button {
+  width: fit-content;
+  min-width: 60px;
+  height: 40px;
+  border: none;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 10px;
+  background-color: #008CBA;
+}
+#valid-host .btn-list button:hover {
+  font-weight:bold;
+  background-color: #007CBA;
+}
