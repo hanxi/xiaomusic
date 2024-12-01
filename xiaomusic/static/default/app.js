@@ -435,5 +435,10 @@ $(function(){
     var minutes = Math.floor(seconds / 60);
     var remainingSeconds =Math.floor(seconds % 60);
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-}
+  }
+  
+  $("audio").on("error", (e) => {
+    console.log('app.js:441 e.currentTarget.error.code,e.currentTarget.error.message', 'color: #007acc;', e.currentTarget.error.code,e.currentTarget.error.message);
+    alert(e.currentTarget.error.code==4 ? "无法打开媒体文件，XIAOMUSIC_HOSTNAME地址错误，请重新设置" : "在线播放失败，请截图反馈: "+e.currentTarget.error.message);
+  });
 });
