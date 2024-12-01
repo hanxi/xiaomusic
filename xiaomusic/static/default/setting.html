@@ -4,9 +4,9 @@
     <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width">
     <title>小爱音箱操控面板</title>
-    <script src="./jquery-3.7.1.min.js?version=1732797036"></script>
-    <script src="./setting.js?version=1732797036"></script>
-    <link rel="stylesheet" type="text/css" href="./style.css?version=1732797036">
+    <script src="./jquery-3.7.1.min.js?version=1733064443"></script>
+    <script src="./setting.js?version=1733064443"></script>
+    <link rel="stylesheet" type="text/css" href="./style.css?version=1733064443">
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
@@ -58,6 +58,12 @@ var vConsole = new window.VConsole();
           <option value="true" selected>true</option>
           <option value="false">false</option>
         </select>
+
+        <label for="port">监听端口(修改后需要重启):</label>
+        <input id="port" type="number" value="8090" />
+
+        <label for="public_port">外网访问端口(0表示跟监听端口一致):</label>
+        <input id="public_port" type="number" value="0" />
 
         <label for="group_list">设备分组配置:<a href="https://github.com/hanxi/xiaomusic/issues/65#issuecomment-2215736529" target="_blank">文档</a></label>
         <input id="group_list" type="text" placeholder="did1:组名1,did2:组名1,did3:组名2" />
@@ -157,12 +163,6 @@ var vConsole = new window.VConsole();
           <option value="true">true</option>
           <option value="false" selected>false</option>
         </select>
-
-        <label for="port">监听端口(修改后需要重启):</label>
-        <input id="port" type="number" value="8090" />
-
-        <label for="public_port">外网访问端口(0表示跟监听端口一致):</label>
-        <input id="public_port" type="number" value="0" />
 
         <label for="pull_ask_sec">获取对话记录间隔(秒):</label>
         <input id="pull_ask_sec" type="number" value="1" />
