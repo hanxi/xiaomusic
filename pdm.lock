@@ -5,7 +5,7 @@
 groups = ["default", "dev", "lint"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:37be8846356b5717495cac7252d78b1554985d607e286cf38ab863e307e5e25e"
+content_hash = "sha256:d22d4b03450cd369683d3ddf827359cd96541ee09e29bfa1fa666d72aa7d3ab0"
 
 [[metadata.targets]]
 requires_python = "==3.10.12"
@@ -39,7 +39,7 @@ files = [
 
 [[package]]
 name = "aiohttp"
-version = "3.11.8"
+version = "3.11.9"
 requires_python = ">=3.9"
 summary = "Async http client/server framework (asyncio)"
 groups = ["default"]
@@ -55,8 +55,8 @@ dependencies = [
     "yarl<2.0,>=1.17.0",
 ]
 files = [
-    {file = "aiohttp-3.11.8-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:df9bf08eb93611b1d4d6245b6fecf88728e90eece00e00d554e1b0c445557d83"},
-    {file = "aiohttp-3.11.8.tar.gz", hash = "sha256:7bc9d64a2350cbb29a9732334e1a0743cbb6844de1731cbdf5949b235653f3fd"},
+    {file = "aiohttp-3.11.9-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:39625703540feb50b6b7f938b3856d1f4886d2e585d88274e62b1bd273fae09b"},
+    {file = "aiohttp-3.11.9.tar.gz", hash = "sha256:a9266644064779840feec0e34f10a89b3ff1d2d6b751fe90017abcad1864fa7c"},
 ]
 
 [[package]]
@@ -163,6 +163,17 @@ dependencies = [
 files = [
     {file = "attrs-23.2.0-py3-none-any.whl", hash = "sha256:99b87a485a5820b23b879f04c2305b44b951b502fd64be915879d77a7e8fc6f1"},
     {file = "attrs-23.2.0.tar.gz", hash = "sha256:935dc3b529c262f6cf76e50877d35a4bd3c1de194fd41f47a2b7ae8f19971f30"},
+]
+
+[[package]]
+name = "brotli"
+version = "1.1.0"
+summary = "Python bindings for the Brotli compression library"
+groups = ["default"]
+marker = "implementation_name == \"cpython\" and python_full_version == \"3.10.12\""
+files = [
+    {file = "Brotli-1.1.0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:38025d9f30cf4634f8309c6874ef871b841eb3c347e90b0851f63d1ded5212da"},
+    {file = "Brotli-1.1.0.tar.gz", hash = "sha256:81de08ac11bcb85841e440c13611c00b67d3bf82698314928d0b676362546724"},
 ]
 
 [[package]]
@@ -659,6 +670,18 @@ files = [
 ]
 
 [[package]]
+name = "pycryptodomex"
+version = "3.21.0"
+requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
+summary = "Cryptographic library for Python"
+groups = ["default"]
+marker = "python_full_version == \"3.10.12\""
+files = [
+    {file = "pycryptodomex-3.21.0-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9aa0cf13a1a1128b3e964dc667e5fe5c6235f7d7cfb0277213f0e2a783837cc2"},
+    {file = "pycryptodomex-3.21.0.tar.gz", hash = "sha256:222d0bd05381dd25c32dd6065c071ebf084212ab79bab4599ba9e6a3e0009e6c"},
+]
+
+[[package]]
 name = "pydantic"
 version = "2.8.2"
 requires_python = ">=3.8"
@@ -760,14 +783,14 @@ files = [
 
 [[package]]
 name = "python-multipart"
-version = "0.0.17"
+version = "0.0.19"
 requires_python = ">=3.8"
 summary = "A streaming multipart parser for Python"
 groups = ["default"]
 marker = "python_full_version == \"3.10.12\""
 files = [
-    {file = "python_multipart-0.0.17-py3-none-any.whl", hash = "sha256:15dc4f487e0a9476cc1201261188ee0940165cffc94429b6fc565c4d3045cb5d"},
-    {file = "python_multipart-0.0.17.tar.gz", hash = "sha256:41330d831cae6e2f22902704ead2826ea038d0419530eadff3ea80175aec5538"},
+    {file = "python_multipart-0.0.19-py3-none-any.whl", hash = "sha256:f8d5b0b9c618575bf9df01c684ded1d94a338839bdd8223838afacfb4bb2082d"},
+    {file = "python_multipart-0.0.19.tar.gz", hash = "sha256:905502ef39050557b7a6af411f454bc19526529ca46ae6831508438890ce12cc"},
 ]
 
 [[package]]
@@ -856,14 +879,14 @@ files = [
 
 [[package]]
 name = "ruff"
-version = "0.8.0"
+version = "0.8.1"
 requires_python = ">=3.7"
 summary = "An extremely fast Python linter and code formatter, written in Rust."
 groups = ["lint"]
 marker = "python_full_version == \"3.10.12\""
 files = [
-    {file = "ruff-0.8.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:87a8e86bae0dbd749c815211ca11e3a7bd559b9710746c559ed63106d382bd9c"},
-    {file = "ruff-0.8.0.tar.gz", hash = "sha256:a7ccfe6331bf8c8dad715753e157457faf7351c2b69f62f32c165c2dbcbacd44"},
+    {file = "ruff-0.8.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b22346f845fec132aa39cd29acb94451d030c10874408dbf776af3aaeb53284c"},
+    {file = "ruff-0.8.1.tar.gz", hash = "sha256:3583db9a6450364ed5ca3f3b4225958b24f78178908d5c4bc0f46251ccca898f"},
 ]
 
 [[package]]
@@ -990,6 +1013,19 @@ files = [
 ]
 
 [[package]]
+name = "websockets"
+version = "14.1"
+requires_python = ">=3.9"
+summary = "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
+groups = ["default"]
+marker = "python_full_version == \"3.10.12\""
+files = [
+    {file = "websockets-14.1-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9607b9a442392e690a57909c362811184ea429585a71061cd5d3c2b98065c199"},
+    {file = "websockets-14.1-py3-none-any.whl", hash = "sha256:4d4fc827a20abe6d544a119896f6b78ee13fe81cbfef416f3f2ddf09a03f0e2e"},
+    {file = "websockets-14.1.tar.gz", hash = "sha256:398b10c77d471c0aab20a845e7a60076b6390bfdaac7a6d2edb0d2c59d75e8d8"},
+]
+
+[[package]]
 name = "yarl"
 version = "1.17.1"
 requires_python = ">=3.9"
@@ -1009,12 +1045,36 @@ files = [
 
 [[package]]
 name = "yt-dlp"
-version = "2024.11.18"
+version = "2024.12.1.232904.dev0"
 requires_python = ">=3.9"
 summary = "A feature-rich command-line audio/video downloader"
 groups = ["default"]
 marker = "python_full_version == \"3.10.12\""
 files = [
-    {file = "yt_dlp-2024.11.18-py3-none-any.whl", hash = "sha256:b9741695911dc566498b5f115cdd6b1abbc5be61cb01fd98abe649990a41656c"},
-    {file = "yt_dlp-2024.11.18.tar.gz", hash = "sha256:b8a4c23d3c9afd7e476bcdb87f38b6c0e8e12e3a239d7988f13acb434200f54d"},
+    {file = "yt_dlp-2024.12.1.232904.dev0-py3-none-any.whl", hash = "sha256:67c1fa0986662f2f26ba70789c79c6d04fda45eb530944872f4a47ef4f94047e"},
+    {file = "yt_dlp-2024.12.1.232904.dev0.tar.gz", hash = "sha256:4fcce6637e70bad7c63220e4dd69a3a6b8969cbc17c93bfe569940dd173c0548"},
+]
+
+[[package]]
+name = "yt-dlp"
+version = "2024.12.1.232904.dev0"
+extras = ["default"]
+requires_python = ">=3.9"
+summary = "A feature-rich command-line audio/video downloader"
+groups = ["default"]
+marker = "python_full_version == \"3.10.12\""
+dependencies = [
+    "brotli; implementation_name == \"cpython\"",
+    "brotlicffi; implementation_name != \"cpython\"",
+    "certifi",
+    "mutagen",
+    "pycryptodomex",
+    "requests<3,>=2.32.2",
+    "urllib3<3,>=1.26.17",
+    "websockets>=13.0",
+    "yt-dlp==2024.12.1.232904.dev0",
+]
+files = [
+    {file = "yt_dlp-2024.12.1.232904.dev0-py3-none-any.whl", hash = "sha256:67c1fa0986662f2f26ba70789c79c6d04fda45eb530944872f4a47ef4f94047e"},
+    {file = "yt_dlp-2024.12.1.232904.dev0.tar.gz", hash = "sha256:4fcce6637e70bad7c63220e4dd69a3a6b8969cbc17c93bfe569940dd173c0548"},
 ]
