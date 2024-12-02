@@ -950,14 +950,17 @@ class XiaoMusic:
         parts = arg1.split("|")
         list_name = parts[0]
 
+        music_name = ""
+        if len(parts) > 1:
+            music_name = parts[1]
+        return await self.do_play_music_list(did, list_name, music_name)
+
+    async def do_play_music_list(self, did, list_name, music_name=""):
         list_name = self._find_real_music_list_name(list_name)
         if list_name not in self.music_list:
             await self.do_tts(did, f"播放列表{list_name}不存在")
             return
 
-        music_name = ""
-        if len(parts) > 1:
-            music_name = parts[1]
         await self.devices[did].play_music_list(list_name, music_name)
 
     # 播放一个播放列表里第几个
@@ -992,6 +995,9 @@ class XiaoMusic:
         if name == "":
             name = search_key
 
+        return await self.do_play(name, search_key)
+
+    async def do_play(self, did, name, search_key):
         return await self.devices[did].play(name, search_key)
 
     # 本地播放

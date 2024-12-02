@@ -192,18 +192,32 @@ $(function(){
     });
   }
 
+  function do_play_music_list(listname, musicname) {
+    $.ajax({
+      type: "POST",
+      url: "/playmusiclist",
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({did: did, listname: listname, musicname: musicname}),
+      success: () => {
+        console.log("do_play_music_list succ", listname, musicname);
+      },
+      error: () => {
+        console.log("do_play_music_list failed", listname, musicname);
+      }
+    });
+  }
+
   $("#play_music_list").on("click", () => {
     var music_list = $("#music_list").val();
     var music_name = $("#music_name").val();
-    let cmd = "播放列表" + music_list + "|" + music_name;
     if (no_warning) {
-      sendcmd(cmd);
+      do_play_music_list(music_list, music_name);
       return;
     }
     $.get(`/musicinfo?name=${music_name}`, function(data, status) {
       console.log(data);
       if (data.ret == "OK") {
-        validHost(data.url) && sendcmd(cmd);
+        validHost(data.url) && do_play_music_list(music_list, music_name);
       }
     });
   });
@@ -268,6 +282,22 @@ $(function(){
     $container.append($button);
   }
 
+  function do_play_music(musicname, searchkey) {
+    $.ajax({
+      type: "POST",
+      url: "/playmusic",
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({did: did, musicname: musicname, searchkey: searchkey}),
+      success: () => {
+        console.log("do_play_music succ", musicname, searchkey);
+      },
+      error: () => {
+        console.log("do_play_music failed", musicname, searchkey);
+      }
+    });
+  }
+
+
   $("#play").on("click", () => {
     var search_key = $("#music-name").val();
     if (search_key == null) {
@@ -277,8 +307,7 @@ $(function(){
     if (filename == null) {
       filename = "";
     }
-    let cmd = "播放歌曲" + search_key + "|" + filename;
-    sendcmd(cmd);
+    do_play_music(filename, search_key);
   });
 
   $("#volume").on('change', function () {

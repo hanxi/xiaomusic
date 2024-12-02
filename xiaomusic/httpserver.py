@@ -325,6 +325,44 @@ class UrlInfo(BaseModel):
     url: str
 
 
+class DidPlayMusic(BaseModel):
+    did: str
+    musicname: str = ""
+    searchkey: str = ""
+
+
+@app.post("/playmusic")
+async def playmusic(data: DidPlayMusic, Verifcation=Depends(verification)):
+    did = data.did
+    musicname = data.musicname
+    searchkey = data.searchkey
+    if not xiaomusic.did_exist(did):
+        return {"ret": "Did not exist"}
+
+    log.info(f"playmusic {did} musicname:{musicname} searchkey:{searchkey}")
+    await xiaomusic.do_play(did, musicname, searchkey)
+    return {"ret": "OK"}
+
+
+class DidPlayMusicList(BaseModel):
+    did: str
+    listname: str = ""
+    musicname: str = ""
+
+
+@app.post("/playmusiclist")
+async def playmusiclist(data: DidPlayMusicList, Verifcation=Depends(verification)):
+    did = data.did
+    listname = data.listname
+    musicname = data.musicname
+    if not xiaomusic.did_exist(did):
+        return {"ret": "Did not exist"}
+
+    log.info(f"playmusiclist {did} listname:{listname} musicname:{musicname}")
+    await xiaomusic.do_play_music_list(did, listname, musicname)
+    return {"ret": "OK"}
+
+
 @app.post("/downloadjson")
 async def downloadjson(data: UrlInfo, Verifcation=Depends(verification)):
     log.info(data)
