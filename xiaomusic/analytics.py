@@ -30,6 +30,7 @@ class Analytics:
     async def run_with_cancel(self, func, *args, **kwargs):
         try:
             asyncio.ensure_future(asyncio.to_thread(func, *args, **kwargs))
+            self.log.info("analytics run_with_cancel success")
         except Exception as e:
             self.log.warning(f"analytics run_with_cancel failed {e}")
             return None
@@ -66,17 +67,18 @@ class Analytics:
         self.gtag.send(events=event_list)
         self.current_date = current_date
 
-    async def send_play_event(self, name, sec):
+    async def send_play_event(self, name, sec, hardware):
         try:
-            await self.run_with_cancel(self._send_play_event, name, sec)
+            await self.run_with_cancel(self._send_play_event, name, sec, hardware)
         except Exception as e:
             self.log.warning(f"analytics send_play_event failed {e}")
             self.init()
 
-    def _send_play_event(self, name, sec):
+    def _send_play_event(self, name, sec, hardware):
         event = self.gtag.create_new_event(name="play")
         event.set_event_param(name="version", value=__version__)
         event.set_event_param(name="music", value=name)
         event.set_event_param(name="sec", value=sec)
+        event.set_event_param(name="hardware", value=hardware)
         event_list = [event]
         self.gtag.send(events=event_list)

@@ -1260,7 +1260,11 @@ class XiaoMusicDevice:
 
     @property
     def did(self):
-        return self.xiaomusic.device_id_did[self.device_id]
+        return self.device.did
+
+    @property
+    def hardware(self):
+        return self.device.hardware
 
     def get_cur_music(self):
         return self.device.cur_music
@@ -1442,7 +1446,7 @@ class XiaoMusicDevice:
             return
 
         self.log.info(f"【{name}】已经开始播放了")
-        await self.xiaomusic.analytics.send_play_event(name, sec)
+        await self.xiaomusic.analytics.send_play_event(name, sec, self.hardware)
 
         if self.device.play_type == PLAY_TYPE_SIN:
             self.log.info(f"【{name}】单曲播放时不会设置下一首歌的定时器")
