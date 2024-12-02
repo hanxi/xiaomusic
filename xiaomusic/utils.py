@@ -596,6 +596,15 @@ def _to_utf8(v):
     return str(v)
 
 
+def save_picture_by_base64(picture_base64_data, save_root, file_path):
+    try:
+        picture_data = base64.b64decode(picture_base64_data)
+    except (TypeError, ValueError) as e:
+        log.exception(f"Error decoding base64 data: {e}")
+        return None
+    return _save_picture(picture_data, save_root, file_path)
+
+
 def _save_picture(picture_data, save_root, file_path):
     # 计算文件名的哈希值
     file_hash = hashlib.md5(file_path.encode("utf-8")).hexdigest()

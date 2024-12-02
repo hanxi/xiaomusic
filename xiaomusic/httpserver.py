@@ -303,6 +303,23 @@ async def musicinfos(
     return ret
 
 
+class MusicInfoObj(BaseModel):
+    musicname: str
+    title: str = ""
+    artist: str = ""
+    album: str = ""
+    year: str = ""
+    genre: str = ""
+    lyrics: str = ""
+    picture: str = ""  # base64
+
+
+@app.post("/setmusictag")
+async def setmusictag(info: MusicInfoObj, Verifcation=Depends(verification)):
+    ret = xiaomusic.set_music_tag(info.musicname, info)
+    return {"ret": ret}
+
+
 @app.get("/curplaylist")
 async def curplaylist(did: str = "", Verifcation=Depends(verification)):
     if not xiaomusic.did_exist(did):

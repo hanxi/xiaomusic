@@ -50,6 +50,7 @@ from xiaomusic.utils import (
     list2str,
     parse_cookie_string,
     parse_str_to_dict,
+    save_picture_by_base64,
     traverse_music_directory,
     try_add_access_control_param,
 )
@@ -462,6 +463,27 @@ class XiaoMusic:
                 f"{self.hostname}:{self.public_port}/picture/{encoded_name}",
             )
         return tags
+
+    # 修改标签信息
+    def set_music_tag(self, name, info):
+        if self._tag_generation_task:
+            self.log.info("tag 更新中，请等待")
+            return "Tag generation task running"
+        tags = copy.copy(self.all_music_tags.get(name, asdict(Metadata())))
+        tags["title"] = info.title
+        tags["artist"] = info.artist
+        tags["album"] = info.album
+        tags["year"] = info.year
+        tags["genre"] = info.genre
+        tags["lyrics"] = info.lyrics
+        if info.picture:
+            file_path = self.all_music[name]
+            tags["picture"] = save_picture_by_base64(
+                info.picture, self.config.picture_cache_path, file_path
+            )
+        self.all_music_tags[name] = tags
+        self.try_save_tag_cache()
+        return "OK"
 
     def get_music_url(self, name):
         if self.is_web_music(name):
