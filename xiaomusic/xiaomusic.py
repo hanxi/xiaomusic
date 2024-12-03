@@ -157,7 +157,7 @@ class XiaoMusic:
 
         log_file = self.config.log_file
         log_path = os.path.dirname(log_file)
-        if not os.path.exists(log_path):
+        if log_path and not os.path.exists(log_path):
             os.makedirs(log_path)
         if os.path.exists(log_file):
             os.remove(log_file)
