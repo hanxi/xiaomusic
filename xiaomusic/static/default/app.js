@@ -304,8 +304,8 @@ $(function(){
       search_key = "";
     }
     var filename = $("#music-filename").val();
-    if (filename == null) {
-      filename = "";
+    if (filename == null || filename == "") {
+      filename = search_key;
     }
     do_play_music(filename, search_key);
   });
