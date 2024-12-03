@@ -20,3 +20,10 @@ PLAY_TYPE_SEQ = 4  # 顺序播放
 GET_ASK_BY_MINA = {
     "M01",
 }
+
+# 需要使用 play_musci 接口的设备型号
+NEED_USE_PLAY_MUSIC_API = {
+    "X08C",
+    "X08E",
+    "X8F",
+}

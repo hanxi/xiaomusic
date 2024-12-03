@@ -28,6 +28,7 @@ from xiaomusic.const import (
     COOKIE_TEMPLATE,
     GET_ASK_BY_MINA,
     LATEST_ASK_API,
+    NEED_USE_PLAY_MUSIC_API,
     PLAY_TYPE_ALL,
     PLAY_TYPE_ONE,
     PLAY_TYPE_RND,
@@ -187,7 +188,7 @@ class XiaoMusic:
                         self.last_timestamp[did] = int(time.time() * 1000)
 
                     hardware = self.get_hardward(device_id)
-                    if hardware in GET_ASK_BY_MINA or self.config.get_ask_by_mina:
+                    if (hardware in GET_ASK_BY_MINA) or self.config.get_ask_by_mina:
                         tasks.append(self.get_latest_ask_by_mina(device_id))
                     else:
                         tasks.append(
@@ -1711,6 +1712,7 @@ class XiaoMusicDevice:
         ret = None
         try:
             audio_id = await self._get_audio_id(name)
+            hardware = self.get_hardward(device_id)
             if self.config.continue_play:
                 ret = await self.xiaomusic.mina_service.play_by_music_url(
                     device_id, url, _type=1, audio_id=audio_id
@@ -1718,7 +1720,7 @@ class XiaoMusicDevice:
                 self.log.info(
                     f"play_one_url continue_play device_id:{device_id} ret:{ret} url:{url} audio_id:{audio_id}"
                 )
-            elif self.config.use_music_api:
+            elif self.config.use_music_api or (hardware in NEED_USE_PLAY_MUSIC_API):
                 ret = await self.xiaomusic.mina_service.play_by_music_url(
                     device_id, url, audio_id=audio_id
                 )
