@@ -476,7 +476,11 @@ $(function(){
   }
   
   $("audio").on("error", (e) => {
-    console.log('网页播放出现错误: ', 'color: #007acc;', e.currentTarget.error.code,e.currentTarget.error.message);
+    //如果audio标签的src为空，则不做任何操作，兼容安卓端的低版本webview
+    if ($("audio").attr("src") === "") {
+      return;
+    }
+    console.log('%c网页播放出现错误: ', 'color: #007acc;', e.currentTarget.error.code,e.currentTarget.error.message);
     alert(e.currentTarget.error.code==4 ? "无法打开媒体文件，XIAOMUSIC_HOSTNAME或端口地址错误，请重新设置" : "在线播放失败，请截图反馈: "+e.currentTarget.error.message);
   });
   function validHost(url) {
