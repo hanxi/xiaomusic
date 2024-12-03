@@ -641,13 +641,15 @@ class XiaoMusic:
                 "全部": [],  # 包含所有歌曲和所有电台
                 "下载": [],  # 下载目录下的
                 "其他": [],  # 主目录下的
+                "最近新增": [],  # 按文件时间排序
             }
         )
-        # 全部，所有，自定义歌单（收藏）
-        self.music_list["全部"] = list(self.all_music.keys())
-        self.music_list["所有歌曲"] = [
-            name for name in self.all_music.keys() if name not in self._all_radio
-        ]
+        # 最近新增(不包含网络歌单)
+        self.music_list["最近新增"] = sorted(
+            self.all_music.keys(),
+            key=lambda x: os.path.getctime(self.all_music[x]),
+            reverse=True,
+        )[: self.config.recently_added_playlist_len]
 
         # 网络歌单
         try:
@@ -655,6 +657,12 @@ class XiaoMusic:
             self._append_music_list()
         except Exception as e:
             self.log.exception(f"Execption {e}")
+
+        # 全部，所有，自定义歌单（收藏）
+        self.music_list["全部"] = list(self.all_music.keys())
+        self.music_list["所有歌曲"] = [
+            name for name in self.all_music.keys() if name not in self._all_radio
+        ]
 
         # 文件夹歌单
         for dir_name, musics in all_music_by_dir.items():

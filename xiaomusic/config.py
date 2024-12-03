@@ -186,6 +186,9 @@ class Config:
     play_type_seq_tts_msg: str = os.getenv(
         "XIAOMUSIC_PLAY_TYPE_SEQ_TTS_MSG", "已经设置为顺序播放"
     )
+    recently_added_playlist_len: int = int(
+        os.getenv("XIAOMUSIC_RECENTLY_ADDED_PLAYLIST_LEN", "50")
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
