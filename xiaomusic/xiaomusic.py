@@ -1014,12 +1014,12 @@ class XiaoMusic:
         parts = arg1.split("|")
         search_key = parts[0]
         name = parts[1] if len(parts) > 1 else search_key
-        if name == "":
+        if not name:
             name = search_key
 
-        return await self.do_play(name, search_key)
+        return await self.do_play(did, name, search_key)
 
-    async def do_play(self, did, name, search_key):
+    async def do_play(self, did, name, search_key=""):
         return await self.devices[did].play(name, search_key)
 
     # 本地播放
