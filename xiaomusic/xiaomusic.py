@@ -647,7 +647,7 @@ class XiaoMusic:
         # 最近新增(不包含网络歌单)
         self.music_list["最近新增"] = sorted(
             self.all_music.keys(),
-            key=lambda x: os.path.getctime(self.all_music[x]),
+            key=lambda x: os.path.getmtime(self.all_music[x]),
             reverse=True,
         )[: self.config.recently_added_playlist_len]
 
