@@ -43,6 +43,10 @@
       <a href="/static/default/index.html" class="href">默认主题</a>
       <a href="/static/pure/index.html" class="href">Pure主题</a>
       <a href="/static/xplayer/index.html" class="href">XMusicPlayer</a>
+      <div class="weapp">
+        <a href="https://github.com/F-loat/xiaoplayer" class="href" target="_blank">微信小程序</a>
+        <iframe width="240px" height="240px" src="/static/weapp/qrcode.html"></iframe>
+      </div>
       <a href="https://afdian.com/a/imhanxi" target="_blank">爱发电</a>
       <a href="https://github.com/hanxi/xiaomusic" target="_blank">GitHub</a>
     </div>
@@ -65,6 +69,9 @@
     .options a{ color: #a2a9af; text-decoration: none; font-size: 1.1em; position: relative; display: inline; margin: 10px auto;}
     .options a::before{ content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background-color: #ebedec; transform-origin: bottom right; transform: scaleX(0); transition: transform 0.3s ease;}
     .options a:hover::before{ transform-origin: bottom left; transform: scaleX(1);} .options a:hover{ color:#ebedec;}
+    .weapp { position: relative; text-align: center; margin: 10px auto; }
+    .weapp iframe { display: none; border: none;position: absolute; top: -80px; right: 100px; }
+    .weapp:hover iframe { display: block; }
     footer{ display: flex; justify-content: center; color: #4c5870;} footer a{ color:inherit; text-decoration: none; margin: auto 10px;}
   </style>
 </body>
