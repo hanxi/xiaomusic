@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weapp QRCode</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #qrcode {
+      flex: 1;
+      max-width: 180px;
+      border-radius: 12px;
+      background-color: white;
+      padding: 8px;
+    }
+  </style>
+  <script src="https://web-9gikcbug35bad3a8-1304825656.tcloudbaseapp.com/sdk/1.4.0/cloud.js"></script>
+</head>
+
+<body>
+  <img id="qrcode" src="https://assets-1251785959.cos.ap-beijing.myqcloud.com/xiaoplayer/weappcode.jpg" />
+  <script>
+    const c1 = new cloud.Cloud({
+      identityless: true,
+      resourceAppid: 'wx5931d820da6e8e50',
+      resourceEnv: 'cards-ahoy-3g50hglqe5f630e4'
+    })
+
+    c1.init().then(() => {
+      c1.callFunction({
+        name: 'qrcode',
+        data: {
+          host: location.host,
+          protocol: location.protocol
+        },
+        complete: (res) => {
+          if (res.errMsg === 'cloud.callFunction:ok' && !res.result.errCode) {
+            const blob = new Blob([res.result.buffer])
+            const url = URL.createObjectURL(blob)
+            document.querySelector('#qrcode').setAttribute('src', url)
+          }
+        }
+      })
+    })
+  </script>
+</body>
+
+</html>
