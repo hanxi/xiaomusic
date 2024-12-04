@@ -70,8 +70,9 @@
     .options a::before{ content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background-color: #ebedec; transform-origin: bottom right; transform: scaleX(0); transition: transform 0.3s ease;}
     .options a:hover::before{ transform-origin: bottom left; transform: scaleX(1);} .options a:hover{ color:#ebedec;}
     .weapp { position: relative; text-align: center; margin: 10px auto; }
-    .weapp iframe { display: none; border: none;position: absolute; top: -80px; right: 100px; }
     .weapp:hover iframe { display: block; }
+    .weapp iframe { display: none; border: none; position: absolute; top: -80px; right: 100px; }
+    @media screen and (max-width: 510px) { .weapp iframe { position: fixed; top: 40%; left: 50%; transform: translate(-50%, 0); } }
     footer{ display: flex; justify-content: center; color: #4c5870;} footer a{ color:inherit; text-decoration: none; margin: auto 10px;}
   </style>
 </body>
