@@ -30,6 +30,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.background import BackgroundTask
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import FileResponse, Response
 
 from xiaomusic import __version__
@@ -105,6 +106,8 @@ app.add_middleware(
     allow_methods=["*"],  # 允许使用的请求方法
     allow_headers=["*"],  # 允许携带的 Headers
 )
+# 添加 GZip 中间件
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
 def reset_http_server():
