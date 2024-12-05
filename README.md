@@ -195,8 +195,7 @@ pdm run xiaomusic.py
 提交前请执行
 
 ```
-pdm fmt
-pdm lint --fix
+pdm lintfmt
 ```
 
 用于检查代码和格式化代码。
@@ -206,6 +205,14 @@ pdm lint --fix
 ```shell
 docker build -t xiaomusic .
 ```
+
+### 技术栈
+
+- 后端代码使用 Python 语言编写。
+- HTTP 服务使用的是 FastAPI 框架，~~早期版本使用的是 Flask~~。
+- 使用了 Docker ，在 NAS 上安装更方便。
+- 默认的前端主题使用了 jQuery 。
+
 
 ## 已测试支持的设备
 
