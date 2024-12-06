@@ -168,6 +168,9 @@ class Config:
     enable_yt_dlp_cookies: bool = (
         os.getenv("XIAOMUSIC_ENABLE_YT_DLP_COOKIES", "false").lower() == "true"
     )
+    enable_save_tag: bool = (
+        os.getenv("XIAOMUSIC_ENABLE_SAVE_TAG", "false").lower() == "true"
+    )
     get_ask_by_mina: bool = (
         os.getenv("XIAOMUSIC_GET_ASK_BY_MINA", "false").lower() == "true"
     )

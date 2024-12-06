@@ -52,6 +52,7 @@ from xiaomusic.utils import (
     parse_cookie_string,
     parse_str_to_dict,
     save_picture_by_base64,
+    set_music_tag_to_file,
     traverse_music_directory,
     try_add_access_control_param,
 )
@@ -477,11 +478,13 @@ class XiaoMusic:
         tags["year"] = info.year
         tags["genre"] = info.genre
         tags["lyrics"] = info.lyrics
+        file_path = self.all_music[name]
         if info.picture:
-            file_path = self.all_music[name]
             tags["picture"] = save_picture_by_base64(
                 info.picture, self.config.picture_cache_path, file_path
             )
+        if self.config.enable_save_tag and (not self.is_web_music(name)):
+            set_music_tag_to_file(file_path, Metadata(tags))
         self.all_music_tags[name] = tags
         self.try_save_tag_cache()
         return "OK"

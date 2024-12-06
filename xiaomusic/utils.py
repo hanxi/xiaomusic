@@ -27,7 +27,19 @@ import aiohttp
 import mutagen
 from mutagen.asf import ASF
 from mutagen.flac import FLAC
-from mutagen.id3 import APIC, ID3, Encoding, TextFrame, TimeStampTextFrame
+from mutagen.id3 import (
+    APIC,
+    ID3,
+    TALB,
+    TCON,
+    TDRC,
+    TIT2,
+    TPE1,
+    USLT,
+    Encoding,
+    TextFrame,
+    TimeStampTextFrame,
+)
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 from mutagen.oggvorbis import OggVorbis
@@ -568,6 +580,16 @@ class Metadata:
     picture: str = ""
     lyrics: str = ""
 
+    def __init__(self, info=None):
+        if info:
+            self.title = info.get("title", "")
+            self.artist = info.get("artist", "")
+            self.album = info.get("album", "")
+            self.year = info.get("year", "")
+            self.genre = info.get("genre", "")
+            self.picture = info.get("picture", "")
+            self.lyrics = info.get("lyrics", "")
+
 
 def _get_alltag_value(tags, k):
     v = tags.getall(k)
@@ -729,6 +751,110 @@ def extract_audio_metadata(file_path, save_root):
         metadata.artist = _get_tag_value(tags, "Artist")
 
     return asdict(metadata)
+
+
+def set_music_tag_to_file(file_path, info):
+    audio = mutagen.File(file_path, easy=True)
+    if audio is None:
+        log.error(f"Unable to open file {file_path}")
+        return "Unable to open file"
+
+    if isinstance(audio, MP3):
+        _set_mp3_tags(audio, info)
+    elif isinstance(audio, FLAC):
+        _set_flac_tags(audio, info)
+    elif isinstance(audio, MP4):
+        _set_mp4_tags(audio, info)
+    elif isinstance(audio, OggVorbis):
+        _set_ogg_tags(audio, info)
+    elif isinstance(audio, ASF):
+        _set_asf_tags(audio, info)
+    elif isinstance(audio, WAVE):
+        _set_wave_tags(audio, info)
+    else:
+        log.error(f"Unsupported file type for {file_path}")
+        return "Unsupported file type"
+
+    try:
+        audio.save()
+        log.info(f"Tags saved successfully to {file_path}")
+        return "OK"
+    except Exception as e:
+        log.exception(f"Error saving tags: {e}")
+        return "Error saving tags"
+
+
+def _set_mp3_tags(audio, info):
+    audio["TIT2"] = TIT2(encoding=3, text=info.title)
+    audio["TPE1"] = TPE1(encoding=3, text=info.artist)
+    audio["TALB"] = TALB(encoding=3, text=info.album)
+    audio["TDRC"] = TDRC(encoding=3, text=info.year)
+    audio["TCON"] = TCON(encoding=3, text=info.genre)
+    if info.lyrics:
+        audio["USLT"] = USLT(encoding=3, lang="eng", text=info.lyrics)
+    if info.picture:
+        with open(info.picture, "rb") as img_file:
+            image_data = img_file.read()
+        audio["APIC"] = APIC(
+            encoding=3, mime="image/jpeg", type=3, desc="Cover", data=image_data
+        )
+
+
+def _set_flac_tags(audio, info):
+    audio["TITLE"] = info.title
+    audio["ARTIST"] = info.artist
+    audio["ALBUM"] = info.album
+    audio["DATE"] = info.year
+    audio["GENRE"] = info.genre
+    if info.lyrics:
+        audio["LYRICS"] = info.lyrics
+    if info.picture:
+        with open(info.picture, "rb") as img_file:
+            image_data = img_file.read()
+        audio.add_picture(image_data)
+
+
+def _set_mp4_tags(audio, info):
+    audio["\xa9nam"] = info.title
+    audio["\xa9ART"] = info.artist
+    audio["\xa9alb"] = info.album
+    audio["\xa9day"] = info.year
+    audio["\xa9gen"] = info.genre
+    if info.picture:
+        with open(info.picture, "rb") as img_file:
+            image_data = img_file.read()
+        audio["covr"] = [image_data]
+
+
+def _set_ogg_tags(audio, info):
+    audio["TITLE"] = info.title
+    audio["ARTIST"] = info.artist
+    audio["ALBUM"] = info.album
+    audio["DATE"] = info.year
+    audio["GENRE"] = info.genre
+    if info.lyrics:
+        audio["LYRICS"] = info.lyrics
+    if info.picture:
+        with open(info.picture, "rb") as img_file:
+            image_data = img_file.read()
+        audio["metadata_block_picture"] = base64.b64encode(image_data).decode()
+
+
+def _set_asf_tags(audio, info):
+    audio["Title"] = info.title
+    audio["Author"] = info.artist
+    audio["WM/AlbumTitle"] = info.album
+    audio["WM/Year"] = info.year
+    audio["WM/Genre"] = info.genre
+    if info.picture:
+        with open(info.picture, "rb") as img_file:
+            image_data = img_file.read()
+        audio["WM/Picture"] = image_data
+
+
+def _set_wave_tags(audio, info):
+    audio["Title"] = info.title
+    audio["Artist"] = info.artist
 
 
 # 下载播放列表
