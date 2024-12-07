@@ -1290,6 +1290,7 @@ class XiaoMusicDevice:
         self._start_time = 0
         self._duration = 0
         self._paused_time = 0
+        self._play_failed_cnt = 0
 
         self._play_list = []
 
@@ -1479,11 +1480,18 @@ class XiaoMusicDevice:
         self.log.info(f"播放 {url}")
         results = await self.group_player_play(url, name)
         if all(ele is None for ele in results):
-            self.log.info(f"播放 {name} 失败")
+            self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
             await asyncio.sleep(1)
-            if self.isplaying() and self._last_cmd != "stop":
+            if (
+                self.isplaying()
+                and self._last_cmd != "stop"
+                and self._play_failed_cnt < 10
+            ):
+                self._play_failed_cnt = self._play_failed_cnt + 1
                 await self._play_next()
             return
+        # 重置播放失败次数
+        self._play_failed_cnt = 0
 
         self.log.info(f"【{name}】已经开始播放了")
         await self.xiaomusic.analytics.send_play_event(name, sec, self.hardware)
@@ -1839,7 +1847,7 @@ class XiaoMusicDevice:
         self._last_cmd = "play_music_list"
         self.device.cur_playlist = list_name
         self.update_playlist()
-        self.log.info(f"开始播放列表{list_name}")
+        self.log.info(f"开始播放列表{list_name} {music_name}")
         await self._play(music_name, exact=True)
 
     async def stop(self, arg1=""):
