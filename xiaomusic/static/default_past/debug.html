@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width">
     <title>Debug For XiaoMusic</title>
 
-    <link rel="stylesheet" type="text/css" href="./main.css?version=1733199308">
+    <link rel="stylesheet" type="text/css" href="./style.css?version=1733563859">
     <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
-    <script src="./jquery-3.7.1.min.js?version=1733199308"></script>
+    <script src="./jquery-3.7.1.min.js?version=1733563859"></script>
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
@@ -57,16 +57,12 @@ function sendDebugCmd() {
   </head>
   <body>
     <h1>Debug For XiaoMusic</h1>
-    <div class="debug">
-      <textarea id="post-input" rows="10" cols="50" placeholder="粘贴json数据..."></textarea><br>
-      <button onclick="postJSON()">提交</button><br>
-    </div>
-    <hr>
-    <div class="debug">
-      <input id="cmd" type="text"></input>
-      <button onclick="sendDebugCmd()">测试自定义口令</button><br>
-    </div>
+    <textarea id="post-input" rows="10" cols="50" placeholder="粘贴json数据..."></textarea><br>
+    <button onclick="postJSON()">提交</button><br>
 
+    <hr>
+    <input id="cmd" type="text"></input>
+    <button onclick="sendDebugCmd()">测试自定义口令</button><br>
   </body>
 
   <footer>
