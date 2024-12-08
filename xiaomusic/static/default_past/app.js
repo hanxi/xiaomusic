@@ -424,7 +424,7 @@ $(function(){
     if (musicNameSelect.options.length === 0) {
       startsWithKeyword = false;
     } else {
-      startsWithKeyword = selectedOption.text.startsWith('使用关键词联网搜索:');
+      startsWithKeyword = selectedOption.text.startsWith("使用关键词播放:");
     }
     
     if (startsWithKeyword) {

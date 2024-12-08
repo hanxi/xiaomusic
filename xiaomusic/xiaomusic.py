@@ -1763,7 +1763,7 @@ class XiaoMusicDevice:
         return ret
 
     async def _get_audio_id(self, name):
-        audio_id = 1582971365183456177
+        audio_id = self.config.use_music_audio_id or "1582971365183456177"
         if not (self.config.use_music_api or self.config.continue_play):
             return str(audio_id)
         try:

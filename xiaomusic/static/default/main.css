@@ -67,7 +67,6 @@ input[type="range"],
 input[type="text"],
 input[type="password"],
 input[type="number"] {
-  width: 300px;
   padding: 10px;
   border: 1px solid #cccccc;
   border-radius: 6px;
@@ -293,4 +292,17 @@ textarea {
   .footer {
     position: relative;
   }
+}
+
+.mini-button {
+  padding: 0px 0px;
+  margin: 0px;
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.playlist-selector,
+.device-selector,
+.song-selector {
+  width: 300px;
 }
