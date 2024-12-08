@@ -1056,18 +1056,22 @@ class XiaoMusic:
     # 添加歌曲到收藏列表
     async def add_to_favorites(self, did="", arg1="", **kwargs):
         name = arg1 if arg1 else self.playingmusic(did)
+        self.log.info(f"add_to_favorites {name}")
         if not name:
+            self.log.warning("当前没有在播放歌曲，添加歌曲到收藏列表失败")
             return
 
-        self.play_list_add_music("收藏", name)
+        self.play_list_add_music("收藏", [name])
 
     # 从收藏列表中移除
     async def del_from_favorites(self, did="", arg1="", **kwargs):
         name = arg1 if arg1 else self.playingmusic(did)
+        self.log.info(f"del_from_favorites {name}")
         if not name:
+            self.log.warning("当前没有在播放歌曲，从收藏列表中移除失败")
             return
 
-        self.play_list_del_music("收藏", name)
+        self.play_list_del_music("收藏", [name])
 
     # 更新每个设备的歌单
     def update_all_playlist(self):
@@ -1111,7 +1115,9 @@ class XiaoMusic:
     def play_list_add_music(self, name, music_list):
         custom_play_list = self.get_custom_play_list()
         if name not in custom_play_list:
-            return False
+            # 歌单不存在则新建
+            if not self.play_list_add(name):
+                return False
         play_list = custom_play_list[name]
         for music_name in music_list:
             if (music_name in self.all_music) and (music_name not in play_list):
@@ -1127,7 +1133,7 @@ class XiaoMusic:
         play_list = custom_play_list[name]
         for music_name in music_list:
             if music_name in play_list:
-                play_list.pop(music_name)
+                play_list.remove(music_name)
         self.save_custom_play_list()
         return True
 
