@@ -189,7 +189,7 @@ progress::-webkit-progress-value {
 .button-group {
   display: flex;
   justify-content: center;
-  margin: 15px 0;
+  margin: 5px 0;
 }
 
 .player-controls {
@@ -285,12 +285,12 @@ textarea {
   align-items: center;
   justify-content: center;
 }
-/* 媒体查询 屏幕宽度小于440px时 */
-
-
 
 @media screen and (max-width: 440px) {
   .player{
     width: 90%;
+  }
+  .footer {
+    position: relative;
   }
 }
