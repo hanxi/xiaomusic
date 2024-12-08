@@ -71,15 +71,17 @@ function togglePlayMode(isSend = true) {
 }
 
 function addToFavorites() {
-
-  const cmd = $(".favorite").hasClass("favorite-active")
-    ? "取消收藏"
-    : "加入收藏";
-    if ($(".favorite").hasClass("favorite-active")) {
-      $(".favorite").removeClass("favorite-active");
-    } else {
-      $(".favorite").addClass("favorite-active");
-    }
+  const isLiked = $(".favorite").hasClass("favorite-active");
+  const cmd = isLiked? "取消收藏": "加入收藏";
+  if (isLiked) {
+    $(".favorite").removeClass("favorite-active");
+    // 取消收藏
+    favoritelist = favoritelist.filter((item) => item != $("#music_name").val());
+  } else {
+    $(".favorite").addClass("favorite-active");
+    // 加入收藏
+    favoritelist.push($("#music_name").val());
+  }
   sendcmd(cmd);
 }
 
@@ -116,19 +118,19 @@ function confirmDelete() {
   var del_music_name = $("#music_name").val();
   console.log(`删除歌曲 ${del_music_name}`);
   $("#delete-component").hide(); // 隐藏删除框
-    $.ajax({
-      type: "POST",
-      url: "/delmusic",
-      data: JSON.stringify({ name: del_music_name }),
-      contentType: "application/json; charset=utf-8",
-      success: () => {
-        alert(`删除 ${del_music_name} 成功`);
-        refresh_music_list();
-      },
-      error: () => {
-        alert(`删除 ${del_music_name} 失败`);
-      },
-    });
+  $.ajax({
+    type: "POST",
+    url: "/delmusic",
+    data: JSON.stringify({ name: del_music_name }),
+    contentType: "application/json; charset=utf-8",
+    success: () => {
+      alert(`删除 ${del_music_name} 成功`);
+      refresh_music_list();
+    },
+    error: () => {
+      alert(`删除 ${del_music_name} 失败`);
+    },
+  });
 }
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
