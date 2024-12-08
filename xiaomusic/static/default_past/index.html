@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width">
+    <title>小爱音箱操控面板</title>
+    <script src="./jquery-3.7.1.min.js?version=1733563859"></script>
+    <script src="./app.js?version=1733563859"></script>
+    <link rel="stylesheet" type="text/css" href="./style.css?version=1733563859">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments)};
+    gtag('js', new Date());
+    gtag('config', 'G-Z09NC1K7ZW');
+    </script>
+
+    <!--
+<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+<script>
+var vConsole = new window.VConsole();
+</script>
+-->
+
+  </head>
+  <body>
+    <h2>小爱音箱操控面板
+      (<a id="version" href="https://github.com/hanxi/xiaomusic/blob/main/CHANGELOG.md">版本未知</a>)
+      <span id="versionnew" class="blink"></span>
+    </h2>
+    <hr>
+
+    <div class="rows">
+      <select id="did">
+      </select>
+    </div>
+
+    <div id="cmds">
+    <a class="button" href="./setting.html">设置</a>
+    </div>
+    <hr>
+
+    <div style="margin: 20px;">
+      <div style="display: flex; align-items: center;">
+        <svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#8e43e7" style="height: 48px; width: 48px;"><path d="M550.826667 154.666667a47.786667 47.786667 0 0 0-19.84 4.48L298.666667 298.666667H186.453333A80 80 0 0 0 106.666667 378.453333v267.093334A80 80 0 0 0 186.453333 725.333333H298.666667l232.32 139.52a47.786667 47.786667 0 0 0 19.84 4.48A46.506667 46.506667 0 0 0 597.333333 822.826667V201.173333a46.506667 46.506667 0 0 0-46.506666-46.506666zM554.666667 822.826667c0 3.413333-3.84 3.84-3.84 3.84L320 688.853333l-9.6-6.186666H186.453333A37.12 37.12 0 0 1 149.333333 645.546667V378.453333A37.12 37.12 0 0 1 186.453333 341.333333h123.946667l10.24-6.186666 229.546667-137.6s3.84 0 3.84 3.84zM667.52 346.026667a21.333333 21.333333 0 0 0 0 30.293333 192 192 0 0 1 0 271.36 21.333333 21.333333 0 0 0 0 30.293333 21.333333 21.333333 0 0 0 30.293333 0 234.666667 234.666667 0 0 0 0-331.946666 21.333333 21.333333 0 0 0-30.293333 0z"></path><path d="M804.48 219.52a21.333333 21.333333 0 0 0-30.293333 30.293333 370.986667 370.986667 0 0 1 0 524.373334 21.333333 21.333333 0 0 0 0 30.293333 21.333333 21.333333 0 0 0 30.293333 0 414.08 414.08 0 0 0 0-584.96z"></path></svg>
+        <input id="volume" type="range"></input>
+      </div>
+    </div>
+    <hr>
+    <div class="rows">
+      <label for="search">搜索歌曲:</label>
+      <input type="text" id="search" placeholder="请输入搜索关键词(如:MV高清版 周杰伦 七里香)">
+
+      <label for="music-name" id="music-name-label" style="display: none;">确认选择:</label>
+      <select id="music-name" style="display: none;">
+          <!-- 动态生成选项 -->
+      </select>
+
+      <input id="music-filename" type="text" placeholder="请输入保存为的文件名称(如:周杰伦七里香)" style="display: none;"></input>
+      <div style="display: flex; align-items: center">
+        <progress id="progress" value="0" max="100" style="width: 270px"></progress>
+        <div id="play-time" style="margin-left: 10px">00:00/00:00</div>
+      </div>
+      <div>
+        <button id="play">播放</button>
+        <div id="playering-music" class="text"></div>
+      </div>
+    </div>
+
+    <hr>
+    <div class="rows">
+      <label for="music_list">播放列表:</label>
+      <select id="music_list"></select>
+      <label for="music_name">歌曲:</label>
+      <select id="music_name"></select>
+      <div>
+      <button id="play_music_list">播放选中歌曲</button>
+      <button id="del_music">删除选中歌曲</button>
+      <button id="web_play">网页播放</button>
+      </div>
+      <div class="play_pannel">
+        <audio autoplay controls src=""></audio>
+      </div>
+    </div>
+
+    <hr>
+    <div class="rows">
+      <input id="music-url" type="text" value="https://lhttp.qtfm.cn/live/4915/64k.mp3"></input>
+      <button id="playurl">播放链接</button>
+    </div>
+
+    <footer>
+      <p>Powered by <a href="https://github.com/hanxi/xiaomusic" target="_blank">xiaomusic</a></p>
+    </footer>
+    <dialog id="valid-host">
+      <form method="dialog">
+        <p>当前页面的HOST与设置中的HOST不一致，请检查是否设置错误</p>
+        <p>当前HOST: <span id="local-host"></span></p>
+        <p>设置中的HOST: <span id="setting-host"></span></p>
+        <div class="btn-list">
+        <a href="./setting.html" target="_blank">立即修改</a>
+        <button value="no-warning" type="submit">继续并不再显示</button>
+        <button value="cancle" type="submit">取消</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

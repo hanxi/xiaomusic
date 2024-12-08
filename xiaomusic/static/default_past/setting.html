@@ -4,9 +4,9 @@
     <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width">
     <title>小爱音箱操控面板</title>
-    <script src="./jquery-3.7.1.min.js?version=1733199308"></script>
-    <script src="./setting.js?version=1733199308"></script>
-    <link rel="stylesheet" type="text/css" href="./main.css?version=1733199308">
+    <script src="./jquery-3.7.1.min.js?version=1733563859"></script>
+    <script src="./setting.js?version=1733563859"></script>
+    <link rel="stylesheet" type="text/css" href="./style.css?version=1733563859">
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
@@ -198,6 +198,12 @@ var vConsole = new window.VConsole();
           <option value="false" selected>false</option>
         </select>
 
+        <label for="enable_save_tag">启用ID3标签写入文件:</label>
+        <select id="enable_save_tag">
+          <option value="true">true</option>
+          <option value="false" selected>false</option>
+        </select>
+
         <label for="get_ask_by_mina">特殊型号获取对话记录:</label>
         <select id="get_ask_by_mina">
           <option value="true">true</option>
@@ -225,27 +231,27 @@ var vConsole = new window.VConsole();
       <button id="upload_yt_dlp_cookie">上传</button>
     </div>
     <hr>
-    <div class="button-group-other">
-      <button onclick="location.href='/static/default/index.html';">返回首页</button>
-      <button id="get_music_list">获取歌单</button>
-      <button class="save-button">保存</button>
-      <hr>
-  
-      <button id="refresh_music_tag">刷新tag</button>
-      <button id="clear_cache">清空缓存</button>
-      <a href="/downloadlog" download="xiaomusic.txt"><button>下载日志文件</button></a>
-  
-      <hr>
-      <a href="/docs" target="_blank"><button>查看接口文档</button></a>
-      <a href="./m3u.html" target="_blank"><button>m3u文件转换</button></a>
-      <a href="./downloadtool.html" target="_blank"><button>歌曲下载工具</button></a>
-      <hr>
-  
-      <a href="./debug.html" target="_blank"><button>调试工具</button></a>
-      <a href="https://afdian.com/a/imhanxi" target="_blank"><button>💰 爱发电</button></a>
-      <a href="https://github.com/hanxi/xiaomusic" target="_blank"><button>点个 Star ⭐</button></a>
-  
-    </div>
+
+    <button onclick="location.href='/static/default/index.html';">返回首页</button>
+    <button id="get_music_list">获取歌单</button>
+    <button class="save-button">保存</button>
+    <hr>
+
+    <button id="refresh_music_tag">刷新tag</button>
+    <button id="clear_cache">清空缓存</button>
+    <a class="button" href="/downloadlog" download="xiaomusic.txt">下载日志文件</a>
+
+    <hr>
+
+    <button onclick="location.href='/docs';">查看接口文档</button>
+    <a class="button" href="./m3u.html" target="_blank">m3u文件转换</a>
+    <a class="button" href="./downloadtool.html" target="_blank">歌曲下载工具</a>
+    <hr>
+
+    <a class="button" href="./debug.html" target="_blank">调试工具</a>
+    <a class="button" href="https://afdian.com/a/imhanxi" target="_blank">💰 爱发电</a>
+    <a class="button" href="https://github.com/hanxi/xiaomusic" target="_blank">点个 Star ⭐</a>
+
     <div class="rows">
       <img class="qrcode" src="./qrcode.png" alt="请涵曦喝奶茶🧋">
     </div>
