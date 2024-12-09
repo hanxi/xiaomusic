@@ -155,7 +155,7 @@ $(function(){
         } else {
           // 使用本地记录的
           playlist = localStorage.getItem('cur_playlist');
-          if (data.includes(playlist)) {
+          if (data.hasOwnProperty(playlist)) {
             $('#music_list').val(playlist);
             $('#music_list').trigger('change');
           }
