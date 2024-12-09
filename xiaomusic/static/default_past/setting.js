@@ -191,4 +191,13 @@ $(function(){
   $("#clear_cache").on("click", () => {
     localStorage.clear();
   });
+  $("#hostname").on("change", function(){
+    const hostname = $(this).val();
+    // 检查是否包含端口号（1到5位数字）
+    if (hostname.match(/:\d{1,5}$/)) {
+      alert("hostname禁止带端口号");
+      // 移除端口号
+      $(this).val(hostname.replace(/:\d{1,5}$/,""));
+    }
+  });
 });
