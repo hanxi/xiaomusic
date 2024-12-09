@@ -30,6 +30,7 @@ input,select {
   width: 90%;
   max-width: 400px;
   height: 40px;
+  box-sizing: border-box;
 }
 
 .rows {
