@@ -103,7 +103,7 @@ class XiaoMusic:
         self.update_devices()
 
         # 启动统计
-        self.analytics = Analytics(self.log)
+        self.analytics = Analytics(self.log, self.config)
 
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"Startup OK. {debug_config}")
