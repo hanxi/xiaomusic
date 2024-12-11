@@ -283,8 +283,10 @@ function _refresh_music_list(callback) {
       const selectedValue = $(this).val();
       localStorage.setItem("cur_playlist", selectedValue);
       $("#music_name").empty();
+      const cur_music = localStorage.getItem("cur_music");
+      console.log("#music_name cur_music", cur_music);
       $.each(data[selectedValue], function (index, item) {
-        $("#music_name").append($("<option></option>").val(item).text(item));
+        $("#music_name").append($("<option></option>").val(item).text(item).prop("selected", item == cur_music));
       });
     });
 
@@ -577,6 +579,7 @@ function get_playing_music() {
       } else {
         $(".favorite").removeClass("favorite-active");
       }
+      localStorage.setItem("cur_music", data.cur_music);
     }
   });
 }
