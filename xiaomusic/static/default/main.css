@@ -112,12 +112,12 @@ button:hover {
   bottom: 150%; /* 控制tooltip相对按钮的位置 */
   left: 50%;
   margin-left: -50px; /* 调整位置以居中显示 Tooltip */
-  width: 100px; /* 设置固定宽度以保证足够的显示空间 */
+  width: 80px; /* 设置固定宽度以保证足够的显示空间 */
   white-space: nowrap; /* 防止换行 */
   opacity: 0;
   transition: opacity 0.3s;
 }
-button:hover .tooltip,.option-inline:hover .tooltip {
+button:hover .tooltip,.option-inline:hover .tooltip,.control-button:hover .tooltip {
   visibility: visible;
   opacity: 1;
 }
@@ -129,8 +129,11 @@ button:hover .tooltip,.option-inline:hover .tooltip {
 }
 .option-inline:hover .tooltip {
   /* 位置调整到左边 */
-  left: -80px; /* 调整位置以居中显示 Tooltip */
+  left: -50px; /* 调整位置以居中显示 Tooltip */
   bottom: 0;
+}
+.control-button{
+  position: relative; /* 为tooltip绝对定位做准备 */
 }
 .progress {
   width: 90%;
@@ -193,8 +196,14 @@ progress::-webkit-progress-value {
 
 .player-controls {
   display: flex;
-  justify-content: center;
+  justify-content: space-around;
   align-items: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.play {
+  font-size: 48px;
 }
 
 .footer {
@@ -202,6 +211,7 @@ progress::-webkit-progress-value {
   bottom: 20px;
   font-size: 14px;
   color: #555;
+  user-select: none;
 }
 
 .timer-tooltip {
@@ -305,4 +315,30 @@ textarea {
 .device-selector,
 .song-selector {
   width: 300px;
+}
+
+.mode-controls {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid #ddd;
+  color: #555;
+}
+.icon-item {
+  text-align: center;
+}
+
+.icon-item p {
+  font-size: 12px;
+  margin: 5px 0 0;
+}
+.disabled {
+  color: #ccc;
+  pointer-events: none;
+}
+
+span,p {
+  cursor: pointer;
+  user-select: none;
 }

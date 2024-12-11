@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小爱音箱操控面板</title>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <script src="./jquery-3.7.1.min.js?version=1733743591"></script>
-    <link rel="stylesheet" href="./main.css?version=1733743591">
+    <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined" rel="stylesheet">
+    <script src="./jquery-3.7.1.min.js?version=1733933734"></script>
+    <link rel="stylesheet" href="./main.css?version=1733933734">
     <link rel="icon" href="./favicon.ico">
 
     <!-- Google tag (gtag.js) -->
@@ -53,69 +53,71 @@
         <select id="music_name" class="song-selector">
         </select>
 
-        <progress class="progress" id="progress" value="0" max="100"></progress>
-        <div style="display: flex; justify-content: space-between; width: 100%;">
-            <span class="current-time" id="current-time">0:00</span>
-            <div class="current-song" id="playering-music">当前播放歌曲：无</div>
-            <span class="duration" id="duration">0:00</span>
+        <div id="device-audio">
+          <progress class="progress" id="progress" value="0" max="100"></progress>
+          <div style="display: flex; justify-content: space-between; width: 100%;">
+              <span class="current-time" id="current-time">0:00</span>
+              <div class="current-song" id="playering-music">当前播放歌曲：无</div>
+              <span class="duration" id="duration">00:00</span>
+          </div>
         </div>
-        <audio id="audio" controls src="" autoplay>
-        </audio>
+        <audio id="audio" controls src="" autoplay></audio>
+
         <div class="buttons">
             <div class="player-controls button-group">
-                <button onclick="prevTrack()">
+                <div id="modeBtn" onclick="togglePlayMode()" class="control-button device-enable">
+                    <span class="material-icons">shuffle</span>
+                    <span class="tooltip">切换播放模式</span>
+                </div>
+                <div onclick="prevTrack()" class="control-button device-enable">
                     <span class="material-icons">skip_previous</span>
                     <span class="tooltip">上一首</span>
-                </button>
-                <button onclick="playOnDevice()">
-                    <span class="material-icons" id="playPauseIcon">play_arrow</span>
+                </div>
+                <div onclick="play()" class="control-button">
+                    <span class="material-icons-outlined play">play_circle_outline</span>
                     <span class="tooltip">播放</span>
-                </button>
-                <button onclick="nextTrack()">
+                </div>
+                <div onclick="nextTrack()" class="control-button device-enable">
                     <span class="material-icons">skip_next</span>
                     <span class="tooltip">下一首</span>
-                </button>
-                <button onclick="stopPlay()">
-                    <span class="material-icons" id="playPauseIcon">stop</span>
+                </div>
+                <div onclick="stopPlay()" class="control-button device-enable">
+                    <span class="material-icons">stop</span>
                     <span class="tooltip">关机</span>
-                </button>
+                </div>
 
             </div>
             <div class="mode-controls button-group">
-                <button id="modeBtn" onclick="togglePlayMode()">
-                    <span class="material-icons">shuffle</span>
-                    <span class="tooltip">切换播放模式</span>
-                </button>
-                <button onclick="addToFavorites()" class="favorite">
+                <div onclick="addToFavorites()" class="favorite icon-item device-enable">
                     <span class="material-icons">favorite</span>
-                    <span class="tooltip">收藏歌曲</span>
-                </button>
-                <button onclick="toggleVolume()">
+                    <p>收藏</p>
+                </div>
+                <div onclick="toggleVolume()" class="icon-item device-enable">
                     <span class="material-icons">volume_up</span>
-                    <span class="tooltip">调节音量</span>
-                </button>
-                <button onclick="toggleLocalPlay()" id="web_play">
+                    <p>音量</p>
+                </div>
+<!--
+                <div onclick="toggleLocalPlay()" id="web_play">
                     <span class="material-icons">headphones</span>
                     <span class="tooltip">网页播放</span>
-                </button>
-            </div>
-            <div class="mode-controls button-group">
-                <button onclick="toggleSearch()">
+                </div>
+-->
+                <div onclick="toggleSearch()" class="icon-item device-enable">
                     <span class="material-icons">search</span>
-                    <span class="tooltip">搜索歌曲</span>
-                </button>
-                <button onclick="togglePlayLink()">
+                    <p>搜索</p>
+                </div>
+                <div onclick="togglePlayLink()" class="icon-item device-enable">
                     <span class="material-icons">link</span>
-                    <span class="tooltip">播放链接</span>
-                </button>
-                <button onclick="toggleTimer()">
+                    <p>链接</p>
+                </div>
+                <div onclick="toggleTimer()" class="icon-item device-enable">
                     <span class="material-icons">timer</span>
-                    <span class="tooltip">定时关机</span>
-                </button>
-                <button onclick="openSettings()">
+                    <p>定时</p>
+                </div>
+                <div onclick="openSettings()" class="icon-item">
                     <span class="material-icons">settings</span>
-                    <span class="tooltip">设置</span>
-                </button>
+                    <p>设置</p>
+                </div>
             </div>
         </div>
     </div>
@@ -194,7 +196,7 @@
       Powered by XiaoMusic
     </div>
 
-    <script src="./md.js?version=1733743591">
+    <script src="./md.js?version=1733933734">
     </script>
 </body>
 

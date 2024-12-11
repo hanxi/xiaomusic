@@ -29,7 +29,28 @@ const playModes = {
 
 let favoritelist = []; //收藏列表
 
+function webPlay() {
+  console.log("webPlay");
+  const music_name = $("#music_name").val();
+  $.get(`/musicinfo?name=${music_name}`, function (data, status) {
+    console.log(data);
+    if (data.ret == "OK") {
+      validHost(data.url) && $("audio").attr("src", data.url);
+    }
+  });
+}
+
+function play() {
+  var did = $("#did").val();
+  if (did == "web_device") {
+    webPlay();
+  } else {
+    playOnDevice();
+  }
+}
+
 function playOnDevice() {
+  console.log("playOnDevice");
   var music_list = $("#music_list").val();
   var music_name = $("#music_name").val();
   if (no_warning) {
@@ -153,7 +174,7 @@ $.get("/getsetting", function (data, status) {
   }
   console.log("cur_did", did);
   console.log("dids", dids);
-  if (dids.length > 0 && (did == null || did == "" || !dids.includes(did))) {
+  if (did != "web_device" && dids.length > 0 && (did == null || did == "" || !dids.includes(did))) {
     did = dids[0];
     localStorage.setItem("cur_did", did);
   }
@@ -189,6 +210,11 @@ $.get("/getsetting", function (data, status) {
       }
     }
   });
+  var option = $("<option></option>")
+    .val("web_device")
+    .text("本机")
+    .prop("selected", "web_device" === did);
+  $("#did").append(option);
 
   console.log("cur_did", did);
   $("#did").change(function () {
@@ -198,6 +224,16 @@ $.get("/getsetting", function (data, status) {
     console.log("cur_did", did);
     location.reload();
   });
+
+  if (did == "web_device") {
+    $("#audio").fadeIn();
+    $("#device-audio").fadeOut();
+    $(".device-enable").addClass('disabled');
+  } else {
+    $("#audio").fadeOut();
+    $("#device-audio").fadeIn();
+    $(".device-enable").removeClass('disabled');
+  }
 });
 
 function compareVersion(version1, version2) {
@@ -329,16 +365,6 @@ $("#play_music_list").on("click", () => {
     console.log(data);
     if (data.ret == "OK") {
       validHost(data.url) && do_play_music_list(music_list, music_name);
-    }
-  });
-});
-
-$("#web_play").on("click", () => {
-  const music_name = $("#music_name").val();
-  $.get(`/musicinfo?name=${music_name}`, function (data, status) {
-    console.log(data);
-    if (data.ret == "OK") {
-      validHost(data.url) && $("audio").attr("src", data.url);
     }
   });
 });
