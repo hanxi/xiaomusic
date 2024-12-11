@@ -1640,6 +1640,8 @@ class XiaoMusicDevice:
             "-x",
             "--audio-format",
             "mp3",
+            "--audio-quality",
+            "0",
             "--paths",
             self.download_path,
             "-o",
