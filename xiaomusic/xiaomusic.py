@@ -49,6 +49,7 @@ from xiaomusic.utils import (
     get_local_music_duration,
     get_web_music_duration,
     list2str,
+    not_in_dirs,
     parse_cookie_string,
     parse_str_to_dict,
     save_picture_by_base64,
@@ -577,6 +578,9 @@ class XiaoMusic:
 
         all_music_tags = self.try_load_from_tag_cache()
         all_music_tags.update(self.all_music_tags)  # 保证最新
+
+        ignore_tag_absolute_dirs = self.config.get_ignore_tag_dirs()
+        self.log.info(f"ignore_tag_absolute_dirs: {ignore_tag_absolute_dirs}")
         for name, file_or_url in only_items.items():
             start = time.perf_counter()
             if name not in all_music_tags:
@@ -584,7 +588,9 @@ class XiaoMusic:
                     if self.is_web_music(name):
                         # TODO: 网络歌曲获取歌曲额外信息
                         pass
-                    elif os.path.exists(file_or_url):
+                    elif os.path.exists(file_or_url) and not_in_dirs(
+                        file_or_url, ignore_tag_absolute_dirs
+                    ):
                         all_music_tags[name] = extract_audio_metadata(
                             file_or_url, self.config.picture_cache_path
                         )

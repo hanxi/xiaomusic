@@ -990,3 +990,15 @@ def try_add_access_control_param(config, url):
     ).geturl()
 
     return new_url
+
+
+# 判断文件在不在排除目录列表
+def not_in_dirs(filename, ignore_absolute_dirs):
+    file_absolute_path = os.path.abspath(filename)
+    file_dir = os.path.dirname(file_absolute_path)
+    for ignore_dir in ignore_absolute_dirs:
+        if file_dir.startswith(ignore_dir):
+            log.info(f"{file_dir} in {ignore_dir}")
+            return False  # 文件在排除目录中
+
+    return True  # 文件不在排除目录中

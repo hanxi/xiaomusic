@@ -106,6 +106,7 @@ class Config:
         "play,set_play_type_rnd,playlocal,play_music_list,play_music_list_index,stop_after_minute,stop",
     )
     exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir,tmp")
+    ignore_tag_dirs: str = os.getenv("XIAOMUSIC_IGNORE_TAG_DIRS", "")
     music_path_depth: int = int(os.getenv("XIAOMUSIC_MUSIC_PATH_DEPTH", "10"))
     disable_httpauth: bool = (
         os.getenv("XIAOMUSIC_DISABLE_HTTPAUTH", "true").lower() == "true"
@@ -330,3 +331,11 @@ class Config:
         if play_type == PLAY_TYPE_SEQ:
             return self.play_type_seq_tts_msg
         return ""
+
+    def get_ignore_tag_dirs(self):
+        ignore_tag_absolute_dirs = []
+        for ignore_tag_dir in self.ignore_tag_dirs.split(","):
+            if ignore_tag_dir:
+                ignore_tag_absolute_path = os.path.abspath(ignore_tag_dir)
+                ignore_tag_absolute_dirs.append(ignore_tag_absolute_path)
+        return ignore_tag_absolute_dirs
