@@ -103,7 +103,7 @@ class Config:
     ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
     active_cmd: str = os.getenv(
         "XIAOMUSIC_ACTIVE_CMD",
-        "play,set_play_type_rnd,playlocal,play_music_list,play_music_list_index,stop_after_minute,stop",
+        "play,search_play,set_play_type_rnd,playlocal,search_playlocal,play_music_list,play_music_list_index,stop_after_minute,stop",
     )
     exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir,tmp")
     ignore_tag_dirs: str = os.getenv("XIAOMUSIC_IGNORE_TAG_DIRS", "")
@@ -141,7 +141,11 @@ class Config:
     keywords_playlocal: str = os.getenv(
         "XIAOMUSIC_KEYWORDS_PLAYLOCAL", "播放本地歌曲,本地播放歌曲"
     )
+    keywords_search_playlocal: str = os.getenv(
+        "XIAOMUSIC_KEYWORDS_SEARCH_PLAYLOCAL", "本地搜索播放"
+    )
     keywords_play: str = os.getenv("XIAOMUSIC_KEYWORDS_PLAY", "播放歌曲,放歌曲")
+    keywords_search_play: str = os.getenv("XIAOMUSIC_KEYWORDS_SEARCH_PLAY", "搜索播放")
     keywords_stop: str = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止,停止播放")
     keywords_playlist: str = os.getenv(
         "XIAOMUSIC_KEYWORDS_PLAYLIST", "播放列表,播放歌单"
@@ -211,7 +215,9 @@ class Config:
         self.key_match_order = default_key_match_order()
         self.key_word_dict = default_key_word_dict()
         self.append_keyword(self.keywords_playlocal, "playlocal")
+        self.append_keyword(self.keywords_search_playlocal, "search_playlocal")
         self.append_keyword(self.keywords_play, "play")
+        self.append_keyword(self.keywords_search_play, "search_play")
         self.append_keyword(self.keywords_stop, "stop")
         self.append_keyword(self.keywords_playlist, "play_music_list")
         self.append_user_keyword()
