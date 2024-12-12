@@ -170,3 +170,4 @@ setting.json
 cache
 tmp/
 xiaomusic.log.txt
+node_modules

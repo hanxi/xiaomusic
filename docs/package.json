@@ -1,0 +1,14 @@
+{
+  "devDependencies": {
+    "vitepress": "^1.5.0"
+  },
+  "scripts": {
+    "docs:dev": "vitepress dev --host=0.0.0.0 --port=3030",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "vite-plugin-vitepress-auto-sidebar": "^1.7.0"
+  }
+}
