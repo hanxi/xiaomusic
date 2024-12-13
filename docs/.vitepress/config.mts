@@ -62,6 +62,7 @@ export default async ({ mode }) => {
               targetUrl: '/issues',
             },
           ],
+          githubProxy: 'https://cloudflare-github-proxy.hanxi-info.workers.dev/proxy',
         }),
       ],
     }
