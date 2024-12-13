@@ -135,6 +135,14 @@ function copyFile(source: string, destination: string) {
   }
 }
 
+// 在文件开头插入内容
+function prependToFile(filePath: string, text: string) {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const updatedContent = `${text}\n\n${content}`;
+    fs.writeFileSync(filePath, updatedContent, 'utf-8');
+    console.log(`Prepended text to ${filePath}`);
+}
+
 function replaceGithubAssetUrls(content: string, githubProxy: string): string {
     const pattern1 = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/assets\/[\w-]+/g;
     const pattern2 = /https:\/\/github\.com\/user-attachments\/assets\/[\w-]+/g;
@@ -182,6 +190,7 @@ export default function GitHubIssuesPlugin(options: GitHubIssuesPluginOptions): 
         const changelogSource = path.join(process.cwd(), '../CHANGELOG.md');
         const changelogDestination = path.join(docsDir, 'changelog.md');
         copyFile(changelogSource, changelogDestination);
+        prependToFile(changelogDestination, '# 变更日志');
 
         for (const issue of issues) {
           // 仅处理包含 "文档" 标签的 issue
