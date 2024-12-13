@@ -47,6 +47,8 @@ jobs:
           npm install
 
       - name: Build VitePress
+        env:
+          VITE_GITHUB_ISSUES_TOKEN: ${{ secrets.VITE_GITHUB_ISSUES_TOKEN }}
         working-directory: ./docs  # 指定工作目录为 docs
         run: |
           npm run docs:build
