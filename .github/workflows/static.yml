@@ -5,6 +5,8 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    tags:
+      - "v*"
     paths:
       - 'docs/**'  # Only trigger on changes in the docs directory
   # Runs on issue events
