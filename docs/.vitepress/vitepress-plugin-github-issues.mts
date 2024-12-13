@@ -46,7 +46,7 @@ async function fetchAllIssues(repo: string, token: string): Promise<any[]> {
 				break; // 退出尝试循环
 			} catch (error) {
 				if (error.response && error.response.status === 503) {
-					console.error('服务不可用，正在重试...');
+					console.error(`服务不可用, 正在重试...`);
 					attempt++;
 					const waitTime = Math.pow(2, attempt) * 1000; // 指数等待时间
 					await new Promise(resolve => setTimeout(resolve, waitTime));

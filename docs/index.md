@@ -4,7 +4,7 @@ layout: home
 
 hero:
   name: "XiaoMusic"
-  text: "无限听歌，解放小爱音箱"
+  text: "无限听歌<br>解放小爱音箱"
   tagline: 使用小爱音箱播放音乐，音乐使用 yt-dlp 下载
   actions:
     - theme: brand
@@ -13,6 +13,9 @@ hero:
     - theme: alt
       text: 文档汇总
       link: /issues/211
+    - theme: alt
+      text: GitHub
+      link: https://github.com/hanxi/xiaomusic
 
 features:
   - title: MIT 开源
