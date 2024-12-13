@@ -8,7 +8,10 @@ on:
     tags:
       - "v*"
     paths:
-      - 'docs/**'  # Only trigger on changes in the docs directory
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG..md'
+      - '.github/workflows/static.yml'
   # Runs on issue events
   issues:
     types: [opened, edited, reopened]  # Specify events you're interested in
