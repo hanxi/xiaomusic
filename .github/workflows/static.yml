@@ -50,7 +50,8 @@ jobs:
         env:
           VITE_GITHUB_ISSUES_TOKEN: ${{ secrets.VITE_GITHUB_ISSUES_TOKEN }}
         working-directory: ./docs  # 指定工作目录为 docs
-        run: |
+        run: | # 有点小问题，得执行2次
+          npm run docs:build
           npm run docs:build
 
       - name: Check for changes
