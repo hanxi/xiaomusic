@@ -135,6 +135,21 @@ function copyReadmeFile(source: string, destination: string) {
   }
 }
 
+function replaceGithubAssetUrls(content: string, githubProxy: string): string {
+    const pattern1 = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/assets\/[\w-]+/g;
+    const pattern2 = /https:\/\/github\.com\/user-attachments\/assets\/[\w-]+/g;
+    const proxyPrefix = "https://cloudflare-github-proxy.hanxi-info.workers.dev/proxy";
+
+    // 使用正则表达式替换符合条件的链接
+    const transformedContent = content.replace(pattern1, (match) => {
+        return match.replace("https://github.com", githubProxy);
+    }).replace(pattern2, (match) => {
+        return match.replace("https://github.com", githubProxy);
+    });
+
+    return transformedContent;
+}
+
 export default function GitHubIssuesPlugin(options: GitHubIssuesPluginOptions): Plugin {
   const { repo, token, replaceRules, githubProxy } = options;
 
@@ -208,15 +223,9 @@ ${comment.body}
               content = content.replace(pattern, `${targetUrl}$1.html`);
             });
 
-            content = content.replace(
-              /(https:\/\/github\.com\/([^\/]+\/[^\/]+\/assets\/[^\s]+)/g,
-              (match, p1) => {
-                const proxyUrl = `${githubProxy}/${p1}`; // 使用传入的 base URL
-                return proxyUrl;
-              }
-            );
+            content = replaceGithubAssetUrls(content, githubProxy);
 
-            content += `[链接到 GitHub Issue](${issue.html_url})\n`
+            content += `[链接到 GitHub Issue](${issue.html_url})\n`;
 
             const filePath = path.join(docsDir, fileName);
 
