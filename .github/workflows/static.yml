@@ -5,6 +5,11 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths:
+      - 'docs/**'  # Only trigger on changes in the docs directory
+  # Runs on issue events
+  issues:
+    types: [opened, edited, reopened]  # Specify events you're interested in
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -45,6 +50,26 @@ jobs:
         working-directory: ./docs  # 指定工作目录为 docs
         run: |
           npm run docs:build
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [ -n "$(git diff docs/issues)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      # Optionally, customize the user name and commit message, and can add an email as well such as Github Actions' email
+      - name: Set up Git and Commit Changes
+        run: |
+          if [ "${{ steps.check_changes.outputs.changed }}" == "true" ]; then
+            git config --local user.name "Issues Docs [BOT]"
+            git add .
+            git commit -m "Auto-Generate docs 🤖"
+            git push
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
