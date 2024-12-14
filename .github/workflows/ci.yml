@@ -2,10 +2,11 @@ name: ci
 on:
   push:
     branches:
-      - "*"
+      - "main"
   workflow_dispatch:
 env:
   TEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}
+  RELEASE_NAME: main  # 固定的 Release 名称
 jobs:
   build-test-publish:
     runs-on: ubuntu-latest
@@ -60,9 +61,38 @@ jobs:
 
       # We test all the images on amd64 host here. This uses QEMU to emulate
       # the other platforms.
-      - run: docker run --rm ${TEST_TAG}-linux-amd64 -h
-      - run: docker run --rm ${TEST_TAG}-linux-arm64 -h
-      - run: docker run --rm ${TEST_TAG}-linux-arm-v7 -h
+      - run: docker run --rm ${TEST_TAG}-linux-amd64 /app/.venv/bin/python3 /app/xiaomusic.py -h
+      - run: docker run --rm ${TEST_TAG}-linux-arm64 /app/.venv/bin/python3 /app/xiaomusic.py -h
+      - run: docker run --rm ${TEST_TAG}-linux-arm-v7 /app/.venv/bin/python3 /app/xiaomusic.py -h
+
+      # 打包完整版本和精简版本 tar.gz 文件
+      - name: Package /app for amd64
+        run: |
+          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-amd64 tar czf /workspace/app-amd64.tar.gz -C / app
+
+      - name: Package /app (lite) for amd64
+        run: |
+          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-amd64 bash -c \
+          "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-amd64-lite.tar.gz *"
+
+      - name: Package /app for arm64
+        run: |
+          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-arm64 tar czf /workspace/app-arm64.tar.gz -C / app
+
+      - name: Package /app (lite) for arm64
+        run: |
+          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-arm64 bash -c \
+          "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-arm64-lite.tar.gz *"
+
+      - name: Package /app for arm/v7
+        run: |
+          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-arm-v7 tar czf /workspace/app-arm-v7.tar.gz -C / app
+
+      - name: Package /app (lite) for arm/v7
+        run: |
+          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-arm-v7 bash -c \
+          "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-arm-v7-lite.tar.gz *"
+
 
       # This will only push the previously built images.
       - name: Publish to Docker Hub
@@ -86,3 +116,102 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  update-release:
+    runs-on: ubuntu-latest
+    needs: build-test-publish
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if Release exists
+        id: check_release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            try {
+              const { data: releases } = await github.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+              const release = releases.find(r => r.tag_name === process.env.RELEASE_NAME);
+              if (release) {
+                core.setOutput('exists', true);
+                core.setOutput('id', release.id);
+                core.setOutput('upload_url', release.upload_url);
+              } else {
+                core.setOutput('exists', false);
+              }
+            } catch (error) {
+              core.setOutput('exists', false);
+            }
+
+      - name: Create Release if not exists
+        if: steps.check_release.outputs.exists == 'false'
+        id: create_release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: release } = await github.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: process.env.RELEASE_NAME,
+              name: "Latest Release",
+              body: "This is the latest release for the main branch.",
+              draft: false,
+              prerelease: false
+            });
+            core.setOutput('id', release.id);
+            core.setOutput('upload_url', release.upload_url);
+
+      - name: Get Upload URL for Existing Release
+        if: steps.check_release.outputs.exists == 'true'
+        run: echo "UPLOAD_URL=${{ steps.check_release.outputs.upload_url }}" >> $GITHUB_ENV
+
+     # 上传打包文件
+      - name: Upload app-amd64.tar.gz
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url || env.UPLOAD_URL }}
+          asset_path: ./app-amd64.tar.gz
+          asset_name: app-amd64.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload app-amd64-lite.tar.gz
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url || env.UPLOAD_URL }}
+          asset_path: ./app-amd64-lite.tar.gz
+          asset_name: app-amd64-lite.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload app-arm64.tar.gz
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url || env.UPLOAD_URL }}
+          asset_path: ./app-arm64.tar.gz
+          asset_name: app-arm64.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload app-arm64-lite.tar.gz
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url || env.UPLOAD_URL }}
+          asset_path: ./app-arm64-lite.tar.gz
+          asset_name: app-arm64-lite.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload app-arm-v7.tar.gz
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url || env.UPLOAD_URL }}
+          asset_path: ./app-arm-v7.tar.gz
+          asset_name: app-arm-v7.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload app-arm-v7-lite.tar.gz
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url || env.UPLOAD_URL }}
+          asset_path: ./app-arm-v7-lite.tar.gz
+          asset_name: app-arm-v7-lite.tar.gz
+          asset_content_type: application/gzip
