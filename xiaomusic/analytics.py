@@ -1,5 +1,6 @@
 import asyncio
 import platform
+import traceback
 from datetime import datetime
 
 import aiohttp
@@ -96,20 +97,30 @@ class Analytics:
                 await response.text()
 
     def _get_user_agent(self):
-        # 获取系统信息
-        os_name = platform.system()  # 操作系统名称，如 'Windows', 'Linux', 'Darwin'
-        os_version = platform.version()  # 操作系统版本号
-        architecture = platform.architecture()[0]  # '32bit' or '64bit'
-        machine = platform.machine()  # 机器类型，如 'x86_64', 'arm64'
+        try:
+            # 获取系统信息
+            os_name = platform.system()  # 操作系统名称，如 'Windows', 'Linux', 'Darwin'
+            os_version = platform.version()  # 操作系统版本号
+            architecture = "unknow"
+            try:
+                architecture = platform.architecture()[0]  # '32bit' or '64bit'
+            except Exception as e:
+                architecture = f"Error {e}"
+                pass
+            machine = platform.machine()  # 机器类型，如 'x86_64', 'arm64'
 
-        # 获取 Python 版本信息
-        python_version = platform.python_version()  # Python 版本
+            # 获取 Python 版本信息
+            python_version = platform.python_version()  # Python 版本
 
-        # 组合 User-Agent 字符串
-        user_agent = (
-            f"XiaoMusic/{__version__} "
-            f"({os_name} {os_version}; {architecture}; {machine}) "
-            f"Python/{python_version}"
-        )
+            # 组合 User-Agent 字符串
+            user_agent = (
+                f"XiaoMusic/{__version__} "
+                f"({os_name} {os_version}; {architecture}; {machine}) "
+                f"Python/{python_version}"
+            )
+        except Exception as e:
+            # 获取报错的堆栈信息
+            error_info = traceback.format_exc()
+            user_agent = f"Error: {e} {error_info}"
 
         return user_agent
