@@ -69,32 +69,35 @@ class Analytics:
             return None
 
     async def post_to_umami(self, event):
-        url = "https://umami.hanxi.cc/api/send"
-        user_agent = self._get_user_agent()
-        event.set_event_param(name="useragent", value=user_agent)
-        data = {
-            "payload": {
-                "hostname": self.config.hostname,
-                "language": "zh-CN",
-                "referrer": "",
-                "screen": "430x932",
-                "title": "后端统计",
-                "url": "/backend",
-                "website": "7bfb0890-4115-4260-8892-b391513e7e99",
-                "name": event.get_event_name(),
-                "data": event.get_event_params(),
-            },
-            "type": "event",
-        }
-
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                "User-Agent": user_agent,
+        try:
+            url = "https://umami.hanxi.cc/api/send"
+            user_agent = self._get_user_agent()
+            event.set_event_param(name="useragent", value=user_agent)
+            data = {
+                "payload": {
+                    "hostname": self.config.hostname,
+                    "language": "zh-CN",
+                    "referrer": "",
+                    "screen": "430x932",
+                    "title": "后端统计",
+                    "url": "/backend",
+                    "website": "7bfb0890-4115-4260-8892-b391513e7e99",
+                    "name": event.get_event_name(),
+                    "data": event.get_event_params(),
+                },
+                "type": "event",
             }
-            # self.log.info(f"headers {headers}, {data}")
-            async with session.post(url, json=data, headers=headers) as response:
-                self.log.info(f"umami Status: {response.status}")
-                await response.text()
+
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    "User-Agent": user_agent,
+                }
+                # self.log.info(f"headers {headers}, {data}")
+                async with session.post(url, json=data, headers=headers) as response:
+                    self.log.info(f"umami Status: {response.status}")
+                    await response.text()
+        except Exception as e:
+            self.log.exception(f"Execption {e}")
 
     def _get_user_agent(self):
         try:

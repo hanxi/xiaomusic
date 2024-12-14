@@ -45,6 +45,7 @@ from xiaomusic.utils import (
     remove_common_prefix,
     remove_id3_tags,
     try_add_access_control_param,
+    update_version,
 )
 
 xiaomusic = None
@@ -569,6 +570,13 @@ async def playlistdelmusic(data: PlayListMusicObj, Verifcation=Depends(verificat
     if ret:
         return {"ret": "OK"}
     return {"ret": "Del failed, may be playlist not exist."}
+
+
+# 更新版本
+@app.post("/updateversion")
+async def updateversion(version: str = "", Verifcation=Depends(verification)):
+    ret = update_version(version)
+    return {"ret": ret}
 
 
 async def file_iterator(file_path, start, end):

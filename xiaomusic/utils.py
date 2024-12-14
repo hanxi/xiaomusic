@@ -1010,3 +1010,28 @@ def not_in_dirs(filename, ignore_absolute_dirs):
             return False  # 文件在排除目录中
 
     return True  # 文件不在排除目录中
+
+
+def is_docker():
+    return os.path.exists("/app/.dockerenv")
+
+
+def restart_xiaomusic():
+    if not is_docker():
+        ret = "xiaomusic 重启只能在 docker 中进行"
+        log.info(ret)
+        return False, ret
+    try:
+        # 重启 xiaomusic 程序
+        subprocess.run(["supervisorctl", "restart", "xiaomusic"], check=True)
+        log.info("xiaomusic 重启成功")
+    except subprocess.CalledProcessError as e:
+        log.info(f"xiaomusic 重启失败: {e}")
+        return False, "xiaomusic 重启失败"
+    return True
+
+
+def update_version(version):
+    ok, ret = restart_xiaomusic()
+    if not ok:
+        return ret
