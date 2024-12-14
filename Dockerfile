@@ -11,10 +11,15 @@ RUN pdm install --prod --no-editable
 
 FROM hanxi/xiaomusic:runtime
 WORKDIR /app
-COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/.venv ./.venv
 COPY --from=builder /app/xiaomusic/ ./xiaomusic/
 COPY --from=builder /app/plugins/ ./plugins/
 COPY --from=builder /app/xiaomusic.py .
+RUN touch /app/.dockerenv
+
+RUN mkdir -p /etc/supervisor/conf.d
+COPY supervisor.conf /etc/supervisor/conf.d/supervisor.conf
+
 ENV XIAOMUSIC_HOSTNAME=192.168.2.5
 ENV XIAOMUSIC_PORT=8090
 VOLUME /app/conf
@@ -22,4 +27,5 @@ VOLUME /app/music
 EXPOSE 8090
 ENV TZ=Asia/Shanghai
 ENV PATH=/app/.venv/bin:$PATH
-ENTRYPOINT [".venv/bin/python3","xiaomusic.py"]
+
+CMD ["/usr/bin/supervisord", "-n"]
