@@ -141,6 +141,8 @@ jobs:
           release_name: ${{ github.ref_name }}
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用自动创建的令牌
 
       # 上传 Release 资产
       - name: Upload Release Asset
