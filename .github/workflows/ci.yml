@@ -7,6 +7,7 @@ on:
 env:
   TEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}
   RELEASE_NAME: main  # 固定的 Release 名称
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用自动创建的令牌
 
 permissions:
   contents: write
@@ -121,17 +122,23 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      # 创建 Release
+      - name: Get Release
+        id: get_release
+        uses: octokit/request-action@v2
+        with:
+          route: GET /repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}
+        continue-on-error: true
+
       - name: Create Release
         id: create_release
+        if: steps.get_release.outputs.status != '200'
         uses: actions/create-release@v1
         with:
           tag_name: ${{ github.ref_name }}
           release_name: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用自动创建的令牌
+
+      - name: Set Upload URL
+        run: echo "UPLOAD_URL=${{ steps.get_release.outputs.response_body || steps.create_release.outputs.upload_url }}" >> $GITHUB_ENV
 
       - name: Upload app-amd64.tar.gz
         uses: actions/upload-release-asset@v1
@@ -180,4 +187,5 @@ jobs:
           asset_path: ./app-arm-v7-lite.tar.gz
           asset_name: app-arm-v7-lite.tar.gz
           asset_content_type: application/gzip
+
 
