@@ -7,6 +7,10 @@ on:
 env:
   TEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}
   RELEASE_NAME: main  # 固定的 Release 名称
+
+permissions:
+  contents: write
+
 jobs:
   build-test-publish:
     runs-on: ubuntu-latest
@@ -117,21 +121,6 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-  update-release:
-    runs-on: ubuntu-latest
-    needs: build-test-publish
-    permissions:
-      contents: write
-    strategy:
-      matrix:
-        file:
-          - { path: "./app-amd64.tar.gz", name: "app-amd64.tar.gz" }
-          - { path: "./app-amd64-lite.tar.gz", name: "app-amd64-lite.tar.gz" }
-          - { path: "./app-arm64.tar.gz", name: "app-arm64.tar.gz" }
-          - { path: "./app-arm64-lite.tar.gz", name: "app-arm64-lite.tar.gz" }
-          - { path: "./app-arm-v7.tar.gz", name: "app-arm-v7.tar.gz" }
-          - { path: "./app-arm-v7-lite.tar.gz", name: "app-arm-v7-lite.tar.gz" }
-    steps:
       # 创建 Release
       - name: Create Release
         id: create_release
@@ -144,18 +133,57 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用自动创建的令牌
 
-      # 上传 Release 资产
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ matrix.file.path }}
-          asset_name: ${{ matrix.file.name }}
-          asset_content_type: application/gzip
+			# 上传 amd64 文件
+			- name: Upload app-amd64.tar.gz
+				uses: actions/upload-release-asset@v1
+				with:
+					upload_url: ${{ steps.create_release.outputs.upload_url }}
+					asset_path: ./app-amd64.tar.gz
+					asset_name: app-amd64.tar.gz
+					asset_content_type: application/gzip
 
-      # 调试信息（可选）
-      - name: Debug Create Release Outputs
-        if: always()
-        run: |
-          echo "Tag Name: ${{ github.ref_name }}"
-          echo "Upload URL: ${{ steps.create_release.outputs.upload_url }}"
+			# 上传 amd64-lite 文件
+			- name: Upload app-amd64-lite.tar.gz
+				uses: actions/upload-release-asset@v1
+				with:
+					upload_url: ${{ steps.create_release.outputs.upload_url }}
+					asset_path: ./app-amd64-lite.tar.gz
+					asset_name: app-amd64-lite.tar.gz
+					asset_content_type: application/gzip
+
+			# 上传 arm64 文件
+			- name: Upload app-arm64.tar.gz
+				uses: actions/upload-release-asset@v1
+				with:
+					upload_url: ${{ steps.create_release.outputs.upload_url }}
+					asset_path: ./app-arm64.tar.gz
+					asset_name: app-arm64.tar.gz
+					asset_content_type: application/gzip
+
+			# 上传 arm64-lite 文件
+			- name: Upload app-arm64-lite.tar.gz
+				uses: actions/upload-release-asset@v1
+				with:
+					upload_url: ${{ steps.create_release.outputs.upload_url }}
+					asset_path: ./app-arm64-lite.tar.gz
+					asset_name: app-arm64-lite.tar.gz
+					asset_content_type: application/gzip
+
+			# 上传 arm-v7 文件
+			- name: Upload app-arm-v7.tar.gz
+				uses: actions/upload-release-asset@v1
+				with:
+					upload_url: ${{ steps.create_release.outputs.upload_url }}
+					asset_path: ./app-arm-v7.tar.gz
+					asset_name: app-arm-v7.tar.gz
+					asset_content_type: application/gzip
+
+			# 上传 arm-v7-lite 文件
+			- name: Upload app-arm-v7-lite.tar.gz
+				uses: actions/upload-release-asset@v1
+				with:
+					upload_url: ${{ steps.create_release.outputs.upload_url }}
+					asset_path: ./app-arm-v7-lite.tar.gz
+					asset_name: app-arm-v7-lite.tar.gz
+					asset_content_type: application/gzip
+
