@@ -120,6 +120,8 @@ jobs:
   update-release:
     runs-on: ubuntu-latest
     needs: build-test-publish
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -131,8 +133,7 @@ jobs:
           release_name: ${{ github.ref_name }}
           draft: false
           prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
-
+          
      # 上传打包文件
       - name: Upload app-amd64.tar.gz
         uses: actions/upload-release-asset@v1
