@@ -2,11 +2,10 @@ name: ci
 on:
   push:
     branches:
-      - "main"
+      - "*"
   workflow_dispatch:
 env:
   TEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}
-  RELEASE_NAME: main  # 固定的 Release 名称
 
 permissions:
   contents: write
@@ -139,11 +138,7 @@ jobs:
           EXISTING_RELEASE=$(gh release view "${RELEASE_NAME}" --json id --jq .id || echo "")
 
           if [[ -n "${EXISTING_RELEASE}" ]]; then
-            # 更新已有 Release
-            gh release edit "${RELEASE_NAME}" \
-              --prerelease=false \
-              --title "${RELEASE_NAME}" \
-              --notes "${RELEASE_BODY}"
+            echo "release exist"
           else
             # 创建新的 Release
             gh release create "${RELEASE_NAME}" \
