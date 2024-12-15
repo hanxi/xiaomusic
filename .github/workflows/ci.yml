@@ -127,6 +127,8 @@ jobs:
         with:
           route: GET /repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}
         continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用自动创建的令牌
 
       - name: Create Release
         id: create_release
