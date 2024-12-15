@@ -7,7 +7,6 @@ on:
 env:
   TEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}
   RELEASE_NAME: main  # 固定的 Release 名称
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用自动创建的令牌
 
 permissions:
   contents: write
@@ -136,6 +135,8 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           release_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用自动创建的令牌
 
       - name: Set Upload URL
         run: echo "UPLOAD_URL=${{ steps.get_release.outputs.response_body || steps.create_release.outputs.upload_url }}" >> $GITHUB_ENV
