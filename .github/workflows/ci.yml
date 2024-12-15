@@ -121,17 +121,53 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      - name: Get Release
-        id: get_release
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用自动创建的令牌
+      # 安装 GitHub CLI
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install -y gh
 
-      - uses: ncipollo/release-action@v1
-        with:
-          artifacts: "app-*.tar.gz"
-          allowUpdates: true
+      # 登录 GitHub CLI
+      - name: Authenticate GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "${GITHUB_TOKEN}" | gh auth login --with-token
+
+      # 创建或更新 Release
+      - name: Create or update Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_NAME=${{ github.ref_name }}
+          RELEASE_BODY="This release is automatically updated from the ${RELEASE_NAME} branch."
+
+          # 检查是否已有同名 Release
+          EXISTING_RELEASE=$(gh release view "${RELEASE_NAME}" --json id --jq .id || echo "")
+
+          if [[ -n "${EXISTING_RELEASE}" ]]; then
+            # 更新已有 Release
+            gh release edit "${RELEASE_NAME}" \
+              --prerelease=false \
+              --title "${RELEASE_NAME}" \
+              --notes "${RELEASE_BODY}"
+          else
+            # 创建新的 Release
+            gh release create "${RELEASE_NAME}" \
+              --prerelease=false \
+              --title "${RELEASE_NAME}" \
+              --notes "${RELEASE_BODY}"
+          fi
+
+      # 上传多个文件并覆盖
+      - name: Upload assets to Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_NAME=${{ github.ref_name }}
+
+          FILES=$(find . -type f -name "app-*.tar.gz")
+          for FILE in ${FILES}; do
+            echo "type upload ${FILE}"
+            gh release upload "${RELEASE_NAME}" "${FILE}" --clobber
+          done
 
