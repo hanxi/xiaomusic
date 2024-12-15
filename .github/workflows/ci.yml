@@ -123,7 +123,7 @@ jobs:
 
       - name: Get Release
         id: get_release
-        uses: octokit/request-action@v2
+        uses: octokit/request-action@v2.x
         with:
           route: GET /repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}
         continue-on-error: true
