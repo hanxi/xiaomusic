@@ -514,7 +514,7 @@ async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verificat
         async def check_download_proc():
             # 等待子进程完成
             exit_code = await download_proc.wait()
-            log.info( f"Download completed with exit code {exit_code}")
+            log.info(f"Download completed with exit code {exit_code}")
             chmoddir(config.download_path)
 
         asyncio.create_task(check_download_proc())
