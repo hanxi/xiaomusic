@@ -1016,11 +1016,7 @@ def is_docker():
     return os.path.exists("/app/.dockerenv")
 
 
-def restart_xiaomusic():
-    if not is_docker():
-        ret = "xiaomusic 重启只能在 docker 中进行"
-        log.info(ret)
-        return False, ret
+def _restart_xiaomusic():
     try:
         # 重启 xiaomusic 程序
         subprocess.run(["supervisorctl", "restart", "xiaomusic"], check=True)
@@ -1032,6 +1028,33 @@ def restart_xiaomusic():
 
 
 def update_version(version):
-    ok, ret = restart_xiaomusic()
+    if not is_docker():
+        ret = "xiaomusic 更新只能在 docker 中进行"
+        log.info(ret)
+        return ret
+
+    # https://github.com/hanxi/xiaomusic/releases/download/main/app-amd64-lite.tar.gz
+
+    ok, ret = _restart_xiaomusic()
     if not ok:
         return ret
+
+
+def chmodfile(file_path: str):
+    try:
+        os.chmod(file_path, 0o775)
+    except Exception as e:
+        log.info(f"chmodfile failed: {e}")
+
+
+def chmoddir(dir_path: str):
+    # 获取指定目录下的所有文件和子目录
+    for item in os.listdir(dir_path):
+        item_path = os.path.join(dir_path, item)
+        # 确保是文件，且不是目录
+        if os.path.isfile(item_path):
+            try:
+                os.chmod(item_path, 0o775)
+                log.info(f"Changed permissions of file: {item_path}")
+            except Exception as e:
+                log.info(f"chmoddir failed: {e}")

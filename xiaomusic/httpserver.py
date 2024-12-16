@@ -35,6 +35,7 @@ from starlette.responses import FileResponse, Response
 
 from xiaomusic import __version__
 from xiaomusic.utils import (
+    chmoddir,
     convert_file_to_mp3,
     deepcopy_data_no_sensitive_info,
     download_one_music,
@@ -489,6 +490,7 @@ async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verificat
             log.debug(f"Download dir_path: {dir_path}")
             # 可能只是部分失败，都需要整理下载目录
             remove_common_prefix(dir_path)
+            chmoddir(dir_path)
 
         asyncio.create_task(check_download_proc())
         return {"ret": "OK"}
@@ -507,7 +509,15 @@ class DownloadOneMusic(BaseModel):
 @app.post("/downloadonemusic")
 async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verification)):
     try:
-        await download_one_music(config, data.url, data.name)
+        download_proc = await download_one_music(config, data.url, data.name)
+
+        async def check_download_proc():
+            # 等待子进程完成
+            exit_code = await download_proc.wait()
+            log.info( f"Download completed with exit code {exit_code}")
+            chmoddir(config.download_path)
+
+        asyncio.create_task(check_download_proc())
         return {"ret": "OK"}
     except Exception as e:
         log.exception(f"Execption {e}")

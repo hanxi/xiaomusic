@@ -41,6 +41,7 @@ from xiaomusic.plugin import PluginManager
 from xiaomusic.utils import (
     Metadata,
     chinese_to_number,
+    chmodfile,
     custom_sort_key,
     deepcopy_data_no_sensitive_info,
     extract_audio_metadata,
@@ -1433,8 +1434,6 @@ class XiaoMusicDevice:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
             await self.download(search_key, name)
-            self.log.info(f"正在下载中 {search_key} {name}")
-            await self._download_proc.wait()
             # 把文件插入到播放列表里
             await self.add_download_music(name)
         await self._playmusic(name)
@@ -1661,6 +1660,11 @@ class XiaoMusicDevice:
         self.log.info(f"download cmd: {cmd}")
         self._download_proc = await asyncio.create_subprocess_exec(*sbp_args)
         await self.do_tts(f"正在下载歌曲{search_key}")
+        self.log.info(f"正在下载中 {search_key} {name}")
+        await self._download_proc.wait()
+        # 下载完成后，修改文件权限
+        file_path = os.path.join(self.download_path, f"{name}.mp3")
+        chmodfile(file_path)
 
     # 继续播放被打断的歌曲
     async def check_replay(self):
