@@ -15,6 +15,7 @@ COPY --from=builder /app/.venv ./.venv
 COPY --from=builder /app/xiaomusic/ ./xiaomusic/
 COPY --from=builder /app/plugins/ ./plugins/
 COPY --from=builder /app/xiaomusic.py .
+COPY --from=builder /app/xiaomusic/__init__.py /base_version.py
 RUN touch /app/.dockerenv
 
 RUN mkdir -p /etc/supervisor/conf.d

@@ -45,6 +45,7 @@ from xiaomusic.utils import (
     is_mp3,
     remove_common_prefix,
     remove_id3_tags,
+    restart_xiaomusic,
     try_add_access_control_param,
     update_version,
 )
@@ -584,9 +585,22 @@ async def playlistdelmusic(data: PlayListMusicObj, Verifcation=Depends(verificat
 
 # 更新版本
 @app.post("/updateversion")
-async def updateversion(version: str = "", Verifcation=Depends(verification)):
-    ret = update_version(version)
-    return {"ret": ret}
+async def updateversion(
+    version: str = "", lite: bool = True, Verifcation=Depends(verification)
+):
+    ret = update_version(version, lite)
+    if ret != "OK":
+        return {"ret": ret}
+
+    proc = restart_xiaomusic()
+
+    async def check_proc():
+        # 等待子进程完成
+        exit_code = await proc.wait()
+        log.info(f"Restart completed with exit code {exit_code}")
+
+    asyncio.create_task(check_proc())
+    return {"ret": "OK"}
 
 
 async def file_iterator(file_path, start, end):

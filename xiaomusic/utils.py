@@ -1018,18 +1018,21 @@ def is_docker():
     return os.path.exists("/app/.dockerenv")
 
 
-def _restart_xiaomusic():
-    try:
-        # 重启 xiaomusic 程序
-        subprocess.run(["supervisorctl", "restart", "xiaomusic"], check=True)
-        log.info("xiaomusic 重启成功")
-    except subprocess.CalledProcessError as e:
-        log.info(f"xiaomusic 重启失败: {e}")
-        return False, "xiaomusic 重启失败"
-    return True
+async def restart_xiaomusic():
+    # 重启 xiaomusic 程序
+    sbp_args = (
+        "supervisorctl",
+        "restart",
+        "xiaomusic",
+    )
+
+    cmd = " ".join(sbp_args)
+    log.info(f"restart_xiaomusic: {cmd}")
+    proc = await asyncio.create_subprocess_exec(*sbp_args)
+    return proc
 
 
-async def update_version(version: str, lite: bool):
+async def update_version(version: str, lite: bool = True):
     if not is_docker():
         ret = "xiaomusic 更新只能在 docker 中进行"
         log.info(ret)
@@ -1046,9 +1049,7 @@ async def update_version(version: str, lite: bool):
     target_directory = "/app"
     await download_and_extract(url, target_directory)
 
-    ok, ret = _restart_xiaomusic()
-    if not ok:
-        return ret
+    return "OK"
 
 
 def get_os_architecture():
