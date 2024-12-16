@@ -16,6 +16,10 @@ on:
   issues:
     types: [opened, edited, reopened]  # Specify events you're interested in
 
+  release:
+    types:
+      - uploaded
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -59,10 +63,17 @@ jobs:
           npm run docs:build
           npm run docs:build
 
+      - uses: pdm-project/setup-pdm@v3
+
+      - name: generate versions.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pdm run get_release.py
+
       - name: Check for changes
         id: check_changes
         run: |
-          if [ -n "$(git diff docs/issues)" ]; then
+          if [ -n "$(git diff docs)" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
