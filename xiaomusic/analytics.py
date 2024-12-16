@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import platform
 import traceback
 from datetime import datetime
@@ -72,7 +73,8 @@ class Analytics:
         try:
             url = "https://umami.hanxi.cc/api/send"
             user_agent = self._get_user_agent()
-            event.set_event_param(name="useragent", value=user_agent)
+            params = copy.copy(event.get_event_params())
+            params["useragent"] = user_agent
             data = {
                 "payload": {
                     "hostname": self.config.hostname,
@@ -83,7 +85,7 @@ class Analytics:
                     "url": "/backend",
                     "website": "7bfb0890-4115-4260-8892-b391513e7e99",
                     "name": event.get_event_name(),
-                    "data": event.get_event_params(),
+                    "data": params,
                 },
                 "type": "event",
             }
