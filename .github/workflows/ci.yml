@@ -19,6 +19,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -40,6 +48,8 @@ jobs:
           push: false
           load: true
           tags: ${{ env.TEST_TAG }}-linux-amd64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Build Docker image (linux/arm64)
         id: build_arm64
@@ -50,6 +60,8 @@ jobs:
           push: false
           load: true
           tags: ${{ env.TEST_TAG }}-linux-arm64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Build Docker image (linux/arm/v7)
         id: build_armv7
@@ -60,12 +72,22 @@ jobs:
           push: false
           load: true
           tags: ${{ env.TEST_TAG }}-linux-arm-v7
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
   # Job 2: 测试镜像
   test:
     runs-on: ubuntu-latest
     needs: build  # 依赖构建完成
     steps:
+      - name: Cache Docker layers for testing
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Test amd64 image
         run: docker run --rm ${{ env.TEST_TAG }}-linux-amd64 /app/.venv/bin/python3 /app/xiaomusic.py -h
 
@@ -75,12 +97,20 @@ jobs:
       - name: Test armv7 image
         run: docker run --rm ${{ env.TEST_TAG }}-linux-arm-v7 /app/.venv/bin/python3 /app/xiaomusic.py -h
 
-  # Job 3: 打包应用
+  # Job 3: 打包应用, 发布镜像和 Release
   package:
     runs-on: ubuntu-latest
     needs: test  # 依赖测试完成
     if: github.ref == 'refs/heads/main'  # 仅在 main 分支运行
     steps:
+      - name: Cache Docker layers for packaging
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Package /app for amd64
         run: |
           docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-amd64 tar czf /workspace/app-amd64.tar.gz -C / app
@@ -108,12 +138,6 @@ jobs:
           docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-arm-v7 bash -c \
           "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-arm-v7-lite.tar.gz .[!.]* *"
 
-  # Job 4: 发布镜像和 Release
-  publish:
-    runs-on: ubuntu-latest
-    needs: package  # 依赖打包完成
-    if: github.ref == 'refs/heads/main'  # 仅在 main 分支运行
-    steps:
       - name: Publish to Docker Hub
         uses: docker/build-push-action@v6
         with:
@@ -121,6 +145,8 @@ jobs:
           context: .
           push: true
           tags: ${{ env.TEST_TAG }}
+          cache-from: type=local,src=/tmp/.buildx-cache-new
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v4
@@ -128,6 +154,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: hanxi/xiaomusic
+
+      - name: Move cache to limit growth
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Install GitHub CLI
         run: |
@@ -159,4 +190,4 @@ jobs:
               ./app-arm-v7.tar.gz \
               ./app-arm-v7-lite.tar.gz \
               --clobber
-           
+
