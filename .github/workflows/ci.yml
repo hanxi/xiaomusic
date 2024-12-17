@@ -90,6 +90,9 @@ jobs:
             /tmp/.buildx-cache-new
           key: ${{ runner.os }}-buildx-${{ github.sha }}
 
+      - name: List Docker images
+        run: docker images
+
       - name: Test amd64 image
         run: |
           echo ${{ env.TEST_TAG }}-linux-amd64 | docker load
