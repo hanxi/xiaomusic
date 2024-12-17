@@ -8,12 +8,14 @@ on:
 
 env:
   TEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}
+  LATEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:latest
+  STABLE_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:stable
 
 permissions:
   contents: write
 
 jobs:
-  # Job 1: 构建镜像
+  # Job 构建镜像
   build:
     runs-on: ubuntu-latest
     steps:
@@ -75,7 +77,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
-  # Job 2: 测试镜像
+  # Job 测试镜像
   test:
     runs-on: ubuntu-latest
     needs: build  # 依赖构建完成
@@ -97,11 +99,43 @@ jobs:
       - name: Test armv7 image
         run: docker run --rm ${{ env.TEST_TAG }}-linux-arm-v7 /app/.venv/bin/python3 /app/xiaomusic.py -h
 
-  # Job 3: 打包应用, 发布镜像和 Release
-  package:
+  # 发布版本
+  pypi-publish:
+    name: upload release to PyPI
+    # 仅在 ref 为以 v 开头的标签时执行
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     needs: test  # 依赖测试完成
-    if: github.ref == 'refs/heads/main'  # 仅在 main 分支运行
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          registry-url: https://registry.npmjs.org/
+          node-version: lts/*
+
+      - run: npx changelogithub
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - uses: pdm-project/setup-pdm@v3
+
+      - name: Publish package distributions to PyPI
+        run: pdm publish
+
+
+  # Job 打包应用, 发布镜像和 Release
+  package:
+    runs-on: ubuntu-latest
+    # 仅在 main 分支或以 v 开头的标签运行
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    needs: test  # 依赖测试完成
     steps:
       - name: Cache Docker layers for packaging
         uses: actions/cache@v3
@@ -147,6 +181,17 @@ jobs:
           tags: ${{ env.TEST_TAG }}
           cache-from: type=local,src=/tmp/.buildx-cache-new
           cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      # 额外步骤以处理标签
+      - name: Push latest and stable tags if current ref is a tag with 'v' prefix
+        if: startsWith(github.ref, 'refs/tags/v')  # 仅在 ref 为以 v 开头的标签时执行
+        run: |
+          # Define the commands to push latest and stable tags
+          echo "Pushing latest and stable tags..."
+          docker tag ${{ env.TEST_TAG }} ${{ env.LATEST_TAG }}
+          docker tag ${{ env.TEST_TAG }} ${{ env.STABLE_TAG }}
+          docker push ${{ env.LATEST_TAG }}
+          docker push ${{ env.STABLE_TAG }}
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v4

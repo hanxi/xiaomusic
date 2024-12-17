@@ -24,7 +24,7 @@ jobs:
       - name: install ruff
         run: pip install ruff
       - name: Format code
-        run: pdm fmt && pdm lint --fix
+        run: pdm lintfmt
 
       - name: Check for changes
         id: check_changes

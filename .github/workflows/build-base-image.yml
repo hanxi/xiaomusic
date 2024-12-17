@@ -2,6 +2,7 @@ name: Build Docker Base Image
 
 on:
   push:
+    branches: ["main"]
     paths:
       - 'Dockerfile.builder'
       - 'Dockerfile.runtime'
