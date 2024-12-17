@@ -1080,6 +1080,10 @@ async def download_and_extract(url: str, target_directory: str):
         async with session.get(url) as response:
             if response.status == 200:
                 file_name = os.path.join(target_directory, url.split("/")[-1])
+                file_name = os.path.normpath(file_name)
+                if not file_name.startswith(target_directory):
+                    log.warning(f"Invalid file path: {file_name}")
+                    return
                 with open(file_name, "wb") as f:
                     # 以块的方式下载文件，防止内存占用过大
                     async for chunk in response.content.iter_any():
