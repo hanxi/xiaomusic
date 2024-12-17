@@ -1,9 +1,11 @@
-name: ci
+name: CI Workflow
+
 on:
   push:
     branches:
-      - "*"
+      - "*"  # 所有分支触发
   workflow_dispatch:
+
 env:
   TEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}
 
@@ -11,9 +13,9 @@ permissions:
   contents: write
 
 jobs:
-  build-test-publish:
+  # Job 1: 构建镜像
+  build:
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v4
 
@@ -30,6 +32,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker image (linux/amd64)
+        id: build_amd64
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64
@@ -37,10 +40,9 @@ jobs:
           push: false
           load: true
           tags: ${{ env.TEST_TAG }}-linux-amd64
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Build Docker image (linux/arm64)
+        id: build_arm64
         uses: docker/build-push-action@v6
         with:
           platforms: linux/arm64
@@ -48,10 +50,9 @@ jobs:
           push: false
           load: true
           tags: ${{ env.TEST_TAG }}-linux-arm64
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Build Docker image (linux/arm/v7)
+        id: build_armv7
         uses: docker/build-push-action@v6
         with:
           platforms: linux/arm/v7
@@ -59,45 +60,60 @@ jobs:
           push: false
           load: true
           tags: ${{ env.TEST_TAG }}-linux-arm-v7
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
-      # We test all the images on amd64 host here. This uses QEMU to emulate
-      # the other platforms.
-      - run: docker run --rm ${TEST_TAG}-linux-amd64 /app/.venv/bin/python3 /app/xiaomusic.py -h
-      - run: docker run --rm ${TEST_TAG}-linux-arm64 /app/.venv/bin/python3 /app/xiaomusic.py -h
-      - run: docker run --rm ${TEST_TAG}-linux-arm-v7 /app/.venv/bin/python3 /app/xiaomusic.py -h
+  # Job 2: 测试镜像
+  test:
+    runs-on: ubuntu-latest
+    needs: build  # 依赖构建完成
+    steps:
+      - name: Test amd64 image
+        run: docker run --rm ${{ env.TEST_TAG }}-linux-amd64 /app/.venv/bin/python3 /app/xiaomusic.py -h
 
-      # 打包完整版本和精简版本 tar.gz 文件
+      - name: Test arm64 image
+        run: docker run --rm ${{ env.TEST_TAG }}-linux-arm64 /app/.venv/bin/python3 /app/xiaomusic.py -h
+
+      - name: Test armv7 image
+        run: docker run --rm ${{ env.TEST_TAG }}-linux-arm-v7 /app/.venv/bin/python3 /app/xiaomusic.py -h
+
+  # Job 3: 打包应用
+  package:
+    runs-on: ubuntu-latest
+    needs: test  # 依赖测试完成
+    if: github.ref == 'refs/heads/main'  # 仅在 main 分支运行
+    steps:
       - name: Package /app for amd64
         run: |
-          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-amd64 tar czf /workspace/app-amd64.tar.gz -C / app
+          docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-amd64 tar czf /workspace/app-amd64.tar.gz -C / app
 
       - name: Package /app (lite) for amd64
         run: |
-          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-amd64 bash -c \
+          docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-amd64 bash -c \
           "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-amd64-lite.tar.gz .[!.]* *"
 
       - name: Package /app for arm64
         run: |
-          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-arm64 tar czf /workspace/app-arm64.tar.gz -C / app
+          docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-arm64 tar czf /workspace/app-arm64.tar.gz -C / app
 
       - name: Package /app (lite) for arm64
         run: |
-          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-arm64 bash -c \
+          docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-arm64 bash -c \
           "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-arm64-lite.tar.gz .[!.]* *"
 
       - name: Package /app for arm/v7
         run: |
-          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-arm-v7 tar czf /workspace/app-arm-v7.tar.gz -C / app
+          docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-arm-v7 tar czf /workspace/app-arm-v7.tar.gz -C / app
 
       - name: Package /app (lite) for arm/v7
         run: |
-          docker run --rm -v $PWD:/workspace ${TEST_TAG}-linux-arm-v7 bash -c \
+          docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-arm-v7 bash -c \
           "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-arm-v7-lite.tar.gz .[!.]* *"
 
-
-      # This will only push the previously built images.
+  # Job 4: 发布镜像和 Release
+  publish:
+    runs-on: ubuntu-latest
+    needs: package  # 依赖打包完成
+    if: github.ref == 'refs/heads/main'  # 仅在 main 分支运行
+    steps:
       - name: Publish to Docker Hub
         uses: docker/build-push-action@v6
         with:
@@ -105,8 +121,6 @@ jobs:
           context: .
           push: true
           tags: ${{ env.TEST_TAG }}
-          cache-from: type=local,src=/tmp/.buildx-cache-new
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v4
@@ -115,48 +129,34 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: hanxi/xiaomusic
 
-      - name: Move cache to limit growth
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-      # 安装 GitHub CLI
       - name: Install GitHub CLI
         run: |
           sudo apt update
           sudo apt install -y gh
 
-      # 创建或更新 Release
       - name: Create or update Release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 设置 GH_TOKEN 环境变量
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           RELEASE_NAME=${{ github.ref_name }}
-          RELEASE_BODY="This release is automatically updated from the ${RELEASE_NAME} branch."
-
-          # 检查是否已有同名 Release
-          EXISTING_RELEASE=$(gh release view "${RELEASE_NAME}" --json id --jq .id || echo "")
-
-          if [[ -n "${EXISTING_RELEASE}" ]]; then
-            echo "release exist"
+          gh release view "$RELEASE_NAME" > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            gh release create "$RELEASE_NAME" \
+              ./app-amd64.tar.gz \
+              ./app-amd64-lite.tar.gz \
+              ./app-arm64.tar.gz \
+              ./app-arm64-lite.tar.gz \
+              ./app-arm-v7.tar.gz \
+              ./app-arm-v7-lite.tar.gz \
+              --title "$RELEASE_NAME" \
+              --notes "Automated release for $RELEASE_NAME"
           else
-            # 创建新的 Release
-            gh release create "${RELEASE_NAME}" \
-              --prerelease=false \
-              --title "${RELEASE_NAME}" \
-              --notes "${RELEASE_BODY}"
-          fi
-
-      # 上传多个文件并覆盖
-      - name: Upload assets to Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 设置 GH_TOKEN 环境变量
-        run: |
-          RELEASE_NAME=${{ github.ref_name }}
-
-          FILES=$(find . -type f -name "app-*.tar.gz")
-          for FILE in ${FILES}; do
-            echo "type upload ${FILE}"
-            gh release upload "${RELEASE_NAME}" "${FILE}" --clobber
-          done
-
+            gh release upload "$RELEASE_NAME" \
+              ./app-amd64.tar.gz \
+              ./app-amd64-lite.tar.gz \
+              ./app-arm64.tar.gz \
+              ./app-arm64-lite.tar.gz \
+              ./app-arm-v7.tar.gz \
+              ./app-arm-v7-lite.tar.gz \
+              --clobber
+           
