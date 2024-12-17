@@ -120,39 +120,33 @@ jobs:
       - name: Package /app for amd64
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         run: |
-          echo ${{ env.TEST_TAG }}-linux-amd64 | docker load
           docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-amd64 tar czf /workspace/app-amd64.tar.gz -C / app
 
       - name: Package /app (lite) for amd64
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         run: |
-          echo ${{ env.TEST_TAG }}-linux-amd64 | docker load
           docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-amd64 bash -c \
           "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-amd64-lite.tar.gz .[!.]* *"
 
       - name: Package /app for arm64
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         run: |
-          echo ${{ env.TEST_TAG }}-linux-arm64 | docker load
           docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-arm64 tar czf /workspace/app-arm64.tar.gz -C / app
 
       - name: Package /app (lite) for arm64
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         run: |
-          echo ${{ env.TEST_TAG }}-linux-arm64 | docker load
           docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-arm64 bash -c \
           "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-arm64-lite.tar.gz .[!.]* *"
 
       - name: Package /app for arm/v7
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         run: |
-          echo ${{ env.TEST_TAG }}-linux-arm-v7 | docker load
           docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-arm-v7 tar czf /workspace/app-arm-v7.tar.gz -C / app
 
       - name: Package /app (lite) for arm/v7
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         run: |
-          echo ${{ env.TEST_TAG }}-linux-arm-v7 | docker load
           docker run --rm -v $PWD:/workspace ${{ env.TEST_TAG }}-linux-arm-v7 bash -c \
           "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-arm-v7-lite.tar.gz .[!.]* *"
 
