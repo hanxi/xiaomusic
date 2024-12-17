@@ -22,14 +22,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Cache Docker layers
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             /tmp/.buildx-cache
             /tmp/.buildx-cache-new
           key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -85,14 +83,12 @@ jobs:
     needs: build  # 依赖构建完成
     steps:
       - name: Cache Docker layers for testing
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             /tmp/.buildx-cache
             /tmp/.buildx-cache-new
           key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
 
       - name: Test amd64 image
         run: docker run --rm ${{ env.TEST_TAG }}-linux-amd64 /app/.venv/bin/python3 /app/xiaomusic.py -h
@@ -142,14 +138,12 @@ jobs:
     needs: test  # 依赖测试完成
     steps:
       - name: Cache Docker layers for packaging
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             /tmp/.buildx-cache
             /tmp/.buildx-cache-new
           key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
 
       - name: Package /app for amd64
         run: |
