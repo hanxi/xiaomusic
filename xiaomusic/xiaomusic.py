@@ -221,16 +221,19 @@ class XiaoMusic:
         self.cookie_jar = session.cookie_jar
 
     async def login_miboy(self, session):
-        account = MiAccount(
-            session,
-            self.config.account,
-            self.config.password,
-            str(self.mi_token_home),
-        )
-        # Forced login to refresh to refresh token
-        await account.login("micoapi")
-        self.mina_service = MiNAService(account)
-        self.miio_service = MiIOService(account)
+        try:
+            account = MiAccount(
+                session,
+                self.config.account,
+                self.config.password,
+                str(self.mi_token_home),
+            )
+            # Forced login to refresh to refresh token
+            await account.login("micoapi")
+            self.mina_service = MiNAService(account)
+            self.miio_service = MiIOService(account)
+        except Exception as e:
+            self.log.warning(f"可能登录失败. {e}")
 
     async def try_update_device_id(self):
         try:
@@ -254,7 +257,7 @@ class XiaoMusic:
             self.config.devices = devices
             self.log.info(f"选中的设备: {devices}")
         except Exception as e:
-            self.log.exception(f"Execption {e}")
+            self.log.warning(f"可能登录失败. {e}")
 
     def get_cookie(self):
         if self.config.cookie:

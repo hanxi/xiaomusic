@@ -146,7 +146,6 @@ function prependToFile(filePath: string, text: string) {
 function replaceGithubAssetUrls(content: string, githubProxy: string): string {
     const pattern1 = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/assets\/[\w-]+/g;
     const pattern2 = /https:\/\/github\.com\/user-attachments\/assets\/[\w-]+/g;
-    const proxyPrefix = "https://cloudflare-github-proxy.hanxi-info.workers.dev/proxy";
 
     // 使用正则表达式替换符合条件的链接
     const transformedContent = content.replace(pattern1, (match) => {

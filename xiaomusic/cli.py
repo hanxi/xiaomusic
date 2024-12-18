@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import logging
 import os
 import signal
 
-import uvicorn
-
-from xiaomusic import __version__
-from xiaomusic.config import Config
-from xiaomusic.httpserver import HttpInit
-from xiaomusic.httpserver import app as HttpApp
-from xiaomusic.xiaomusic import XiaoMusic
+import sentry_sdk
+from sentry_sdk.integrations.asyncio import AsyncioIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 LOGO = r"""
  __  __  _                   __  __                 _
@@ -22,7 +19,30 @@ LOGO = r"""
 """
 
 
+sentry_sdk.init(
+    dsn="https://659690a901a37237df8097a9eb95e60f@github.hanxi.cc/sentry/4508470200434688",
+    traces_sample_rate=0.1,
+    profiles_sample_rate=0.05,
+    integrations=[
+        AsyncioIntegration(),
+        LoggingIntegration(
+            level=logging.WARNING,
+            event_level=logging.ERROR,
+        ),
+    ],
+    # debug=True,
+)
+
+
 def main():
+    import uvicorn
+
+    from xiaomusic import __version__
+    from xiaomusic.config import Config
+    from xiaomusic.httpserver import HttpInit
+    from xiaomusic.httpserver import app as HttpApp
+    from xiaomusic.xiaomusic import XiaoMusic
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--port",
