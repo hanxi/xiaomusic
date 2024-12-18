@@ -1028,6 +1028,7 @@ async def restart_xiaomusic():
 
     cmd = " ".join(sbp_args)
     log.info(f"restart_xiaomusic: {cmd}")
+    await asyncio.sleep(2)
     proc = await asyncio.create_subprocess_exec(*sbp_args)
     exit_code = await proc.wait()  # 等待子进程完成
     log.info(f"restart_xiaomusic completed with exit code {exit_code}")
