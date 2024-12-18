@@ -1146,6 +1146,49 @@ class XiaoMusic:
         self.save_custom_play_list()
         return True
 
+    # 修改歌单名字
+    def play_list_update_name(self, oldname, newname):
+        custom_play_list = self.get_custom_play_list()
+        if oldname not in custom_play_list:
+            self.log.info(f"旧歌单名字不存在 {oldname}")
+            return False
+        if newname in custom_play_list:
+            self.log.info(f"新歌单名字已存在 {newname}")
+            return False
+        play_list = custom_play_list[oldname]
+        custom_play_list.pop(oldname)
+        custom_play_list[newname] = play_list
+        return True
+
+    # 获取所有自定义歌单
+    def get_play_list_names(self):
+        custom_play_list = self.get_custom_play_list()
+        return custom_play_list.keys()
+
+    # 获取歌单中所有歌曲
+    def play_list_musics(self, name):
+        custom_play_list = self.get_custom_play_list()
+        if name not in custom_play_list:
+            return "歌单不存在", []
+        play_list = custom_play_list[name]
+        return "OK", play_list
+
+    # 歌单更新歌曲
+    def play_list_update_music(self, name, music_list):
+        custom_play_list = self.get_custom_play_list()
+        if name not in custom_play_list:
+            # 歌单不存在则新建
+            if not self.play_list_add(name):
+                return False
+        play_list = []
+        for music_name in music_list:
+            if (music_name in self.all_music) and (music_name not in play_list):
+                play_list.append(music_name)
+        # 直接覆盖
+        custom_play_list[name] = play_list
+        self.save_custom_play_list()
+        return True
+
     # 歌单新增歌曲
     def play_list_add_music(self, name, music_list):
         custom_play_list = self.get_custom_play_list()

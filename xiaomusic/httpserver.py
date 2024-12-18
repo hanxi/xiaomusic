@@ -560,6 +560,32 @@ async def playlistdel(data: PlayListObj, Verifcation=Depends(verification)):
     return {"ret": "Del failed, may be not exist."}
 
 
+class PlayListUpdateObj(BaseModel):
+    oldname: str  # 旧歌单名字
+    newname: str  # 新歌单名字
+
+
+# 修改歌单名字
+@app.post("/playlistupdatename")
+async def playlistupdatename(
+    data: PlayListUpdateObj, Verifcation=Depends(verification)
+):
+    ret = xiaomusic.play_list_update_name(data.oldname, data.newname)
+    if ret:
+        return {"ret": "OK"}
+    return {"ret": "Update failed, may be not exist."}
+
+
+# 获取所有自定义歌单
+@app.get("/playlistnames")
+async def getplaylistnames(Verifcation=Depends(verification)):
+    names = xiaomusic.get_play_list_names()
+    return {
+        "ret": "OK",
+        "names": names,
+    }
+
+
 class PlayListMusicObj(BaseModel):
     name: str = ""  # 歌单名
     music_list: list[str]  # 歌曲名列表
@@ -581,6 +607,27 @@ async def playlistdelmusic(data: PlayListMusicObj, Verifcation=Depends(verificat
     if ret:
         return {"ret": "OK"}
     return {"ret": "Del failed, may be playlist not exist."}
+
+
+# 歌单更新歌曲
+@app.post("/playlistupdatemusic")
+async def playlistupdatemusic(
+    data: PlayListMusicObj, Verifcation=Depends(verification)
+):
+    ret = xiaomusic.play_list_update_music(data.name, data.music_list)
+    if ret:
+        return {"ret": "OK"}
+    return {"ret": "Del failed, may be playlist not exist."}
+
+
+# 获取歌单中所有歌曲
+@app.get("/playlistmusics")
+async def getplaylist(name: str, Verifcation=Depends(verification)):
+    ret, musics = xiaomusic.play_list_musics(name)
+    return {
+        "ret": "OK",
+        "musics": musics,
+    }
 
 
 # 更新版本
