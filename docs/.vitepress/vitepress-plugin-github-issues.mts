@@ -189,7 +189,7 @@ export default function GitHubIssuesPlugin(options: GitHubIssuesPluginOptions): 
         const changelogSource = path.join(process.cwd(), '../CHANGELOG.md');
         const changelogDestination = path.join(docsDir, 'changelog.md');
         copyFile(changelogSource, changelogDestination);
-        prependToFile(changelogDestination, '# 变更日志');
+        prependToFile(changelogDestination, '# 版本日志');
 
         for (const issue of issues) {
           // 仅处理包含 "文档" 标签的 issue
