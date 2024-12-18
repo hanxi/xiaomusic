@@ -1029,7 +1029,9 @@ async def restart_xiaomusic():
     cmd = " ".join(sbp_args)
     log.info(f"restart_xiaomusic: {cmd}")
     proc = await asyncio.create_subprocess_exec(*sbp_args)
-    return proc
+    exit_code = await proc.wait()  # 等待子进程完成
+    log.info(f"restart_xiaomusic completed with exit code {exit_code}")
+    return exit_code
 
 
 async def update_version(version: str, lite: bool = True):
@@ -1047,9 +1049,7 @@ async def update_version(version: str, lite: bool = True):
     # https://github.com/hanxi/xiaomusic/releases/download/main/app-amd64-lite.tar.gz
     url = f"https://github.hanxi.cc/proxy/hanxi/xiaomusic/releases/download/{version}/app-{arch}{lite_tag}.tar.gz"
     target_directory = "/app"
-    await download_and_extract(url, target_directory)
-
-    return "OK"
+    return await download_and_extract(url, target_directory)
 
 
 def get_os_architecture():
@@ -1072,6 +1072,7 @@ def get_os_architecture():
 
 
 async def download_and_extract(url: str, target_directory: str):
+    ret = "OK"
     # 创建目标目录
     os.makedirs(target_directory, exist_ok=True)
 
@@ -1095,7 +1096,9 @@ async def download_and_extract(url: str, target_directory: str):
                         tar.extractall(path=target_directory)
                         log.info(f"文件解压完成到: {target_directory}")
             else:
-                log.warning(f"下载失败, 状态码: {response.status}")
+                ret = f"下载失败, 状态码: {response.status}"
+                log.warning(ret)
+    return ret
 
 
 def chmodfile(file_path: str):

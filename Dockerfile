@@ -18,8 +18,7 @@ COPY --from=builder /app/xiaomusic.py .
 COPY --from=builder /app/xiaomusic/__init__.py /base_version.py
 RUN touch /app/.dockerenv
 
-RUN mkdir -p /etc/supervisor/conf.d
-COPY supervisor.conf /etc/supervisor/conf.d/supervisor.conf
+COPY supervisor.conf /etc/supervisor.conf
 
 ENV XIAOMUSIC_HOSTNAME=192.168.2.5
 ENV XIAOMUSIC_PORT=8090
@@ -29,4 +28,4 @@ EXPOSE 8090
 ENV TZ=Asia/Shanghai
 ENV PATH=/app/.venv/bin:$PATH
 
-CMD ["/usr/bin/supervisord", "-n"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor.conf"]

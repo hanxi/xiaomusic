@@ -588,18 +588,11 @@ async def playlistdelmusic(data: PlayListMusicObj, Verifcation=Depends(verificat
 async def updateversion(
     version: str = "", lite: bool = True, Verifcation=Depends(verification)
 ):
-    ret = update_version(version, lite)
+    ret = await update_version(version, lite)
     if ret != "OK":
         return {"ret": ret}
 
-    proc = restart_xiaomusic()
-
-    async def check_proc():
-        # 等待子进程完成
-        exit_code = await proc.wait()
-        log.info(f"Restart completed with exit code {exit_code}")
-
-    asyncio.create_task(check_proc())
+    asyncio.create_task(restart_xiaomusic())
     return {"ret": "OK"}
 
 
