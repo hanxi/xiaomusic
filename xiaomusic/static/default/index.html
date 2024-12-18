@@ -26,8 +26,7 @@
 <body class="index_page">
     <div class="player">
         <h1>小爱音箱播放器
-            <a id="version" href="https://xdocs.hanxi.cc/issues/changelog.html" target="_blank">版本
-                1.0.0</a><span id="versionnew" class="new-badge"></span>
+            <a id="version" href="javascript:void(0);">1.0.0</a><span id="versionnew" class="new-badge"></span>
         </h1>
 
         <label for="did">选择播放设备:</label>
@@ -191,7 +190,32 @@
           <button onclick="nowarning()">继续并不再显示</button>
           <button onclick="toggleWarning()">取消</button>
         </div>
-      </div>
+    </div>
+    <!-- 更新组件 -->
+    <div class="component" id="update-component" style="display: none;">
+        <h2>更新</h2>
+        <label for="update-version" style="display: flex;align-items: center;">选择版本:
+            <a class="option-inline changelog-button" href="https://xdocs.hanxi.cc/issues/changelog.html" target="_blank">
+              <span class="material-icons">list_alt</span>
+              <span>版本日志</span>
+            </a>
+        </label>
+
+        <select id="update-version" class="version-selector">
+            <option value="main" selected>测试版</option>
+        </select>
+
+        <label for="lite">选择类型:</label>
+        <select id="lite" class="version-selector">
+            <option value="true" selected>轻量(不更新ffmpeg)</option>
+            <option value="false">完整(更新ffmpeg)</option>
+        </select>
+
+        <div class="component-button-group">
+            <button onclick="doUpdates()">更新</button>
+            <button onclick="toggleUpdate()">关闭</button>
+        </div>
+    </div>
     <div class="footer">
       Powered by XiaoMusic
     </div>

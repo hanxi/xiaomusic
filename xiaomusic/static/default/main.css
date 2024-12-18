@@ -313,6 +313,7 @@ textarea {
 
 .playlist-selector,
 .device-selector,
+.version-selector,
 .song-selector {
   width: 300px;
 }
@@ -341,4 +342,12 @@ textarea {
 span,p {
   cursor: pointer;
   user-select: none;
+}
+
+.changelog-button {
+  padding: 0px 0px;
+  margin: 0px;
+  font-size: 14px;
+  margin-left: auto;
+  text-decoration: none;
 }
