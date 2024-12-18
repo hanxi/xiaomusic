@@ -322,19 +322,31 @@ class XiaoMusic:
                 )
                 # self.log.debug(f"url:{url} device_id:{device_id} hardware:{hardware}")
                 r = await session.get(url, timeout=timeout, cookies=cookies)
+
+                # 检查响应状态码
+                if r.status != 200:
+                    self.log.error(f"Request failed with status {r.status}")
+                    continue
+
+            except asyncio.CancelledError:
+                self.log.warning("Task was cancelled.")
+                return None
+
             except Exception as e:
-                self.log.exception(f"Execption {e}")
+                self.log.warning(f"Execption {e}")
                 continue
+
             try:
                 data = await r.json()
             except Exception as e:
-                self.log.exception(f"Execption {e}")
+                self.log.warning(f"Execption {e}")
                 if i == 2:
                     # tricky way to fix #282 #272 # if it is the third time we re init all data
                     self.log.info("Maybe outof date trying to re init it")
                     await self.init_all_data(self.session)
             else:
                 return self._get_last_query(device_id, data)
+        self.log.warning("get_latest_ask_from_xiaoai. All retries failed.")
 
     async def get_latest_ask_by_mina(self, device_id):
         try:
@@ -365,7 +377,7 @@ class XiaoMusic:
                         }
                         self._check_last_query(last_record)
         except Exception as e:
-            self.log.exception(f"get_latest_ask_by_mina {e}")
+            self.log.warning(f"get_latest_ask_by_mina {e}")
         return
 
     def _get_last_query(self, device_id, data):
@@ -1327,7 +1339,7 @@ class XiaoMusic:
         try:
             device_list = await self.mina_service.device_list()
         except Exception as e:
-            self.log.exception(f"Execption {e}")
+            self.log.warning(f"Execption {e}")
         return device_list
 
     async def debug_play_by_music_url(self, arg1=None):
@@ -1931,13 +1943,17 @@ class XiaoMusicDevice:
             self.log.exception(f"Execption {e}")
 
     async def get_volume(self):
-        playing_info = await self.xiaomusic.mina_service.player_get_status(
-            self.device_id
-        )
-        self.log.info(f"get_volume. playing_info:{playing_info}")
-        volume = json.loads(playing_info.get("data", {}).get("info", "{}")).get(
-            "volume", 0
-        )
+        volume = 0
+        try:
+            playing_info = await self.xiaomusic.mina_service.player_get_status(
+                self.device_id
+            )
+            self.log.info(f"get_volume. playing_info:{playing_info}")
+            volume = json.loads(playing_info.get("data", {}).get("info", "{}")).get(
+                "volume", 0
+            )
+        except Exception as e:
+            self.log.warning(f"Execption {e}")
         volume = int(volume)
         self.log.info("get_volume. volume:%d", volume)
         return volume

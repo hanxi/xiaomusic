@@ -59,7 +59,13 @@ class Analytics:
     async def _send(self, event):
         await self.post_to_umami(event)
         events = [event]
-        await self.run_with_cancel(self.gtag.send, events)
+        await self.run_with_cancel(self._google_send, events)
+
+    async def _google_send(self, events):
+        try:
+            self.gtag.send(events)
+        except Exception as e:
+            self.log.warning(f"google analytics run_with_cancel failed {e}")
 
     async def run_with_cancel(self, func, *args, **kwargs):
         try:
