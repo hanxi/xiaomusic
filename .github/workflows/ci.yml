@@ -153,7 +153,7 @@ jobs:
           "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-arm-v7-lite.tar.gz .[!.]* *"
 
       - name: Publish to Docker Hub main
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
