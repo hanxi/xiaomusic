@@ -153,27 +153,27 @@ jobs:
           "cd /app && tar --exclude='ffmpeg' -czf /workspace/app-arm-v7-lite.tar.gz .[!.]* *"
 
       - name: Publish to Docker Hub main
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        if: github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           context: .
           push: true
-          load: true
           tags: ${{ env.TEST_TAG }}
           cache-from: type=local,src=/tmp/.buildx-cache-new
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       # 仅在 ref 为以 v 开头的标签时执行
       - name: Publish to Docker Hub latest and stable
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-        run: |
-          # Define the commands to push latest and stable tags
-          echo "Pushing latest and stable tags..."
-          docker tag ${{ env.TEST_TAG }} ${{ env.LATEST_TAG }}
-          docker tag ${{ env.TEST_TAG }} ${{ env.STABLE_TAG }}
-          docker push ${{ env.LATEST_TAG }}
-          docker push ${{ env.STABLE_TAG }}
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          context: .
+          push: true
+          tags: ${{ env.TEST_TAG }}, ${{ env.LATEST_TAG }}, ${{ env.STABLE_TAG }}
+          cache-from: type=local,src=/tmp/.buildx-cache-new
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Move cache to limit growth
         run: |
