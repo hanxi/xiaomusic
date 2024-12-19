@@ -165,7 +165,7 @@ jobs:
 
       # 仅在 ref 为以 v 开头的标签时执行
       - name: Publish to Docker Hub latest and stable
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         run: |
           # Define the commands to push latest and stable tags
           echo "Pushing latest and stable tags..."
