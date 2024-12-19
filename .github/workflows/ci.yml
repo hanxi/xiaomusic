@@ -115,6 +115,7 @@ jobs:
       - name: Publish package distributions to PyPI
         if: startsWith(github.ref, 'refs/tags/v')
         run: pdm publish
+        continue-on-error: true
 
 
       # Job 打包应用, 发布镜像和 Release
