@@ -192,7 +192,7 @@ jobs:
 
       # 创建或更新 Release
       - name: Create or update Release main
-        if: github.ref == 'refs/heads/mtag
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 设置 GH_TOKEN 环境变量
         run: |
