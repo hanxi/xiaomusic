@@ -1108,10 +1108,9 @@ async def extract_tar_gz(file_name: str, target_directory: str):
     # 使用 asyncio.create_subprocess_exec 执行 tar 解压命令
     command = ["tar", "-xzvf", file_name, "-C", target_directory]
     # 启动子进程执行解压命令
-    proc = await asyncio.create_subprocess_exec(*command)
-    exit_code = await proc.wait()  # 等待子进程完成
-    log.info(f"extract_tar_gz completed with exit code {exit_code}")
-    return exit_code
+    await asyncio.create_subprocess_exec(*command)
+    # 不等待子进程完成
+    log.info(f"extract_tar_gz ing {file_name}")
 
 
 def chmodfile(file_path: str):
