@@ -660,11 +660,7 @@ $('#version').on('click', function() {
     data.forEach((item) => {
       const option = document.createElement("option");
       option.value = item.version;
-      if (item.version=="main"){
-        option.textContent = "测试版";
-      } else {
-        option.textContent = item.version;
-      }
+      option.textContent = item.version;
       versionSelect.appendChild(option);
     });
   });

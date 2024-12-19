@@ -191,8 +191,29 @@ jobs:
           sudo apt install -y gh
 
       # 创建或更新 Release
-      - name: Create or update Release
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+      - name: Create or update Release main
+        if: github.ref == 'refs/heads/mtag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 设置 GH_TOKEN 环境变量
+        run: |
+          RELEASE_NAME=test
+          RELEASE_BODY="This release is automatically updated from the main branch."
+
+          # 检查是否已有同名 Release
+          EXISTING_RELEASE=$(gh release view "${RELEASE_NAME}" --json id --jq .id || echo "")
+
+          if [[ -n "${EXISTING_RELEASE}" ]]; then
+            echo "release exist"
+          else
+            # 创建新的 Release
+            gh release create "${RELEASE_NAME}" \
+              --prerelease=false \
+              --title "${RELEASE_NAME}" \
+              --notes "${RELEASE_BODY}"
+          fi
+
+      - name: Create or update Release tag
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 设置 GH_TOKEN 环境变量
         run: |
@@ -212,9 +233,23 @@ jobs:
               --notes "${RELEASE_BODY}"
           fi
 
+
       # 上传多个文件并覆盖
-      - name: Upload assets to Release
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+      - name: Upload assets to Release main
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 设置 GH_TOKEN 环境变量
+        run: |
+          RELEASE_NAME=test
+
+          FILES=$(find . -type f -name "app-*.tar.gz")
+          for FILE in ${FILES}; do
+            echo "type upload ${FILE}"
+            gh release upload "${RELEASE_NAME}" "${FILE}" --clobber
+          done
+
+      - name: Upload assets to Release tag
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 设置 GH_TOKEN 环境变量
         run: |
@@ -225,4 +260,3 @@ jobs:
             echo "type upload ${FILE}"
             gh release upload "${RELEASE_NAME}" "${FILE}" --clobber
           done
-
