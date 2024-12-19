@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "*"  # 所有分支触发
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 env:
