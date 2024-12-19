@@ -8,7 +8,7 @@ on:
     paths:
       - 'docs/**'
       - 'README.md'
-      - 'CHANGELOG..md'
+      - 'CHANGELOG.md'
       - '.github/workflows/static.yml'
   # Runs on issue events
   issues:
