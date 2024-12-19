@@ -17,7 +17,6 @@ import re
 import shutil
 import string
 import subprocess
-import tarfile
 import tempfile
 import urllib.parse
 from collections.abc import AsyncIterator
@@ -1091,15 +1090,28 @@ async def download_and_extract(url: str, target_directory: str):
                     async for chunk in response.content.iter_any():
                         f.write(chunk)
                 log.info(f"文件下载完成: {file_name}")
+
                 # 解压下载的文件
                 if file_name.endswith(".tar.gz"):
-                    with tarfile.open(file_name, "r:gz") as tar:
-                        tar.extractall(path=target_directory)
-                        log.info(f"文件解压完成到: {target_directory}")
+                    await extract_tar_gz(file_name, target_directory)
+                else:
+                    ret = f"下载失败, 包有问题: {file_name}"
+                log.warning(ret)
+
             else:
                 ret = f"下载失败, 状态码: {response.status}"
                 log.warning(ret)
     return ret
+
+
+async def extract_tar_gz(file_name: str, target_directory: str):
+    # 使用 asyncio.create_subprocess_exec 执行 tar 解压命令
+    command = ["tar", "-xzvf", file_name, "-C", target_directory]
+    # 启动子进程执行解压命令
+    proc = await asyncio.create_subprocess_exec(*command)
+    exit_code = await proc.wait()  # 等待子进程完成
+    log.info(f"extract_tar_gz completed with exit code {exit_code}")
+    return exit_code
 
 
 def chmodfile(file_path: str):
