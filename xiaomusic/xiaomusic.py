@@ -325,7 +325,7 @@ class XiaoMusic:
 
                 # 检查响应状态码
                 if r.status != 200:
-                    self.log.error(f"Request failed with status {r.status}")
+                    self.log.warning(f"Request failed with status {r.status}")
                     continue
 
             except asyncio.CancelledError:
@@ -1646,7 +1646,7 @@ class XiaoMusicDevice:
             )
             await self.stop_if_xiaoai_is_playing(device_id)
         except Exception as e:
-            self.log.exception(f"Execption {e}")
+            self.log.warning(f"Execption {e}")
 
     async def get_if_xiaoai_is_playing(self):
         playing_info = await self.xiaomusic.mina_service.player_get_status(

@@ -336,7 +336,7 @@ async def get_local_music_duration(filename, ffmpeg_location="./ffmpeg/bin"):
             m = await loop.run_in_executor(None, mutagen.File, filename)
         duration = m.info.length
     except Exception as e:
-        log.error(f"Error getting local music {filename} duration: {e}")
+        log.warning(f"Error getting local music {filename} duration: {e}")
     return duration
 
 
@@ -673,8 +673,16 @@ def _resize_save_image(image_bytes, save_path, max_size=300):
 
 
 def extract_audio_metadata(file_path, save_root):
-    audio = mutagen.File(file_path)
     metadata = Metadata()
+
+    audio = None
+    try:
+        audio = mutagen.File(file_path)
+    except Exception as e:
+        log.warning(f"Error extract_audio_metadata file: {file_path} {e}")
+    if audio is None:
+        return asdict(metadata)
+
     tags = audio.tags
     if tags is None:
         return asdict(metadata)
