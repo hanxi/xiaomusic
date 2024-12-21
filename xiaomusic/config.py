@@ -75,7 +75,7 @@ class Device:
     device_id: str = ""
     hardware: str = ""
     name: str = ""
-    play_type: int = ""
+    play_type: int = PLAY_TYPE_RND
     cur_music: str = ""
     cur_playlist: str = ""
 
