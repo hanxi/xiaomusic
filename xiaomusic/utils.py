@@ -643,14 +643,19 @@ def _save_picture(picture_data, save_root, file_path):
     try:
         _resize_save_image(picture_data, picture_path)
     except Exception as e:
-        log.exception(f"Error _resize_save_image: {e}")
+        log.warning(f"Error _resize_save_image: {e}")
     return picture_path
 
 
 def _resize_save_image(image_bytes, save_path, max_size=300):
     # 将 bytes 转换为 PIL Image 对象
-    image = Image.open(io.BytesIO(image_bytes))
-    image = image.convert("RGB")
+    image = None
+    try:
+        image = Image.open(io.BytesIO(image_bytes))
+        image = image.convert("RGB")
+    except Exception as e:
+        log.warning(f"Error _resize_save_image: {e}")
+        return
 
     # 获取原始尺寸
     original_width, original_height = image.size
