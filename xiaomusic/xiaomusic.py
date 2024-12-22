@@ -266,7 +266,7 @@ class XiaoMusic:
             return cookie_jar
 
         if not os.path.exists(self.mi_token_home):
-            self.log.error(f"{self.mi_token_home} file not exist")
+            self.log.warning(f"{self.mi_token_home} file not exist")
             return None
 
         with open(self.mi_token_home, encoding="utf-8") as f:

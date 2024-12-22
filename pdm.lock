@@ -5,7 +5,7 @@
 groups = ["default", "dev", "lint"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:69e5e664520761c67366902346f147c8f750335eb6fb5843277776c1fe439ff3"
+content_hash = "sha256:be03d4a0e0e150847ab753a6b65d34c908944d20c37203ca0e3edba976f0aa80"
 
 [[metadata.targets]]
 requires_python = "==3.10.12"
@@ -891,35 +891,35 @@ files = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.19.2"
-requires_python = ">=3.6"
+version = "1.45.1"
 summary = "Python client for Sentry (https://sentry.io)"
 groups = ["default"]
 marker = "python_full_version == \"3.10.12\""
 dependencies = [
     "certifi",
-    "urllib3>=1.26.11",
+    "urllib3>=1.25.7; python_version <= \"3.4\"",
+    "urllib3>=1.26.11; python_version >= \"3.6\"",
+    "urllib3>=1.26.9; python_version == \"3.5\"",
 ]
 files = [
-    {file = "sentry_sdk-2.19.2-py2.py3-none-any.whl", hash = "sha256:ebdc08228b4d131128e568d696c210d846e5b9d70aa0327dec6b1272d9d40b84"},
-    {file = "sentry_sdk-2.19.2.tar.gz", hash = "sha256:467df6e126ba242d39952375dd816fbee0f217d119bf454a8ce74cf1e7909e8d"},
+    {file = "sentry_sdk-1.45.1-py2.py3-none-any.whl", hash = "sha256:608887855ccfe39032bfd03936e3a1c4f4fc99b3a4ac49ced54a4220de61c9c1"},
+    {file = "sentry_sdk-1.45.1.tar.gz", hash = "sha256:a16c997c0f4e3df63c0fc5e4207ccb1ab37900433e0f72fef88315d317829a26"},
 ]
 
 [[package]]
 name = "sentry-sdk"
-version = "2.19.2"
+version = "1.45.1"
 extras = ["fastapi"]
-requires_python = ">=3.6"
 summary = "Python client for Sentry (https://sentry.io)"
 groups = ["default"]
 marker = "python_full_version == \"3.10.12\""
 dependencies = [
     "fastapi>=0.79.0",
-    "sentry-sdk==2.19.2",
+    "sentry-sdk==1.45.1",
 ]
 files = [
-    {file = "sentry_sdk-2.19.2-py2.py3-none-any.whl", hash = "sha256:ebdc08228b4d131128e568d696c210d846e5b9d70aa0327dec6b1272d9d40b84"},
-    {file = "sentry_sdk-2.19.2.tar.gz", hash = "sha256:467df6e126ba242d39952375dd816fbee0f217d119bf454a8ce74cf1e7909e8d"},
+    {file = "sentry_sdk-1.45.1-py2.py3-none-any.whl", hash = "sha256:608887855ccfe39032bfd03936e3a1c4f4fc99b3a4ac49ced54a4220de61c9c1"},
+    {file = "sentry_sdk-1.45.1.tar.gz", hash = "sha256:a16c997c0f4e3df63c0fc5e4207ccb1ab37900433e0f72fef88315d317829a26"},
 ]
 
 [[package]]

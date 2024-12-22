@@ -20,7 +20,8 @@ LOGO = r"""
 
 
 sentry_sdk.init(
-    dsn="https://659690a901a37237df8097a9eb95e60f@github.hanxi.cc/sentry/4508470200434688",
+    # dsn="https://659690a901a37237df8097a9eb95e60f@github.hanxi.cc/sentry/4508470200434688",
+    dsn="https://ffe4962642d04b29afe62ebd1a065231@glitchtip.hanxi.cc/1",
     integrations=[
         AsyncioIntegration(),
         LoggingIntegration(
