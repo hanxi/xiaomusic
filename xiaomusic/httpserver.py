@@ -580,6 +580,7 @@ async def playlistupdatename(
 @app.get("/playlistnames")
 async def getplaylistnames(Verifcation=Depends(verification)):
     names = xiaomusic.get_play_list_names()
+    log.info(f"names {names}")
     return {
         "ret": "OK",
         "names": names,

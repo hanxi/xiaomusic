@@ -1176,7 +1176,7 @@ class XiaoMusic:
     # 获取所有自定义歌单
     def get_play_list_names(self):
         custom_play_list = self.get_custom_play_list()
-        return custom_play_list.keys()
+        return list(custom_play_list.keys())
 
     # 获取歌单中所有歌曲
     def play_list_musics(self, name):
