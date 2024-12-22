@@ -1171,6 +1171,7 @@ class XiaoMusic:
         play_list = custom_play_list[oldname]
         custom_play_list.pop(oldname)
         custom_play_list[newname] = play_list
+        self.save_custom_play_list()
         return True
 
     # 获取所有自定义歌单
