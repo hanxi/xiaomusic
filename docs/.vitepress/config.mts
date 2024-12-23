@@ -46,23 +46,23 @@ export default async ({ mode }) => {
       },
     },
     logLevel: 'warn',
-    vite:{
+    vite: {
       plugins: [
         AutoSidebar({
-          path:'.',
+          path: '.',
           collapsed: true,
           titleFromFile: true,
         }),
         GitHubIssuesPlugin({
           repo: 'hanxi/xiaomusic',
           token: env.VITE_GITHUB_ISSUES_TOKEN,
-          replaceRules:[
+          replaceRules: [
             {
               baseUrl: 'https://github.com/hanxi/xiaomusic/issues',
               targetUrl: '/issues',
             },
           ],
-          githubProxy: 'https://github.hanxi.cc/proxy',
+          githubProxy: 'https://gproxy.hanxi.cc/proxy',
         }),
       ],
     }
