@@ -1060,7 +1060,7 @@ async def update_version(version: str, lite: bool = True):
         log.warning(f"update_version failed: {arch}")
         return arch
     # https://github.com/hanxi/xiaomusic/releases/download/main/app-amd64-lite.tar.gz
-    url = f"https://github.hanxi.cc/proxy/hanxi/xiaomusic/releases/download/{version}/app-{arch}{lite_tag}.tar.gz"
+    url = f"https://gproxy.hanxi.cc/proxy/hanxi/xiaomusic/releases/download/{version}/app-{arch}{lite_tag}.tar.gz"
     target_directory = "/app"
     return await download_and_extract(url, target_directory)
 
