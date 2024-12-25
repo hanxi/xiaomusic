@@ -2,7 +2,6 @@ import asyncio
 import hashlib
 import json
 import os
-import re
 import secrets
 import shutil
 import tempfile
@@ -687,9 +686,6 @@ def access_key_verification(file_path, key, code):
             return True
 
     return False
-
-
-range_pattern = re.compile(r"bytes=(\d+)-(\d*)")
 
 
 def safe_redirect(url):
