@@ -76,6 +76,7 @@ class XiaoMusic:
         self.all_music = {}
         self._all_radio = {}  # 电台列表
         self.music_list = {}  # 播放列表 key 为目录名, value 为 play_list
+        self.default_music_list_names = []  # 非自定义个歌单
         self.devices = {}  # key 为 did
         self.running_task = []
         self.all_music_tags = {}  # 歌曲额外信息
@@ -699,6 +700,9 @@ class XiaoMusic:
         for _, play_list in self.music_list.items():
             play_list.sort(key=custom_sort_key)
 
+        # 非自定义个歌单
+        self.default_music_list_names = list(self.music_list.keys())
+
         # 刷新自定义歌单
         self.refresh_custom_play_list()
 
@@ -717,6 +721,11 @@ class XiaoMusic:
 
     def refresh_custom_play_list(self):
         try:
+            # 删除旧的自定义个歌单
+            for k in list(self.music_list.keys()):
+                if k not in self.default_music_list_names:
+                    del self.music_list[k]
+            # 合并新的自定义个歌单
             custom_play_list = self.get_custom_play_list()
             for k, v in custom_play_list.items():
                 self.music_list[k] = list(v)
