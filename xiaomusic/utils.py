@@ -965,7 +965,7 @@ def remove_common_prefix(directory):
 
     log.info(f'Common prefix identified: "{common_prefix}"')
 
-    pattern = re.compile(r"(\d+)[\t 　]*\1")
+    pattern = re.compile(r"^(\d+)\s+\d*(.+?)\.(.*$)")
     for filename in files:
         if filename == common_prefix:
             continue
@@ -973,9 +973,12 @@ def remove_common_prefix(directory):
         if filename.startswith(common_prefix):
             # 构造新的文件名
             new_filename = filename[len(common_prefix) :]
-            match = pattern.match(new_filename)
+            match = pattern.search(new_filename.strip())
             if match:
-                new_filename = match.group(1) + new_filename[match.end() :]
+                num = match.group(1)
+                name = match.group(2).replace(".", " ").strip()
+                suffix = match.group(3)
+                new_filename = f"{num}.{name}.{suffix}"
             # 生成完整的文件路径
             old_file_path = os.path.join(directory, filename)
             new_file_path = os.path.join(directory, new_filename)
