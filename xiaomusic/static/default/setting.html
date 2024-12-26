@@ -50,22 +50,20 @@ var vConsole = new window.VConsole();
         <label for="password">*小米密码:</label>
         <input id="password" type="password" placeholder="填写小米登录密码" />
 
-        <label for="hostname">*XIAOMUSIC_HOSTNAME(IP或域名):</label>
+        <label for="hostname">*XIAOMUSIC_HOSTNAME(NAS的IP或域名):</label>
         <input id="hostname" type="text" />
+
+        <label for="public_port">*本地端口(0表示跟容器端口一致):</label>
+        <input id="public_port" type="number" value="0" />
       </div>
       <hr>
+
       <div class="rows">
         <label for="verbose">是否开启调试日志:</label>
         <select id="verbose">
-          <option value="true" selected>true</option>
-          <option value="false">false</option>
+          <option value="true">true</option>
+          <option value="false" selected>false</option>
         </select>
-
-        <label for="port">监听端口(修改后需要重启):</label>
-        <input id="port" type="number" value="8090" />
-
-        <label for="public_port">外网访问端口(0表示跟监听端口一致):</label>
-        <input id="public_port" type="number" value="0" />
 
         <label for="group_list">设备分组配置:<a href="https://github.com/hanxi/xiaomusic/issues/65#issuecomment-2215736529" target="_blank">文档</a></label>
         <input id="group_list" type="text" placeholder="did1:组名1,did2:组名1,did3:组名2" />

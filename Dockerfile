@@ -20,8 +20,6 @@ RUN touch /app/.dockerenv
 
 COPY supervisor.conf /etc/supervisor.conf
 
-ENV XIAOMUSIC_HOSTNAME=192.168.2.5
-ENV XIAOMUSIC_PORT=8090
 VOLUME /app/conf
 VOLUME /app/music
 EXPOSE 8090
