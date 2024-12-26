@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     libopenjp2-7 \
     libxcb1 \
     supervisor \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
