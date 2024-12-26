@@ -1,4 +1,5 @@
 # XiaoMusic: 无限听歌，解放小爱音箱
+
 [![GitHub License](https://img.shields.io/github/license/hanxi/xiaomusic)](https://github.com/hanxi/xiaomusic)
 [![Docker Image Version](https://img.shields.io/docker/v/hanxi/xiaomusic?sort=semver&label=docker%20image)](https://hub.docker.com/r/hanxi/xiaomusic)
 [![Docker Pulls](https://img.shields.io/docker/pulls/hanxi/xiaomusic)](https://hub.docker.com/r/hanxi/xiaomusic)
@@ -8,7 +9,6 @@
 [![GitHub Release](https://img.shields.io/github/v/release/hanxi/xiaomusic)](https://github.com/hanxi/xiaomusic/releases)
 [![Visitors](https://api.visitorbadge.io/api/daily?path=hanxi%2Fxiaomusic&label=daily%20visitor&countColor=%232ccce4&style=flat)](https://visitorbadge.io/status?path=hanxi%2Fxiaomusic)
 [![Visitors](https://api.visitorbadge.io/api/visitors?path=hanxi%2Fxiaomusic&label=total%20visitor&countColor=%232ccce4&style=flat)](https://visitorbadge.io/status?path=hanxi%2Fxiaomusic)
-
 
 使用小爱音箱播放音乐，音乐使用 yt-dlp 下载。
 
@@ -22,13 +22,13 @@
 已经支持在 web 页面配置其他参数，docker 启动命令如下:
 
 ```bash
-docker run -p 8090:8090 -v /xiaomusic/music:/app/music -v /xiaomusic/conf:/app/conf hanxi/xiaomusic
+docker run -p 58090:8090 -e XIAOMUSIC_PUBLIC_PORT=58090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf hanxi/xiaomusic
 ```
 
 🔥 国内：
 
 ```bash
-docker run -p 8090:8090 -v /xiaomusic/music:/app/music -v /xiaomusic/conf:/app/conf m.daocloud.io/docker.io/hanxi/xiaomusic
+docker run -p 58090:8090 -e XIAOMUSIC_PUBLIC_PORT=58090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf m.daocloud.io/docker.io/hanxi/xiaomusic
 ```
 
 对应的 docker compose 配置如下：
@@ -40,10 +40,12 @@ services:
     container_name: xiaomusic
     restart: unless-stopped
     ports:
-      - 8090:8090
+      - 58090:8090
+    environment:
+      XIAOMUSIC_PUBLIC_PORT: 58090
     volumes:
-      - /xiaomusic/music:/app/music
-      - /xiaomusic/conf:/app/conf
+      - /xiaomusic_music:/app/music
+      - /xiaomusic_conf:/app/conf
 ```
 
 🔥 国内：
@@ -55,71 +57,26 @@ services:
     container_name: xiaomusic
     restart: unless-stopped
     ports:
-      - 8090:8090
+      - 58090:8090
+    environment:
+      XIAOMUSIC_PUBLIC_PORT: 58090
     volumes:
-      - /xiaomusic/music:/app/music
-      - /xiaomusic/conf:/app/conf
+      - /xiaomusic_music:/app/music
+      - /xiaomusic_conf:/app/conf
 ```
 
-其中 conf 目录为配置文件存放目录，music 目录为音乐存放目录，建议分开配置为不同的目录。
+- 其中 conf 目录为配置文件存放目录，music 目录为音乐存放目录，建议分开配置为不同的目录。
+- /xiaomusic_music 和 /xiaomusic_conf 是 docker 主机里的目录，可以修改为其他目录。如果报错找不到 /xiaomusic_music 目录，可以先执行 `mkdir -p /xiaomusic_{music,conf}` 命令新建目录。
+- XIAOMUSIC_PUBLIC_PORT 是用来配置 NAS 本地端口的。8090 是容器端口，不要去修改。
+- 后台访问地址为： http://NAS_IP:58090
 
 > [!NOTE]
-> 上面配置的 /xiaomusic/music 和 /xiaomusic/conf 是 docker 主机里的 /xiaomusic 目录下的，可以修改为其他目录。如果报错找不到 /xiaomusic/music 目录，可以先执行 `mkdir -p /xiaomusic/{music,conf}` 命令新建目录。
-
-docker 和 docker compose 二选一即可，启动成功后，在 web 页面可以配置其他参数，带有 `*` 号的配置是必须要配置的，其他的用不上时不用修改。初次配置时需要在页面上输入小米账号和密码保存后才能获取到设备列表。
+> docker 和 docker compose 二选一即可，启动成功后，在 web 页面可以配置其他参数，带有 `*` 号的配置是必须要配置的，其他的用不上时不用修改。初次配置时需要在页面上输入小米账号和密码保存后才能获取到设备列表。
 
 > [!TIP]
 > 目前安装步骤已经是最简化了，如果还是嫌安装麻烦，可以微信或者 QQ 约我远程安装，我一般周末和晚上才有时间，收个辛苦费 :moneybag: 50 元一次，安装失败不收费。
 
-### 🔥 修改默认8090端口映射
-
-#### 方法1： 不修改监听端口 8090
-
-【监听端口】保持为默认的 8090 不变，把【外网访问端口】改为 5678 。
-
-```yaml
-services:
-  xiaomusic:
-    image: hanxi/xiaomusic
-    container_name: xiaomusic
-    restart: unless-stopped
-    ports:
-      - 5678:8090
-    volumes:
-      - /xiaomusic/music:/app/music
-      - /xiaomusic/conf:/app/conf
-    environment:
-      XIAOMUSIC_PUBLIC_PORT: 5678
-```
-
-XIAOMUSIC_PUBLIC_PORT 对应后台设置里的【外网访问端口】，修改后可以不用重启。
-
-#### 方法2： 修改监听端口 8090 为 5678
-
-如果需要修改 8090 端口为其他端口，比如 5678，需要这样配，3个数字都需要是 5678 。见 <https://github.com/hanxi/xiaomusic/issues/19>
-
-```yaml
-services:
-  xiaomusic:
-    image: hanxi/xiaomusic
-    container_name: xiaomusic
-    restart: unless-stopped
-    ports:
-      - 5678:5678
-    volumes:
-      - /xiaomusic/music:/app/music
-      - /xiaomusic/conf:/app/conf
-    environment:
-      XIAOMUSIC_PORT: 5678
-```
-
-如果不是首次修改端口，还需要修改 /xiaomusic/conf/setting.json 文件里的端口(也可以在后台修改监听端口后重启)。
-
 遇到问题可以去 web 设置页面底部点击【下载日志文件】按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
-
-> [!IMPORTANT]
-> XIAOMUSIC_PORT 也可以在后台配置，对应的是监听端口，修改后记得重启。
-
 
 ### 🤐 支持语音口令
 
@@ -154,7 +111,7 @@ services:
   \  /  | |  / _` |  / _ \  | |\/| | | | | | / __| | |  / __|
   /  \  | | | (_| | | (_) | | |  | | | |_| | \__ \ | | | (__
  /_/\_\ |_|  \__,_|  \___/  |_|  |_|  \__,_| |___/ |_|  \___|
-          XiaoMusic v0.3.37 by: github.com/hanxi
+          XiaoMusic v0.3.65 by: github.com/hanxi
 
 usage: xiaomusic [-h] [--port PORT] [--hardware HARDWARE] [--account ACCOUNT]
                  [--password PASSWORD] [--cookie COOKIE] [--verbose]
@@ -214,7 +171,6 @@ docker build -t xiaomusic .
 - 使用了 Docker ，在 NAS 上安装更方便。
 - 默认的前端主题使用了 jQuery 。
 
-
 ## 已测试支持的设备
 
 | 型号   | 名称                                                                                             |
@@ -257,24 +213,6 @@ docker build -t xiaomusic .
 > 已知 L05B L05C LX06 L16A 不支持 flac 格式。
 > 如果格式不能播放可以打开【转换为MP3】和【型号兼容模式】选项。具体见 <https://github.com/hanxi/xiaomusic/issues/153#issuecomment-2328168689>
 
-
-## 💡 简易的控制面板
-
-浏览器进入 <http://192.168.2.5:8090>
-
-- ip 是 XIAOMUSIC_HOSTNAME 设置的
-- 8090 是默认端口
-- 支持功能
-    - 显示正在播放的歌曲
-    - 模糊搜索本地歌曲
-    - 播放列表
-    - 删除歌曲
-    - 设置页面
-    - 配置网络歌单
-    - 日志文件下载
-
-采用新的设置页面之后，没有必须在启动前配置的环境变量了，除非是改默认的 8090 端口才需要配置环境变量。
-
 ## 🌏 网络歌单功能
 
 可以配置一个 json 格式的歌单，支持电台和歌曲，也可以直接用别人分享的链接，同时配备了 m3u 文件格式转换工具，可以很方便的把 m3u 电台文件转换成网络歌单格式的 json 文件，具体用法见  <https://github.com/hanxi/xiaomusic/issues/78>
@@ -304,9 +242,10 @@ docker build -t xiaomusic .
 - XIAOMUSIC_PROXY 用于配置国内使用 youtube 源下载歌曲时使用的代理，参数格式参考 yt-dlp 文档说明。 见 <https://github.com/hanxi/xiaomusic/issues/2> 和 <https://github.com/hanxi/xiaomusic/issues/11>
 - MIIO_TTS_CMD 用于部分机型（如：`L05C`）使用 MiIO 支持 tts 能力，默认为空，命令选择见 [MiService-fork 文档](https://github.com/yihong0618/MiService)
 
-### ⚠️ 安全提醒
+## ⚠️ 安全提醒
 
 > [!IMPORTANT]
+>
 > 1. 如果配置了公网访问 xiaomusic ，请一定要开启密码登陆，并设置复杂的密码。且不要在公共场所的 WiFi 环境下使用，否则可能造成小米账号密码泄露。
 > 2. 强烈不建议将小爱音箱的小米账号绑定摄像头，代码难免会有 bug ，一旦小米账号密码泄露，可能监控录像也会泄露。
 
@@ -365,4 +304,3 @@ docker build -t xiaomusic .
 ## License
 
 [MIT](https://github.com/hanxi/xiaomusic/blob/main/LICENSE) License © 2024 涵曦
-
