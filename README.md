@@ -80,11 +80,11 @@ services:
 
 > [!TIP]
 > 海外 RackNerd VPS 机器推荐
-> [🔥1 GB KVM VPS $11.29](https://my.racknerd.com/aff.php?aff=1177&pid=903)
-> [2 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=904)
-> [3.5 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=905)
-> [4 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=906)
-> [6 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=907)
+> - [🔥1 GB KVM VPS $11.29](https://my.racknerd.com/aff.php?aff=1177&pid=903)
+> - [2 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=904)
+> - [3.5 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=905)
+> - [4 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=906)
+> - [6 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=907)
 
 ### 🤐 支持语音口令
 
