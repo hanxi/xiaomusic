@@ -79,8 +79,8 @@ services:
 遇到问题可以去 web 设置页面底部点击【下载日志文件】按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
 
 > [!TIP]
-> 海外 RackNerd VPS 机器推荐
-> - [🔥1 GB KVM VPS $11.29](https://my.racknerd.com/aff.php?aff=1177&pid=903)
+> 海外 RackNerd VPS 机器推荐，可支付宝付款。
+> - [🔥1 GB KVM VPS $11.29/年](https://my.racknerd.com/aff.php?aff=1177&pid=903)
 > - [2 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=904)
 > - [3.5 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=905)
 > - [4 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=906)
