@@ -901,7 +901,7 @@ async def download_playlist(config, url, dirname):
 
     if config.enable_yt_dlp_cookies:
         sbp_args += ("--cookies", f"{config.yt_dlp_cookies_path}")
-    
+
     if config.loudnorm:
         sbp_args += ("--postprocessor-args", f"-af {config.loudnorm}")
 
@@ -939,7 +939,7 @@ async def download_one_music(config, url, name=""):
 
     if config.enable_yt_dlp_cookies:
         sbp_args += ("--cookies", f"{config.yt_dlp_cookies_path}")
-    
+
     if config.loudnorm:
         sbp_args += ("--postprocessor-args", f"-af {config.loudnorm}")
 

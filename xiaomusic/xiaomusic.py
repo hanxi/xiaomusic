@@ -1724,7 +1724,7 @@ class XiaoMusicDevice:
 
         if self.config.enable_yt_dlp_cookies:
             sbp_args += ("--cookies", f"{self.config.yt_dlp_cookies_path}")
-    
+
         if self.config.loudnorm:
             sbp_args += ("--postprocessor-args", f"-af {self.config.loudnorm}")
 
