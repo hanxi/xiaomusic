@@ -487,6 +487,11 @@ def convert_file_to_mp3(input_file: str, config) -> str:
         log.info(f"File {out_file_path} already exists. Skipping convert_file_to_mp3.")
         return relative_path
 
+    # 检查是否存在 loudnorm 参数
+    loudnorm_args = []
+    if config.loudnorm:
+        loudnorm_args = ["-af", config.loudnorm]
+
     command = [
         os.path.join(config.ffmpeg_location, "ffmpeg"),
         "-i",
@@ -495,6 +500,7 @@ def convert_file_to_mp3(input_file: str, config) -> str:
         "mp3",
         "-vn",
         "-y",
+        *loudnorm_args,
         out_file_path,
     ]
 
@@ -895,6 +901,9 @@ async def download_playlist(config, url, dirname):
 
     if config.enable_yt_dlp_cookies:
         sbp_args += ("--cookies", f"{config.yt_dlp_cookies_path}")
+    
+    if config.loudnorm:
+        sbp_args += ("--postprocessor-args", f"-af {config.loudnorm}")
 
     sbp_args += (url,)
 
@@ -930,6 +939,9 @@ async def download_one_music(config, url, name=""):
 
     if config.enable_yt_dlp_cookies:
         sbp_args += ("--cookies", f"{config.yt_dlp_cookies_path}")
+    
+    if config.loudnorm:
+        sbp_args += ("--postprocessor-args", f"-af {config.loudnorm}")
 
     sbp_args += (url,)
 

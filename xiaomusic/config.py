@@ -97,6 +97,7 @@ class Config:
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))  # 监听端口
     public_port: int = int(os.getenv("XIAOMUSIC_PUBLIC_PORT", 0))  # 歌曲访问端口
     proxy: str = os.getenv("XIAOMUSIC_PROXY", None)
+    loudnorm: str = os.getenv("XIAOMUSIC_LOUDNORM", None) # 均衡音量参数
     search_prefix: str = os.getenv(
         "XIAOMUSIC_SEARCH", "bilisearch:"
     )  # "bilisearch:" or "ytsearch:"
