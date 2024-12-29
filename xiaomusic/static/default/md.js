@@ -96,7 +96,7 @@ function togglePlayMode(isSend = true) {
 
 function addToFavorites() {
   const isLiked = $(".favorite").hasClass("favorite-active");
-  const cmd = isLiked? "取消收藏": "加入收藏";
+  const cmd = isLiked ? "取消收藏" : "加入收藏";
   if (isLiked) {
     $(".favorite").removeClass("favorite-active");
     // 取消收藏
@@ -655,7 +655,7 @@ function timedShutDown(cmd) {
 }
 
 // 绑定点击事件，显示弹窗
-$('#version').on('click', function() {
+$('#version').on('click', function () {
   $.get("https://xdocs.hanxi.cc/versions.json", function (data, status) {
     console.log(data);
     const versionSelect = document.getElementById("update-version");
@@ -695,3 +695,19 @@ function doUpdates() {
     },
   });
 }
+
+function confirmSearch() {
+  var search_key = $("#search").val();
+  if (search_key == null) {
+    search_key = "";
+  }
+  var filename = $("#music-name").val();
+  var musicfilename = $("#music-filename").val();
+  if ((filename == null || filename == "" || filename == search_key)
+    && (musicfilename != null && musicfilename != "")) {
+    filename = musicfilename;
+  }
+  console.log("confirmSearch", filename, search_key);
+  do_play_music(filename, search_key);
+}
+
