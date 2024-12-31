@@ -28,7 +28,7 @@ docker run -p 58090:8090 -e XIAOMUSIC_PUBLIC_PORT=58090 -v /xiaomusic_music:/app
 🔥 国内：
 
 ```bash
-docker run -p 58090:8090 -e XIAOMUSIC_PUBLIC_PORT=58090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf m.daocloud.io/docker.io/hanxi/xiaomusic
+docker run -p 58090:8090 -e XIAOMUSIC_PUBLIC_PORT=58090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf docker.hanxi.cc/hanxi/xiaomusic
 ```
 
 对应的 docker compose 配置如下：
@@ -53,7 +53,7 @@ services:
 ```yaml
 services:
   xiaomusic:
-    image: m.daocloud.io/docker.io/hanxi/xiaomusic
+    image: docker.hanxi.cc/hanxi/xiaomusic
     container_name: xiaomusic
     restart: unless-stopped
     ports:
