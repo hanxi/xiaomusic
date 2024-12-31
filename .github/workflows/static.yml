@@ -71,8 +71,8 @@ jobs:
 
       - uses: pdm-project/setup-pdm@v3
 
-      - name: pdm install
-        run: pdm install --prod --frozen-lockfile
+      - name: pdm
+        run: pdm update
 
       - name: generate versions.json
         env:
