@@ -18,6 +18,12 @@ on:
     types:
       - uploaded
 
+  workflow_run:
+    workflows:
+      - CI Workflow
+    types:
+      - completed
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
