@@ -72,7 +72,7 @@ jobs:
       - uses: pdm-project/setup-pdm@v3
 
       - name: install request
-        run: pdm install requests
+        run: pip install requests
 
       - name: generate versions.json
         env:
