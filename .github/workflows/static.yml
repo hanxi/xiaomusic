@@ -70,7 +70,10 @@ jobs:
           npm run docs:build
 
       - uses: pdm-project/setup-pdm@v3
-      
+
+      - name: install request
+        run: pdm install requests
+
       - name: generate versions.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
