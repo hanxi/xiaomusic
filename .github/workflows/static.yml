@@ -64,8 +64,7 @@ jobs:
           npm run docs:build
 
       - uses: pdm-project/setup-pdm@v3
-      - name: Install dependencies
-        run: pdm install
+      
       - name: generate versions.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
