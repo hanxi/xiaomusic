@@ -71,8 +71,8 @@ jobs:
 
       - uses: pdm-project/setup-pdm@v3
 
-      - name: install request
-        run: pip install requests
+      - name: pdm install
+        run: pdm install --prod --no-editable
 
       - name: generate versions.json
         env:
