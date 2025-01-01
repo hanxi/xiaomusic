@@ -57,11 +57,10 @@ class Analytics:
         await self._send(event)
 
     async def _send(self, event):
-        await self.post_to_umami(event)
-        events = [event]
-        await self.run_with_cancel(self._google_send, events)
+        asyncio.create_task(self.post_to_umami(event))
+        await self.run_with_cancel(self._google_send, [event])
 
-    async def _google_send(self, events):
+    def _google_send(self, events):
         try:
             self.gtag.send(events)
         except Exception as e:
@@ -69,7 +68,7 @@ class Analytics:
 
     async def run_with_cancel(self, func, *args, **kwargs):
         try:
-            asyncio.ensure_future(asyncio.to_thread(func, *args, **kwargs))
+            asyncio.create_task(asyncio.to_thread(func, *args, **kwargs))
             self.log.info("analytics run_with_cancel success")
         except Exception as e:
             self.log.warning(f"analytics run_with_cancel failed {e}")
@@ -96,6 +95,7 @@ class Analytics:
                 "type": "event",
             }
 
+            self.log.info(f"umami data: {data}")
             async with aiohttp.ClientSession() as session:
                 headers = {
                     "User-Agent": user_agent,
