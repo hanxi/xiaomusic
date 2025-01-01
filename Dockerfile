@@ -19,6 +19,7 @@ COPY --from=builder /app/xiaomusic/__init__.py /base_version.py
 RUN touch /app/.dockerenv
 
 COPY supervisord.conf /etc/supervisor/supervisord.conf
+RUN rm -f /var/run/supervisor.sock
 
 VOLUME /app/conf
 VOLUME /app/music
