@@ -178,6 +178,11 @@ class XiaoMusic:
     async def poll_latest_ask(self):
         async with ClientSession() as session:
             while True:
+                if not self.config.enable_pull_ask:
+                    self.log.debug("Listening new message disabled")
+                    await asyncio.sleep(5)
+                    continue
+
                 self.log.debug(
                     f"Listening new message, timestamp: {self.last_timestamp}"
                 )
