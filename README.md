@@ -66,7 +66,8 @@ services:
 ```
 
 - 其中 conf 目录为配置文件存放目录，music 目录为音乐存放目录，建议分开配置为不同的目录。
-- /xiaomusic_music 和 /xiaomusic_conf 是 docker 主机里的目录，可以修改为其他目录。如果报错找不到 /xiaomusic_music 目录，可以先执行 `mkdir -p /xiaomusic_{music,conf}` 命令新建目录。
+- /xiaomusic_music 和 /xiaomusic_conf 是 docker 所在的主机的目录，可以修改为其他目录。如果报错找不到 /xiaomusic_music 目录，可以先执行 `mkdir -p /xiaomusic_{music,conf}` 命令新建目录。
+- /app/music 和 /app/conf 是 docker 容器里的目录，不要去修改。
 - XIAOMUSIC_PUBLIC_PORT 是用来配置 NAS 本地端口的。8090 是容器端口，不要去修改。
 - 后台访问地址为： http://NAS_IP:58090
 
@@ -80,6 +81,7 @@ services:
 
 > [!TIP]
 > 海外 RackNerd VPS 机器推荐，可支付宝付款。
+>
 > - [🔥1 GB KVM VPS $11.29/年](https://my.racknerd.com/aff.php?aff=1177&pid=903)
 > - [2 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=904)
 > - [3.5 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=905)
@@ -119,7 +121,7 @@ services:
   \  /  | |  / _` |  / _ \  | |\/| | | | | | / __| | |  / __|
   /  \  | | | (_| | | (_) | | |  | | | |_| | \__ \ | | | (__
  /_/\_\ |_|  \__,_|  \___/  |_|  |_|  \__,_| |___/ |_|  \___|
-          XiaoMusic v0.3.65 by: github.com/hanxi
+          XiaoMusic v0.3.69 by: github.com/hanxi
 
 usage: xiaomusic [-h] [--port PORT] [--hardware HARDWARE] [--account ACCOUNT]
                  [--password PASSWORD] [--cookie COOKIE] [--verbose]
