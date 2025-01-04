@@ -276,11 +276,9 @@ jobs:
           gitee_release_name: Test
           gitee_release_body: This release is automatically updated from the main branch.
           gitee_target_commitish: main
+          gitee_release_id: test
           gitee_upload_retry_times:  3
-          gitee_files: |
-            app-amd64.tar.gz
-            app-arm64.tar.gz
-            app-arm-v7.tar.gz
+          gitee_files: app-*.tar.gz
 
       - name: Upload assets to gitee Release tag
         if: startsWith(github.ref, 'refs/tags/v')
@@ -294,7 +292,4 @@ jobs:
           gitee_release_body: This release is automatically updated from the ${{ github.ref_name }} tag.
           gitee_target_commitish: ${{ github.ref_name }}
           gitee_upload_retry_times:  3
-          gitee_files: |
-            app-amd64-lite.tar.gz
-            app-arm64-lite.tar.gz
-            app-arm-v7-lite.tar.gz
+          gitee_files: app-*-lite.tar.gz
