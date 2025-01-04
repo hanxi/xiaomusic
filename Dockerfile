@@ -27,4 +27,4 @@ EXPOSE 8090
 ENV TZ=Asia/Shanghai
 ENV PATH=/app/.venv/bin:$PATH
 
-CMD ["/bin/sh", "-c", "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf && tail -F /app/supervisord.log /app/xiaomusic.log.txt"]
+ENTRYPOINT ["/bin/sh", "-c", "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf && tail -F /app/supervisord.log /app/xiaomusic.log.txt"]
