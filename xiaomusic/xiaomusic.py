@@ -1427,10 +1427,10 @@ class XiaoMusicDevice:
         return self.device.cur_music
 
     def get_offset_duration(self):
-        if not self.isplaying():
-            return -1, -1
-        offset = time.time() - self._start_time - self._paused_time
         duration = self._duration
+        if not self.isplaying():
+            return 0, duration
+        offset = time.time() - self._start_time - self._paused_time
         return offset, duration
 
     # 初始化播放列表
