@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -295,6 +295,6 @@ jobs:
           gitee_target_commitish: ${{ github.ref_name }}
           gitee_upload_retry_times:  3
           gitee_files: |
-            app-amd64.tar.gz
-            app-arm64.tar.gz
-            app-arm-v7.tar.gz
+            app-amd64-lite.tar.gz
+            app-arm64-lite.tar.gz
+            app-arm-v7-lite.tar.gz
