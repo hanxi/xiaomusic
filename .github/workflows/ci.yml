@@ -264,34 +264,34 @@ jobs:
       # 上传文件到 gitee
       - name: Upload assets to gitee Release main
         if: github.ref == 'refs/heads/main'
-				uses: nicennnnnnnlee/action-gitee-release@v1.0.5
-				with:
-					gitee_owner: hanxi
-					gitee_repo: xiaomusic
-					gitee_token: ${{ secrets.GITEE_TOKEN }}
-					gitee_tag_name: test
-					gitee_release_name: Test
+        uses: nicennnnnnnlee/action-gitee-release@v1.0.5
+        with:
+          gitee_owner: hanxi
+          gitee_repo: xiaomusic
+          gitee_token: ${{ secrets.GITEE_TOKEN }}
+          gitee_tag_name: test
+          gitee_release_name: Test
           gitee_release_body: This release is automatically updated from the main branch.
-					gitee_target_commitish: main
-					gitee_upload_retry_times:  3
-					gitee_files: |
-						app-amd64.tar.gz
-						app-arm64.tar.gz
-						app-arm-v7.tar.gz
+          gitee_target_commitish: main
+          gitee_upload_retry_times:  3
+          gitee_files: |
+            app-amd64.tar.gz
+            app-arm64.tar.gz
+            app-arm-v7.tar.gz
 
       - name: Upload assets to gitee Release tag
         if: startsWith(github.ref, 'refs/tags/v')
-				uses: nicennnnnnnlee/action-gitee-release@v1.0.5
-				with:
-					gitee_owner: hanxi
-					gitee_repo: xiaomusic
-					gitee_token: ${{ secrets.GITEE_TOKEN }}
-					gitee_tag_name: ${{ github.ref_name }}
-					gitee_release_name: ${{ github.ref_name }}
+        uses: nicennnnnnnlee/action-gitee-release@v1.0.5
+        with:
+          gitee_owner: hanxi
+          gitee_repo: xiaomusic
+          gitee_token: ${{ secrets.GITEE_TOKEN }}
+          gitee_tag_name: ${{ github.ref_name }}
+          gitee_release_name: ${{ github.ref_name }}
           gitee_release_body: This release is automatically updated from the ${{ github.ref_name }} tag.
-					gitee_target_commitish: ${{ github.ref_name }}
-					gitee_upload_retry_times:  3
-					gitee_files: |
-						app-amd64.tar.gz
-						app-arm64.tar.gz
-						app-arm-v7.tar.gz
+          gitee_target_commitish: ${{ github.ref_name }}
+          gitee_upload_retry_times:  3
+          gitee_files: |
+            app-amd64.tar.gz
+            app-arm64.tar.gz
+            app-arm-v7.tar.gz
