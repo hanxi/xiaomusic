@@ -709,5 +709,6 @@ function confirmSearch() {
   }
   console.log("confirmSearch", filename, search_key);
   do_play_music(filename, search_key);
+  toggleSearch();
 }
 
