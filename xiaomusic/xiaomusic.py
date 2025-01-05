@@ -1252,6 +1252,9 @@ class XiaoMusic:
 
     # 设置音量
     async def set_volume(self, did="", arg1=0, **kwargs):
+        if did not in self.devices:
+            self.log.info(f"设备 did:{did} 不存在, 不能设置音量")
+            return
         volume = int(arg1)
         return await self.devices[did].set_volume(volume)
 
