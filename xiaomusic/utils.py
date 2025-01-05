@@ -805,19 +805,25 @@ def set_music_tag_to_file(file_path, info):
 
 
 def _set_mp3_tags(audio, info):
+    audio.tags = ID3()
     audio["TIT2"] = TIT2(encoding=3, text=info.title)
     audio["TPE1"] = TPE1(encoding=3, text=info.artist)
     audio["TALB"] = TALB(encoding=3, text=info.album)
     audio["TDRC"] = TDRC(encoding=3, text=info.year)
     audio["TCON"] = TCON(encoding=3, text=info.genre)
+
+    # 使用 USLT 存储歌词
     if info.lyrics:
         audio["USLT"] = USLT(encoding=3, lang="eng", text=info.lyrics)
+
+    # 添加封面图片
     if info.picture:
         with open(info.picture, "rb") as img_file:
             image_data = img_file.read()
         audio["APIC"] = APIC(
             encoding=3, mime="image/jpeg", type=3, desc="Cover", data=image_data
         )
+    audio.save()  # 保存修改
 
 
 def _set_flac_tags(audio, info):
@@ -835,11 +841,11 @@ def _set_flac_tags(audio, info):
 
 
 def _set_mp4_tags(audio, info):
-    audio["\xa9nam"] = info.title
-    audio["\xa9ART"] = info.artist
-    audio["\xa9alb"] = info.album
-    audio["\xa9day"] = info.year
-    audio["\xa9gen"] = info.genre
+    audio["nam"] = info.title
+    audio["ART"] = info.artist
+    audio["alb"] = info.album
+    audio["day"] = info.year
+    audio["gen"] = info.genre
     if info.picture:
         with open(info.picture, "rb") as img_file:
             image_data = img_file.read()
