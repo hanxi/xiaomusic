@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width">
     <title>小爱音箱操控面板</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <script src="./jquery-3.7.1.min.js?version=1735989367"></script>
-    <script src="./setting.js?version=1735989367"></script>
-    <link rel="stylesheet" type="text/css" href="./main.css?version=1735989367">
+    <script src="./jquery-3.7.1.min.js?version=1736209939"></script>
+    <script src="./setting.js?version=1736209939"></script>
+    <link rel="stylesheet" type="text/css" href="./main.css?version=1736209939">
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
@@ -50,10 +50,20 @@ var vConsole = new window.VConsole();
         <label for="password">*小米密码:</label>
         <input id="password" type="password" placeholder="填写小米登录密码" />
 
-        <label for="hostname">*XIAOMUSIC_HOSTNAME(NAS的IP或域名):</label>
+        <label for="hostname" class="setting-label">*NAS的IP或域名:
+          <button class="option-inline mini-button" id="auto-hostname">
+            <span class="material-icons">sync_alt</span>
+            <span>自动填</span>
+          </button>
+        </label>
         <input id="hostname" type="text" />
 
-        <label for="public_port">*本地端口(0表示跟容器端口一致):</label>
+        <label for="public_port" class="setting-label">*本地端口:
+          <button class="option-inline mini-button" id="auto-port">
+            <span class="material-icons">sync_alt</span>
+            <span>自动填</span>
+          </button>
+        </label>
         <input id="public_port" type="number" value="0" />
       </div>
       <hr>
@@ -229,7 +239,7 @@ var vConsole = new window.VConsole();
         <label for="recently_added_playlist_len">最近新增的歌曲数量:</label>
         <input id="recently_added_playlist_len" type="number" value="50" />
 
-        <label for="music_list_url" style="display: flex;align-items: center;">歌单地址:
+        <label for="music_list_url"  class="setting-label">歌单地址:
           <button class="option-inline mini-button" id="get_music_list">
             <span class="material-icons">sync_alt</span>
             <span>获取歌单</span>

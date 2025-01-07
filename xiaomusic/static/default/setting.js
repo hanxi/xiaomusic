@@ -1,13 +1,13 @@
-$(function(){
+$(function () {
   // 拉取版本
-  $.get("/getversion", function(data, status) {
+  $.get("/getversion", function (data, status) {
     console.log(data, status, data["version"]);
     $("#version").text(`${data.version}`);
   });
 
   // 遍历所有的select元素，默认选中只有1个选项的
   const autoSelectOne = () => {
-    $('select').each(function() {
+    $('select').each(function () {
       // 如果select元素仅有一个option子元素
       if ($(this).children('option').length === 1) {
         // 选中这个option
@@ -16,7 +16,7 @@ $(function(){
     });
   };
 
-  function updateCheckbox(selector, mi_did, device_list,accountPassValid) {
+  function updateCheckbox(selector, mi_did, device_list, accountPassValid) {
     // 清除现有的内容
     $(selector).empty();
 
@@ -29,7 +29,7 @@ $(function(){
       $(selector).append(loginTips);
       return;
     }
-    $.each(device_list, function(index, device) {
+    $.each(device_list, function (index, device) {
       var did = device.miotDID;
       var hardware = device.hardware;
       var name = device.name;
@@ -59,7 +59,7 @@ $(function(){
     var selectedDids = [];
 
     // 仅选择给定容器中选中的复选框
-    $(containerSelector + ' .custom-checkbox:checked').each(function() {
+    $(containerSelector + ' .custom-checkbox:checked').each(function () {
       var did = this.value;
       selectedDids.push(did);
     });
@@ -68,23 +68,23 @@ $(function(){
   }
 
   // 拉取现有配置
-  $.get("/getsetting?need_device_list=true", function(data, status) {
+  $.get("/getsetting?need_device_list=true", function (data, status) {
     console.log(data, status);
     const accountPassValid = data.account && data.password;
     updateCheckbox("#mi_did", data.mi_did, data.device_list, accountPassValid);
 
     // 初始化显示
     for (const key in data) {
-        const $element = $("#" + key);
-        if ($element.length) {
-          if (data[key] === true) {
-            $element.val('true');
-          } else if (data[key] === false) {
-            $element.val('false');
-          } else {
-            $element.val(data[key]);
-          }
+      const $element = $("#" + key);
+      if ($element.length) {
+        if (data[key] === true) {
+          $element.val('true');
+        } else if (data[key] === false) {
+          $element.val('false');
+        } else {
+          $element.val(data[key]);
         }
+      }
     }
 
     autoSelectOne();
@@ -94,7 +94,7 @@ $(function(){
     var setting = $('#setting');
     var inputs = setting.find('input, select, textarea');
     var data = {};
-    inputs.each(function() {
+    inputs.each(function () {
       var id = this.id;
       if (id) {
         data[id] = $(this).val();
@@ -173,17 +173,17 @@ $(function(){
         data: formData,
         processData: false,
         contentType: false,
-        success: function(res) {
+        success: function (res) {
           console.log(res);
           alert("上传成功");
         },
-        error: function(jqXHR, textStatus, errorThrown) {
+        error: function (jqXHR, textStatus, errorThrown) {
           console.log(res);
           alert("上传失败");
         }
       });
     } else {
-        alert("请选择一个文件");
+      alert("请选择一个文件");
     }
   });
 
@@ -191,14 +191,29 @@ $(function(){
   $("#clear_cache").on("click", () => {
     localStorage.clear();
   });
-  $("#hostname").on("change", function(){
+  $("#hostname").on("change", function () {
     const hostname = $(this).val();
     // 检查是否包含端口号（1到5位数字）
     if (hostname.match(/:\d{1,5}$/)) {
       alert("hostname禁止带端口号");
       // 移除端口号
-      $(this).val(hostname.replace(/:\d{1,5}$/,""));
+      $(this).val(hostname.replace(/:\d{1,5}$/, ""));
     }
+  });
+
+
+  $("#auto-hostname").on("click", () => {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const baseUrl = `${protocol}//${hostname}`;
+    console.log(baseUrl);
+    $("#hostname").val(baseUrl);
+  });
+
+  $("#auto-port").on("click", () => {
+    const port = window.location.port;
+    console.log(port);
+    $("#public_port").val(port);
   });
 
 });

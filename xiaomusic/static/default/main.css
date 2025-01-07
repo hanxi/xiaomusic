@@ -351,3 +351,8 @@ span,p {
   margin-left: auto;
   text-decoration: none;
 }
+
+.setting-label {
+  display: flex;
+  align-items: center;
+}
