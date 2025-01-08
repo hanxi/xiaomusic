@@ -442,6 +442,16 @@ async def playurl(did: str, url: str, Verifcation=Depends(verification)):
     return await xiaomusic.play_url(did=did, arg1=decoded_url)
 
 
+@app.get("/playtts")
+async def playtts(did: str, text: str, Verifcation=Depends(verification)):
+    if not xiaomusic.did_exist(did):
+        return {"ret": "Did not exist"}
+
+    log.info(f"tts {did} {text}")
+    await xiaomusic.do_tts(did=did, value=text)
+    return {"ret": "OK"}
+
+
 @app.post("/refreshmusictag")
 async def refreshmusictag(Verifcation=Depends(verification)):
     xiaomusic.refresh_music_tag()

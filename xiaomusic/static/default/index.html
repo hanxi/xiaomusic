@@ -95,23 +95,17 @@
                     <span class="material-icons">volume_up</span>
                     <p>音量</p>
                 </div>
-<!--
-                <div onclick="toggleLocalPlay()" id="web_play">
-                    <span class="material-icons">headphones</span>
-                    <span class="tooltip">网页播放</span>
-                </div>
--->
                 <div onclick="toggleSearch()" class="icon-item device-enable">
                     <span class="material-icons">search</span>
                     <p>搜索</p>
                 </div>
-                <div onclick="togglePlayLink()" class="icon-item device-enable">
-                    <span class="material-icons">link</span>
-                    <p>链接</p>
-                </div>
                 <div onclick="toggleTimer()" class="icon-item device-enable">
                     <span class="material-icons">timer</span>
                     <p>定时</p>
+                </div>
+                <div onclick="togglePlayLink()" class="icon-item device-enable">
+                    <span class="material-icons">emoji_nature</span>
+                    <p>测试</p>
                 </div>
                 <div onclick="openSettings()" class="icon-item">
                     <span class="material-icons">settings</span>
@@ -154,9 +148,14 @@
         <h2>播放链接</h2>
         <input type="text" id="music-url" class="search-input" placeholder="请输入播放链接"
             value="https://lhttp.qtfm.cn/live/4915/64k.mp3">
+        <h2>播放文字</h2>
+        <input type="text" id="text-tts" class="search-input" placeholder="请输入文字"
+            value="播放文字测试">
+
         <div class="component-button-group">
-            <button id="playurl">播放链接</button>
-            <button onclick="togglePlayLink()">关闭</button>
+          <button onclick="playUrl()">播放链接</button>
+          <button onclick="playTts()">播放文字</button>
+          <button onclick="togglePlayLink()">关闭</button>
         </div>
     </div>
 
