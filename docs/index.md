@@ -11,8 +11,8 @@ hero:
       text: 快速开始
       link: /issues/index
     - theme: alt
-      text: 文档汇总
-      link: /issues/211
+      text: FAQ
+      link: /issues/99
     - theme: alt
       text: GitHub
       link: https://github.com/hanxi/xiaomusic
