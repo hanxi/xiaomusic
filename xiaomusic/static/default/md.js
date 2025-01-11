@@ -83,7 +83,7 @@ function nextTrack() {
 
 function togglePlayMode(isSend = true) {
   const modeBtnIcon = $("#modeBtn .material-icons");
-  if (playModeIndex == '') {
+  if (playModeIndex === '') {
     playModeIndex = 2;
   }
   modeBtnIcon.text(playModes[playModeIndex].icon);
