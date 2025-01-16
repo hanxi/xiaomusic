@@ -334,6 +334,9 @@ class XiaoMusic:
                 # 检查响应状态码
                 if r.status != 200:
                     self.log.warning(f"Request failed with status {r.status}")
+                    # fix #362
+                    if i == 2 and r.status == 401:
+                        await self.init_all_data(self.session)
                     continue
 
             except asyncio.CancelledError:

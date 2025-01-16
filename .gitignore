@@ -169,5 +169,5 @@ setting.json
 .DS_Store
 cache
 tmp/
-xiaomusic.log.txt
+xiaomusic.log.txt*
 node_modules
