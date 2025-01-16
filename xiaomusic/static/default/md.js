@@ -572,8 +572,10 @@ function get_playing_music() {
     if (data.ret == "OK") {
       if (data.is_playing) {
         $("#playering-music").text(`【播放中】 ${data.cur_music}`);
+        isPlaying = true;
       } else {
         $("#playering-music").text(`【空闲中】 ${data.cur_music}`);
+        isPlaying = false;
       }
       offset = data.offset;
       duration = data.duration;
@@ -594,9 +596,11 @@ function get_playing_music() {
 }
 setInterval(() => {
   if (duration > 0) {
-    offset++;
-    $("#progress").val((offset / duration) * 100);
-    $("#current-time").text(formatTime(offset));
+    if (isPlaying) {
+      offset++;
+      $("#progress").val((offset / duration) * 100);
+      $("#current-time").text(formatTime(offset));
+    }
     $("#duration").text(formatTime(duration));
   } else {
     $("#current-time").text(formatTime(0));
