@@ -1506,7 +1506,7 @@ class XiaoMusicDevice:
                     self.device.cur_playlist = "临时搜索列表"
                     self.update_playlist(reorder=False)
             name = names[0]
-            if update_cur_list:
+            if update_cur_list and (name not in self._play_list):
                 # 根据当前歌曲匹配歌曲列表
                 self.device.cur_playlist = self.find_cur_playlist(name)
                 self.update_playlist()
