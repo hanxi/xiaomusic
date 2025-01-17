@@ -75,7 +75,7 @@ var vConsole = new window.VConsole();
           <option value="false" selected>false</option>
         </select>
 
-        <label for="group_list">设备分组配置:<a href="https://github.com/hanxi/xiaomusic/issues/65#issuecomment-2215736529" target="_blank">文档</a></label>
+        <label for="group_list">设备分组配置（不推荐，声音不同步）:<a href="https://xdocs.hanxi.cc/issues/366.html" target="_blank">文档</a></label>
         <input id="group_list" type="text" placeholder="did1:组名1,did2:组名1,did3:组名2" />
 
         <label for="music_path">音乐目录:</label>
@@ -135,7 +135,7 @@ var vConsole = new window.VConsole();
           <option value="false" selected>false</option>
         </select>
 
-        <label for="miio_tts_command">MiIO tts 指令(解决部分型号没有提示音的问题):</label>
+        <label for="miio_tts_command">MiIO ttsCommand 指令(解决部分型号没有提示音的问题):<a href="https://xdocs.hanxi.cc/issues/365.html" target="_blank">格式文档</a></label>
         <input id="miio_tts_command" type="text" placeholder="如：5 或者 5-3" />
 
         <label for="disable_httpauth">关闭控制台密码验证:</label>
@@ -247,17 +247,17 @@ var vConsole = new window.VConsole();
         </label>
         <input id="music_list_url" type="text" value="https://gist.githubusercontent.com/hanxi/dda82d964a28f8110f8fba81c3ff8314/raw/example.json" />
 
-        <label for="music_list_json">歌单内容:<a href="https://github.com/hanxi/xiaomusic/issues/78" target="_blank">格式文档</a></label>
+        <label for="music_list_json">歌单内容:<a href="https://xdocs.hanxi.cc/issues/78.html" target="_blank">格式文档</a></label>
         <textarea id="music_list_json" type="text"></textarea>
 
-        <label for="crontab_json">定时任务:<a href="https://github.com/hanxi/xiaomusic/issues/182" target="_blank">格式文档</a></label>
+        <label for="crontab_json">定时任务:<a href="https://xdocs.hanxi.cc/issues/182.html" target="_blank">格式文档</a></label>
         <textarea id="crontab_json" type="text"></textarea>
       </div>
     </div>
     <hr>
 
     <div class="rows">
-      <label for="yt_dlp_cookies_file">上传yt_dlp_cookies.txt文件:<a href="https://github.com/hanxi/xiaomusic/issues/210" target="_blank">文档</a></label>
+      <label for="yt_dlp_cookies_file">上传yt_dlp_cookies.txt文件:<a href="https://xdocs.hanxi.cc/issues/210.html" target="_blank">文档</a></label>
       <input id="yt_dlp_cookies_file" name="file" type="file">
       <button id="upload_yt_dlp_cookie">上传</button>
     </div>
