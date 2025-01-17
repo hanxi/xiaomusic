@@ -983,7 +983,7 @@ def remove_common_prefix(directory):
 
     log.info(f'Common prefix identified: "{common_prefix}"')
 
-    pattern = re.compile(r"^(\d+)\s+\d*(.+?)\.(.*$)")
+    pattern = re.compile(r"^[pP]?(\d+)\s+\d*(.+?)\.(.*$)")
     for filename in files:
         if filename == common_prefix:
             continue
