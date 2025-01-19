@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width">
+    <title>M3U to JSON Converter</title>
+    <link rel="stylesheet" type="text/css" href="./main.css?version=1736211336">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments)};
+    gtag('js', new Date());
+    gtag('config', 'G-Z09NC1K7ZW');
+    </script>
+
+    <!-- umami -->
+    <script async defer src="https://umami.hanxi.cc/script.js" data-website-id="7bfb0890-4115-4260-8892-b391513e7e99"></script>
+
+    <!--
+<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+<script>
+// VConsole 默认会挂载到 `window.VConsole` 上
+var vConsole = new window.VConsole();
+</script>
+-->
+    <script>
+function handleFileSelect(evt) {
+  var file = evt.target.files[0];
+  if (file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('m3u-input').value = e.target.result;
+    };
+    reader.readAsText(file);
+  } else {
+    alert('无法加载文件');
+  }
+}
+
+function convertToJSON() {
+  var m3uContent = document.getElementById('m3u-input').value;
+  var lines = m3uContent.split('\n');
+  console.log(lines);
+  var musicsArray = [];
+  var currentName = '';
+  lines.forEach(function(line) {
+    line = line.trim();
+    if (line.startsWith('#EXTINF:')) {
+      currentName = line.replace(/.*,/g, '');
+    } else if (line.startsWith('http') && currentName !== '') {
+      musicsArray.push({"name": currentName, "type": "radio", "url": line});
+      currentName = ''; // Reset the name for the next entry
+    }
+  });
+  var output = [{
+    "name": "m3u电台",
+    "musics": musicsArray
+  }];
+
+  document.getElementById('json-output').value = JSON.stringify(output, null, 2);
+}
+    </script>
+  </head>
+  <body>
+    <h1>M3U to JSON Converter</h1>
+    <input type="file" id="file-input" accept=".m3u" onchange="handleFileSelect(event)"/><br>
+    <textarea id="m3u-input" rows="10" cols="50" placeholder="粘贴m3u内容或上传文件..."></textarea><br>
+    <button onclick="convertToJSON()">转换</button><br>
+    <textarea id="json-output" rows="10" cols="50" placeholder="转换后的JSON..."></textarea>
+  </body>
+  <footer>
+    <p>Powered by <a href="https://xdocs.hanxi.cc" target="_blank">XiaoMusic</a></p>
+  </footer>
+</html>
+

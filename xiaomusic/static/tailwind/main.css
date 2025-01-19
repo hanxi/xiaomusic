@@ -1,0 +1,358 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+.index_page {
+  height: 100vh;
+}
+
+.player {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 360px;
+  position: relative;
+  overflow: hidden;
+}
+
+h1 {
+  font-size: 28px;
+  margin-bottom: 15px;
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+h1 a {
+  margin-left: 10px;
+  font-size: 14px;
+  color: #007bff;
+  text-decoration: none;
+}
+
+h1 a:hover {
+  text-decoration: underline;
+}
+
+.new-badge {
+  background-color: #ff4757;
+  color: white;
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 12px;
+  margin-left: 5px;
+  display: none;
+  width: fit-content;
+}
+
+label {
+  font-size: 14px;
+  color: #555;
+  margin: 5px 0;
+  display: block;
+  text-align: left;
+}
+
+select,
+input[type="range"],
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+  padding: 10px;
+  border: 1px solid #cccccc;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  transition: border 0.2s ease;
+  box-sizing: border-box
+}
+
+select:focus,
+input[type="text"]:focus {
+  border-color: #007bff;
+  outline: none;
+}
+select {
+  overflow: hidden;
+}
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 15px;
+  cursor: pointer;
+  margin: 5px;
+  font-size: 16px;
+  transition: background-color 0.3s;
+  position: relative; /* 为tooltip绝对定位做准备 */
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+.tooltip {
+  visibility: hidden;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 150%; /* 控制tooltip相对按钮的位置 */
+  left: 50%;
+  margin-left: -50px; /* 调整位置以居中显示 Tooltip */
+  width: 80px; /* 设置固定宽度以保证足够的显示空间 */
+  white-space: nowrap; /* 防止换行 */
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+button:hover .tooltip,.option-inline:hover .tooltip,.control-button:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+.option-inline{
+  display: flex;
+  margin-left: auto;
+  position: relative;
+  align-items: center;
+}
+.option-inline:hover .tooltip {
+  /* 位置调整到左边 */
+  left: -50px; /* 调整位置以居中显示 Tooltip */
+  bottom: 0;
+}
+.control-button{
+  position: relative; /* 为tooltip绝对定位做准备 */
+}
+.progress {
+  width: 90%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 6px;
+  margin: 15px 0;
+  cursor: pointer;
+}
+progress::-webkit-progress-bar {
+  background: #e0e0e0;
+}
+
+progress::-moz-progress-bar,
+progress::-webkit-progress-value {
+  background: #007bff;
+}
+
+.current-song {
+  color: #333;
+  margin: 10px 0;
+  font-weight: bold;
+  text-align: center;
+}
+
+.component {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ffffff;
+  padding: 5px 15px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  width: 300px;
+}
+.component input {
+  width: 90%;
+}
+.component-button-group {
+  display: flex;
+  justify-content: space-between;
+}
+.component-button-one {
+  display: flex;
+  justify-content: center;
+}
+#warning-component p span {
+  color: #007bff;
+}
+
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  margin: 5px 0;
+}
+
+.player-controls {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.play {
+  font-size: 48px;
+}
+
+.footer {
+  position: absolute;
+  bottom: 20px;
+  font-size: 14px;
+  color: #555;
+  user-select: none;
+}
+
+.timer-tooltip {
+  bottom: 50%;
+  visibility: visible;
+  opacity: 1;
+}
+.favorite.favorite-active .material-icons {
+  color: #ff6347;
+}
+#audio {
+  width: 100%;
+  display: none;
+}
+
+.qrcode {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+}
+
+.login-tips {
+  color: red;
+  font-size: 12px;
+  margin-left: 10px;
+}
+.login-tips a {
+  color: rgb(9, 105, 218);
+  text-decoration: underline;
+}
+
+/* setting.html */
+.rows {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.rows a {
+  color: rgb(9, 105, 218);
+  text-decoration: none;
+}
+.rows a:hover {
+  color: rgb(9, 95, 198);
+  text-decoration: underline;
+}
+
+textarea {
+  margin-left: 5%;
+  margin-right: 5%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 90%;
+  /* max-width: 400px; */
+  height: 200px;
+}
+.custom-checkbox {
+  display: inline-block;
+  margin: 10px;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle; /* 确保与标签垂直居中对齐 */
+}
+
+.checkbox-label {
+  display: inline-block;
+  width: 180px;
+  background-color: #fff;
+  border: 0px solid #ccc;
+  border-radius: 3px;
+  position: relative;
+  cursor: pointer;
+  vertical-align: middle; /* 确保与复选框垂直居中对齐 */
+  margin-left: 1px; /* 给复选框和标签之间一些距离，如果需要的话 */
+  padding: 5px 10px;
+}
+.debug {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+@media screen and (max-width: 440px) {
+  .player{
+    width: 90%;
+  }
+  .footer {
+    position: relative;
+  }
+}
+
+.mini-button {
+  padding: 0px 0px;
+  margin: 0px;
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.playlist-selector,
+.device-selector,
+.version-selector,
+.song-selector {
+  width: 300px;
+}
+
+.mode-controls {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid #ddd;
+  color: #555;
+}
+.icon-item {
+  text-align: center;
+}
+
+.icon-item p {
+  font-size: 12px;
+  margin: 5px 0 0;
+}
+.disabled {
+  color: #ccc;
+  pointer-events: none;
+}
+
+span,p {
+  cursor: pointer;
+  user-select: none;
+}
+
+.changelog-button {
+  padding: 0px 0px;
+  margin: 0px;
+  font-size: 14px;
+  margin-left: auto;
+  text-decoration: none;
+}
+
+.setting-label {
+  display: flex;
+  align-items: center;
+}

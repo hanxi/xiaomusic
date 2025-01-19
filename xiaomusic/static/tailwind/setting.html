@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="icon" href="/favicon.ico">
+  <meta name="viewport" content="width=device-width">
+  <title>小爱音箱操控面板</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <script src="./jquery-3.7.1.min.js?version=1736211336"></script>
+  <script src="./setting.js?version=1736211336"></script>
+  <script src="./tailwind.js"></script>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments) };
+    gtag('js', new Date());
+    gtag('config', 'G-Z09NC1K7ZW');
+  </script>
+
+  <!-- umami -->
+  <script async defer src="https://umami.hanxi.cc/script.js"
+    data-website-id="7bfb0890-4115-4260-8892-b391513e7e99"></script>
+
+  <style>
+    /* 只保留一些必要的自定义样式 */
+    .custom-checkbox {
+      width: 20px;
+      height: 20px;
+      vertical-align: middle;
+    }
+
+    .login-tips {
+      color: red;
+      font-size: 12px;
+    }
+
+    .login-tips a {
+      color: rgb(9, 105, 218);
+      text-decoration: underline;
+    }
+
+    /* 添加平滑滚动 */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* 修复toast样式 */
+    .toast {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.375rem;
+      transition: all 0.3s ease;
+    }
+  </style>
+
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+  <div id="toast" class="toast bg-green-500 text-white hidden">
+    <span id="toast-message"></span>
+  </div>
+
+  <nav class="bg-white border-b top-0 z-50">
+    <div class="container mx-auto px-4 py-3">
+      <div class="flex justify-between items-center">
+        <h1 class="text-xl font-bold text-gray-900">
+          小爱音箱设置面板
+          <a id="version" href="https://xdocs.hanxi.cc/issues/changelog.html"
+            class="text-sm text-blue-600 hover:text-blue-800">
+            (版本未知)
+          </a>
+        </h1>
+        <button onclick="location.href='/static/default/index.html';"
+          class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+          返回首页
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主要内容区 -->
+  <div class="container mx-auto px-4 py-6">
+    <!-- 设置内容区 - 改进移动端布局 -->
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- 左侧导航 - 移动端变为水平滚动 -->
+      <div class="lg:w-72 flex-shrink-0">
+        <nav
+          class="lg:sticky lg:top-20 overflow-x-auto lg:overflow-x-visible flex lg:flex-col gap-1 pb-2 lg:pb-0 bg-white rounded-lg border p-2"
+          id="settings-nav">
+          <a href="#devices"
+            class="nav-item whitespace-nowrap px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-md flex-shrink-0 lg:flex-shrink">
+            设备选择
+          </a>
+          <a href="#account_section"
+            class="nav-item whitespace-nowrap px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-md flex-shrink-0 lg:flex-shrink">
+            账号设置
+          </a>
+          <a href="#music"
+            class="nav-item whitespace-nowrap px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-md flex-shrink-0 lg:flex-shrink">
+            音乐设置
+          </a>
+          <a href="#playback"
+            class="nav-item whitespace-nowrap px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-md flex-shrink-0 lg:flex-shrink">
+            播放控制
+          </a>
+          <a href="#playlist"
+            class="nav-item whitespace-nowrap px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-md flex-shrink-0 lg:flex-shrink">
+            歌单管理
+          </a>
+          <a href="#advanced"
+            class="nav-item whitespace-nowrap px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-md flex-shrink-0 lg:flex-shrink">
+            高级设置
+          </a>
+        </nav>
+      </div>
+
+      <!-- 右侧设置内容 -->
+      <div class="flex-1 space-y-6" id="setting">
+        <!-- 设备选择部分 -->
+        <section id="devices" class="setting-section bg-white rounded-lg border hover:shadow-md transition-shadow">
+          <div class="p-4 sm:p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+              <span class="material-icons mr-2 text-gray-500">devices</span>
+              设备选择
+            </h2>
+            <div class="space-y-4">
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">
+                  勾选设备 (至少选择一个)
+                </label>
+                <div id="mi_did" class="mt-2"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 账号设置部分 -->
+        <section id="account_section" class="setting-section bg-white rounded-lg shadow">
+          <div class="p-4 sm:p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">账号设置</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+              <div class="space-y-4">
+                <div class="mb-4">
+                  <label for="account" class="block text-sm font-medium text-gray-700">
+                    小米账号
+                    <span class="text-red-500">*</span>
+                  </label>
+                  <input id="account" type="text" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" value="" placeholder="填写小米登录账号" />
+                </div>
+                <div class="mb-4">
+                  <label for="password" class="block text-sm font-medium text-gray-700">
+                    小米密码
+                    <span class="text-red-500">*</span>
+                  </label>
+                  <input id="password" type="password" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" placeholder="填写小米登录密码" />
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div class="mb-4">
+                  <label for="hostname" class="block text-sm font-medium text-gray-700">
+                    NAS的IP或域名
+                    <span class="text-red-500">*</span>
+                    <button id="auto-hostname"
+                      class="ml-2 inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+                      <span class="material-icons text-sm">edit</span>
+                      自动填写
+                    </button>
+                  </label>
+                  <input id="hostname" type="text" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="public_port" class="block text-sm font-medium text-gray-700">
+                    本地端口
+                    <span class="text-red-500">*</span>
+                    <button id="auto-port"
+                      class="ml-2 inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+                      <span class="material-icons text-sm">edit</span>
+                      自动填写
+                    </button>
+                  </label>
+                  <input id="public_port" type="number" value="0" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 音乐设置部分 -->
+        <section id="music" class="setting-section bg-white rounded-lg shadow">
+          <div class="p-4 sm:p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">音乐设置</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+              <div class="space-y-4">
+                <div class="mb-4">
+                  <label for="music_path" class="block text-sm font-medium text-gray-700">
+                    音乐目录
+                  </label>
+                  <input id="music_path" type="text" value="music" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="download_path" class="block text-sm font-medium text-gray-700">
+                    音乐下载目录
+                    <span class="text-gray-500 text-xs">(必须是music的子目录)</span>
+                  </label>
+                  <input id="download_path" type="text" value="music/download" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="temp_path" class="block text-sm font-medium text-gray-700">
+                    临时文件目录
+                  </label>
+                  <input id="temp_path" type="text" value="music/tmp" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div class="mb-4">
+                  <label for="exclude_dirs" class="block text-sm font-medium text-gray-700">
+                    忽略目录
+                    <span class="text-gray-500 text-xs">(逗号分割)</span>
+                  </label>
+                  <input id="exclude_dirs" type="text" value="@eaDir,tmp" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="music_path_depth" class="block text-sm font-medium text-gray-700">
+                    目录深度
+                  </label>
+                  <input id="music_path_depth" type="number" value="10" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="ffmpeg_location" class="block text-sm font-medium text-gray-700">
+                    ffmpeg路径
+                  </label>
+                  <input id="ffmpeg_location" type="text" value="./ffmpeg/bin" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 播放控制部分 -->
+        <section id="playback" class="setting-section bg-white rounded-lg shadow">
+          <div class="p-4 sm:p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">播放控制</h2>
+
+            <!-- 命令词设置 -->
+            <div class="mb-8">
+              <h3 class="text-md font-medium text-gray-800 mb-4">命令词设置</h3>
+              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                <div class="mb-4">
+                  <label for="keywords_playlocal" class="block text-sm font-medium text-gray-700">
+                    播放本地歌曲口令
+                  </label>
+                  <input id="keywords_playlocal" type="text" value="播放本地歌曲,本地播放歌曲" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="keywords_play" class="block text-sm font-medium text-gray-700">
+                    播放歌曲口令
+                  </label>
+                  <input id="keywords_play" type="text" value="播放歌曲,放歌曲" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="keywords_stop" class="block text-sm font-medium text-gray-700">
+                    停止口令
+                  </label>
+                  <input id="keywords_stop" type="text" value="关机,暂停,停止,停止播放" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="delay_sec" class="block text-sm font-medium text-gray-700">
+                    下一首歌延迟播放秒数
+                  </label>
+                  <input id="delay_sec" type="number" value="3" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 提示音设置 -->
+            <div>
+              <h3 class="text-md font-medium text-gray-800 mb-4">提示音设置</h3>
+              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                <div class="mb-4">
+                  <label for="stop_tts_msg" class="block text-sm font-medium text-gray-700">
+                    停止提示音
+                  </label>
+                  <input id="stop_tts_msg" type="text" value="收到,再见" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="play_type_one_tts_msg" class="block text-sm font-medium text-gray-700">
+                    单曲循环提示音
+                  </label>
+                  <input id="play_type_one_tts_msg" type="text" value="已经设置为单曲循环" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="play_type_all_tts_msg" class="block text-sm font-medium text-gray-700">
+                    全部循环提示音
+                  </label>
+                  <input id="play_type_all_tts_msg" type="text" value="已经设置为全部循环" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="play_type_rnd_tts_msg" class="block text-sm font-medium text-gray-700">
+                    随机播放提示音
+                  </label>
+                  <input id="play_type_rnd_tts_msg" type="text" value="已经设置为随机播放" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="play_type_sin_tts_msg" class="block text-sm font-medium text-gray-700">
+                    单曲播放提示音
+                  </label>
+                  <input id="play_type_sin_tts_msg" type="text" value="已经设置为单曲播放" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="play_type_seq_tts_msg" class="block text-sm font-medium text-gray-700">
+                    顺序播放提示音
+                  </label>
+                  <input id="play_type_seq_tts_msg" type="text" value="已经设置为顺序播放" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 歌单管理部分 -->
+        <section id="playlist" class="setting-section bg-white rounded-lg shadow">
+          <div class="p-4 sm:p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">歌单管理</h2>
+
+            <!-- 歌单设置 -->
+            <div class="mb-8">
+              <div class="mb-6">
+                <div class="flex items-center justify-between mb-2">
+                  <label for="music_list_url" class="block text-sm font-medium text-gray-700">
+                    歌单地址
+                  </label>
+                  <button id="get_music_list"
+                    class="inline-flex items-center px-3 py-1 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100">
+                    <span class="material-icons text-sm mr-1">sync_alt</span>
+                    获取歌单
+                  </button>
+                </div>
+                <input id="music_list_url" type="text"
+                  value="https://gist.githubusercontent.com/hanxi/dda82d964a28f8110f8fba81c3ff8314/raw/example.json"
+                  class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+              </div>
+
+              <div class="mb-4">
+                <div class="flex items-center gap-2 mb-2">
+                  <label for="music_list_json" class="block text-sm font-medium text-gray-700">
+                    歌单内容
+                  </label>
+                  <a href="https://github.com/hanxi/xiaomusic/issues/78" target="_blank"
+                    class="text-sm text-blue-600 hover:text-blue-800">
+                    格式文档
+                  </a>
+                </div>
+                <textarea id="music_list_json" class="mt-1 block w-full h-48 rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400"
+                  placeholder=''></textarea>
+              </div>
+            </div>
+
+            <!-- 定时任务设置 -->
+            <div>
+              <div class="mb-4">
+                <div class="flex items-center gap-2 mb-2">
+                  <label for="crontab_json" class="block text-sm font-medium text-gray-700">
+                    定时任务配置
+                  </label>
+                  <a href="https://github.com/hanxi/xiaomusic/issues/182" target="_blank"
+                    class="text-sm text-blue-600 hover:text-blue-800">
+                    格式文档
+                  </a>
+                </div>
+                <textarea id="crontab_json" class="mt-1 block w-full h-48 rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400"
+                  placeholder=''></textarea>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 高级设置部分 -->
+        <section id="advanced" class="setting-section bg-white rounded-lg shadow">
+          <div class="p-4 sm:p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">高级设置</h2>
+
+            <!-- 功能开关 -->
+            <div class="mb-8">
+              <h3 class="text-md font-medium text-gray-800 mb-4">功能开关</h3>
+              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                <div class="mb-4">
+                  <label for="verbose" class="block text-sm font-medium text-gray-700">
+                    调试日志
+                  </label>
+                  <select id="verbose"
+                    class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400 bg-white py-2 px-3 text-gray-900 cursor-pointer hover:bg-gray-50">
+                    <option value="true">开启</option>
+                    <option value="false" selected>关闭</option>
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label for="disable_download" class="block text-sm font-medium text-gray-700">
+                    下载功能
+                  </label>
+                  <select id="disable_download"
+                    class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400 bg-white py-2 px-3 text-gray-900 cursor-pointer hover:bg-gray-50">
+                    <option value="true">关闭</option>
+                    <option value="false" selected>开启</option>
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label for="enable_fuzzy_match" class="block text-sm font-medium text-gray-700">
+                    模糊搜索
+                  </label>
+                  <select id="enable_fuzzy_match"
+                    class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400 bg-white py-2 px-3 text-gray-900 cursor-pointer hover:bg-gray-50">
+                    <option value="true" selected>开启</option>
+                    <option value="false">关闭</option>
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label for="fuzzy_match_cutoff" class="block text-sm font-medium text-gray-700">
+                    模糊匹配阈值(0.1~0.9)
+                  </label>
+                  <input id="fuzzy_match_cutoff" type="number" value="0.6" step="0.1" min="0.1" max="0.9" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 安全设置 -->
+            <div class="mb-8">
+              <h3 class="text-md font-medium text-gray-800 mb-4">安全设置</h3>
+              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                <div class="mb-4">
+                  <label for="disable_httpauth" class="block text-sm font-medium text-gray-700">
+                    控制台密码验证
+                  </label>
+                  <select id="disable_httpauth"
+                    class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400 bg-white py-2 px-3 text-gray-900 cursor-pointer hover:bg-gray-50">
+                    <option value="true" selected>关闭</option>
+                    <option value="false">开启</option>
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label for="httpauth_username" class="block text-sm font-medium text-gray-700">
+                    控制台账户
+                  </label>
+                  <input id="httpauth_username" type="text" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+                <div class="mb-4">
+                  <label for="httpauth_password" class="block text-sm font-medium text-gray-700">
+                    控制台密码
+                  </label>
+                  <input id="httpauth_password" type="password" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 文件上传 -->
+            <div>
+              <h3 class="text-md font-medium text-gray-800 mb-4">文件上传</h3>
+              <div class="mb-4">
+                <div class="flex items-center gap-2 mb-2">
+                  <label for="yt_dlp_cookies_file" class="text-sm font-medium text-gray-700">
+                    上传yt_dlp_cookies.txt文件
+                  </label>
+                  <a href="https://github.com/hanxi/xiaomusic/issues/210" target="_blank"
+                    class="text-sm text-blue-600 hover:text-blue-800">
+                    文档
+                  </a>
+                </div>
+                <div class="flex gap-2">
+                  <input id="yt_dlp_cookies_file" name="file" type="file" class="block w-full text-sm text-gray-500
+                                  file:mr-4 file:py-2 file:px-4
+                                  file:rounded-md file:border-0
+                                  file:text-sm file:font-semibold
+                                  file:bg-blue-50 file:text-blue-700
+                                  hover:file:bg-blue-100" />
+                  <button id="upload_yt_dlp_cookie"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    上传
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-8">
+              <h3 class="text-md font-medium text-gray-800 mb-4">下载设置</h3>
+              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                <div class="mb-4">
+                  <label for="search_prefix" class="block text-sm font-medium text-gray-700">
+                    歌曲下载方式
+                  </label>
+                  <select id="search_prefix"
+                    class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400 bg-white py-2 px-3 text-gray-900 cursor-pointer hover:bg-gray-50">
+                    <option value="bilisearch:">bilisearch:</option>
+                    <option value="ytsearch:">ytsearch:</option>
+                  </select>
+                </div>
+
+                <div class="mb-4">
+                  <label for="proxy" class="block text-sm font-medium text-gray-700">
+                    代理设置
+                    <span class="text-gray-500 text-xs">(ytsearch需要)</span>
+                  </label>
+                  <input id="proxy" type="text" placeholder="http://192.168.2.5:8080" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-8">
+              <h3 class="text-md font-medium text-gray-800 mb-4">其他设置</h3>
+              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                <div class="mb-4">
+                  <label for="enable_save_tag" class="block text-sm font-medium text-gray-700">
+                    启用ID3标签写入文件
+                  </label>
+                  <select id="enable_save_tag"
+                    class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400 bg-white py-2 px-3 text-gray-900 cursor-pointer hover:bg-gray-50">
+                    <option value="true">开启</option>
+                    <option value="false" selected>关闭</option>
+                  </select>
+                </div>
+
+                <div class="mb-4">
+                  <label for="get_ask_by_mina" class="block text-sm font-medium text-gray-700">
+                    特殊型号获取对话记录
+                  </label>
+                  <select id="get_ask_by_mina"
+                    class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400 bg-white py-2 px-3 text-gray-900 cursor-pointer hover:bg-gray-50">
+                    <option value="true">开启</option>
+                    <option value="false" selected>关闭</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 继续添加其他设置部分... -->
+      </div>
+    </div>
+
+    <!-- 底部按钮组 - 改进移动端显示 -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t">
+      <div class="container mx-auto px-4 py-3">
+        <!-- 所有按钮的容器 -->
+        <div class="flex flex-col sm:flex-row sm:justify-between gap-2">
+          <!-- 主要操作按钮 -->
+          <div class="flex flex-wrap justify-center gap-2">
+            <button
+              class="save-button px-4 py-2 bg-black text-white rounded-md hover:bg-gray-700 flex-1 sm:flex-none">
+              保存设置
+            </button>
+            <button id="refresh_music_tag"
+              class="px-4 py-2 bg-gray-300 border border-gray-300 text-black rounded-md hover:bg-gray-200 flex-1 sm:flex-none">
+              刷新tag
+            </button>
+            <button id="clear_cache"
+              class="px-4 py-2 bg-gray-300 border border-gray-300 text-black rounded-md hover:bg-gray-200 flex-1 sm:flex-none">
+              清空缓存
+            </button>
+          </div>
+
+          <!-- 工具按钮 -->
+          <div class="grid grid-cols-3 sm:flex sm:flex-wrap gap-2">
+            <a href="/docs" target="_blank" class="flex-1 sm:flex-none">
+              <button class="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                <span class="hidden sm:inline">接口文档</span>
+                <span class="sm:hidden">文档</span>
+              </button>
+            </a>
+            <a href="./m3u.html" target="_blank" class="flex-1 sm:flex-none">
+              <button class="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                <span class="hidden sm:inline">m3u转换</span>
+                <span class="sm:hidden">m3u</span>
+              </button>
+            </a>
+            <a href="./downloadtool.html" target="_blank" class="flex-1 sm:flex-none">
+              <button class="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                <span class="hidden sm:inline">歌曲下载工具</span>
+                <span class="sm:hidden">下载</span>
+              </button>
+            </a>
+            <a href="./debug.html" target="_blank" class="flex-1 sm:flex-none">
+              <button class="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                <span class="hidden sm:inline">调试工具</span>
+                <span class="sm:hidden">调试</span>
+              </button>
+            </a>
+            <a href="https://github.com/hanxi/xiaomusic" target="_blank" class="flex-1 sm:flex-none">
+              <button class="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                GitHub
+              </button>
+            </a>
+            <a href="https://afdian.com/a/imhanxi" target="_blank" class="flex-1 sm:flex-none">
+              <button class="w-full px-4 py-2 bg-blue-500 border border-gray-300 text-white rounded-md hover:bg-blue-600">
+                <span class="hidden sm:inline">💰 爱发电</span>
+                <span class="sm:hidden">💰爱发电</span>
+              </button>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 二维码 -->
+    <div class="text-center mt-12 mb-24">
+      <div class="bg-white p-6 rounded-lg border inline-block">
+        <img class="qrcode mx-auto w-40 sm:w-64 h-40 sm:h-64" src="./qrcode.png" alt="请涵曦喝奶茶🧋">
+        <p class="mt-4 text-gray-600 font-medium">扫码请涵曦喝奶茶🧋</p>
+      </div>
+      <footer class="mt-6 text-sm sm:text-base text-gray-600">
+        <p>Powered by <a href="https://xdocs.hanxi.cc" target="_blank"
+            class="text-blue-600 hover:text-blue-800">XiaoMusic</a></p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- 回到顶部按钮 -->
+  <button id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+    class="fixed bottom-24 right-6 w-10 h-10 flex items-center justify-center bg-white border border-gray-300 rounded-full shadow-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 opacity-0 invisible">
+    <span class="material-icons text-xl">arrow_upward</span>
+  </button>
+
+  <!-- 添加必要的 JavaScript -->
+  <script>
+    // 保留导航高亮功能
+    const navItems = $('.nav-item');
+    const sections = $('.setting-section');
+
+    function highlightNav() {
+      const scrollPos = $(window).scrollTop();
+      sections.each(function () {
+        const top = $(this).offset().top - 100;
+        const bottom = top + $(this).outerHeight();
+        if (scrollPos >= top && scrollPos <= bottom) {
+          const id = $(this).attr('id');
+          navItems.removeClass('bg-gray-100 text-gray-900');
+          $(`a[href="#${id}"]`).addClass('bg-gray-100 text-gray-900');
+        }
+      });
+
+      // 控制回到顶部按钮的显示和隐藏
+      const backToTop = $('#back-to-top');
+      if (scrollPos > 300) {
+        backToTop.removeClass('opacity-0 invisible').addClass('opacity-100');
+      } else {
+        backToTop.removeClass('opacity-100').addClass('opacity-0 invisible');
+      }
+    }
+
+    $(window).on('scroll', highlightNav);
+    highlightNav();
+  </script>
+</body>
+
+</html>

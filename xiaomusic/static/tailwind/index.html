@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小爱音箱音乐播放器</title>
+    <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined" rel="stylesheet">
+    <script src="./jquery-3.7.1.min.js?version=1736211336"></script>
+    <script src="./tailwind.js"></script>
+    <script src="./theme.js"></script>
+    <link rel="icon" href="./favicon.ico">
+    <style>
+        .dark .dark\:bg-gray-900 { background-color: #121212; }
+        .dark .dark\:text-white { color: #ffffff; }
+        .dark .dark\:bg-gray-800 { background-color: #282828; }
+        .dark .dark\:hover\:bg-gray-700:hover { background-color: #383838; }
+    </style>
+</head>
+
+<body class="h-full bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
+    <div class="h-full flex flex-col md:flex-row pb-24 md:pb-20">
+        <!-- 左侧边栏 - 播放列表选择 -->
+        <div class="w-full md:w-64 bg-white dark:bg-gray-800 p-6 flex-shrink-0 overflow-y-auto">
+            <!-- 标题 - 仅在桌面端显示 -->
+            <div class="mb-8 hidden md:block">
+                <h1 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">小爱音箱播放器
+                    <a id="version" href="https://github.com/hanxi/xiaomusic" class="text-sm text-blue-500 dark:text-blue-400 ml-2">1.0.0</a>
+                    <span id="versionnew" class="new-badge"></span>
+                </h1>
+            </div>
+            
+            <!-- 设备选择 -->
+            <div class="mb-6">
+                <h2 class="text-sm font-semibold text-gray-600 dark:text-white uppercase tracking-wider mb-3 hidden md:block">播放设备</h2>
+                <div id="device-buttons" class="md:space-y-2 flex md:flex-col overflow-x-auto md:overflow-visible space-x-2 md:space-x-0 pb-2">
+                    <!-- 设备按钮将通过 JavaScript 动态添加 -->
+                </div>
+            </div>
+
+            <!-- 歌单分类 -->
+            <div class="mb-6">
+                <!-- 刷新按钮单独放置 -->
+                <div class="fixed top-16 right-4 z-10 md:static md:mb-3">
+                    <button onclick="refresh_music_list()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="刷新歌单列表">
+                        <span class="material-icons text-gray-600 dark:text-gray-400">refresh</span>
+                    </button>
+                </div>
+
+                <!-- 歌单列表 -->
+                <div id="system-playlists" class="flex-1 md:space-y-2 flex md:flex-col overflow-x-auto md:overflow-visible space-x-2 md:space-x-0 mt-2 md:mt-0">
+                    <!-- 系统播放列表将通过 JavaScript 动态添加 -->
+                </div>
+            </div>
+
+            <!-- 专辑分类 -->
+            <div class="mb-6">
+                <h2 class="text-sm font-semibold text-gray-600 dark:text-white uppercase tracking-wider mb-3 hidden md:block">专辑</h2>
+                <div id="album-list" class="md:space-y-2 flex md:flex-col overflow-x-auto md:overflow-visible space-x-2 md:space-x-0">
+                    <!-- 专辑列表将通过 JavaScript 动态添加 -->
+                </div>
+                <div class="border-t border-gray-200 dark:border-gray-700 my-3"></div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="flex-1 overflow-auto bg-white dark:bg-gray-900">
+            <!-- 顶部操作栏 -->
+            <div class="sticky top-0 bg-white dark:bg-gray-900 p-4 z-10">
+                <div class="flex items-center justify-between space-x-4">
+                    <!-- 搜索框 -->
+                    <div class="relative flex-1">
+                        <span class="material-icons absolute left-3 top-2.5 text-gray-400">search</span>
+                        <input type="text" id="search-input" placeholder="搜索歌曲" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white pl-10 pr-4 py-2 rounded-full" oninput="searchSongs()">
+                    </div>
+                    <!-- 操作按钮 -->
+                    <div class="flex items-center space-x-2">
+                        <button onclick="toggleTheme()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <span class="material-icons block dark:hidden">light_mode</span>
+                            <span class="material-icons hidden dark:block">dark_mode</span>
+                        </button>
+                        <button onclick="openSettings()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <span class="material-icons">settings</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 歌曲列表区域 -->
+            <div class="p-6">
+                <div class="mb-6 flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <h2 class="text-2xl font-bold">歌曲列表</h2>
+                        <button onclick="toggleDeleteButtons()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <span class="material-icons text-gray-600 dark:text-gray-400">delete_outline</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 歌曲列表 -->
+                <div id="song-list" class="space-y-2">
+                    <!-- 歌曲行示例 -->
+                    <div class="song-item flex items-center justify-between p-3 bg-gray-200 dark:bg-gray-800 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">
+                        <div class="flex items-center space-x-3 flex-1">
+                            <div class="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center flex-shrink-0">
+                                <span class="material-icons text-gray-500 dark:text-gray-400">music_note</span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="font-semibold truncate dark:text-blue-400">歌曲名称</h3>
+                            </div>
+                        </div>
+                        <button onclick="playMusic(this.parentElement.querySelector('h3').textContent)" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors">
+                            <span class="material-icons text-gray-600 dark:text-gray-300">play_arrow</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部播放控制栏 -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 p-4">
+        <div class="max-w-screen-xl mx-auto">
+            <!-- 移动端布局 -->
+            <div class="md:hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
+                            <span class="material-icons text-gray-500 dark:text-gray-400">album</span>
+                        </div>
+                        <div>
+                            <h3 id="playering-music-mobile" class="font-semibold text-sm truncate">当前播放歌曲：无</h3>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 truncate">艺术家</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="toggleTimer()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full">
+                            <span class="material-icons">timer</span>
+                        </button>
+                        <button onclick="play()" class="w-12 h-12 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors">
+                            <span class="material-icons-outlined play">play_circle_outline</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 text-xs">
+                    <span id="current-time-mobile" class="text-gray-600 dark:text-gray-400">0:00</span>
+                    <div class="flex-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full">
+                        <div id="progress-mobile" class="h-full bg-blue-500 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <span id="duration-mobile" class="text-gray-600 dark:text-gray-400">0:00</span>
+                </div>
+            </div>
+
+            <!-- 桌面端布局 -->
+            <div class="hidden md:flex items-center justify-between">
+                <div class="flex items-center space-x-4 w-1/4">
+                    <div class="w-14 h-14 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
+                        <span class="material-icons text-2xl text-gray-500 dark:text-gray-400">album</span>
+                    </div>
+                    <div>
+                        <h3 id="playering-music" class="font-semibold truncate">当前播放歌曲：无</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 truncate">艺术家</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center w-2/4">
+                    <div class="flex items-center space-x-4 mb-2">
+                        <button id="modeBtn" onclick="togglePlayMode()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors relative group">
+                            <span class="material-icons">shuffle</span>
+                            <span class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">随机播放</span>
+                        </button>
+                        <button onclick="prevTrack()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <span class="material-icons">skip_previous</span>
+                        </button>
+                        <button onclick="play()" class="w-12 h-12 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors">
+                            <span class="material-icons-outlined play">play_circle_outline</span>
+                        </button>
+                        <button onclick="nextTrack()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <span class="material-icons">skip_next</span>
+                        </button>
+                        <button onclick="stopPlay()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <span class="material-icons">stop</span>
+                        </button>
+                        <button onclick="addToFavorites()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <span class="material-icons favorite-icon">favorite_border</span>
+                        </button>
+                        <button onclick="toggleTimer()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors relative">
+                            <span class="material-icons">timer</span>
+                        </button>
+                    </div>
+                    <div class="w-full flex items-center space-x-3">
+                        <span id="current-time" class="text-xs text-gray-600 dark:text-gray-400">0:00</span>
+                        <div class="flex-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full">
+                            <div id="progress" class="h-full bg-blue-500 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <span id="duration" class="text-xs text-gray-600 dark:text-gray-400">0:00</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-4 w-1/4">
+                    <span class="material-icons text-gray-600 dark:text-gray-400">volume_up</span>
+                    <input type="range" id="volume-slider" min="0" max="1" step="0.01" class="w-24" oninput="adjustVolume(this.value)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 隐藏的音频元素 -->
+    <audio id="audio" src="" autoplay class="hidden"></audio>
+
+    <!-- 定时关机组件 -->
+    <div class="component hidden fixed inset-0 z-50" id="timer-component">
+        <!-- 定时选择框 -->
+        <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">定时关机</h3>
+            </div>
+            <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                <button onclick="timedShutDown('10分钟后关机')" class="w-full p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-3">
+                    <span class="material-icons text-gray-500 dark:text-gray-400">timer</span>
+                    <span class="text-gray-700 dark:text-white">10分钟后关机</span>
+                </button>
+                <button onclick="timedShutDown('30分钟后关机')" class="w-full p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-3">
+                    <span class="material-icons text-gray-500 dark:text-gray-400">timer</span>
+                    <span class="text-gray-700 dark:text-white">30分钟后关机</span>
+                </button>
+                <button onclick="timedShutDown('60分钟后关机')" class="w-full p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-3">
+                    <span class="material-icons text-gray-500 dark:text-gray-400">timer</span>
+                    <span class="text-gray-700 dark:text-white">60分钟后关机</span>
+                </button>
+            </div>
+            <div class="p-3 text-center border-t border-gray-200 dark:border-gray-700">
+                <span class="timer-tooltip hidden text-green-500 text-sm">已发送指令</span>
+            </div>
+        </div>
+        <!-- 背景遮罩 -->
+        <div class="fixed inset-0 bg-black bg-opacity-25" onclick="toggleTimer()"></div>
+    </div>
+
+    <!-- 设置组件 -->
+    <div class="component hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50" id="settings-component">
+        <div class="relative top-20 mx-auto p-5 border w-96 max-w-[90%] shadow-lg rounded-md bg-white dark:bg-gray-800">
+            <h2 class="text-lg font-bold mb-4">设置</h2>
+            <!-- 在这里添加设置选项 -->
+            <div class="flex justify-end mt-4">
+                <button onclick="closeSettings()" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 focus:outline-none">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./md.js?version=1736211336"></script>
+    <script>
+        // 初始化主题和音量
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            initVolume();
+        });
+    </script>
+</body>
+</html>

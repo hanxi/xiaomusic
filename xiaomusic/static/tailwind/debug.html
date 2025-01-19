@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width">
+    <title>Debug For XiaoMusic</title>
+
+    <link rel="stylesheet" type="text/css" href="./main.css?version=1736211336">
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script src="./jquery-3.7.1.min.js?version=1736211336"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments)};
+    gtag('js', new Date());
+    gtag('config', 'G-Z09NC1K7ZW');
+    </script>
+
+    <!-- umami -->
+    <script async defer src="https://umami.hanxi.cc/script.js" data-website-id="7bfb0890-4115-4260-8892-b391513e7e99"></script>
+
+    <script>
+var vConsole = new window.VConsole();
+
+function postJSON() {
+  var data = $('#post-input').val();
+  $.ajax({
+    type: 'POST',
+    url: '/debug_play_by_music_url',
+    data: data,
+    contentType: "application/json; charset=utf-8",
+    success: (err) => {
+      console.log("succ", res);
+    },
+    error: (res) => {
+      console.log("error", res);
+    }
+  });
+}
+
+function sendDebugCmd() {
+  var cmd = $("#cmd").val();
+  var did = localStorage.getItem('cur_did');
+  $.ajax({
+    type: "POST",
+    url: "/cmd",
+    contentType: "application/json; charset=utf-8",
+    data: JSON.stringify({did: did, cmd: cmd}),
+    success: () => {
+    },
+    error: () => {
+      // 请求失败时执行的操作
+    }
+  });
+}
+    </script>
+  </head>
+  <body>
+    <h1>Debug For XiaoMusic</h1>
+    <div class="debug">
+      <textarea id="post-input" rows="10" cols="50" placeholder="粘贴json数据..."></textarea><br>
+      <button onclick="postJSON()">提交</button><br>
+    </div>
+    <hr>
+    <div class="debug">
+      <input id="cmd" type="text"></input>
+      <button onclick="sendDebugCmd()">测试自定义口令</button><br>
+    </div>
+
+  </body>
+
+  <footer>
+    <p>Powered by <a href="https://xdocs.hanxi.cc" target="_blank">XiaoMusic</a></p>
+  </footer>
+</html>
