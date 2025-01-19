@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<title>歌曲下载工具</title>
+	<script src="./jquery-3.7.1.min.js?version=1736211336"></script>
+	<script src="./tailwind.js"></script>
+	<link rel="icon" href="./favicon.ico">
+
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments) };
+		gtag('js', new Date());
+		gtag('config', 'G-Z09NC1K7ZW');
+	</script>
+
+	<!-- umami -->
+	<script async defer src="https://umami.hanxi.cc/script.js"
+		data-website-id="7bfb0890-4115-4260-8892-b391513e7e99"></script>
+
+</head>
+
+<body class="bg-gray-100 min-h-screen p-6">
+	<div class="max-w-4xl mx-auto">
+		<div class="bg-white rounded-lg shadow-md p-6">
+			<div class="flex justify-between items-center mb-6">
+				<h1 class="text-2xl font-bold text-gray-900">歌曲下载工具</h1>
+				<button onclick="location.href='/static/default/setting.html';"
+					class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+					返回设置
+				</button>
+			</div>
+
+			<!-- 歌单下载部分 -->
+			<div class="space-y-4 mb-8">
+				<div class="space-y-4">
+					<div>
+						<label for="playlistUrl" class="block text-sm font-medium text-gray-700 mb-1">输入歌单 URL:</label>
+						<input type="text" id="playlistUrl" value="https://m.bilibili.com/video/BV1WUsDezE88"
+							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+					</div>
+
+					<div>
+						<label for="dirname" class="block text-sm font-medium text-gray-700 mb-1">输入歌单名字:</label>
+						<input type="text" id="dirname" placeholder="流行歌曲"
+							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+					</div>
+
+					<button id="downloadPlaylistBtn"
+						class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+						下载歌单
+					</button>
+				</div>
+			</div>
+
+			<div class="border-t border-gray-200 my-6"></div>
+
+			<!-- 单曲下载部分 -->
+			<div class="space-y-4">
+				<div>
+					<label for="songUrl" class="block text-sm font-medium text-gray-700 mb-1">输入歌曲 URL:</label>
+					<input type="text" id="songUrl" value="https://m.bilibili.com/video/BV1qD4y1U7fs"
+						class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+				</div>
+
+				<div>
+					<label for="songName" class="block text-sm font-medium text-gray-700 mb-1">输入歌曲名字:</label>
+					<input type="text" id="songName" placeholder="歌曲名"
+						class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+				</div>
+
+				<button id="downloadSongBtn"
+					class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+					下载单曲
+				</button>
+			</div>
+		</div>
+
+		<!-- 使用说明部分 -->
+		<div class="bg-white rounded-lg shadow-md p-6 mt-6">
+			<h2 class="text-lg font-medium text-gray-900 mb-4">使用说明</h2>
+			<div class="prose prose-blue">
+				<div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+					<ul class="space-y-2 text-gray-600">
+						<li>• 支持下载B站和YouTube的播放列表或单个视频</li>
+						<li>• 播放列表链接格式要求：
+							<ul class="ml-4 mt-1 space-y-1">
+								<li>- B站示例：<code
+										class="bg-blue-100 px-2 py-0.5 rounded">https://m.bilibili.com/video/BV1WUsDezE88</code>
+								</li>
+								<li>- YouTube示例：<code
+										class="bg-blue-100 px-2 py-0.5 rounded">https://m.youtube.com/playlist?list=PLUD2d-pqyvT6_ztf31hx-5SsUUvY5UsQn</code>
+								</li>
+								<li>- 链接中不能包含其他多余参数</li>
+							</ul>
+						</li>
+						<li>• 歌单名称用于创建保存文件夹，建议每次使用新的名称</li>
+						<li>• YouTube下载需要上传cookies.txt文件（<a href="https://github.com/hanxi/xiaomusic/issues/210"
+								class="text-blue-600 hover:text-blue-800 underline" target="_blank">查看详细说明</a>）</li>
+						<li>• 也支持下载单个视频的音频</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<!-- 底部按钮组 - 改进移动端显示 -->
+		<div class="fixed bottom-0 left-0 right-0 bg-white border-t">
+			<div class="container mx-auto px-4 py-3">
+				<!-- 所有按钮的容器 -->
+				<div class="flex flex-col sm:flex-row sm:justify-end gap-2">
+					<!-- 工具按钮 -->
+					<div class="grid grid-cols-3 sm:flex sm:flex-wrap gap-2">
+						<a href="/docs" target="_blank" class="flex-1 sm:flex-none">
+							<button
+								class="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+								<span class="hidden sm:inline">接口文档</span>
+								<span class="sm:hidden">文档</span>
+							</button>
+						</a>
+						<a href="./m3u.html" target="_blank" class="flex-1 sm:flex-none">
+							<button
+								class="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+								<span class="hidden sm:inline">m3u转换</span>
+								<span class="sm:hidden">m3u</span>
+							</button>
+						</a>
+						<a href="./downloadtool.html" target="_blank" class="flex-1 sm:flex-none">
+							<button
+								class="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+								<span class="hidden sm:inline">歌曲下载工具</span>
+								<span class="sm:hidden">下载</span>
+							</button>
+						</a>
+						<a href="./debug.html" target="_blank" class="flex-1 sm:flex-none">
+							<button
+								class="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+								<span class="hidden sm:inline">调试工具</span>
+								<span class="sm:hidden">调试</span>
+							</button>
+						</a>
+						<a href="https://github.com/hanxi/xiaomusic" target="_blank" class="flex-1 sm:flex-none">
+							<button
+								class="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+								GitHub
+							</button>
+						</a>
+						<a href="https://afdian.com/a/imhanxi" target="_blank" class="flex-1 sm:flex-none">
+							<button
+								class="w-full px-4 py-2 bg-blue-500 border border-gray-300 text-white rounded-md hover:bg-blue-600">
+								<span class="hidden sm:inline">💰 爱发电</span>
+								<span class="sm:hidden">💰爱发电</span>
+							</button>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- 二维码 -->
+		<div class="text-center mt-12 mb-24">
+			<div class="bg-white p-6 rounded-lg border inline-block">
+				<img class="qrcode mx-auto w-40 sm:w-64 h-40 sm:h-64" src="./qrcode.png" alt="请涵曦喝奶茶🧋">
+				<p class="mt-4 text-gray-600 font-medium">扫码请涵曦喝奶茶🧋</p>
+			</div>
+			<footer class="mt-6 text-sm sm:text-base text-gray-600">
+				<p>Powered by <a href="https://xdocs.hanxi.cc" target="_blank"
+						class="text-blue-600 hover:text-blue-800">XiaoMusic</a></p>
+			</footer>
+		</div>
+	</div>
+	</div>
+
+
+	<script>
+		// 下载歌单
+		$('#downloadPlaylistBtn').click(function () {
+			var playlistUrl = $('#playlistUrl').val();
+			var dirname = $('#dirname').val();
+
+			if (!playlistUrl || !dirname) {
+				alert('请填写完整的歌单 URL 和歌单名字');
+				return;
+			}
+
+			var data = {
+				dirname: dirname,
+				url: playlistUrl
+			};
+			$.ajax({
+				type: "POST",
+				url: "/downloadplaylist",
+				contentType: "application/json",
+				data: JSON.stringify(data),
+				success: (msg) => {
+					alert('歌单下载请求已发送!');
+					console.log(response);
+				},
+				error: (msg) => {
+					alert('歌单下载请求失败，请重试。');
+				}
+			});
+		});
+
+		// 下载单曲
+		$('#downloadSongBtn').click(function () {
+			var songName = $('#songName').val();
+			var songUrl = $('#songUrl').val();
+
+			if (!songUrl || !songName) {
+				alert('请填写完整的歌曲 URL 和歌曲名字');
+				return;
+			}
+
+			var data = {
+				name: songName,
+				url: songUrl
+			};
+			$.ajax({
+				type: "POST",
+				url: "/downloadonemusic",
+				contentType: "application/json",
+				data: JSON.stringify(data),
+				success: (msg) => {
+					alert('单曲下载请求已发送!');
+					console.log(response);
+				},
+				error: (msg) => {
+					alert('单曲下载请求失败，请重试。');
+				}
+			});
+		});
+	</script>
+</body>
+
+</html>

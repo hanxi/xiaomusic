@@ -265,7 +265,7 @@ textarea {
   margin-top: 10px;
   margin-bottom: 10px;
   width: 90%;
-  max-width: 400px;
+  /* max-width: 400px; */
   height: 200px;
 }
 .custom-checkbox {
