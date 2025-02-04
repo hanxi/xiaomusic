@@ -266,6 +266,7 @@ docker build -t xiaomusic .
 - [微信小程序: XIAO晓音](https://github.com/F-loat/xiaoplayer)
 - [pure 主题 xiaomusicUI](https://github.com/52fisher/xiaomusicUI)
 - [移动端的播放器主题](https://github.com/52fisher/XMusicPlayer)
+- [Tailwind主题](https://github.com/clarencejh/xiaomusic)
 - [一个第三方的主题](https://github.com/DarrenWen/xiaomusicui)
 - [Umami 统计](https://github.com/umami-software/umami)
 - [Sentry 报错监控](https://github.com/getsentry/sentry)

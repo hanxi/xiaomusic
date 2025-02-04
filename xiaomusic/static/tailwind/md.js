@@ -5,6 +5,7 @@ let isPlaying = false;
 let playModeIndex = 2;
 //重新设计playModes
 const playModes = {
+<<<<<<< HEAD
   0: {
     icon: "repeat_one",
     cmd: "单曲循环"
@@ -13,16 +14,26 @@ const playModes = {
     icon: "repeat",
     cmd: "全部循环"
   },
+=======
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
   2: {
     icon: "shuffle",
     cmd: "随机播放"
   },
   3: {
+<<<<<<< HEAD
     icon: "looks_one",
     cmd: "单曲播放"
   },
   4: {
     icon: "queue_music",
+=======
+    icon: "repeat_one",
+    cmd: "单曲播放"
+  },
+  4: {
+    icon: "repeat",
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
     cmd: "顺序播放"
   }
 };
@@ -30,9 +41,12 @@ const playModes = {
 let favoritelist = []; //收藏列表
 let progressInterval;
 
+<<<<<<< HEAD
 // 全局变量，用于存储播放状态更新定时器
 let playingStatusInterval = null;
 
+=======
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
 function startProgressUpdate() {
   // 清除之前的计时器
   if (progressInterval) {
@@ -255,18 +269,25 @@ function togglePlayMode(isSend = true) {
     playModeIndex = parseInt(localStorage.getItem("playModeIndex")) || 2;
   }
   
+<<<<<<< HEAD
   // 计算下一个播放模式索引：2 -> 3 -> 4 -> 2
   const nextModeIndex = playModeIndex >= 4 ? 2 : playModeIndex + 1;
   
   // 获取下一个播放模式
   const nextMode = playModes[nextModeIndex];
   console.log('切换到播放模式:', nextModeIndex, nextMode.cmd);
+=======
+  // 获取当前播放模式
+  const currentMode = playModes[playModeIndex];
+  console.log('当前播放模式:', playModeIndex, currentMode.cmd);
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
   
   // 更新按钮图标和提示文本
   const modeBtn = $("#modeBtn");
   const modeBtnIcon = modeBtn.find(".material-icons");
   const tooltip = modeBtn.find(".tooltip");
   
+<<<<<<< HEAD
   modeBtnIcon.text(nextMode.icon);
   tooltip.text(nextMode.cmd);
   
@@ -279,6 +300,23 @@ function togglePlayMode(isSend = true) {
   // 保存新的播放模式到本地存储和全局变量
   localStorage.setItem("playModeIndex", nextModeIndex);
   playModeIndex = nextModeIndex;
+=======
+  modeBtnIcon.text(currentMode.icon);
+  tooltip.text(currentMode.cmd);
+  
+  // 如果需要发送命令，则发送到设备
+  if (isSend && window.did !== 'web_device') {
+    console.log('发送播放模式命令:', currentMode.cmd);
+    sendcmd(currentMode.cmd);
+  }
+  
+  // 更新播放模式索引，循环切换：2 -> 3 -> 4 -> 2
+  playModeIndex = playModeIndex >= 4 ? 2 : playModeIndex + 1;
+  console.log('下一个播放模式索引:', playModeIndex);
+  
+  // 保存下一个播放模式到本地存储
+  localStorage.setItem("playModeIndex", playModeIndex);
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
 }
 
 function addToFavorites() {
@@ -467,6 +505,7 @@ function _refresh_music_list(callback) {
     if (!localStorage.getItem("cur_playlist")) {
       localStorage.setItem("cur_playlist", defaultList);
       showPlaylist(defaultList);
+<<<<<<< HEAD
     }
 
     // 渲染系统播放列表和专辑列表
@@ -489,6 +528,16 @@ function _refresh_music_list(callback) {
       }
       callback && callback();
     });
+=======
+      callback && callback();
+      return;
+    }
+
+    // 获取当前播放列表
+    const currentPlaylist = localStorage.getItem("cur_playlist") || defaultList;
+    showPlaylist(currentPlaylist);
+    callback && callback();
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
   });
 }
 
@@ -639,7 +688,11 @@ window.showPlaylist = function(listName) {
 function refresh_music_list() {
   console.log("开始刷新音乐列表...");
   // 刷新列表时清空并临时禁用搜索框
+<<<<<<< HEAD
   const searchInput = document.getElementById("search-input");
+=======
+  const searchInput = document.getElementById("search-input");  // 修正ID
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
   if (!searchInput) {
     console.error("未找到搜索输入框");
     return;
@@ -660,8 +713,16 @@ function refresh_music_list() {
     searchInput.value = oriValue;
     searchInput.dispatchEvent(inputEvent);
     searchInput.placeholder = oriPlaceHolder;
+<<<<<<< HEAD
     // 立即获取一次播放状态
     get_playing_music();
+=======
+    // 每3秒获取下正在播放的音乐
+    get_playing_music();
+    setInterval(() => {
+      get_playing_music();
+    }, 3000);
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
   });
 }
 
@@ -863,6 +924,7 @@ function get_playing_music() {
       } else {
         $(".favorite").removeClass("favorite-active");
       }
+<<<<<<< HEAD
 
       // 更新 Vue 组件状态
       const app = document.querySelector('#app')?.__vue_app__;
@@ -872,6 +934,8 @@ function get_playing_music() {
           vm.updatePlayingStatus();
         }
       }
+=======
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
     } else {
       // 如果没有正在播放的音乐，重置显示
       $("#progress").val(0);
@@ -1108,6 +1172,41 @@ document.getElementById('volume-slider')?.addEventListener('input', function() {
   adjustVolume(this.value);
 });
 
+<<<<<<< HEAD
+=======
+// 搜索功能
+function searchSongs() {
+  const searchInput = document.getElementById('search-input');
+  if (!searchInput) return;
+  
+  const searchTerm = searchInput.value.toLowerCase();
+  const songItems = document.querySelectorAll('.song-item');
+
+  songItems.forEach(item => {
+    const songName = item.querySelector('h3')?.textContent.toLowerCase() || '';
+    if (songName.includes(searchTerm)) {
+      item.style.display = '';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+// 初始化事件监听器
+function initEventListeners() {
+  // 搜索输入框事件监听
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', searchSongs);
+  }
+}
+
+// 在文档加载完成后初始化
+$(document).ready(function() {
+  initEventListeners();
+});
+
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
 // 渲染设备按钮
 function renderDeviceButtons(devices, currentDid) {
   const container = $("#device-buttons");
@@ -1218,6 +1317,10 @@ window.toggleTheme = toggleTheme;
 window.initTheme = initTheme;
 window.adjustVolume = adjustVolume;
 window.initVolume = initVolume;
+<<<<<<< HEAD
+=======
+window.searchSongs = searchSongs;
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
 
 // 添加删除按钮显示状态变量
 let showDeleteButtons = false;
@@ -1261,12 +1364,21 @@ function renderSongList(songs) {
         <div class="flex items-center space-x-2">
           <button class="play-button w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors">
             <span class="material-icons play-icon text-gray-600 dark:text-gray-300">${isCurrentSong && isPlaying ? 'pause' : 'play_arrow'}</span>
+<<<<<<< HEAD
             </button>
           <button class="delete-button w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-400 dark:hover:bg-red-600 transition-colors ${showDeleteButtons ? '' : 'hidden'}">
             <span class="material-icons text-gray-600 dark:text-gray-300 hover:text-white">delete</span>
             </button>
           </div>
         </div>
+=======
+          </button>
+          <button class="delete-button w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-400 dark:hover:bg-red-600 transition-colors ${showDeleteButtons ? '' : 'hidden'}">
+            <span class="material-icons text-gray-600 dark:text-gray-300 hover:text-white">delete</span>
+          </button>
+        </div>
+      </div>
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
     `);
     
     // 添加播放按钮点击事件
@@ -1549,7 +1661,97 @@ window.toggleFavorite = function() {
       refresh_music_list();
     },
     error: () => {
+<<<<<<< HEAD
       console.error(`收藏失败:`, currentSong);
     }
   });
 }
+=======
+      console.error(`${isFavorite ? '取消收藏' : '收藏'}失败:`, currentSong);
+      // 恢复图标状态
+      favoriteIcon.textContent = isFavorite ? 'favorite' : 'favorite_border';
+    }
+  });
+}
+
+// 切换定时器显示
+window.toggleTimer = function() {
+  const timerComponent = document.getElementById('timer-component');
+  const isVisible = !timerComponent.classList.contains('hidden');
+  
+  if (isVisible) {
+    timerComponent.classList.add('hidden');
+  } else {
+    // 显示定时器组件
+    timerComponent.classList.remove('hidden');
+  }
+}
+
+// 定时关机
+window.timedShutDown = function(cmd) {
+  sendcmd(cmd);
+  // 显示提示信息
+  const tooltip = document.querySelector('.timer-tooltip');
+  tooltip.classList.remove('hidden');
+  // 3秒后隐藏提示和定时器组件
+  setTimeout(() => {
+    tooltip.classList.add('hidden');
+    document.getElementById('timer-component').classList.add('hidden');
+  }, 3000);
+}
+
+// 更新收藏状态
+function updateFavoriteStatus(songName) {
+  if (!songName) return;
+  
+  // 检查歌曲是否在收藏列表中
+  const isLiked = favoritelist.includes(songName);
+  
+  // 更新收藏按钮状态
+  if (isLiked) {
+    $(".favorite").addClass("favorite-active");
+  } else {
+    $(".favorite").removeClass("favorite-active");
+  }
+}
+
+// 音频播放结束时自动播放下一首
+$("#audio").on("ended", function() {
+  nextTrack();
+});
+
+// 初始化时开始定时获取播放状态
+$(document).ready(function() {
+  // 立即获取一次播放状态
+  get_playing_music();
+  
+  // 每3秒更新一次播放状态
+  setInterval(get_playing_music, 3000);
+});
+
+// 在页面加载时初始化播放模式
+$(document).ready(function() {
+  console.log('初始化播放模式...');
+  
+  // 从本地存储获取播放模式，如果没有则使用默认值
+  const savedMode = localStorage.getItem("playModeIndex");
+  if (savedMode !== null) {
+    playModeIndex = parseInt(savedMode);
+  } else {
+    playModeIndex = 2; // 默认随机播放
+    localStorage.setItem("playModeIndex", playModeIndex);
+  }
+  
+  // 获取当前播放模式
+  const currentMode = playModes[playModeIndex];
+  console.log('当前播放模式:', playModeIndex, currentMode.cmd);
+  
+  // 初始化播放模式按钮
+  const modeBtn = $("#modeBtn");
+  const modeBtnIcon = modeBtn.find(".material-icons");
+  const tooltip = modeBtn.find(".tooltip");
+  
+  modeBtnIcon.text(currentMode.icon);
+  tooltip.text(currentMode.cmd);
+});
+>>>>>>> 94cd7be58c5ef8c46d6305ca5d7af110299ee729
