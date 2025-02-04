@@ -181,7 +181,7 @@
                                         <div class="flex items-center gap-3">
                                             <div
                                                 class="w-10 h-10 bg-base-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <span class="material-icons icon-sm opacity-50">music_note</span>
+                                                <img :src="song.cover" :alt="song.title" class="w-10 h-10 rounded-lg">
                                             </div>
                                             <div class="flex flex-col">
                                                 <span class="font-medium"
@@ -650,6 +650,7 @@
 
                 const loadSongs = async (songNames) => {
                     try {
+                        
                         // 使用 getMusicInfos 批量获取歌曲信息
                         const songsInfo = await API.getMusicInfos(songNames);
 
@@ -669,18 +670,22 @@
                                     isLoading: false
                                 };
                             }
-                            return {
+
+                            const songData = {
                                 id: songName,
-                                title: songName,
+                                title: info.tags?.title || songName,
                                 artist: info.tags?.artist || '未知歌手',
                                 album: info.tags?.album || '未知专辑',
+                                year: info.tags?.year || '',
+                                genre: info.tags?.genre || '',
                                 duration: info.duration ? formatTime(info.duration) : '0:00',
-                                cover: info.cover || '/static/xiaoai.png',
+                                cover: info.tags?.picture || '/static/xiaoai.png',
                                 url: info.url,
+                                lyrics: info.tags?.lyrics || '',
                                 isLoading: false
                             };
+                            return songData;
                         });
-
                     } catch (error) {
                         console.error('Error loading songs:', error);
                         songs.value = [];

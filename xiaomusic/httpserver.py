@@ -8,7 +8,10 @@ import tempfile
 import urllib.parse
 from contextlib import asynccontextmanager
 from dataclasses import asdict
-from typing import Annotated
+from typing import Annotated, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from xiaomusic.xiaomusic import XiaoMusic
 
 import aiofiles
 from fastapi import (
@@ -49,7 +52,7 @@ from xiaomusic.utils import (
     update_version,
 )
 
-xiaomusic = None
+xiaomusic: "XiaoMusic" = None
 config = None
 log = None
 
