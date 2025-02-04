@@ -1,358 +1,133 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f0f0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  padding: 0;
+/* 自定义滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
 }
-.index_page {
-  height: 100vh;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
 }
-
-.player {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  max-width: 360px;
-  position: relative;
-  overflow: hidden;
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
-h1 {
-  font-size: 28px;
-  margin-bottom: 15px;
-  color: #333;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* Material Icons 基础样式 */
+.material-icons {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  overflow: hidden !important;
+  vertical-align: middle !important;
 }
 
-h1 a {
-  margin-left: 10px;
-  font-size: 14px;
-  color: #007bff;
-  text-decoration: none;
+.material-icons.icon-sm {
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 20px !important;
 }
 
-h1 a:hover {
-  text-decoration: underline;
+.material-icons.icon-lg {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 28px !important;
 }
 
-.new-badge {
-  background-color: #ff4757;
-  color: white;
-  border-radius: 12px;
-  padding: 2px 6px;
-  font-size: 12px;
-  margin-left: 5px;
-  display: none;
-  width: fit-content;
+/* 按钮样式 */
+.btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  line-height: 1 !important;
 }
 
-label {
-  font-size: 14px;
-  color: #555;
-  margin: 5px 0;
-  display: block;
-  text-align: left;
+.btn-circle {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  min-height: unset !important;
 }
 
-select,
-input[type="range"],
-input[type="text"],
-input[type="password"],
-input[type="number"] {
-  padding: 10px;
-  border: 1px solid #cccccc;
-  border-radius: 6px;
-  margin-bottom: 12px;
-  font-size: 14px;
-  transition: border 0.2s ease;
-  box-sizing: border-box
+/* 左侧按钮组样式 */
+.side-buttons .btn {
+  opacity: 0.7;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  background-color: transparent;
+  padding: 0.5rem !important;
+  min-height: unset !important;
 }
 
-select:focus,
-input[type="text"]:focus {
-  border-color: #007bff;
-  outline: none;
-}
-select {
-  overflow: hidden;
-}
-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 15px;
-  cursor: pointer;
-  margin: 5px;
-  font-size: 16px;
-  transition: background-color 0.3s;
-  position: relative; /* 为tooltip绝对定位做准备 */
+.side-buttons .btn .material-icons {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-button:hover {
-  background-color: #0056b3;
-}
-.tooltip {
-  visibility: hidden;
-  background-color: #555;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 5px;
-  position: absolute;
-  z-index: 1;
-  bottom: 150%; /* 控制tooltip相对按钮的位置 */
-  left: 50%;
-  margin-left: -50px; /* 调整位置以居中显示 Tooltip */
-  width: 80px; /* 设置固定宽度以保证足够的显示空间 */
-  white-space: nowrap; /* 防止换行 */
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-button:hover .tooltip,.option-inline:hover .tooltip,.control-button:hover .tooltip {
-  visibility: visible;
+.side-buttons .btn:hover {
   opacity: 1;
-}
-.option-inline{
-  display: flex;
-  margin-left: auto;
-  position: relative;
-  align-items: center;
-}
-.option-inline:hover .tooltip {
-  /* 位置调整到左边 */
-  left: -50px; /* 调整位置以居中显示 Tooltip */
-  bottom: 0;
-}
-.control-button{
-  position: relative; /* 为tooltip绝对定位做准备 */
-}
-.progress {
-  width: 90%;
-  height: 6px;
-  background: #e0e0e0;
-  border-radius: 6px;
-  margin: 15px 0;
-  cursor: pointer;
-}
-progress::-webkit-progress-bar {
-  background: #e0e0e0;
+  transform: translateX(4px);
+  background-color: rgba(59, 130, 246, 0.1);
 }
 
-progress::-moz-progress-bar,
-progress::-webkit-progress-value {
-  background: #007bff;
-}
-
-.current-song {
-  color: #333;
-  margin: 10px 0;
-  font-weight: bold;
-  text-align: center;
-}
-
-.component {
-  display: none;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #ffffff;
-  padding: 5px 15px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  z-index: 100;
-  width: 300px;
-}
-.component input {
-  width: 90%;
-}
-.component-button-group {
-  display: flex;
-  justify-content: space-between;
-}
-.component-button-one {
-  display: flex;
-  justify-content: center;
-}
-#warning-component p span {
-  color: #007bff;
-}
-
-
-.button-group {
-  display: flex;
-  justify-content: center;
-  margin: 5px 0;
-}
-
-.player-controls {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-.play {
-  font-size: 48px;
-}
-
-.footer {
-  position: absolute;
-  bottom: 20px;
-  font-size: 14px;
-  color: #555;
-  user-select: none;
-}
-
-.timer-tooltip {
-  bottom: 50%;
-  visibility: visible;
+.side-buttons .btn.active {
   opacity: 1;
+  background-color: rgb(59, 130, 246);
+  color: white;
+  border: 2px solid rgb(59, 130, 246);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+  transform: scale(1.1);
 }
-.favorite.favorite-active .material-icons {
-  color: #ff6347;
+
+.side-buttons .btn.active:hover {
+  transform: scale(1.1) translateX(4px);
+  background-color: rgb(37, 99, 235);
 }
-#audio {
-  width: 100%;
+
+/* 播放控制栏样式 */
+.player-controls .btn-circle {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+}
+
+.player-controls .btn-circle .material-icons {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 下拉菜单样式 */
+.dropdown-content .material-icons {
+  margin-right: 0.5rem !important;
+}
+
+/* 其他图标容器样式 */
+.flex-center-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+[v-cloak] {
   display: none;
 }
 
-.qrcode {
-  width: 100%;
-  max-width: 400px;
-  height: auto;
+/* 收藏按钮样式 */
+.btn-ghost:not(.text-error) .icon-sm {
+  opacity: 0.5;
 }
-
-.login-tips {
-  color: red;
-  font-size: 12px;
-  margin-left: 10px;
-}
-.login-tips a {
-  color: rgb(9, 105, 218);
-  text-decoration: underline;
-}
-
-/* setting.html */
-.rows {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.rows a {
-  color: rgb(9, 105, 218);
-  text-decoration: none;
-}
-.rows a:hover {
-  color: rgb(9, 95, 198);
-  text-decoration: underline;
-}
-
-textarea {
-  margin-left: 5%;
-  margin-right: 5%;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  width: 90%;
-  /* max-width: 400px; */
-  height: 200px;
-}
-.custom-checkbox {
-  display: inline-block;
-  margin: 10px;
-  width: 20px;
-  height: 20px;
-  vertical-align: middle; /* 确保与标签垂直居中对齐 */
-}
-
-.checkbox-label {
-  display: inline-block;
-  width: 180px;
-  background-color: #fff;
-  border: 0px solid #ccc;
-  border-radius: 3px;
-  position: relative;
-  cursor: pointer;
-  vertical-align: middle; /* 确保与复选框垂直居中对齐 */
-  margin-left: 1px; /* 给复选框和标签之间一些距离，如果需要的话 */
-  padding: 5px 10px;
-}
-.debug {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-@media screen and (max-width: 440px) {
-  .player{
-    width: 90%;
-  }
-  .footer {
-    position: relative;
-  }
-}
-
-.mini-button {
-  padding: 0px 0px;
-  margin: 0px;
-  font-size: 14px;
-  margin-left: auto;
-}
-
-.playlist-selector,
-.device-selector,
-.version-selector,
-.song-selector {
-  width: 300px;
-}
-
-.mode-controls {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 10px 0;
-  border-top: 1px solid #ddd;
-  color: #555;
-}
-.icon-item {
-  text-align: center;
-}
-
-.icon-item p {
-  font-size: 12px;
-  margin: 5px 0 0;
-}
-.disabled {
-  color: #ccc;
-  pointer-events: none;
-}
-
-span,p {
-  cursor: pointer;
-  user-select: none;
-}
-
-.changelog-button {
-  padding: 0px 0px;
-  margin: 0px;
-  font-size: 14px;
-  margin-left: auto;
-  text-decoration: none;
-}
-
-.setting-label {
-  display: flex;
-  align-items: center;
+.text-error .icon-sm {
+  fill: currentColor;
 }

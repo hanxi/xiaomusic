@@ -1,259 +1,1319 @@
 <!DOCTYPE html>
-<html lang="zh" class="h-full">
+<html lang="en" data-theme="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小爱音箱音乐播放器</title>
-    <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined" rel="stylesheet">
-    <script src="./jquery-3.7.1.min.js?version=1736211336"></script>
-    <script src="./tailwind.js"></script>
-    <script src="./theme.js"></script>
+    <title>小爱音箱播放器</title>
     <link rel="icon" href="./favicon.ico">
-    <style>
-        .dark .dark\:bg-gray-900 { background-color: #121212; }
-        .dark .dark\:text-white { color: #ffffff; }
-        .dark .dark\:bg-gray-800 { background-color: #282828; }
-        .dark .dark\:hover\:bg-gray-700:hover { background-color: #383838; }
-    </style>
+
+    <!-- DaisyUI and Tailwind -->
+    <link href="./libs/daisyui@4.12.23.css" rel="stylesheet" type="text/css" />
+    <script src="./libs/tailwind.js"></script>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <!-- jQuery -->
+    <script src="./libs/jquery-3.6.0.js"></script>
+    <!-- Vue 3 Production -->
+    <script src="./libs/vue@3.5.13.js"></script>
+    <!-- Axios for API calls -->
+    <script src="./libs/axios.min.js"></script>
+    <!-- Animate.css -->
+    <link href="./libs/animate.min.css" rel="stylesheet">
+    <!-- md.js -->
+    <script src="./md.js"></script>
+    <script src="./api.js"></script>
+    <link rel="stylesheet" href="./main.css">
 </head>
 
-<body class="h-full bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
-    <div class="h-full flex flex-col md:flex-row pb-24 md:pb-20">
-        <!-- 左侧边栏 - 播放列表选择 -->
-        <div class="w-full md:w-64 bg-white dark:bg-gray-800 p-6 flex-shrink-0 overflow-y-auto">
-            <!-- 标题 - 仅在桌面端显示 -->
-            <div class="mb-8 hidden md:block">
-                <h1 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">小爱音箱播放器
-                    <a id="version" href="https://github.com/hanxi/xiaomusic" class="text-sm text-blue-500 dark:text-blue-400 ml-2">1.0.0</a>
-                    <span id="versionnew" class="new-badge"></span>
-                </h1>
-            </div>
-            
-            <!-- 设备选择 -->
-            <div class="mb-6">
-                <h2 class="text-sm font-semibold text-gray-600 dark:text-white uppercase tracking-wider mb-3 hidden md:block">播放设备</h2>
-                <div id="device-buttons" class="md:space-y-2 flex md:flex-col overflow-x-auto md:overflow-visible space-x-2 md:space-x-0 pb-2">
-                    <!-- 设备按钮将通过 JavaScript 动态添加 -->
-                </div>
-            </div>
-
-            <!-- 歌单分类 -->
-            <div class="mb-6">
-                <!-- 刷新按钮单独放置 -->
-                <div class="fixed top-16 right-4 z-10 md:static md:mb-3">
-                    <button onclick="refresh_music_list()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="刷新歌单列表">
-                        <span class="material-icons text-gray-600 dark:text-gray-400">refresh</span>
-                    </button>
-                </div>
-
-                <!-- 歌单列表 -->
-                <div id="system-playlists" class="flex-1 md:space-y-2 flex md:flex-col overflow-x-auto md:overflow-visible space-x-2 md:space-x-0 mt-2 md:mt-0">
-                    <!-- 系统播放列表将通过 JavaScript 动态添加 -->
-                </div>
-            </div>
-
-            <!-- 专辑分类 -->
-            <div class="mb-6">
-                <h2 class="text-sm font-semibold text-gray-600 dark:text-white uppercase tracking-wider mb-3 hidden md:block">专辑</h2>
-                <div id="album-list" class="md:space-y-2 flex md:flex-col overflow-x-auto md:overflow-visible space-x-2 md:space-x-0">
-                    <!-- 专辑列表将通过 JavaScript 动态添加 -->
-                </div>
-                <div class="border-t border-gray-200 dark:border-gray-700 my-3"></div>
+<body class="bg-base-200">
+    <div id="app" v-cloak>
+        <!-- 添加 toast 容器 -->
+        <div class="toast toast-top toast-center z-[9999]">
+            <div v-if="showToast" :class="['alert', toastType]">
+                <span>{{ toastMessage }}</span>
             </div>
         </div>
 
-        <!-- 主内容区 -->
-        <div class="flex-1 overflow-auto bg-white dark:bg-gray-900">
-            <!-- 顶部操作栏 -->
-            <div class="sticky top-0 bg-white dark:bg-gray-900 p-4 z-10">
-                <div class="flex items-center justify-between space-x-4">
-                    <!-- 搜索框 -->
-                    <div class="relative flex-1">
-                        <span class="material-icons absolute left-3 top-2.5 text-gray-400">search</span>
-                        <input type="text" id="search-input" placeholder="搜索歌曲" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white pl-10 pr-4 py-2 rounded-full" oninput="searchSongs()">
+        <!-- 导航栏 -->
+        <div class="navbar bg-base-100 shadow-lg fixed top-0 left-0 right-0 w-full z-40 px-4">
+            <div class="flex-1">
+                <a class="btn btn-ghost text-xl px-2">
+                    <span class="material-icons icon-lg mr-2">music_note</span>
+                    小爱音箱播放器
+                </a>
+                <a href="https://xdocs.hanxi.cc/issues/changelog.html" target="_blank">
+                    <div class="badge badge-primary ml-2" v-if="version">v{{ version }}</div>
+                </a>
+            </div>
+            <div class="flex-none gap-2">
+                <!-- 搜索框 -->
+                <div class="relative">
+                    <input type="text" v-model="searchQuery" @input="handleSearch" placeholder="搜索歌曲、歌手或专辑..."
+                        class="input input-bordered w-full pr-10" />
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2">
+                        <i class="material-icons text-gray-400">search</i>
+                    </span>
+                </div>
+                <div class="flex flex-row gap-2 items-center">
+                    <div class="dropdown">
+                        <label tabindex="0" class="btn btn-ghost btn-circle flex items-center justify-center w-10 h-10">
+                            <span class="material-icons">{{ currentTheme === 'light' ? 'light_mode' : 'dark_mode'
+                                }}</span>
+                        </label>
+                        <ul tabindex="0"
+                            class="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 max-h-96 overflow-y-auto z-[9999]">
+                            <li class="menu-title">选择主题</li>
+                            <li v-for="theme in themes" :key="theme">
+                                <a @click="setTheme(theme)" :class="{ 'active': currentTheme === theme }">
+                                    {{ theme }}
+                                </a>
+                            </li>
+                        </ul>
                     </div>
-                    <!-- 操作按钮 -->
-                    <div class="flex items-center space-x-2">
-                        <button onclick="toggleTheme()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <span class="material-icons block dark:hidden">light_mode</span>
-                            <span class="material-icons hidden dark:block">dark_mode</span>
-                        </button>
-                        <button onclick="openSettings()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <span class="material-icons">settings</span>
-                        </button>
-                    </div>
+                    <div class="divider divider-horizontal my-1"></div>
+                    <a href="./downloadtool.html" target="_blank"
+                        class="btn btn-ghost btn-circle flex items-center justify-center w-10 h-10">
+                        <span class="material-icons">download</span>
+                    </a>
+                    <a href="./setting.html" target="_blank"
+                        class="btn btn-ghost btn-circle flex items-center justify-center w-10 h-10">
+                        <span class="material-icons">settings</span>
+                    </a>
+                    <a href="https://github.com/hanxi/xiaomusic" target="_blank" data-tip="Github"
+                        class="btn btn-ghost btn-circle flex items-center justify-center w-10 h-10 tooltip">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                            fill="currentColor">
+                            <path
+                                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                        </svg>
+                    </a>
+                    <a href="/" target="_blank"
+                        class="btn btn-ghost btn-circle flex items-center justify-center w-10 h-10">
+                        <span class="material-icons">home</span>
+                    </a>
                 </div>
             </div>
+        </div>
 
-            <!-- 歌曲列表区域 -->
-            <div class="p-6">
-                <div class="mb-6 flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <h2 class="text-2xl font-bold">歌曲列表</h2>
-                        <button onclick="toggleDeleteButtons()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <span class="material-icons text-gray-600 dark:text-gray-400">delete_outline</span>
-                        </button>
-                    </div>
-                </div>
+        <div class="container mx-auto p-4 h-screen flex flex-col pt-16">
+            <!-- 主内容区域 -->
+            <div class="flex-1 flex gap-4 mb-20 relative">
+                <!-- 左侧歌单列表 -->
+                <div class="w-64 bg-base-100 rounded-box p-4 shadow-lg relative">
+                    <!-- 左侧悬浮按钮组 -->
+                    <div class="absolute -left-14 top-20 side-buttons">
+                        <div class="flex flex-col gap-2">
+                            <button v-for="(device, index) in devices" :key="device.id"
+                                class="btn btn-circle tooltip tooltip-right"
+                                :class="{ active: activeButton === device.id }" :data-tip="device.name"
+                                @click="setActiveButton(device.id)">
+                                <span v-if="device.id === 'web_device'" class="material-icons icon">computer</span>
+                                <span v-else v-html="device.icon" class="icon"></span>
+                            </button>
+                            <div class="divider divider-horizontal my-1"></div>
+                            <button class="btn btn-circle tooltip tooltip-right" data-tip="刷新列表"
+                                @click="handleRefreshClick">
+                                <span class="material-icons icon">refresh</span>
+                            </button>
 
-                <!-- 歌曲列表 -->
-                <div id="song-list" class="space-y-2">
-                    <!-- 歌曲行示例 -->
-                    <div class="song-item flex items-center justify-between p-3 bg-gray-200 dark:bg-gray-800 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">
-                        <div class="flex items-center space-x-3 flex-1">
-                            <div class="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center flex-shrink-0">
-                                <span class="material-icons text-gray-500 dark:text-gray-400">music_note</span>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <h3 class="font-semibold truncate dark:text-blue-400">歌曲名称</h3>
-                            </div>
+                            <div class="divider divider-horizontal my-1"></div>
+                            <button class="btn btn-circle tooltip tooltip-right active" data-tip="请我喝杯咖啡"
+                                @click="showQRCode">
+                                <span class="material-icons icon">qr_code_scanner</span>
+                            </button>
                         </div>
-                        <button onclick="playMusic(this.parentElement.querySelector('h3').textContent)" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors">
-                            <span class="material-icons text-gray-600 dark:text-gray-300">play_arrow</span>
-                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold">我的歌单</h2>
+                    </div>
+                    <!-- 系统歌单 -->
+                    <ul class="menu gap-1 mb-4">
+                        <li v-for="playlist in systemPlaylists" :key="playlist.id">
+                            <a class="flex justify-between" :class="{ active: currentPlaylist === playlist.name }"
+                                @click="selectPlaylist(playlist.name)">
+                                {{ playlist.name }}
+                                <div class="badge badge-sm">{{ playlist.count }}</div>
+                            </a>
+                        </li>
+                    </ul>
+                    <!-- 自定义歌单 -->
+                    <div v-if="customPlaylists && customPlaylists.length > 0">
+                        <div class="divider">自定义歌单</div>
+                        <ul class="menu gap-1">
+                            <li v-for="playlist in customPlaylists" :key="playlist.name">
+                                <a class="flex justify-between" :class="{ active: currentPlaylist === playlist.name }"
+                                    @click="selectPlaylist(playlist.name)">
+                                    <span class="truncate flex-1">{{ playlist.name }}</span>
+                                    <div class="badge badge-sm">{{ playlist.count }}</div>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 右侧歌曲列表 -->
+                <div class="flex-1 bg-base-100 rounded-box p-4 shadow-lg overflow-hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">{{ currentPlaylist }}</h2>
+                    </div>
+                    <div class="h-[calc(100vh-240px)] overflow-y-auto">
+                        <table class="table w-full">
+                            <thead class="sticky top-0 bg-base-100 z-20">
+                                <tr>
+                                    <th class="w-12 bg-base-100">#</th>
+                                    <th class="min-w-[240px] bg-base-100">歌曲标题</th>
+                                    <th class="w-48 bg-base-100">歌手</th>
+                                    <th class="w-48 bg-base-100">专辑</th>
+                                    <th class="w-20 bg-base-100">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(song, index) in filteredSongs" :key="song.title"
+                                    class="hover transition-all duration-200" @dblclick="playSong(song)" :class="{
+                                        'bg-primary/5 hover:bg-primary/10': currentSong?.title === song.title,
+                                        'hover:bg-base-200': currentSong?.title !== song.title
+                                    }">
+                                    <td class="font-mono text-sm opacity-50">{{ index + 1 }}</td>
+                                    <td>
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="w-10 h-10 bg-base-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                <span class="material-icons icon-sm opacity-50">music_note</span>
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <span class="font-medium"
+                                                    :class="{'text-primary': currentSong?.title === song.title}">
+                                                    {{ song.title }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-sm opacity-70">
+                                        <template v-if="song.isLoading">
+                                            <div class="loading loading-spinner loading-xs"></div>
+                                        </template>
+                                        <template v-else>
+                                            {{ song.artist }}
+                                        </template>
+                                    </td>
+                                    <td class="text-sm opacity-70">
+                                        <template v-if="song.isLoading">
+                                            <div class="loading loading-spinner loading-xs"></div>
+                                        </template>
+                                        <template v-else>
+                                            {{ song.album }}
+                                        </template>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center gap-1">
+                                            <button @click="playSong(song)" class="btn btn-ghost btn-sm btn-circle"
+                                                :class="{'text-primary': currentSong?.title === song.title}">
+                                                <span class="material-icons icon-sm">{{ currentSong?.title ===
+                                                    song.title && isPlaying ? 'pause' : 'play_arrow' }}</span>
+                                            </button>
+                                            <div class="dropdown dropdown-end">
+                                                <button class="btn btn-ghost btn-sm btn-circle" tabindex="0">
+                                                    <span class="material-icons icon-sm opacity-50">more_vert</span>
+                                                </button>
+                                                <ul
+                                                    class="dropdown-content menu shadow-lg bg-base-100 rounded-box w-52 z-[9999]">
+                                                    <li>
+                                                        <button @click.stop="toggleFavorite(song)"
+                                                            class="flex items-center gap-2 w-full px-4 py-2 hover:bg-base-200">
+                                                            <span class="material-icons icon-sm"
+                                                                :class="{'text-error fill-current': favoriteList.includes(song.title)}">favorite</span>
+                                                            {{ favoriteList.includes(song.title) ? '取消收藏' : '收藏' }}
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <button @click.stop="deleteMusic(song)"
+                                                            class="flex items-center gap-2 w-full px-4 py-2 hover:bg-base-200 text-error">
+                                                            <span class="material-icons icon-sm">delete</span>
+                                                            删除
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- 底部播放控制栏 -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 p-4">
-        <div class="max-w-screen-xl mx-auto">
-            <!-- 移动端布局 -->
-            <div class="md:hidden">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
-                            <span class="material-icons text-gray-500 dark:text-gray-400">album</span>
+            <!-- 底部播放控制栏 -->
+            <div class="bg-base-100 rounded-box p-4 shadow-lg fixed bottom-0 left-0 right-0 z-50">
+                <div class="flex items-center justify-between max-w-7xl mx-auto">
+                    <!-- 歌曲信息 -->
+                    <div class="flex items-center gap-4">
+                        <div class="avatar">
+                            <div class="w-12 rounded-lg">
+                                <img :src="currentSong?.cover" :alt="currentSong?.title" />
+                            </div>
                         </div>
                         <div>
-                            <h3 id="playering-music-mobile" class="font-semibold text-sm truncate">当前播放歌曲：无</h3>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 truncate">艺术家</p>
+                            <div class="font-bold">{{ currentSong?.title }}</div>
+                            <div class="text-sm opacity-50">
+                                {{ currentSong?.artist }} - {{ currentSong?.album }}
+                            </div>
+                            <div class="text-sm opacity-50">
+                                {{ currentPlaylist }}
+                            </div>
+                        </div>
+                        <button class="btn btn-ghost btn-circle btn-sm"
+                            @click="currentSong && toggleFavorite(currentSong)"
+                            :class="{ 'text-error': currentSong && favoriteList.includes(currentSong.title) }">
+                            <span class="material-icons icon-sm">{{ currentSong &&
+                                favoriteList.includes(currentSong.title) ? 'favorite' : 'favorite_border' }}</span>
+                        </button>
+                    </div>
+
+                    <!-- 播放控制 -->
+                    <div class="flex flex-col items-center gap-2 flex-1 max-w-2xl px-4">
+                        <!-- 添加当前播放列表信息 -->
+                        <div class="flex gap-4 items-center">
+                            <button class="btn btn-circle btn-sm tooltip tooltip-bottom"
+                                :data-tip="playModes[currentPlayMode].cmd" @click="togglePlayMode">
+                                <span class="material-icons icon-sm">{{
+                                    currentPlayMode === 0 ? 'repeat' :
+                                    currentPlayMode === 1 ? 'repeat_one' :
+                                    currentPlayMode === 2 ? 'shuffle' :
+                                    currentPlayMode === 3 ? 'arrow_forward' :
+                                    'playlist_play'
+                                    }}</span>
+                            </button>
+                            <button class="btn btn-circle btn-sm" @click="playPrevious">
+                                <span class="material-icons icon-sm">skip_previous</span>
+                            </button>
+                            <button class="btn btn-circle btn-primary" @click="togglePlay">
+                                <span class="material-icons icon">{{ isPlaying ? 'pause' : 'play_arrow' }}</span>
+                            </button>
+                            <button class="btn btn-circle btn-sm" @click="playNext">
+                                <span class="material-icons icon-sm">skip_next</span>
+                            </button>
+                            <button class="btn btn-circle btn-sm tooltip tooltip-bottom" data-tip="停止播放"
+                                @click="stopPlay">
+                                <span class="material-icons icon-sm">stop</span>
+                            </button>
+                        </div>
+
+                        <!-- 进度条 -->
+                        <div class="w-full flex gap-2 items-center">
+                            <span class="text-sm">{{ formatTime(currentTime) }}</span>
+                            <input type="range" min="0" :max="duration" v-model="currentTime"
+                                class="range range-xs range-primary flex-1" @input="seekTo" />
+                            <span class="text-sm">{{ formatTime(duration) }}</span>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <button onclick="toggleTimer()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full">
-                            <span class="material-icons">timer</span>
-                        </button>
-                        <button onclick="play()" class="w-12 h-12 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors">
-                            <span class="material-icons-outlined play">play_circle_outline</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-2 text-xs">
-                    <span id="current-time-mobile" class="text-gray-600 dark:text-gray-400">0:00</span>
-                    <div class="flex-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full">
-                        <div id="progress-mobile" class="h-full bg-blue-500 rounded-full" style="width: 0%"></div>
-                    </div>
-                    <span id="duration-mobile" class="text-gray-600 dark:text-gray-400">0:00</span>
-                </div>
-            </div>
 
-            <!-- 桌面端布局 -->
-            <div class="hidden md:flex items-center justify-between">
-                <div class="flex items-center space-x-4 w-1/4">
-                    <div class="w-14 h-14 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
-                        <span class="material-icons text-2xl text-gray-500 dark:text-gray-400">album</span>
+                    <!-- 音量控制 -->
+                    <div class="flex items-center gap-2">
+                        <button class="btn btn-ghost btn-circle btn-sm">
+                            <span class="material-icons icon-sm">volume_up</span>
+                        </button>
+                        <input type="range" min="0" max="100" v-model="volume" class="range range-xs range-primary w-24"
+                            @input="setVolume" />
                     </div>
-                    <div>
-                        <h3 id="playering-music" class="font-semibold truncate">当前播放歌曲：无</h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 truncate">艺术家</p>
-                    </div>
-                </div>
-
-                <div class="flex flex-col items-center w-2/4">
-                    <div class="flex items-center space-x-4 mb-2">
-                        <button id="modeBtn" onclick="togglePlayMode()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors relative group">
-                            <span class="material-icons">shuffle</span>
-                            <span class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">随机播放</span>
-                        </button>
-                        <button onclick="prevTrack()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <span class="material-icons">skip_previous</span>
-                        </button>
-                        <button onclick="play()" class="w-12 h-12 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors">
-                            <span class="material-icons-outlined play">play_circle_outline</span>
-                        </button>
-                        <button onclick="nextTrack()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <span class="material-icons">skip_next</span>
-                        </button>
-                        <button onclick="stopPlay()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <span class="material-icons">stop</span>
-                        </button>
-                        <button onclick="addToFavorites()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <span class="material-icons favorite-icon">favorite_border</span>
-                        </button>
-                        <button onclick="toggleTimer()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors relative">
-                            <span class="material-icons">timer</span>
-                        </button>
-                    </div>
-                    <div class="w-full flex items-center space-x-3">
-                        <span id="current-time" class="text-xs text-gray-600 dark:text-gray-400">0:00</span>
-                        <div class="flex-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full">
-                            <div id="progress" class="h-full bg-blue-500 rounded-full" style="width: 0%"></div>
-                        </div>
-                        <span id="duration" class="text-xs text-gray-600 dark:text-gray-400">0:00</span>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-end space-x-4 w-1/4">
-                    <span class="material-icons text-gray-600 dark:text-gray-400">volume_up</span>
-                    <input type="range" id="volume-slider" min="0" max="1" step="0.01" class="w-24" oninput="adjustVolume(this.value)">
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 隐藏的音频元素 -->
-    <audio id="audio" src="" autoplay class="hidden"></audio>
-
-    <!-- 定时关机组件 -->
-    <div class="component hidden fixed inset-0 z-50" id="timer-component">
-        <!-- 定时选择框 -->
-        <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">定时关机</h3>
+    <!-- 二维码对话框 -->
+    <dialog id="qrcode_dialog" class="modal">
+        <div class="modal-box">
+            <div class="flex justify-center">
+                <img src="./qrcode.png" alt="QR Code" class="w-100 h-100">
             </div>
-            <div class="divide-y divide-gray-200 dark:divide-gray-700">
-                <button onclick="timedShutDown('10分钟后关机')" class="w-full p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-3">
-                    <span class="material-icons text-gray-500 dark:text-gray-400">timer</span>
-                    <span class="text-gray-700 dark:text-white">10分钟后关机</span>
-                </button>
-                <button onclick="timedShutDown('30分钟后关机')" class="w-full p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-3">
-                    <span class="material-icons text-gray-500 dark:text-gray-400">timer</span>
-                    <span class="text-gray-700 dark:text-white">30分钟后关机</span>
-                </button>
-                <button onclick="timedShutDown('60分钟后关机')" class="w-full p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-3">
-                    <span class="material-icons text-gray-500 dark:text-gray-400">timer</span>
-                    <span class="text-gray-700 dark:text-white">60分钟后关机</span>
-                </button>
-            </div>
-            <div class="p-3 text-center border-t border-gray-200 dark:border-gray-700">
-                <span class="timer-tooltip hidden text-green-500 text-sm">已发送指令</span>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn">关闭</button>
+                </form>
             </div>
         </div>
-        <!-- 背景遮罩 -->
-        <div class="fixed inset-0 bg-black bg-opacity-25" onclick="toggleTimer()"></div>
-    </div>
+    </dialog>
 
-    <!-- 设置组件 -->
-    <div class="component hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50" id="settings-component">
-        <div class="relative top-20 mx-auto p-5 border w-96 max-w-[90%] shadow-lg rounded-md bg-white dark:bg-gray-800">
-            <h2 class="text-lg font-bold mb-4">设置</h2>
-            <!-- 在这里添加设置选项 -->
-            <div class="flex justify-end mt-4">
-                <button onclick="closeSettings()" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 focus:outline-none">关闭</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="./md.js?version=1736211336"></script>
     <script>
-        // 初始化主题和音量
-        document.addEventListener('DOMContentLoaded', function() {
-            initTheme();
-            initVolume();
+        const { createApp, ref, onMounted, watch, onUnmounted, nextTick, defineExpose, computed } = Vue;
+
+        const app = createApp({
+            setup() {
+                // 状态
+                const isDarkTheme = ref(false);
+                const currentTheme = ref(localStorage.getItem('theme') || 'light');
+                const themes = ref([
+                    "light",    // 默认亮色主题
+                    "pastel",
+                    "emerald",  // 清新的绿色系
+                    "dark",     // 默认暗色主题
+                    "synthwave",// 赛博朋克风格
+                    "dracula",   // 经典暗色主题
+                    "night",    // 深邃的黑色系
+                    "black",    // 纯黑色系
+                ]);
+                const searchQuery = ref('');
+                const version = ref('');  // 添加版本号状态
+                const activeButton = ref(localStorage.getItem('cur_did') || 'web_device');
+                const devices = ref([
+                    { id: 'web_device', name: 'Web播放器', icon: 'monitor' }
+                ]);
+                const playlists = ref([]);
+                const songs = ref([]);
+                const currentSong = ref(null);
+                const isPlaying = ref(false);
+                const currentTime = ref(0);
+                const duration = ref(0);
+                const volume = ref(80);
+                const currentPlaylist = ref(localStorage.getItem('cur_playlist') || '所有歌曲');
+                const systemPlaylists = ref([]);
+                const customPlaylists = ref([]);
+                const newPlaylistName = ref('');
+
+                // 添加音频播放相关状态
+                const audioPlayer = ref(null);
+                const playModes = ref([
+                    { value: 0, icon: 'repeat', cmd: '全部循环', handler: () => playNext() },
+                    {
+                        value: 1, icon: 'repeat_one', cmd: '单曲循环', handler: () => {
+                            if (audioPlayer.value) {
+                                audioPlayer.value.currentTime = 0;
+                                audioPlayer.value.play();
+                            }
+                        }
+                    },
+                    {
+                        value: 2, icon: 'shuffle', cmd: '随机播放', handler: () => {
+                            const randomIndex = Math.floor(Math.random() * songs.value.length);
+                            playSong(songs.value[randomIndex]);
+                        }
+                    },
+                    {
+                        value: 3, icon: 'arrow_forward', cmd: '单曲播放', handler: () => {
+                            if (audioPlayer.value) {
+                                audioPlayer.value.pause();
+                                isPlaying.value = false;
+                            }
+                        }
+                    },
+                    { value: 4, icon: 'playlist_play', cmd: '顺序播放', handler: () => playNext() }
+                ]);
+                const currentPlayMode = ref(parseInt(localStorage.getItem('play_mode') || '0'));
+
+                // 添加收藏相关状态
+                const favoriteList = ref([]);
+
+                // 播放状态更新定时器
+                let playingStatusInterval = null;
+
+                // 开始播放状态更新
+                const startPlayingStatusUpdate = () => {
+                    // 立即获取一次状态
+                    updatePlayingStatus();
+
+                    // 设置定时器，每3秒更新一次
+                    playingStatusInterval = setInterval(updatePlayingStatus, 3000);
+                };
+
+                // 停止播放状态更新
+                const stopPlayingStatusUpdate = () => {
+                    if (playingStatusInterval) {
+                        clearInterval(playingStatusInterval);
+                        playingStatusInterval = null;
+                    }
+                };
+
+                // 防抖函数
+                const debounce = (fn, delay) => {
+                    let timer = null;
+                    return function (...args) {
+                        if (timer) clearTimeout(timer);
+                        timer = setTimeout(() => fn.apply(this, args), delay);
+                    };
+                };
+
+                // 节流函数
+                const throttle = (fn, delay) => {
+                    let timer = null;
+                    return function (...args) {
+                        if (timer) return;
+                        timer = setTimeout(() => {
+                            fn.apply(this, args);
+                            timer = null;
+                        }, delay);
+                    };
+                };
+
+                // 优化搜索处理
+                const handleSearch = debounce((event) => {
+                    searchQuery.value = event.target.value;
+                }, 300);
+
+                // 优化歌单切换
+                const selectPlaylist = async (name) => {
+                    try {
+                        if (name === currentPlaylist.value) return;
+
+                        currentPlaylist.value = name;
+                        localStorage.setItem('cur_playlist', name);
+
+                        // 获取歌单中的歌曲
+                        let songNames = [];
+                        const data = await API.getMusicList();
+                        songNames = data[name] || [];
+
+                        // 加载歌曲详细信息
+                        await loadSongs(songNames);
+                    } catch (error) {
+                        console.error('Error selecting playlist:', error);
+                    }
+                };
+
+                // 优化播放状态更新
+                const updatePlayingStatus = throttle(async () => {
+                    try {
+                        if (window.did === 'web_device') return;
+
+                        const data = await API.getPlayingStatus(window.did);
+
+                        if (data.ret === 'OK') {
+                            isPlaying.value = data.is_playing;
+                            currentTime.value = data.offset || 0;
+                            duration.value = data.duration || 0;
+
+                            if (data.cur_music) {
+                                const existingSong = songs.value.find(s => s.title === data.cur_music);
+                                if (existingSong) {
+                                    currentSong.value = existingSong;
+                                } else {
+                                    const songInfo = await API.getMusicInfo(data.cur_music);
+                                    if (songInfo && songInfo.ret === 'OK') {
+                                        currentSong.value = {
+                                            title: data.cur_music,
+                                            url: songInfo.url,
+                                            artist: songInfo.tags?.artist || '未知歌手',
+                                            album: songInfo.tags?.album || '未知专辑',
+                                            tags: songInfo.tags
+                                        };
+                                    }
+                                }
+
+                                localStorage.setItem('cur_music', data.cur_music);
+                                localStorage.setItem('is_playing', data.is_playing);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error updating playing status:', error);
+                    }
+                }, 1000);
+
+                // 方法
+                const setTheme = (theme) => {
+                    currentTheme.value = theme;
+                    document.documentElement.setAttribute('data-theme', theme);
+                    localStorage.setItem('theme', theme);
+                    // 更新 isDarkTheme 状态，用于图标显示
+                    isDarkTheme.value = ['dark', 'black', 'luxury', 'dracula', 'night', 'coffee'].includes(theme);
+                    showNotification(`已切换到 ${theme} 主题`, 'alert-success');
+                };
+
+                const filteredSongs = computed(() => {
+                    if (!searchQuery.value) {
+                        return songs.value;
+                    }
+                    const query = searchQuery.value.toLowerCase().trim();
+                    return songs.value.filter(song =>
+                        song.title.toLowerCase().includes(query) ||
+                        song.artist.toLowerCase().includes(query) ||
+                        song.album.toLowerCase().includes(query)
+                    );
+                });
+
+                // 从 API 获取设备设置
+                const loadDevices = async () => {
+                    try {
+                        const response = await fetch('/getsetting');
+                        const data = await response.json();
+
+                        // 保存小爱设备ID
+                        if (data.mi_did) {
+                            localStorage.setItem("mi_did", data.mi_did);
+                        }
+
+                        // 获取当前设备ID和可用设备列表
+                        let did = localStorage.getItem("cur_did");
+                        const dids = data.mi_did ? data.mi_did.split(",") : [];
+
+                        // 如果当前设备不是web设备，且设备列表不为空，检查当前设备是否有效
+                        if (did !== "web_device" && dids.length > 0 && (did === null || did === "" || !dids.includes(did))) {
+                            did = dids[0];
+                            localStorage.setItem("cur_did", did);
+                        }
+
+                        // 如果没有有效的设备ID，使用web设备
+                        if (!did) {
+                            did = "web_device";
+                            localStorage.setItem("cur_did", did);
+                        }
+
+                        // 设置全局设备ID
+                        window.did = did;
+                        activeButton.value = did;
+
+                        // 构建设备列表
+                        const devicesList = [
+                            { id: 'web_device', name: 'Web播放器', icon: 'monitor' }
+                        ];
+
+                        // 添加小爱设备
+                        if (dids.length > 0) {
+                            dids.forEach(deviceId => {
+                                devicesList.push({
+                                    id: deviceId,
+                                    name: `小爱音箱 ${deviceId}`,
+                                    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>`
+                                });
+                            });
+                        }
+
+                        // 更新设备列表
+                        devices.value = devicesList;
+
+                        // 更新UI显示
+                        updateDeviceUI(did);
+
+                        // 获取设备音量
+                        if (did !== 'web_device') {
+                            const volumeResponse = await fetch(`/getvolume?did=${did}`);
+                            const volumeData = await volumeResponse.json();
+                            if (volumeData && volumeData.volume !== undefined) {
+                                volume.value = volumeData.volume;
+                            }
+                        }
+
+                    } catch (error) {
+                        console.error('Error loading devices:', error);
+                    }
+                };
+
+                // 更新设备UI显示
+                const updateDeviceUI = (deviceId) => {
+                    if (deviceId === "web_device") {
+                        // Web播放模式
+                        document.querySelectorAll('.device-enable').forEach(el => {
+                            el.classList.add('disabled');
+                        });
+                    } else {
+                        // 设备播放模式
+                        document.querySelectorAll('.device-enable').forEach(el => {
+                            el.classList.remove('disabled');
+                        });
+                    }
+                };
+
+                // 修改设备选择方法
+                const setActiveButton = async (deviceId) => {
+                    try {
+                        activeButton.value = deviceId;
+                        window.did = deviceId;
+                        localStorage.setItem('cur_did', deviceId);
+
+                        // 更新UI显示
+                        updateDeviceUI(deviceId);
+
+                        // 获取设备音量
+                        if (deviceId !== 'web_device') {
+                            const volumeData = await API.getVolume(deviceId);
+                            if (volumeData && volumeData.ret === 'OK') {
+                                volume.value = volumeData.volume;
+                            }
+                        }
+
+                        // 切换设备后刷新播放状态
+                        await updatePlayingStatus();
+                    } catch (error) {
+                        console.error('Error setting device:', error);
+                    }
+                };
+
+                const refreshList = async () => {
+                    try {
+                        await fetchData();
+                    } catch (error) {
+                        console.error('Error refreshing list:', error);
+                    }
+                };
+
+                const loadSongs = async (songNames) => {
+                    try {
+                        // 使用 getMusicInfos 批量获取歌曲信息
+                        const songsInfo = await API.getMusicInfos(songNames);
+
+                        // 更新歌曲信息
+                        songs.value = songNames.map(songName => {
+                            const info = songsInfo.find(s => s.name === songName);
+                            if (!info) {
+                                console.error(`No info found for song ${songName}`);
+                                return {
+                                    id: songName,
+                                    title: songName,
+                                    artist: '未知歌手',
+                                    album: '未知专辑',
+                                    duration: '0:00',
+                                    cover: '/static/xiaoai.png',
+                                    url: '',
+                                    isLoading: false
+                                };
+                            }
+                            return {
+                                id: songName,
+                                title: songName,
+                                artist: info.tags?.artist || '未知歌手',
+                                album: info.tags?.album || '未知专辑',
+                                duration: info.duration ? formatTime(info.duration) : '0:00',
+                                cover: info.cover || '/static/xiaoai.png',
+                                url: info.url,
+                                isLoading: false
+                            };
+                        });
+
+                    } catch (error) {
+                        console.error('Error loading songs:', error);
+                        songs.value = [];
+                    }
+                };
+
+                const showAddPlaylistDialog = () => {
+                    newPlaylistName.value = '';
+                    document.getElementById('add_playlist_dialog').showModal();
+                };
+
+                const closeAddPlaylistDialog = () => {
+                    document.getElementById('add_playlist_dialog').close();
+                };
+
+                const createPlaylist = async () => {
+                    try {
+                        const response = await API.addPlaylist(newPlaylistName.value);
+                        if (response.ret === 'OK') {
+                            await loadPlaylists();
+                            closeAddPlaylistDialog();
+                        }
+                    } catch (error) {
+                        console.error('Error creating playlist:', error);
+                    }
+                };
+
+                const loadPlaylists = async () => {
+                    try {
+                        // 获取音乐列表数据
+                        const data = await API.getMusicList();
+
+                        // 系统预设的歌单列表
+                        const systemPlaylistNames = ['所有歌曲', '所有电台', '收藏', '下载', '最近新增'];
+
+                        // 设置系统播放列表
+                        systemPlaylists.value = systemPlaylistNames.map((name, index) => ({
+                            id: index + 1,
+                            name,
+                            count: data[name]?.length || 0
+                        }));
+
+                        // 获取所有歌单名称
+                        const allPlaylistNames = Object.keys(data);
+
+                        // 过滤出自定义歌单（排除系统预设歌单和特殊歌单）
+                        const excludedPlaylists = [...systemPlaylistNames, '临时搜索列表', '全部', '其他'];
+                        const customPlaylistNames = allPlaylistNames.filter(
+                            name => !excludedPlaylists.includes(name)
+                        );
+
+                        // 设置自定义歌单
+                        customPlaylists.value = customPlaylistNames.map(name => ({
+                            name,
+                            count: data[name]?.length || 0
+                        }));
+                    } catch (error) {
+                        console.error('Error loading playlists:', error);
+                    }
+                };
+
+                // 音频播放控制方法
+                const initAudioPlayer = async () => {
+                    try {
+                        // 创建音频播放器
+                        const audio = document.createElement('audio');
+                        audio.id = 'audio-player';
+                        document.body.appendChild(audio);
+
+                        // 监听播放进度
+                        audio.addEventListener('timeupdate', () => {
+                            currentTime.value = audio.currentTime;
+                            duration.value = audio.duration;
+                        });
+
+                        // 监听播放状态
+                        audio.addEventListener('play', () => {
+                            isPlaying.value = true;
+                        });
+
+                        audio.addEventListener('pause', () => {
+                            isPlaying.value = false;
+                        });
+
+                        // 监听播放结束
+                        audio.addEventListener('ended', () => {
+                            const currentMode = currentPlayMode.value;
+                            const handler = playModes.value[currentMode].handler;
+                            if (handler) {
+                                handler();
+                            }
+                        });
+
+                        // 监听加载元数据
+                        audio.addEventListener('loadedmetadata', () => {
+                            duration.value = audio.duration;
+                        });
+
+                        // 监听错误
+                        audio.addEventListener('error', (e) => {
+                            console.error('Audio playback error:', e);
+                            showNotification('播放出错，请重试', 'alert-error');
+                        });
+
+                        audioPlayer.value = audio;
+
+                        // 设置初始音量
+                        audio.volume = volume.value / 100;
+                    } catch (error) {
+                        console.error('Error initializing audio player:', error);
+                    }
+                };
+
+                const playSong = async (song) => {
+                    try {
+                        if (!song || !song.title) {
+                            console.error('Invalid song object:', song);
+                            return;
+                        }
+
+                        const currentPlaylistName = localStorage.getItem("cur_playlist") || "所有歌曲";
+                        console.log('Playing song:', song.title, 'from playlist:', currentPlaylistName);
+
+                        if (window.did === 'web_device') {
+                            // Web播放模式
+                            const musicInfo = await API.getMusicInfo(song.title);
+                            if (!musicInfo || musicInfo.ret !== 'OK') {
+                                console.error('Failed to get music info:', musicInfo);
+                                return;
+                            }
+
+                            if (audioPlayer.value) {
+                                if (audioPlayer.value.src === musicInfo.url) {
+                                    // 同一首歌，切换播放状态
+                                    if (audioPlayer.value.paused) {
+                                        await audioPlayer.value.play();
+                                        isPlaying.value = true;
+                                    } else {
+                                        audioPlayer.value.pause();
+                                        isPlaying.value = false;
+                                    }
+                                } else {
+                                    // 播放新歌曲
+                                    audioPlayer.value.src = musicInfo.url;
+                                    await audioPlayer.value.play();
+                                    isPlaying.value = true;
+                                }
+                            }
+                        } else {
+                            // 设备播放模式
+                            const response = await API.playMusicFromList(window.did, currentPlaylistName, song.title);
+                            if (response.ret === 'OK') {
+                                isPlaying.value = true;
+                            }
+                        }
+
+                        // 更新当前歌曲和播放状态
+                        currentSong.value = song;
+                        localStorage.setItem("cur_music", song.title);
+
+                        // 高亮当前播放的歌曲
+                        songs.value = songs.value.map(s => ({
+                            ...s,
+                            isPlaying: s.id === song.id
+                        }));
+                    } catch (error) {
+                        console.error('Error playing song:', error);
+                        showNotification('播放失败，请重试', 'alert-error');
+                    }
+                };
+
+                const togglePlay = async () => {
+                    try {
+                        if (!currentSong.value) return;
+
+                        if (window.did === 'web_device') {
+                            // Web播放模式
+                            if (audioPlayer.value) {
+                                if (audioPlayer.value.paused) {
+                                    await audioPlayer.value.play();
+                                } else {
+                                    audioPlayer.value.pause();
+                                }
+                            }
+                        } else {
+                            // 设备播放模式
+                            const response = await API.sendCommand(window.did, isPlaying.value ? "暂停播放" : "继续播放");
+                            if (response.ret === 'OK') {
+                                isPlaying.value = !isPlaying.value;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error toggling play state:', error);
+                        showNotification('播放控制失败，请重试', 'alert-error');
+                    }
+                };
+
+                const seekTo = async (event) => {
+                    try {
+                        const time = parseInt(event.target.value);
+
+                        if (window.did === 'web_device') {
+                            // Web播放模式
+                            if (audioPlayer.value) {
+                                audioPlayer.value.currentTime = time;
+                                currentTime.value = time;
+                            }
+                        } else {
+                            // 设备播放模式
+                            // 目前设备端不支持 seek 功能
+                            console.log('Seek not supported for device playback');
+                        }
+                    } catch (error) {
+                        console.error('Error seeking:', error);
+                    }
+                };
+
+                const setVolume = async (event) => {
+                    try {
+                        const vol = parseInt(event.target.value);
+                        volume.value = vol;
+
+                        if (window.did === 'web_device') {
+                            // Web播放模式
+                            if (audioPlayer.value) {
+                                audioPlayer.value.volume = vol / 100;
+                            }
+                        } else {
+                            // 设备播放模式
+                            const response = await API.setVolume(window.did, vol);
+                            if (response.ret !== 'OK') {
+                                console.error('Failed to set volume:', response);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error setting volume:', error);
+                    }
+                };
+
+                const playPrevious = async () => {
+                    try {
+                        if (window.did === 'web_device') {
+                            // Web播放模式
+                            if (!currentSong.value) return;
+                            const currentIndex = songs.value.findIndex(s => s.title === currentSong.value.title);
+                            if (currentIndex > 0) {
+                                await playSong(songs.value[currentIndex - 1]);
+                            }
+                        } else {
+                            // 设备播放模式
+                            const response = await API.sendCommand(window.did, "上一首");
+                            if (response.ret === 'OK') {
+                                await updatePlayingStatus();
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error playing previous song:', error);
+                        showNotification('切换上一首失败，请重试', 'alert-error');
+                    }
+                };
+
+                const playNext = async () => {
+                    try {
+                        if (window.did === 'web_device') {
+                            // Web播放模式
+                            if (!currentSong.value) return;
+                            const currentIndex = songs.value.findIndex(s => s.title === currentSong.value.title);
+                            if (currentIndex < songs.value.length - 1) {
+                                await playSong(songs.value[currentIndex + 1]);
+                            } else if (currentPlayMode.value === 0) { // 全部循环模式
+                                await playSong(songs.value[0]);
+                            }
+                        } else {
+                            // 设备播放模式
+                            const response = await API.sendCommand(window.did, "下一首");
+                            if (response.ret === 'OK') {
+                                await updatePlayingStatus();
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error playing next song:', error);
+                        showNotification('切换下一首失败，请重试', 'alert-error');
+                    }
+                };
+
+                const togglePlayMode = async () => {
+                    try {
+                        // 计算新的播放模式
+                        const newMode = (currentPlayMode.value + 1) % playModes.value.length;
+
+                        if (window.did === 'web_device') {
+                            // Web播放模式下直接更新
+                            currentPlayMode.value = newMode;
+                            localStorage.setItem('play_mode', newMode.toString());
+                            showNotification(`已切换到${playModes.value[newMode].cmd}模式`, 'alert-info');
+                        } else {
+                            // 设备播放模式
+                            const response = await API.sendCommand(window.did, playModes.value[newMode].cmd);
+                            if (response.ret === 'OK') {
+                                currentPlayMode.value = newMode;
+                                localStorage.setItem('play_mode', newMode.toString());
+                                showNotification(`已切换到${playModes.value[newMode].cmd}模式`, 'alert-info');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error toggling play mode:', error);
+                        showNotification('切换播放模式失败，请重试', 'alert-error');
+                    }
+                };
+
+                const formatTime = (seconds) => {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = Math.floor(seconds % 60);
+                    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                };
+
+                // 数据获取
+                const fetchData = async () => {
+                    try {
+                        // 获取音乐列表数据
+                        const data = await API.getMusicList();
+
+                        // 设置播放列表数据
+                        playlists.value = [
+                            { id: 1, name: '所有歌曲', count: data['所有歌曲']?.length || 0, active: true },
+                            { id: 2, name: '收藏', count: data['收藏']?.length || 0, active: false },
+                            { id: 3, name: '最近新增', count: data['最近新增']?.length || 0, active: false },
+                            { id: 4, name: '下载', count: data['下载']?.length || 0, active: false }
+                        ];
+
+                        // 设置歌曲列表数据，不再单独获取每首歌的信息
+                        const allSongs = data['所有歌曲'] || [];
+                        songs.value = allSongs.map(songName => ({
+                            id: songName,
+                            title: songName,
+                            artist: '未知歌手',
+                            album: '未知专辑',
+                            duration: '0:00',
+                            cover: '/static/xiaoai.png',
+                            url: '',
+                            isLoading: false
+                        }));
+
+                        // 如果没有当前播放的歌曲，设置第一首歌为当前歌曲
+                        if (songs.value.length > 0 && !currentSong.value) {
+                            currentSong.value = songs.value[0];
+                        }
+                    } catch (error) {
+                        console.error('Error fetching data:', error);
+                    }
+                };
+
+                // 获取版本号
+                const loadVersion = async () => {
+                    try {
+                        const response = await fetch('/getversion');
+                        const data = await response.json();
+                        if (data && data.version) {
+                            version.value = data.version;
+                            console.log('Version loaded:', data.version);
+                        }
+                    } catch (error) {
+                        console.error('Error loading version:', error);
+                    }
+                };
+
+                // 修改 toggleFavorite 方法
+                const toggleFavorite = async (song) => {
+                    try {
+                        const isLiked = favoriteList.value.includes(song.title);
+                        const cmd = isLiked ? "取消收藏" : "加入收藏";
+
+                        localStorage.setItem("cur_music", song.title);
+
+                        const response = await API.sendCommand(window.did, cmd);
+                        if (response.ret === 'OK') {
+                            if (isLiked) {
+                                favoriteList.value = favoriteList.value.filter(name => name !== song.title);
+                            } else {
+                                favoriteList.value.push(song.title);
+                            }
+
+                            if (currentPlaylist.value === '收藏') {
+                                await selectPlaylist('收藏');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error toggling favorite:', error);
+                    }
+                };
+
+                // 在 setup 中添加 toast 相关的状态
+                const showToast = ref(false);
+                const toastMessage = ref('');
+                const toastType = ref('alert-info');
+
+                // 添加显示 toast 的方法
+                const showNotification = (message, type = 'alert-info') => {
+                    toastMessage.value = message;
+                    toastType.value = type;
+                    showToast.value = true;
+                    // 3秒后自动关闭
+                    setTimeout(() => {
+                        showToast.value = false;
+                    }, 3000);
+                };
+
+                // 修改 deleteMusic 方法
+                const deleteMusic = async (song) => {
+                    try {
+                        if (!confirm(`确定要删除歌曲"${song.title}"吗？`)) {
+                            return;
+                        }
+
+                        const response = await fetch('/delmusic', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ name: song.title })
+                        });
+
+                        const data = await response.json();
+                        if (data === 'success' || data.ret === 'OK') {
+                            // 如果删除的是当前播放的歌曲，切换到下一首
+                            if (currentSong.value?.title === song.title) {
+                                await playNext();
+                            }
+
+                            // 从当前列表中移除歌曲
+                            songs.value = songs.value.filter(s => s.title !== song.title);
+
+                            // 如果在收藏列表中，也从收藏列表中移除
+                            if (favoriteList.value.includes(song.title)) {
+                                favoriteList.value = favoriteList.value.filter(name => name !== song.title);
+                            }
+
+                            // 刷新歌单信息
+                            await loadPlaylists();
+
+                            // 显示成功通知
+                            showNotification(`删除歌曲"${song.title}"成功`, 'alert-success');
+                        } else {
+                            throw new Error(typeof data === 'string' ? data : (data.msg || '删除失败'));
+                        }
+                    } catch (error) {
+                        console.error('Error deleting song:', error);
+                        showNotification(`删除失败: ${error.message}`, 'alert-error');
+                    }
+                };
+
+                // 加载收藏列表
+                const loadFavoriteList = async () => {
+                    try {
+                        const data = await API.getMusicList();
+                        if (data && data['收藏']) {
+                            favoriteList.value = data['收藏'];
+                        }
+                    } catch (error) {
+                        console.error('Error loading favorite list:', error);
+                    }
+                };
+
+                // 发送命令到设备
+                const sendCommand = (cmd) => {
+                    $.ajax({
+                        type: "POST",
+                        url: "/cmd",
+                        contentType: "application/json; charset=utf-8",
+                        data: JSON.stringify({ did: window.did, cmd: cmd }),
+                        success: () => {
+                            if (cmd === "刷新列表") {
+                                checkStatusAndRefreshList(3); // 最多重试3次
+                            }
+                        }
+                    });
+                };
+
+                // 检查命令状态并刷新列表
+                const checkStatusAndRefreshList = (retries) => {
+                    $.get("/cmdstatus", function (data) {
+                        if (data.status === "finish") {
+                            fetchData(); // 使用 Vue 组件中的 fetchData 方法刷新列表
+                        } else if (retries > 0) {
+                            setTimeout(() => {
+                                checkStatusAndRefreshList(retries - 1);
+                            }, 1000);
+                        }
+                    });
+                };
+
+                // 刷新列表按钮点击处理
+                const handleRefreshClick = () => {
+                    sendCommand("刷新列表");
+                };
+
+                // 在 setup 函数中添加 showQRCode 方法
+                const showQRCode = () => {
+                    document.getElementById('qrcode_dialog').showModal();
+                };
+
+                // 添加停止播放方法
+                const stopPlay = async () => {
+                    try {
+                        if (window.did === 'web_device') {
+                            // Web播放模式
+                            if (audioPlayer.value) {
+                                audioPlayer.value.pause();
+                                audioPlayer.value.currentTime = 0;
+                                isPlaying.value = false;
+                                currentTime.value = 0;
+                            }
+                        } else {
+                            // 设备播放模式
+                            const response = await API.sendCommand(window.did, "停止");
+                            if (response.ret === 'OK') {
+                                isPlaying.value = false;
+                                currentTime.value = 0;
+                            }
+                        }
+                        showNotification('已发送停止播放的请求', 'alert-info');
+                    } catch (error) {
+                        console.error('Error stopping playback:', error);
+                        showNotification('停止播放失败，请重试', 'alert-error');
+                    }
+                };
+
+                // 生命周期钩子
+                onMounted(async () => {
+                    try {
+                        // 初始化音频播放器
+                        await initAudioPlayer();
+
+                        // 并行加载数据
+                        await Promise.all([
+                            loadVersion(),
+                            loadDevices(),
+                            loadFavoriteList(),
+                            loadPlaylists()
+                        ]);
+
+                        // 获取数据
+                        await fetchData();
+
+                        // 从本地存储获取主题设置
+                        const savedTheme = localStorage.getItem('theme');
+                        if (savedTheme && themes.value.includes(savedTheme)) {
+                            setTheme(savedTheme);
+                        } else {
+                            // 如果没有保存的主题设置，根据系统主题设置默认值
+                            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                            setTheme(prefersDark ? 'dark' : 'light');
+                        }
+
+                        // 恢复上次选择的歌单
+                        const savedPlaylist = localStorage.getItem('cur_playlist') || '所有歌曲';
+                        await selectPlaylist(savedPlaylist);
+
+                        // 开始更新播放状态
+                        startPlayingStatusUpdate();
+                    } catch (error) {
+                        console.error('Error in onMounted:', error);
+                    }
+                });
+
+                // 在组件卸载时停止更新
+                onUnmounted(() => {
+                    stopPlayingStatusUpdate();
+                });
+
+                // 返回所有需要的数据和方法
+                return {
+                    isDarkTheme,
+                    currentTheme,
+                    themes,
+                    setTheme,
+                    searchQuery,
+                    filteredSongs,
+                    version,
+                    activeButton,
+                    devices,
+                    playlists,
+                    songs,
+                    currentSong,
+                    isPlaying,
+                    currentTime,
+                    duration,
+                    volume,
+                    toggleTheme,
+                    handleSearch,
+                    setActiveButton,
+                    refreshList,
+                    selectPlaylist,
+                    togglePlay,
+                    seekTo,
+                    setVolume,
+                    formatTime,
+                    playModes,
+                    currentPlayMode,
+                    playPrevious,
+                    playNext,
+                    togglePlayMode,
+                    playSong,
+                    currentPlaylist,
+                    systemPlaylists,
+                    customPlaylists,
+                    newPlaylistName,
+                    showAddPlaylistDialog,
+                    closeAddPlaylistDialog,
+                    createPlaylist,
+                    favoriteList,
+                    toggleFavorite,
+                    deleteMusic,
+                    updatePlayingStatus,
+                    handleRefreshClick,
+                    sendCommand,
+                    startPlayingStatusUpdate,
+                    stopPlayingStatusUpdate,
+                    showQRCode,
+                    showToast,
+                    toastMessage,
+                    toastType,
+                    stopPlay,  // 添加 stopPlay 方法到返回对象中
+                };
+            },
+            expose: ['updatePlayingStatus'], // 使用 expose 选项
         });
+
+        app.mount('#app');
+
+        // 确保在 Vue 应用初始化之前设置全局变量
+        window.did = localStorage.getItem('cur_did') || 'web_device';
     </script>
 </body>
+
 </html>
