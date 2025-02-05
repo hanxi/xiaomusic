@@ -487,21 +487,31 @@
                             currentTime.value = data.offset || 0;
                             duration.value = data.duration || 0;
 
-                            if (data.cur_music) {
-                                const existingSong = songs.value.find(s => s.title === data.cur_music);
-                                if (existingSong) {
-                                    currentSong.value = existingSong;
-                                } else {
-                                    const songInfo = await API.getMusicInfo(data.cur_music);
-                                    if (songInfo && songInfo.ret === 'OK') {
+                            if (data.cur_music && data.cur_music !== currentSong.value?.title) {
+                                try {
+                                    // 获取音乐详细信息
+                                    const musicInfo = await API.getMusicInfo(data.cur_music);
+                                    if (musicInfo && musicInfo.ret === 'OK') {
+                                        const tags = musicInfo.tags || {};
                                         currentSong.value = {
-                                            title: data.cur_music,
-                                            url: songInfo.url,
-                                            artist: songInfo.tags?.artist || '未知歌手',
-                                            album: songInfo.tags?.album || '未知专辑',
-                                            tags: songInfo.tags
+                                            title: tags.title || data.cur_music,
+                                            artist: tags.artist || '未知歌手',
+                                            album: tags.album || '未知专辑',
+                                            cover: tags.picture || "/static/xiaoai.png",
+                                            url: musicInfo.url,
+                                            isPlaying: data.is_playing
                                         };
                                     }
+                                } catch (error) {
+                                    console.error('Error getting music info:', error);
+                                    // 如果获取详细信息失败，至少更新基本信息
+                                    currentSong.value = {
+                                        title: data.cur_music,
+                                        artist: '未知歌手',
+                                        album: '未知专辑',
+                                        cover: "/static/xiaoai.png",
+                                        isPlaying: data.is_playing
+                                    };
                                 }
 
                                 localStorage.setItem('cur_music', data.cur_music);
@@ -652,7 +662,6 @@
 
                 const loadSongs = async (songNames) => {
                     try {
-                        
                         // 使用 getMusicInfos 批量获取歌曲信息
                         const songsInfo = await API.getMusicInfos(songNames);
 
@@ -686,6 +695,15 @@
                                 lyrics: info.tags?.lyrics || '',
                                 isLoading: false
                             };
+
+                            // 如果这是当前播放的歌曲，更新currentSong
+                            if (currentSong.value && songName === currentSong.value.title) {
+                                currentSong.value = {
+                                    ...currentSong.value,
+                                    cover: songData.cover
+                                };
+                            }
+
                             return songData;
                         });
                     } catch (error) {
