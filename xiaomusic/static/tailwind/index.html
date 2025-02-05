@@ -181,7 +181,7 @@
                                         <div class="flex items-center gap-3">
                                             <div
                                                 class="w-10 h-10 bg-base-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <span class="material-icons icon-sm opacity-50">music_note</span>
+                                                <img :src="song.cover" :alt="song.title" class="w-10 h-10 rounded-lg">
                                             </div>
                                             <div class="flex flex-col">
                                                 <span class="font-medium"
@@ -251,12 +251,14 @@
                 <div class="flex items-center justify-between max-w-7xl mx-auto">
                     <!-- 歌曲信息 -->
                     <div class="flex items-center gap-4">
-                        <div class="avatar">
-                            <div class="w-12 rounded-lg">
-                                <img :src="currentSong?.cover" :alt="currentSong?.title" />
-                            </div>
+                        <div class="avatar cursor-pointer">
+                            <a href="./now_playing.html" target="_blank">
+                                <div class="w-12 rounded-lg">
+                                    <img :src="currentSong?.cover" :alt="currentSong?.title" />
+                                </div>
+                            </a>
                         </div>
-                        <div>
+                        <div class="cursor-pointer hover:text-primary transition-colors">
                             <div class="font-bold">{{ currentSong?.title }}</div>
                             <div class="text-sm opacity-50">
                                 {{ currentSong?.artist }} - {{ currentSong?.album }}
@@ -485,21 +487,31 @@
                             currentTime.value = data.offset || 0;
                             duration.value = data.duration || 0;
 
-                            if (data.cur_music) {
-                                const existingSong = songs.value.find(s => s.title === data.cur_music);
-                                if (existingSong) {
-                                    currentSong.value = existingSong;
-                                } else {
-                                    const songInfo = await API.getMusicInfo(data.cur_music);
-                                    if (songInfo && songInfo.ret === 'OK') {
+                            if (data.cur_music && data.cur_music !== currentSong.value?.title) {
+                                try {
+                                    // 获取音乐详细信息
+                                    const musicInfo = await API.getMusicInfo(data.cur_music);
+                                    if (musicInfo && musicInfo.ret === 'OK') {
+                                        const tags = musicInfo.tags || {};
                                         currentSong.value = {
-                                            title: data.cur_music,
-                                            url: songInfo.url,
-                                            artist: songInfo.tags?.artist || '未知歌手',
-                                            album: songInfo.tags?.album || '未知专辑',
-                                            tags: songInfo.tags
+                                            title: tags.title || data.cur_music,
+                                            artist: tags.artist || '未知歌手',
+                                            album: tags.album || '未知专辑',
+                                            cover: tags.picture || "/static/xiaoai.png",
+                                            url: musicInfo.url,
+                                            isPlaying: data.is_playing
                                         };
                                     }
+                                } catch (error) {
+                                    console.error('Error getting music info:', error);
+                                    // 如果获取详细信息失败，至少更新基本信息
+                                    currentSong.value = {
+                                        title: data.cur_music,
+                                        artist: '未知歌手',
+                                        album: '未知专辑',
+                                        cover: "/static/xiaoai.png",
+                                        isPlaying: data.is_playing
+                                    };
                                 }
 
                                 localStorage.setItem('cur_music', data.cur_music);
@@ -669,18 +681,31 @@
                                     isLoading: false
                                 };
                             }
-                            return {
+
+                            const songData = {
                                 id: songName,
-                                title: songName,
+                                title: info.tags?.title || songName,
                                 artist: info.tags?.artist || '未知歌手',
                                 album: info.tags?.album || '未知专辑',
+                                year: info.tags?.year || '',
+                                genre: info.tags?.genre || '',
                                 duration: info.duration ? formatTime(info.duration) : '0:00',
-                                cover: info.cover || '/static/xiaoai.png',
+                                cover: info.tags?.picture || '/static/xiaoai.png',
                                 url: info.url,
+                                lyrics: info.tags?.lyrics || '',
                                 isLoading: false
                             };
-                        });
 
+                            // 如果这是当前播放的歌曲，更新currentSong
+                            if (currentSong.value && songName === currentSong.value.title) {
+                                currentSong.value = {
+                                    ...currentSong.value,
+                                    cover: songData.cover
+                                };
+                            }
+
+                            return songData;
+                        });
                     } catch (error) {
                         console.error('Error loading songs:', error);
                         songs.value = [];
@@ -1241,6 +1266,9 @@
 
                         // 开始更新播放状态
                         startPlayingStatusUpdate();
+
+                        // 添加键盘事件监听
+                        document.addEventListener('keydown', handleKeyPress)
                     } catch (error) {
                         console.error('Error in onMounted:', error);
                     }
@@ -1249,7 +1277,47 @@
                 // 在组件卸载时停止更新
                 onUnmounted(() => {
                     stopPlayingStatusUpdate();
+                    document.removeEventListener('keydown', handleKeyPress)
                 });
+
+                // 处理键盘事件
+                async function handleKeyPress(event) {
+                    // 如果用户正在输入，不处理快捷键
+                    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+                        return
+                    }
+
+                    switch (event.code) {
+                        case 'Space': // 空格键：播放/暂停
+                            event.preventDefault() // 防止页面滚动
+                            if (currentSong.value) {
+                                await togglePlay(currentSong.value)
+                            }
+                            break
+                        case 'ArrowLeft': // 左方向键：上一首
+                            event.preventDefault()
+                            await sendCommand(API.commands.PLAY_PREVIOUS)
+                            break
+                        case 'ArrowRight': // 右方向键：下一首
+                            event.preventDefault()
+                            await sendCommand(API.commands.PLAY_NEXT)
+                            break
+                        case 'ArrowUp': // 上方向键：增加音量
+                            event.preventDefault()
+                            if (volume.value < 100) {
+                                volume.value = Math.min(100, volume.value + 5)
+                                await setVolume({ target: { value: volume.value } })
+                            }
+                            break
+                        case 'ArrowDown': // 下方向键：减小音量
+                            event.preventDefault()
+                            if (volume.value > 0) {
+                                volume.value = Math.max(0, volume.value - 5)
+                                await setVolume({ target: { value: volume.value } })
+                            }
+                            break
+                    }
+                }
 
                 // 返回所有需要的数据和方法
                 return {

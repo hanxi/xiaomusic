@@ -16,7 +16,7 @@ const API = {
             .map(name => `name=${encodeURIComponent(name)}`)
             .join('&');
             
-        const response = await fetch(`/musicinfos?${queryParams}`);
+        const response = await fetch(`/musicinfos?${queryParams}&musictag=true`);
         return response.json();
     },
 

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正在播放 - XiaoMusic</title>
+    <link rel="icon" href="./favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.js"></script>
+    <script src="./api.js"></script>
+</head>
+
+<body class="font-sans">
+    <div id="app" class="h-screen flex flex-col">
+        <!-- Toast 提示 -->
+        <div class="toast toast-top toast-center z-[9999]">
+            <div v-if="showToast" :class="['alert', toastType]">
+                <span>{{ toastMessage }}</span>
+            </div>
+        </div>
+
+        <!-- 错误提示 -->
+        <div v-if="error" class="fixed top-4 right-4 z-50 alert alert-error shadow-lg max-w-sm">
+            <span class="material-icons">error</span>
+            <span>{{ error }}</span>
+        </div>
+
+        <!-- 背景图 -->
+        <div class="fixed inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out"
+            :style="{ backgroundImage: `url(${currentSong.cover})` }"></div>
+        <div class="fixed inset-0 backdrop-blur-2xl bg-black/40"></div>
+
+        <!-- 主内容区 -->
+        <div class="relative z-10 flex h-full">
+            <!-- 左侧内容 -->
+            <div class="flex-1">
+                <!-- 顶部信息 -->
+                <div class="text-center p-6">
+                    <h2 class="text-3xl font-bold text-white mb-1 tracking-wide">{{ currentSong.title }}</h2>
+                    <p class="text-l text-white/40 mb-1">{{ currentSong.artist }} - {{ currentSong.album }}</p>
+                    <!-- 标签显示 -->
+                    <div v-if="currentSong.tags" class="flex justify-center gap-2 mt-2 flex-wrap">
+                        <span v-for="(value, key) in currentSong.tags" :key="key"
+                            class="px-2 py-1 rounded-full bg-primary/20 text-primary text-sm">
+                            {{ key }}: {{ value }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 歌词区域 -->
+                <div class="flex-grow overflow-y-auto lyrics-container px-4 py-2 scrollbar-hide">
+                    <div class="max-w-2xl mx-auto pb-24">
+                        <div v-if="currentSong.lyrics.length === 0" class="text-center text-white/50 text-xl mt-10">
+                            暂无歌词
+                        </div>
+                        <p v-else v-for="(line, index) in currentSong.lyrics" :key="index"
+                            :class="{'text-white text-3xl font-semibold': currentLyricIndex === index, 'text-white/50 text-xl': currentLyricIndex !== index}"
+                            class="mb-6 transition-all duration-300 text-center"
+                            :data-index="index">
+                            {{ line.text }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧控制面板 -->
+            <div class="fixed right-8 top-1/2 -translate-y-1/2 flex items-start">
+                <!-- 控制面板内容 -->
+                <div class="transition-all duration-300"
+                    :class="[showControlPanel ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0']">
+                    <div class="bg-black/30 backdrop-blur-lg rounded-xl p-6 shadow-2xl">
+                        <!-- 快捷键提示 -->
+                        <div class="flex flex-col gap-4 text-white/50 text-sm mb-8">
+                            <h3 class="text-white/70 font-semibold mb-2">快捷键</h3>
+                            <div class="flex items-center gap-2">
+                                <kbd class="kbd kbd-sm">Space</kbd>
+                                <span>播放/暂停</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex gap-1">
+                                    <kbd class="kbd kbd-sm">←</kbd>
+                                    <kbd class="kbd kbd-sm">→</kbd>
+                                </div>
+                                <span>切换歌曲</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex gap-1">
+                                    <kbd class="kbd kbd-sm">↑</kbd>
+                                    <kbd class="kbd kbd-sm">↓</kbd>
+                                </div>
+                                <span>调节音量</span>
+                            </div>
+                        </div>
+
+                        <!-- 歌词偏移控制 -->
+                        <div class="flex flex-col gap-4">
+                            <h3 class="text-white/70 font-semibold">歌词偏移</h3>
+                            <div class="flex items-center gap-2">
+                                <button @click="adjustLyricsOffset(-0.5)" 
+                                    class="btn btn-sm btn-ghost text-white/70 hover:text-white">
+                                    <span class="material-icons text-lg">remove</span>
+                                </button>
+                                <div class="text-white/70 text-sm">
+                                    {{ lyricsOffset.toFixed(1) }}s
+                                </div>
+                                <button @click="adjustLyricsOffset(0.5)"
+                                    class="btn btn-sm btn-ghost text-white/70 hover:text-white">
+                                    <span class="material-icons text-lg">add</span>
+                                </button>
+                                <button @click="resetLyricsOffset"
+                                    class="btn btn-sm btn-ghost text-white/70 hover:text-white"
+                                    title="重置歌词偏移">
+                                    <span class="material-icons text-lg">restart_alt</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 切换按钮 -->
+                <button @click="showControlPanel = !showControlPanel"
+                    class="w-6 h-6 bg-black/30 backdrop-blur-lg rounded-full flex items-center justify-center hover:bg-black/50 transition-colors ml-2"
+                    :class="{'rotate-180': !showControlPanel}">
+                    <span class="material-icons text-white/70 text-sm">chevron_left</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 底部控制栏 -->
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent pt-10 pb-4 px-4">
+            <!-- 进度条 -->
+            <div class="mb-4">
+                <input type="range" min="0" :max="duration" v-model="currentTime"
+                    class="range range-xs range-primary w-full opacity-70 hover:opacity-100 transition-opacity" @input="seek">
+                <div class="flex justify-between text-xs text-white/50 mt-1">
+                    <span>{{ formatTime(currentTime) }}</span>
+                    <span>{{ formatTime(duration) }}</span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <!-- 播放模式 -->
+                <div class="flex space-x-3">
+                    <button class="text-white/70 hover:text-white transition-colors p-2 rounded-full"
+                        :class="{'bg-primary/20 text-primary': playMode === 'repeat'}" @click="setPlayMode('repeat')">
+                        <span class="material-icons text-xl">repeat</span>
+                    </button>
+                    <button class="text-white/70 hover:text-white transition-colors p-2 rounded-full"
+                        :class="{'bg-primary/20 text-primary': playMode === 'repeat_one'}" @click="setPlayMode('repeat_one')">
+                        <span class="material-icons text-xl">repeat_one</span>
+                    </button>
+                    <button class="text-white/70 hover:text-white transition-colors p-2 rounded-full"
+                        :class="{'bg-primary/20 text-primary': playMode === 'shuffle'}" @click="setPlayMode('shuffle')">
+                        <span class="material-icons text-xl">shuffle</span>
+                    </button>
+                </div>
+
+                <!-- 播放控制 -->
+                <div class="flex items-center space-x-4">
+                    <button class="text-white/70 hover:text-white transition-colors" @click="previousSong">
+                        <span class="material-icons text-3xl">skip_previous</span>
+                    </button>
+                    <button class="bg-white text-black rounded-full p-2 hover:bg-primary hover:text-white transition-all"
+                        @click="togglePlay">
+                        <span class="material-icons text-3xl">{{ isPlaying ? 'pause' : 'play_arrow' }}</span>
+                    </button>
+                    <button class="text-white/70 hover:text-white transition-colors" @click="nextSong">
+                        <span class="material-icons text-3xl">skip_next</span>
+                    </button>
+                    <button class="text-white/70 hover:text-white transition-colors" @click="stopPlay">
+                        <span class="material-icons text-3xl">stop</span>
+                    </button>
+                </div>
+
+                <!-- 音量控制 -->
+                <div class="flex items-center space-x-2">
+                    <span class="material-icons text-white/70 text-xl hover:text-white transition-colors cursor-pointer">
+                        {{ volume > 0 ? 'volume_up' : 'volume_off' }}
+                    </span>
+                    <input type="range" min="0" max="100" step="1" v-model.number="volume"
+                        class="range range-primary w-32" @input="setVolume">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 添加平滑滚动效果 */
+        .lyrics-container {
+            scroll-behavior: smooth;
+        }
+
+        /* 自定义范围输入样式 */
+        .range {
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .range::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* 歌词动画效果 */
+        .lyrics-container p {
+            transition: all 0.3s ease-out;
+        }
+
+        .lyrics-container p.active {
+            transform: scale(1.05);
+        }
+    </style>
+
+    <script src="./now_playing.js"></script>
+</body>
+
+</html>
