@@ -20,6 +20,7 @@ createApp({
         const isLoading = ref(false)
         const error = ref(null)
         const lyricsOffset = ref(0) // 歌词偏移值（秒）
+        const showControlPanel = ref(true) // 控制面板显示状态
         
         // Toast 提示相关
         const showToast = ref(false)
@@ -62,16 +63,16 @@ createApp({
 
         // 初始化
         onMounted(async () => {
-            // 获取初始音量
+            // 获取并更新当前音量
             try {
                 const volumeResponse = await API.getVolume(deviceId)
                 if (volumeResponse.ret === 'OK') {
                     volume.value = parseInt(volumeResponse.volume)
                 }
-            } catch (error) {
-                console.error('Error getting volume:', error)
+            } catch (err) {
+                console.error('Error getting volume:', err)
             }
-
+            
             // 开始定时获取播放状态
             updatePlayingStatus()
             setInterval(updatePlayingStatus, 1000)
@@ -133,16 +134,6 @@ createApp({
                     isPlaying.value = status.is_playing
                     currentTime.value = status.offset || 0
                     duration.value = status.duration || 0
-
-                    // 获取并更新当前音量
-                    try {
-                        const volumeResponse = await API.getVolume(deviceId)
-                        if (volumeResponse.ret === 'OK') {
-                            volume.value = parseInt(volumeResponse.volume)
-                        }
-                    } catch (err) {
-                        console.error('Error getting volume:', err)
-                    }
 
                     // 如果有正在播放的音乐且音乐发生改变
                     if (status.cur_music && status.cur_music !== currentSong.value.name) {
@@ -399,6 +390,7 @@ createApp({
             showToast,
             toastMessage,
             toastType,
+            showControlPanel,
             togglePlay,
             seek,
             setVolume,
