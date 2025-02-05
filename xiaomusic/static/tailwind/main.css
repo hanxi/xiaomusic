@@ -131,3 +131,8 @@
 .text-error .icon-sm {
   fill: currentColor;
 }
+
+/* 修复手机端播放列表 歌曲名称超长溢出问题 */
+.song-list .song-item .min-w-0 {
+  width: 1px;
+}
