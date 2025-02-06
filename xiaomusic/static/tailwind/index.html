@@ -259,13 +259,15 @@
                             </a>
                         </div>
                         <div class="cursor-pointer hover:text-primary transition-colors">
-                            <div class="font-bold">{{ currentSong?.title }}</div>
-                            <div class="text-sm opacity-50">
-                                {{ currentSong?.artist }} - {{ currentSong?.album }}
-                            </div>
-                            <div class="text-sm opacity-50">
-                                {{ currentPlaylist }}
-                            </div>
+                            <a href="./now_playing.html" target="_blank">
+                                <div class="font-bold">{{ currentSong?.title }}</div>
+                                <div class="text-sm opacity-50">
+                                    {{ currentSong?.artist }} - {{ currentSong?.album }}
+                                </div>
+                                <div class="text-sm opacity-50">
+                                    {{ currentPlaylist }}
+                                </div>
+                            </a>
                         </div>
                         <button class="btn btn-ghost btn-circle btn-sm"
                             @click="currentSong && toggleFavorite(currentSong)"
@@ -891,10 +893,33 @@
                                 }
                             }
                         } else {
-                            // 设备播放模式
-                            const response = await API.sendCommand(window.did, isPlaying.value ? "暂停播放" : "继续播放");
-                            if (response.ret === 'OK') {
-                                isPlaying.value = !isPlaying.value;
+                            try {
+                                if (isPlaying.value) {
+                                    // 如果正在播放，则暂停
+                                    const response = await API.sendCommand(window.did, API.commands.PLAY_PAUSE)
+                                    if (response.ret === 'OK') {
+                                        isPlaying.value = false
+                                        showNotification('暂停播放')
+                                    }
+                                } else {
+                                    // 如果当前是暂停状态，获取当前歌曲信息并重新播放
+                                    const status = await API.getPlayingStatus(window.did)
+                                    if (status.ret === 'OK' && status.cur_music && status.cur_playlist) {
+                                        // 使用 playmusiclist 接口重新播放当前歌曲
+                                        const response = await API.playMusicFromList(window.did, status.cur_playlist, status.cur_music)
+                                        if (response.ret === 'OK') {
+                                            isPlaying.value = true
+                                            showNotification('开始播放')
+                                        } else {
+                                            showNotification('播放失败', 'error')
+                                        }
+                                    } else {
+                                        showNotification('获取播放信息失败', 'error')
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error toggling play state:', error)
+                                showNotification('播放控制失败', 'error')
                             }
                         }
                     } catch (error) {

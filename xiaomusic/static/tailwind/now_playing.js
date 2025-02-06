@@ -9,7 +9,8 @@ createApp({
             cover: '',
             lyrics: [],
             tags: null,
-            name: '' // 原始文件名
+            name: '', // 原始文件名
+            cur_playlist: '' // 当前歌单
         })
         const isPlaying = ref(false)
         const currentTime = ref(0)
@@ -134,7 +135,7 @@ createApp({
                     isPlaying.value = status.is_playing
                     currentTime.value = status.offset || 0
                     duration.value = status.duration || 0
-
+                    currentSong.value.cur_playlist = status.cur_playlist || ''
                     // 如果有正在播放的音乐且音乐发生改变
                     if (status.cur_music && status.cur_music !== currentSong.value.name) {
                         isLoading.value = true
@@ -250,29 +251,18 @@ createApp({
             // 如果找到新的歌词索引，更新显示
             if (foundIndex !== -1 && foundIndex !== currentLyricIndex.value) {
                 currentLyricIndex.value = foundIndex
-
-                // 获取歌词容器和当前歌词元素
+                // 滚动到当前歌词
                 const container = document.querySelector('.lyrics-container')
-                const currentLyric = container?.querySelector(`[data-index="${foundIndex}"]`)
-                
-                if (container && currentLyric) {
-                    // 计算目标滚动位置，使当前歌词保持在容器中央
-                    const containerHeight = container.offsetHeight
-                    const lyricHeight = currentLyric.offsetHeight
-                    const targetPosition = currentLyric.offsetTop - (containerHeight / 2) + (lyricHeight / 2)
-
-                    // 使用平滑滚动
+                const currentLyric = container.querySelector(`[data-index="${foundIndex}"]`)
+                if (currentLyric) {
+                    const containerHeight = container.clientHeight
+                    const lyricTop = currentLyric.offsetTop
+                    const lyricHeight = currentLyric.clientHeight
+                    // 计算滚动位置，使当前歌词在容器中垂直居中
                     container.scrollTo({
-                        top: targetPosition,
+                        top: lyricTop - (containerHeight / 2) + (lyricHeight / 2),
                         behavior: 'smooth'
                     })
-
-                    // 添加高亮动画效果
-                    currentLyric.style.transition = 'transform 0.3s ease-out'
-                    currentLyric.style.transform = 'scale(1.05)'
-                    setTimeout(() => {
-                        currentLyric.style.transform = 'scale(1)'
-                    }, 200)
                 }
             }
         }
@@ -292,11 +282,33 @@ createApp({
 
         // 播放控制
         async function togglePlay() {
-            const cmd = isPlaying.value ? API.commands.PLAY_PAUSE : API.commands.PLAY_CONTINUE
-            const response = await API.sendCommand(deviceId, cmd)
-            if (response.ret === 'OK') {
-                isPlaying.value = !isPlaying.value
-                showMessage(isPlaying.value ? '开始播放' : '暂停播放')
+            try {
+                if (isPlaying.value) {
+                    // 如果正在播放，则暂停
+                    const response = await API.sendCommand(deviceId, API.commands.PLAY_PAUSE)
+                    if (response.ret === 'OK') {
+                        isPlaying.value = false
+                        showMessage('暂停播放')
+                    }
+                } else {
+                    // 如果当前是暂停状态，获取当前歌曲信息并重新播放
+                    const status = await API.getPlayingStatus(deviceId)
+                    if (status.ret === 'OK' && status.cur_music && status.cur_playlist) {
+                        // 使用 playmusiclist 接口重新播放当前歌曲
+                        const response = await API.playMusicFromList(deviceId, status.cur_playlist, status.cur_music)
+                        if (response.ret === 'OK') {
+                            isPlaying.value = true
+                            showMessage('开始播放')
+                        } else {
+                            showMessage('播放失败', 'error')
+                        }
+                    } else {
+                        showMessage('获取播放信息失败', 'error')
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling play state:', error)
+                showMessage('播放控制失败', 'error')
             }
         }
 
@@ -363,17 +375,33 @@ createApp({
             }
         }
 
-        // 进度控制
-        function seek() {
-            // 更新歌词显示
-            updateCurrentLyric()
+        // 手动调整进度
+        async function seek() {
+            try {
+                if (window.did === 'web_device') {
+                    // Web播放模式
+                    const audio = document.getElementById('audio-player')
+                    if (audio) {
+                        audio.currentTime = currentTime.value
+                    }
+                } else {
+                    // 设备播放模式
+                    await API.sendCommand(window.did, `seek ${Math.floor(currentTime.value)}`)
+                }
+                // 立即更新歌词显示
+                updateCurrentLyric()
+            } catch (error) {
+                console.error('Error seeking:', error)
+                showMessage('调整进度失败', 'error')
+            }
         }
 
-        // 时间格式化
+        // 格式化时间
         function formatTime(time) {
+            if (!time) return '00:00'
             const minutes = Math.floor(time / 60)
             const seconds = Math.floor(time % 60)
-            return `${minutes}:${seconds.toString().padStart(2, '0')}`
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
         }
 
         return {
