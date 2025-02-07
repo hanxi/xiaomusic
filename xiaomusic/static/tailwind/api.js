@@ -29,7 +29,10 @@ const API = {
     // 获取当前播放状态
     async getPlayingStatus(did = 'web_device') {
         const response = await fetch(`/playingmusic?did=${did}`);
-        return response.json();
+        const data = await response.json();
+        localStorage.setItem('cur_music', data.cur_music);
+        localStorage.setItem('cur_playlist', data.cur_playlist);
+        return data;
     },
 
     // 播放歌单中的歌曲

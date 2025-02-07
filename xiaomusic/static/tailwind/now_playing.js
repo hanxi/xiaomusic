@@ -22,17 +22,14 @@ createApp({
         const error = ref(null)
         const lyricsOffset = ref(0) // 歌词偏移值（秒）
         const showControlPanel = ref(true) // 控制面板显示状态
+        const deviceId = ref(localStorage.getItem('cur_did') || 'web_device')
+        const audioPlayer = ref(null) // 添加 audioPlayer ref
         
         // Toast 提示相关
         const showToast = ref(false)
         const toastMessage = ref('')
         const toastType = ref('alert-info')
         let toastTimer = null
-
-        // 获取设备ID
-        const deviceId = localStorage.getItem('cur_did') || 'web_device'
-        // 保存设备ID到localStorage
-        localStorage.setItem('cur_did', deviceId)
 
         // 从localStorage获取保存的歌词偏移值
         const savedOffset = localStorage.getItem('lyrics_offset')
@@ -62,86 +59,54 @@ createApp({
             }
         }
 
-        // 初始化
-        onMounted(async () => {
-            // 获取并更新当前音量
-            try {
-                const volumeResponse = await API.getVolume(deviceId)
-                if (volumeResponse.ret === 'OK') {
-                    volume.value = parseInt(volumeResponse.volume)
+        // 初始化音频播放器
+        function initAudioPlayer() {
+            const audio = document.createElement('audio')
+            audio.id = 'audio-player'
+            document.body.appendChild(audio)
+            audioPlayer.value = audio
+
+            // 监听播放状态变化
+            audio.addEventListener('play', () => {
+                isPlaying.value = true
+            })
+            audio.addEventListener('pause', () => {
+                isPlaying.value = false
+            })
+            audio.addEventListener('timeupdate', () => {
+                currentTime.value = audio.currentTime
+                updateCurrentLyric()
+            })
+            audio.addEventListener('loadedmetadata', () => {
+                duration.value = audio.duration
+            })
+            audio.addEventListener('ended', () => {
+                // 根据播放模式决定下一步操作
+                if (playMode.value === 'repeat_one') {
+                    audio.currentTime = 0
+                    audio.play()
+                } else {
+                    nextSong()
                 }
-            } catch (err) {
-                console.error('Error getting volume:', err)
-            }
-            
-            // 开始定时获取播放状态
-            updatePlayingStatus()
-            setInterval(updatePlayingStatus, 1000)
-
-            // 添加键盘事件监听
-            document.addEventListener('keydown', handleKeyPress)
-        })
-
-        // 处理键盘事件
-        async function handleKeyPress(event) {
-            // 如果用户正在输入，不处理快捷键
-            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-                return
-            }
-
-            switch (event.code) {
-                case 'Space': // 空格键：播放/暂停
-                    event.preventDefault() // 防止页面滚动
-                    await togglePlay()
-                    break
-                case 'ArrowLeft': // 左方向键：上一首
-                    event.preventDefault()
-                    await previousSong()
-                    break
-                case 'ArrowRight': // 右方向键：下一首
-                    event.preventDefault()
-                    await nextSong()
-                    break
-                case 'ArrowUp': // 上方向键：增加音量
-                    event.preventDefault()
-                    if (volume.value < 100) {
-                        volume.value = Math.min(100, volume.value + 5)
-                        await setVolume()
-                    }
-                    break
-                case 'ArrowDown': // 下方向键：减小音量
-                    event.preventDefault()
-                    if (volume.value > 0) {
-                        volume.value = Math.max(0, volume.value - 5)
-                        await setVolume()
-                    }
-                    break
-            }
+            })
         }
-
-        // 在组件销毁时移除事件监听
-        onUnmounted(() => {
-            document.removeEventListener('keydown', handleKeyPress)
-        })
 
         // 更新播放状态
         async function updatePlayingStatus() {
             try {
                 error.value = null
-                // 获取当前播放状态
-                const status = await API.getPlayingStatus(deviceId)
-                if (status.ret === 'OK') {
-                    // 更新播放状态
-                    isPlaying.value = status.is_playing
-                    currentTime.value = status.offset || 0
-                    duration.value = status.duration || 0
-                    currentSong.value.cur_playlist = status.cur_playlist || ''
-                    // 如果有正在播放的音乐且音乐发生改变
-                    if (status.cur_music && status.cur_music !== currentSong.value.name) {
+                deviceId.value = localStorage.getItem('cur_did') || 'web_device'
+                
+                if (deviceId.value === 'web_device') {
+                    // Web播放模式 - 从localStorage获取当前播放信息
+                    const curMusic = localStorage.getItem('cur_music')
+                    const curPlaylist = localStorage.getItem('cur_playlist')
+
+                    if (curMusic && (!currentSong.value?.name || curMusic !== currentSong.value.name)) {
                         isLoading.value = true
                         try {
                             // 获取音乐详细信息
-                            const musicInfo = await API.getMusicInfo(status.cur_music)
+                            const musicInfo = await API.getMusicInfo(curMusic)
                             if (musicInfo && musicInfo.ret === 'OK') {
                                 const tags = musicInfo.tags || {}
                                 currentSong.value = {
@@ -154,16 +119,72 @@ createApp({
                                         year: tags.year,
                                         genre: tags.genre
                                     },
-                                    name: musicInfo.name
+                                    name: musicInfo.name,
+                                    cur_playlist: curPlaylist
                                 }
-                                // 更新当前歌词
-                                updateCurrentLyric()
+
+                                // 如果音频播放器存在且URL不同，更新URL
+                                if (audioPlayer.value && audioPlayer.value.src !== musicInfo.url) {
+                                    audioPlayer.value.src = musicInfo.url
+                                    // 如果标记为正在播放，但实际已暂停，尝试恢复播放
+                                    if (isPlaying.value && audioPlayer.value.paused) {
+                                        try {
+                                            await audioPlayer.value.play()
+                                        } catch (e) {
+                                            console.error('Failed to resume playback:', e)
+                                            isPlaying.value = false
+                                        }
+                                    }
+                                }
                             }
                         } finally {
                             isLoading.value = false
                         }
-                    } else {
-                        // 即使歌曲没有改变，也要更新当前歌词（因为时间在变化）
+                    }
+
+                    // 更新播放状态
+                    if (audioPlayer.value) {
+                        isPlaying.value = !audioPlayer.value.paused
+                        currentTime.value = audioPlayer.value.currentTime || 0
+                        duration.value = audioPlayer.value.duration || 0
+                        updateCurrentLyric()
+                    }
+                } else {
+                    // 设备播放模式 - 从API获取状态
+                    const status = await API.getPlayingStatus(deviceId.value)
+                    if (status.ret === 'OK') {
+                        // 更新播放状态
+                        isPlaying.value = status.is_playing
+                        currentTime.value = status.offset || 0
+                        duration.value = status.duration || 0
+                        currentSong.value.cur_playlist = status.cur_playlist || ''
+                        // 如果有正在播放的音乐且音乐发生改变
+                        if (status.cur_music && status.cur_music !== currentSong.value.name) {
+                            isLoading.value = true
+                            try {
+                                // 获取音乐详细信息
+                                const musicInfo = await API.getMusicInfo(status.cur_music)
+                                if (musicInfo && musicInfo.ret === 'OK') {
+                                    const tags = musicInfo.tags || {}
+                                    currentSong.value = {
+                                        title: tags.title || musicInfo.name,
+                                        artist: tags.artist || '未知歌手',
+                                        album: tags.album || '未知专辑',
+                                        cover: tags.picture || `/cover?name=${encodeURIComponent(musicInfo.name)}`,
+                                        lyrics: parseLyrics(tags.lyrics || ''),
+                                        tags: {
+                                            year: tags.year,
+                                            genre: tags.genre
+                                        },
+                                        name: musicInfo.name,
+                                        cur_playlist: status.cur_playlist
+                                    }
+                                }
+                            } finally {
+                                isLoading.value = false
+                            }
+                        }
+                        // 更新当前歌词
                         updateCurrentLyric()
                     }
                 }
@@ -283,27 +304,64 @@ createApp({
         // 播放控制
         async function togglePlay() {
             try {
-                if (isPlaying.value) {
-                    // 如果正在播放，则暂停
-                    const response = await API.sendCommand(deviceId, API.commands.PLAY_PAUSE)
-                    if (response.ret === 'OK') {
-                        isPlaying.value = false
-                        showMessage('暂停播放')
+                if (deviceId.value === 'web_device') {
+                    // Web播放模式
+                    if (!currentSong.value?.name) {
+                        showMessage('没有可播放的歌曲', 'error')
+                        return
                     }
-                } else {
-                    // 如果当前是暂停状态，获取当前歌曲信息并重新播放
-                    const status = await API.getPlayingStatus(deviceId)
-                    if (status.ret === 'OK' && status.cur_music && status.cur_playlist) {
-                        // 使用 playmusiclist 接口重新播放当前歌曲
-                        const response = await API.playMusicFromList(deviceId, status.cur_playlist, status.cur_music)
-                        if (response.ret === 'OK') {
-                            isPlaying.value = true
-                            showMessage('开始播放')
-                        } else {
-                            showMessage('播放失败', 'error')
+
+                    if (isPlaying.value) {
+                        if (audioPlayer.value) {
+                            audioPlayer.value.pause()
+                            isPlaying.value = false
+                            showMessage('暂停播放')
                         }
                     } else {
-                        showMessage('获取播放信息失败', 'error')
+                        try {
+                            // 获取最新的音乐URL
+                            const musicInfo = await API.getMusicInfo(currentSong.value.name)
+                            if (musicInfo && musicInfo.ret === 'OK') {
+                                if (audioPlayer.value) {
+                                    if (audioPlayer.value.src !== musicInfo.url) {
+                                        audioPlayer.value.src = musicInfo.url
+                                    }
+                                    await audioPlayer.value.play()
+                                    isPlaying.value = true
+                                    showMessage('开始播放')
+                                }
+                            } else {
+                                showMessage('获取音乐信息失败', 'error')
+                            }
+                        } catch (error) {
+                            console.error('Error getting music info:', error)
+                            showMessage('播放失败', 'error')
+                        }
+                    }
+                } else {
+                    // 设备播放模式
+                    if (isPlaying.value) {
+                        // 如果正在播放，则暂停
+                        const response = await API.sendCommand(deviceId.value, API.commands.PLAY_PAUSE)
+                        if (response.ret === 'OK') {
+                            isPlaying.value = false
+                            showMessage('暂停播放')
+                        }
+                    } else {
+                        // 如果当前是暂停状态，获取当前歌曲信息并重新播放
+                        const status = await API.getPlayingStatus(deviceId.value)
+                        if (status.ret === 'OK' && status.cur_music && status.cur_playlist) {
+                            // 使用 playmusiclist 接口重新播放当前歌曲
+                            const response = await API.playMusicFromList(deviceId.value, status.cur_playlist, status.cur_music)
+                            if (response.ret === 'OK') {
+                                isPlaying.value = true
+                                showMessage('开始播放')
+                            } else {
+                                showMessage('播放失败', 'error')
+                            }
+                        } else {
+                            showMessage('获取播放信息失败', 'error')
+                        }
                     }
                 }
             } catch (error) {
@@ -313,21 +371,21 @@ createApp({
         }
 
         async function previousSong() {
-            const response = await API.sendCommand(deviceId, API.commands.PLAY_PREVIOUS)
+            const response = await API.sendCommand(deviceId.value, API.commands.PLAY_PREVIOUS)
             if (response.ret === 'OK') {
                 showMessage('播放上一首')
             }
         }
 
         async function nextSong() {
-            const response = await API.sendCommand(deviceId, API.commands.PLAY_NEXT)
+            const response = await API.sendCommand(deviceId.value, API.commands.PLAY_NEXT)
             if (response.ret === 'OK') {
                 showMessage('播放下一首')
             }
         }
 
         async function stopPlay() {
-            const response = await API.sendCommand(deviceId, API.commands.PLAY_PAUSE)
+            const response = await API.sendCommand(deviceId.value, API.commands.PLAY_PAUSE)
             if (response.ret === 'OK') {
                 isPlaying.value = false
                 showMessage('停止播放')
@@ -352,7 +410,7 @@ createApp({
                     break
             }
             if (cmd) {
-                const response = await API.sendCommand(deviceId, cmd)
+                const response = await API.sendCommand(deviceId.value, cmd)
                 if (response.ret === 'OK') {
                     playMode.value = mode
                     showMessage(`切换到${modeName}模式`)
@@ -364,9 +422,12 @@ createApp({
         async function setVolume() {
             try {
                 const volumeValue = parseInt(volume.value)
-                const response = await API.setVolume(deviceId, volumeValue)
+                const response = await API.setVolume(deviceId.value, volumeValue)
                 if (response.ret === 'OK') {
                     showMessage(`音量: ${volumeValue}%`)
+                    if (audioPlayer.value) {
+                        audioPlayer.value.volume = volumeValue / 100
+                    }
                 } else {
                     console.error('Failed to set volume:', response)
                 }
@@ -378,7 +439,7 @@ createApp({
         // 手动调整进度
         async function seek() {
             try {
-                if (window.did === 'web_device') {
+                if (deviceId.value === 'web_device') {
                     // Web播放模式
                     const audio = document.getElementById('audio-player')
                     if (audio) {
@@ -386,7 +447,7 @@ createApp({
                     }
                 } else {
                     // 设备播放模式
-                    await API.sendCommand(window.did, `seek ${Math.floor(currentTime.value)}`)
+                    await API.sendCommand(deviceId.value, `seek ${Math.floor(currentTime.value)}`)
                 }
                 // 立即更新歌词显示
                 updateCurrentLyric()
@@ -403,6 +464,77 @@ createApp({
             const seconds = Math.floor(time % 60)
             return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
         }
+
+        // 初始化
+        onMounted(async () => {
+            // 初始化音频播放器
+            initAudioPlayer()
+
+            // 获取并更新当前音量
+            try {
+                const volumeResponse = await API.getVolume(deviceId.value)
+                if (volumeResponse.ret === 'OK') {
+                    volume.value = parseInt(volumeResponse.volume)
+                    if (audioPlayer.value) {
+                        audioPlayer.value.volume = volume.value / 100
+                    }
+                }
+            } catch (err) {
+                console.error('Error getting volume:', err)
+            }
+            
+            // 开始定时获取播放状态
+            updatePlayingStatus()
+            setInterval(updatePlayingStatus, 1000)
+
+            // 添加键盘事件监听
+            document.addEventListener('keydown', handleKeyPress)
+        })
+
+        // 处理键盘事件
+        async function handleKeyPress(event) {
+            // 如果用户正在输入，不处理快捷键
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+                return
+            }
+
+            switch (event.code) {
+                case 'Space': // 空格键：播放/暂停
+                    event.preventDefault() // 防止页面滚动
+                    await togglePlay()
+                    break
+                case 'ArrowLeft': // 左方向键：上一首
+                    event.preventDefault()
+                    await previousSong()
+                    break
+                case 'ArrowRight': // 右方向键：下一首
+                    event.preventDefault()
+                    await nextSong()
+                    break
+                case 'ArrowUp': // 上方向键：增加音量
+                    event.preventDefault()
+                    if (volume.value < 100) {
+                        volume.value = Math.min(100, volume.value + 5)
+                        await setVolume()
+                    }
+                    break
+                case 'ArrowDown': // 下方向键：减小音量
+                    event.preventDefault()
+                    if (volume.value > 0) {
+                        volume.value = Math.max(0, volume.value - 5)
+                        await setVolume()
+                    }
+                    break
+            }
+        }
+
+        // 在组件销毁时清理
+        onUnmounted(() => {
+            document.removeEventListener('keydown', handleKeyPress)
+            if (audioPlayer.value) {
+                audioPlayer.value.remove()
+            }
+        })
 
         return {
             currentSong,
