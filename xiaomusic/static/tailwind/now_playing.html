@@ -14,11 +14,7 @@
 </head>
 
 <body class="font-sans">
-<<<<<<< HEAD
     <div id="app" class="h-screen flex flex-col overflow-hidden">
-=======
-    <div id="app" class="h-screen flex flex-col">
->>>>>>> 87760eecbdc624c32421931dbb2ba49654bd2472
         <!-- Toast 提示 -->
         <div class="toast toast-top toast-center z-[9999]">
             <div v-if="showToast" :class="['alert', toastType]">
@@ -38,7 +34,6 @@
         <div class="fixed inset-0 backdrop-blur-2xl bg-black/40"></div>
 
         <!-- 主内容区 -->
-<<<<<<< HEAD
         <div class="relative z-10 flex flex-col h-full">
             <!-- 添加一个返回按钮 在页面左侧顶部-->
             <a class="btn btn-sm btn-ghost text-white/70 hover:text-white fixed top-4 left-4" href="./index.html">
@@ -70,37 +65,6 @@
                         :data-index="index">
                         {{ line.text }}
                     </p>
-=======
-        <div class="relative z-10 flex h-full">
-            <!-- 左侧内容 -->
-            <div class="flex-1">
-                <!-- 顶部信息 -->
-                <div class="text-center p-6">
-                    <h2 class="text-3xl font-bold text-white mb-1 tracking-wide">{{ currentSong.title }}</h2>
-                    <p class="text-l text-white/40 mb-1">{{ currentSong.artist }} - {{ currentSong.album }}</p>
-                    <!-- 标签显示 -->
-                    <div v-if="currentSong.tags" class="flex justify-center gap-2 mt-2 flex-wrap">
-                        <span v-for="(value, key) in currentSong.tags" :key="key"
-                            class="px-2 py-1 rounded-full bg-primary/20 text-primary text-sm">
-                            {{ key }}: {{ value }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- 歌词区域 -->
-                <div class="flex-grow overflow-y-auto lyrics-container px-4 py-2 scrollbar-hide">
-                    <div class="max-w-2xl mx-auto pb-24">
-                        <div v-if="currentSong.lyrics.length === 0" class="text-center text-white/50 text-xl mt-10">
-                            暂无歌词
-                        </div>
-                        <p v-else v-for="(line, index) in currentSong.lyrics" :key="index"
-                            :class="{'text-white text-3xl font-semibold': currentLyricIndex === index, 'text-white/50 text-xl': currentLyricIndex !== index}"
-                            class="mb-6 transition-all duration-300 text-center"
-                            :data-index="index">
-                            {{ line.text }}
-                        </p>
-                    </div>
->>>>>>> 87760eecbdc624c32421931dbb2ba49654bd2472
                 </div>
             </div>
 
@@ -165,7 +129,6 @@
                     <span class="material-icons text-white/70 text-sm">chevron_left</span>
                 </button>
             </div>
-<<<<<<< HEAD
 
             <!-- 底部控制栏 -->
             <div class="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent pt-10 pb-4 px-4 z-20">
@@ -221,63 +184,6 @@
                         <input type="range" min="0" max="100" step="1" v-model.number="volume"
                             class="range range-primary w-32" @input="setVolume">
                     </div>
-=======
-        </div>
-
-        <!-- 底部控制栏 -->
-        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent pt-10 pb-4 px-4">
-            <!-- 进度条 -->
-            <div class="mb-4">
-                <input type="range" min="0" :max="duration" v-model="currentTime"
-                    class="range range-xs range-primary w-full opacity-70 hover:opacity-100 transition-opacity" @input="seek">
-                <div class="flex justify-between text-xs text-white/50 mt-1">
-                    <span>{{ formatTime(currentTime) }}</span>
-                    <span>{{ formatTime(duration) }}</span>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-between">
-                <!-- 播放模式 -->
-                <div class="flex space-x-3">
-                    <button class="text-white/70 hover:text-white transition-colors p-2 rounded-full"
-                        :class="{'bg-primary/20 text-primary': playMode === 'repeat'}" @click="setPlayMode('repeat')">
-                        <span class="material-icons text-xl">repeat</span>
-                    </button>
-                    <button class="text-white/70 hover:text-white transition-colors p-2 rounded-full"
-                        :class="{'bg-primary/20 text-primary': playMode === 'repeat_one'}" @click="setPlayMode('repeat_one')">
-                        <span class="material-icons text-xl">repeat_one</span>
-                    </button>
-                    <button class="text-white/70 hover:text-white transition-colors p-2 rounded-full"
-                        :class="{'bg-primary/20 text-primary': playMode === 'shuffle'}" @click="setPlayMode('shuffle')">
-                        <span class="material-icons text-xl">shuffle</span>
-                    </button>
-                </div>
-
-                <!-- 播放控制 -->
-                <div class="flex items-center space-x-4">
-                    <button class="text-white/70 hover:text-white transition-colors" @click="previousSong">
-                        <span class="material-icons text-3xl">skip_previous</span>
-                    </button>
-                    <button class="bg-white text-black rounded-full p-2 hover:bg-primary hover:text-white transition-all"
-                        @click="togglePlay">
-                        <span class="material-icons text-3xl">{{ isPlaying ? 'pause' : 'play_arrow' }}</span>
-                    </button>
-                    <button class="text-white/70 hover:text-white transition-colors" @click="nextSong">
-                        <span class="material-icons text-3xl">skip_next</span>
-                    </button>
-                    <button class="text-white/70 hover:text-white transition-colors" @click="stopPlay">
-                        <span class="material-icons text-3xl">stop</span>
-                    </button>
-                </div>
-
-                <!-- 音量控制 -->
-                <div class="flex items-center space-x-2">
-                    <span class="material-icons text-white/70 text-xl hover:text-white transition-colors cursor-pointer">
-                        {{ volume > 0 ? 'volume_up' : 'volume_off' }}
-                    </span>
-                    <input type="range" min="0" max="100" step="1" v-model.number="volume"
-                        class="range range-primary w-32" @input="setVolume">
->>>>>>> 87760eecbdc624c32421931dbb2ba49654bd2472
                 </div>
             </div>
         </div>
@@ -296,7 +202,6 @@
         /* 添加平滑滚动效果 */
         .lyrics-container {
             scroll-behavior: smooth;
-<<<<<<< HEAD
             mask-image: linear-gradient(to bottom, 
                 transparent 0%,
                 black 10%,
@@ -309,19 +214,14 @@
                 black 90%,
                 transparent 100%
             );
-=======
->>>>>>> 87760eecbdc624c32421931dbb2ba49654bd2472
         }
 
         /* 自定义范围输入样式 */
         .range {
             height: 8px;
             background-color: rgba(255, 255, 255, 0.1);
-<<<<<<< HEAD
             -webkit-appearance: none;
             appearance: none;
-=======
->>>>>>> 87760eecbdc624c32421931dbb2ba49654bd2472
         }
 
         .range::-webkit-slider-thumb {
@@ -335,14 +235,11 @@
             transition: all 0.3s ease-in-out;
         }
 
-<<<<<<< HEAD
         .range::-webkit-slider-thumb:hover {
             transform: scale(1.2);
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
-=======
->>>>>>> 87760eecbdc624c32421931dbb2ba49654bd2472
         .range::-moz-range-thumb {
             width: 16px;
             height: 16px;
@@ -353,14 +250,11 @@
             transition: all 0.3s ease-in-out;
         }
 
-<<<<<<< HEAD
         .range::-moz-range-thumb:hover {
             transform: scale(1.2);
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
-=======
->>>>>>> 87760eecbdc624c32421931dbb2ba49654bd2472
         /* 歌词动画效果 */
         .lyrics-container p {
             transition: all 0.3s ease-out;
