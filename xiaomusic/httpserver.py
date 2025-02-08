@@ -8,7 +8,7 @@ import tempfile
 import urllib.parse
 from contextlib import asynccontextmanager
 from dataclasses import asdict
-from typing import Annotated, TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 if TYPE_CHECKING:
     from xiaomusic.xiaomusic import XiaoMusic

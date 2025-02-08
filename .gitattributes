@@ -1,0 +1,12 @@
+# 指定 Python 为主要语言
+*.py linguist-detectable=true
+
+# 将 HTML 和 JavaScript 归类为文档或前端资源，降低权重
+*.html linguist-vendored
+*.js linguist-vendored
+*.css linguist-vendored
+
+# 如果有前端框架（如 Vue 或 React），也可以添加：
+*.vue linguist-vendored
+*.tsx linguist-vendored
+*.jsx linguist-vendored
