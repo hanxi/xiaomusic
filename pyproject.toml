@@ -21,7 +21,6 @@ dependencies = [
     "python-multipart>=0.0.12",
     "requests>=2.32.3",
     "sentry-sdk[fastapi]==1.45.1",
-    "watchdog>=6.0.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
