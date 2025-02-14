@@ -201,6 +201,9 @@ class Config:
     recently_added_playlist_len: int = int(
         os.getenv("XIAOMUSIC_RECENTLY_ADDED_PLAYLIST_LEN", "50")
     )
+    enable_watchdog: bool = (
+        os.getenv("XIAOMUSIC_ENABLE_WATCHDOG", "false").lower() == "true"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):

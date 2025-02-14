@@ -9,12 +9,16 @@ import random
 import re
 import time
 import urllib.parse
+from threading import Timer
 from collections import OrderedDict
 from dataclasses import asdict
 from logging.handlers import RotatingFileHandler
 
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService, miio_command
+
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 from xiaomusic import __version__
 from xiaomusic.analytics import Analytics
@@ -58,6 +62,26 @@ from xiaomusic.utils import (
     try_add_access_control_param,
 )
 
+class MusicFolderHandler(FileSystemEventHandler):
+    def __init__(self, xiaomusic):
+        self.xiaomusic = xiaomusic
+        self.last_event_time = 0
+        self.timer = None
+
+    def on_any_event(self, event):
+        current_time = time.time()
+        if current_time - self.last_event_time > 10:  # 控制任务队列，避免短时间内多次刷新
+            self.last_event_time = current_time
+            self.xiaomusic.log.info("检测到文件变化，10秒后刷新歌曲列表")
+            if self.timer:
+                self.timer.cancel()
+            self.timer = Timer(10, self.run_gen_music_list)
+            self.timer.start()
+
+    def run_gen_music_list(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.xiaomusic.gen_music_list())
 
 class XiaoMusic:
     def __init__(self, config: Config):
@@ -113,6 +137,9 @@ class XiaoMusic:
 
         if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
+
+        self.observer = None
+        self.setup_watchdog()
 
     def init_config(self):
         self.music_path = self.config.music_path
@@ -1115,6 +1142,10 @@ class XiaoMusic:
     # 停止
     async def stop(self, did="", arg1="", **kwargs):
         return await self.devices[did].stop(arg1=arg1)
+        if self.observer:
+            self.observer.stop()
+            self.observer.join()
+        self.log.info("stop now")
 
     # 定时关机
     async def stop_after_minute(self, did="", arg1=0, **kwargs):
@@ -1392,6 +1423,14 @@ class XiaoMusic:
 
     async def do_tts(self, did, value):
         return await self.devices[did].do_tts(value)
+
+    def setup_watchdog(self):
+        if self.config.enable_watchdog:
+            event_handler = MusicFolderHandler(self)
+            self.observer = Observer()
+            self.observer.schedule(event_handler, self.music_path, recursive=True)
+            self.observer.start()
+            self.log.info("Watchdog 已启动，监控文件夹变化")
 
 
 class XiaoMusicDevice:
