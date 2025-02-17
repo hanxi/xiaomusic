@@ -263,7 +263,7 @@ docker build -t xiaomusic .
 - [实现原理](https://github.com/yihong0618/gitblog/issues/258)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [awesome-xiaoai](https://github.com/zzz6519003/awesome-xiaoai)
-- [微信小程序: XIAO晓音](https://github.com/F-loat/xiaoplayer)
+- [微信小程序: 卯卯音乐](https://github.com/F-loat/xiaoplayer)
 - [pure 主题 xiaomusicUI](https://github.com/52fisher/xiaomusicUI)
 - [移动端的播放器主题](https://github.com/52fisher/XMusicPlayer)
 - [Tailwind主题](https://github.com/clarencejh/xiaomusic)
