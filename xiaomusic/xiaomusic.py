@@ -59,6 +59,7 @@ from xiaomusic.utils import (
     set_music_tag_to_file,
     traverse_music_directory,
     try_add_access_control_param,
+    thdplay,
 )
 
 
@@ -1663,8 +1664,12 @@ class XiaoMusicDevice:
         sec, url = await self.xiaomusic.get_music_sec_url(name)
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
-        results = await self.group_player_play(url, name)
-        if all(ele is None for ele in results):
+        # 有3方设备打开 /static/3thplay.html 通过socketio连接返回true 忽律小爱音箱的播放
+        online=await  thdplay('play',url)
+        if not online:
+              
+          results = await self.group_player_play(url, name)
+          if all(ele is None for ele in results):
             self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
             await asyncio.sleep(1)
             if (
