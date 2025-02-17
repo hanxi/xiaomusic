@@ -8,6 +8,7 @@ authors = [
 dependencies = [
     "aiohttp>=3.8.6",
     "miservice-fork>=2.7.0",
+    "watchdog>=6.0.0",
     "mutagen>=1.47.0",
     "yt-dlp[default]>=2024.12.1.232904.dev0",
     "uvicorn>=0.30.1",
