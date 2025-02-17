@@ -923,7 +923,7 @@ class XiaoMusic:
     def find_real_music_name(self, name, n=100):
         if not self.config.enable_fuzzy_match:
             self.log.debug("没开启模糊匹配")
-            return name
+            return []
 
         all_music_list = list(self.all_music.keys())
         real_names = find_best_match(
