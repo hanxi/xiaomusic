@@ -72,6 +72,15 @@ var vConsole = new window.VConsole();
         <label for="music_path">音乐目录:</label>
         <input id="music_path" type="text" value="music" />
 
+        <label for="enable_file_watch">启用目录监控(自动刷新音乐列表):</label>
+        <select id="enable_file_watch">
+          <option value="true">开启</option>
+          <option value="false" selected>关闭</option>
+        </select>
+
+        <label for="file_watch_debounce">刷新列表延迟时间(秒):</label>
+        <input id="file_watch_debounce" type="number" value="10" />
+
         <label for="download_path">音乐下载目录(必须是music的子目录):</label>
         <input id="download_path" type="text" value='music/download' />
 

@@ -169,6 +169,11 @@ class Config:
     continue_play: bool = (
         os.getenv("XIAOMUSIC_CONTINUE_PLAY", "false").lower() == "true"
     )
+    # 目录监控配置
+    enable_file_watch: bool = (
+        os.getenv("XIAOMUSIC_ENABLE_FILE_WATCH", "false").lower() == "true"
+    )
+    file_watch_debounce: int = int(os.getenv("XIAOMUSIC_FILE_WATCH_DEBOUNCE", 10))  # 监控刷新延迟时间(秒)
     pull_ask_sec: int = int(os.getenv("XIAOMUSIC_PULL_ASK_SEC", "1"))
     enable_pull_ask: bool = (
         os.getenv("XIAOMUSIC_ENABLE_PULL_ASK", "true").lower() == "true"
