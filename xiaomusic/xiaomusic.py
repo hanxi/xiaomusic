@@ -134,7 +134,9 @@ class XiaoMusic:
         self.public_port = self.config.public_port
         if self.public_port == 0:
             self.public_port = self.port
-
+        
+        self.thdtarget= self.config.thdtarget      # "HTTP://192.168.1.10:58091/items/"
+        
         self.active_cmd = self.config.active_cmd.split(",")
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
         self.music_path_depth = self.config.music_path_depth
@@ -1665,7 +1667,7 @@ class XiaoMusicDevice:
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
         # 有3方设备打开 /static/3thplay.html 通过socketio连接返回true 忽律小爱音箱的播放
-        online=await  thdplay('play',url)
+        online=await  thdplay('play',url,self.xiaomusic.thdtarget)
         if not online:
               
           results = await self.group_player_play(url, name)
