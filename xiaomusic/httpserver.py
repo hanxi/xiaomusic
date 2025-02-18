@@ -9,7 +9,7 @@ import urllib.parse
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from typing import TYPE_CHECKING, Annotated
-
+import socketio
 if TYPE_CHECKING:
     from xiaomusic.xiaomusic import XiaoMusic
 
@@ -55,7 +55,13 @@ from xiaomusic.utils import (
 xiaomusic: "XiaoMusic" = None
 config = None
 log = None
-
+from pydantic import BaseModel
+# 3thplay指令
+class Item(BaseModel):
+    action:str
+    args:str
+# 在线用户
+onlines= set()
 
 @asynccontextmanager
 async def app_lifespan(app):
@@ -104,6 +110,42 @@ app = FastAPI(
     openapi_url=None,
 )
 
+# 创建Socket.IO实例
+sio = socketio.AsyncServer(
+    async_mode='asgi',
+    cors_allowed_origins='*'  # 允许所有跨域请求，生产环境应限制
+)
+# 将Socket.IO挂载到FastAPI应用
+socketio_app = socketio.ASGIApp(
+    socketio_server=sio,
+    other_asgi_app=app,
+    socketio_path='/socket.io'
+)
+
+# Socket.IO事件处理
+@sio.event
+async def connect(sid, environ, auth):
+    global onlines
+    print(f'客户端连接: {sid}')
+    onlines.update([sid])
+    await sio.emit('message', {'data': '欢迎连接'}, room=sid)
+
+@sio.event
+async def disconnect(sid):
+    print(f'客户端断开: {sid}')
+    onlines.discard(sid)
+
+@sio.on("message")
+async def custom_event(sid, data):
+    log.info(f'收到来自 {sid} 的数据: {data}')
+    await sio.emit('response', {"action":'切歌','status':data})
+
+@app.post("/items/")
+async def create_item(item: Item):
+    result = {**item.dict()}
+    await sio.emit('response',{"action":item.action,"args":item.args,"status":item.args},)
+    return onlines
+    
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # 允许访问的源
@@ -135,11 +177,11 @@ class AuthStaticFiles(StaticFiles):
 
 
 def HttpInit(_xiaomusic):
-    global xiaomusic, config, log
+    global xiaomusic, config, log,onlines
     xiaomusic = _xiaomusic
     config = xiaomusic.config
     log = xiaomusic.log
-
+    onlines=set()
     folder = os.path.dirname(__file__)
     app.mount("/static", AuthStaticFiles(directory=f"{folder}/static"), name="static")
     reset_http_server()
