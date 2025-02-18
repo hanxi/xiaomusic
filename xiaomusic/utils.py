@@ -239,7 +239,7 @@ async def thdplay(action,args,target="HTTP://192.168.1.10:58091/items/"):
   # 接口地址 target,在参数文件指定
     data={"action":action,"args":args}
     async with aiohttp.ClientSession() as session:
-        async with session.get(
+        async with session.post(
             target,json=data, timeout=5
         ) as response:  # 增加超时以避免长时间挂起
             # 如果响应不是200，引发异常
