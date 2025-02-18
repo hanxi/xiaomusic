@@ -40,7 +40,7 @@ def main():
     from xiaomusic import __version__
     from xiaomusic.config import Config
     from xiaomusic.httpserver import HttpInit
-    from xiaomusic.httpserver import app as HttpApp
+    from xiaomusic.httpserver import socketio_app as HttpApp
     from xiaomusic.xiaomusic import XiaoMusic
 
     parser = argparse.ArgumentParser()
