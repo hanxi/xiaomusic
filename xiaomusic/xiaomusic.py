@@ -134,8 +134,8 @@ class XiaoMusic:
         self.public_port = self.config.public_port
         if self.public_port == 0:
             self.public_port = self.port
-        
-        self.thdtarget= self.config.thdtarget      # "HTTP://192.168.1.10:58091/items/"
+        #自动3thplay生成播放 post url
+        self.thdtarget=     f"{self.hostname}:{self.public_port}/items/"    # "HTTP://192.168.1.10:58091/items/"
         
         self.active_cmd = self.config.active_cmd.split(",")
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
