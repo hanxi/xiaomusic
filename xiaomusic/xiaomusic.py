@@ -1419,7 +1419,7 @@ class XiaoMusic:
         self.crontab.reload_config(self)
 
     # 重新初始化
-    async def reinit(self, **kwargs):
+    async def reinit(self):
         for handler in self.log.handlers:
             handler.close()
         self.setup_logger()
