@@ -58,6 +58,7 @@ from xiaomusic.utils import (
     set_music_tag_to_file,
     traverse_music_directory,
     try_add_access_control_param,
+    thdplay,
 )
 
 
@@ -132,7 +133,9 @@ class XiaoMusic:
         self.public_port = self.config.public_port
         if self.public_port == 0:
             self.public_port = self.port
-
+        #自动3thplay生成播放 post url
+        self.thdtarget=     f"{self.hostname}:{self.public_port}/items/"    # "HTTP://192.168.1.10:58091/items/"
+        
         self.active_cmd = self.config.active_cmd.split(",")
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
         self.music_path_depth = self.config.music_path_depth
@@ -1289,13 +1292,33 @@ class XiaoMusic:
     # 获取音量
     async def get_volume(self, did="", **kwargs):
         return await self.devices[did].get_volume()
-
+    # 3thdplay.html 的音量设置消息发送 需要配置文件加入自定义指令
+    #  "user_key_word_dict": {
+    #"音量": "set_myvolume",
+    #"继续": "stop",
+    #"大点音": "exec#setmyvolume(\"up\")",
+    #"小点音": "exec#setmyvolume(\"down\")",
+    
+    async def set_myvolume(self, did="", arg1=0, **kwargs):
+        if did not in self.devices:
+            self.log.info(f"设备 did:{did} 不存在, 不能设置音量")
+            return
+        if arg1=="up":
+                  await thdplay('up','',self.thdtarget)
+       
+        elif arg1=="down":
+              await thdplay('down','',self.thdtarget)
+        else:
+              volume =  chinese_to_number(arg1)    
+              await  thdplay('volume',str(volume),self.thdtarget)
+ 
     # 设置音量
     async def set_volume(self, did="", arg1=0, **kwargs):
         if did not in self.devices:
             self.log.info(f"设备 did:{did} 不存在, 不能设置音量")
             return
         volume = int(arg1)
+        await  thdplay('volume',str(volume),self.thdtarget)
         return await self.devices[did].set_volume(volume)
 
     # 搜索音乐
@@ -1664,8 +1687,12 @@ class XiaoMusicDevice:
         sec, url = await self.xiaomusic.get_music_sec_url(name)
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
-        results = await self.group_player_play(url, name)
-        if all(ele is None for ele in results):
+        # 有3方设备打开 /static/3thplay.html 通过socketio连接返回true 忽律小爱音箱的播放
+        online=await  thdplay('play',url,self.xiaomusic.thdtarget)
+        if not online:
+              
+          results = await self.group_player_play(url, name)
+          if all(ele is None for ele in results):
             self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
             await asyncio.sleep(1)
             if (
@@ -2057,6 +2084,9 @@ class XiaoMusicDevice:
             await self.do_tts(self.config.stop_tts_msg)
         await asyncio.sleep(3)  # 等它说完
         # 取消组内所有的下一首歌曲的定时器
+        if await thdplay('stop','',self.xiaomusic.thdtarget):
+      
+            return 
         self.cancel_group_next_timer()
         await self.group_force_stop_xiaoai()
         self.log.info("stop now")
