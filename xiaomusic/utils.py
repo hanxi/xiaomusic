@@ -235,7 +235,7 @@ def traverse_music_directory(directory, depth, exclude_dirs, support_extension):
     return result
 
 # 发送给网页3thplay，用于三者设备播放
-async def thdplay(action,args,target="HTTP://192.168.1.10:58091/items/"):
+async def thdplay(action,args="/static/3thdplay.mp3",target="HTTP://192.168.1.10:58091/items/"):
   # 接口地址 target,在参数文件指定
     data={"action":action,"args":args}
     async with aiohttp.ClientSession() as session:
