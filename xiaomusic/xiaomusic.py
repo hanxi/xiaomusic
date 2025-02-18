@@ -1291,13 +1291,33 @@ class XiaoMusic:
     # 获取音量
     async def get_volume(self, did="", **kwargs):
         return await self.devices[did].get_volume()
-
+    # 3thdplay.html 的音量设置消息发送 需要配置文件加入自定义指令
+    #  "user_key_word_dict": {
+    #"音量": "set_myvolume",
+    #"继续": "stop",
+    #"大点音": "exec#setmyvolume(\"up\")",
+    #"小点音": "exec#setmyvolume(\"down\")",
+    
+    async def set_myvolume(self, did="", arg1=0, **kwargs):
+        if did not in self.devices:
+            self.log.info(f"设备 did:{did} 不存在, 不能设置音量")
+            return
+        if arg1=="up":
+                  await thdplay('up','',self.thdtarget)
+       
+        elif arg1=="down":
+              await thdplay('down','',self.thdtarget)
+        else:
+              volume =  chinese_to_number(arg1)    
+              await  thdplay('volume',str(volume),self.thdtarget)
+ 
     # 设置音量
     async def set_volume(self, did="", arg1=0, **kwargs):
         if did not in self.devices:
             self.log.info(f"设备 did:{did} 不存在, 不能设置音量")
             return
         volume = int(arg1)
+        await  thdplay('volume',str(volume),self.thdtarget)
         return await self.devices[did].set_volume(volume)
 
     # 搜索音乐
@@ -2063,6 +2083,9 @@ class XiaoMusicDevice:
             await self.do_tts(self.config.stop_tts_msg)
         await asyncio.sleep(3)  # 等它说完
         # 取消组内所有的下一首歌曲的定时器
+        if await thdplay('stop','',self.xiaomusic.thdtarget):
+      
+            return 
         self.cancel_group_next_timer()
         await self.group_force_stop_xiaoai()
         self.log.info("stop now")
