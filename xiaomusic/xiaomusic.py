@@ -15,9 +15,8 @@ from logging.handlers import RotatingFileHandler
 
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService, miio_command
-
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 from xiaomusic import __version__
 from xiaomusic.analytics import Analytics
@@ -797,16 +796,18 @@ class XiaoMusic:
         self._file_watch_handler = XiaoMusicPathWatch(
             callback=self._on_file_change,
             debounce_delay=self.config.file_watch_debounce,
-            loop=loop
+            loop=loop,
         )
         # 创建监控 music_path 目录对象
         self._observer = Observer()
-        self._observer.schedule(self._file_watch_handler, self.music_path, recursive=True)
+        self._observer.schedule(
+            self._file_watch_handler, self.music_path, recursive=True
+        )
         self._observer.start()
         self.log.info(f"已启动对 {self.music_path} 的目录监控。")
 
     def _on_file_change(self):
-        self.log.info(f"检测到音乐目录文件变化，正在刷新歌曲列表。")
+        self.log.info("检测到音乐目录文件变化，正在刷新歌曲列表。")
         self._gen_all_music_list()
 
     def stop_file_watch(self):
@@ -2145,6 +2146,7 @@ class XiaoMusicDevice:
             return "所有电台"
         return "全部"
 
+
 # 目录监控类，使用延迟防抖
 class XiaoMusicPathWatch(FileSystemEventHandler):
     def __init__(self, callback, debounce_delay, loop):
@@ -2160,6 +2162,9 @@ class XiaoMusicPathWatch(FileSystemEventHandler):
         def _execute_callback():
             self._debounce_handle = None
             self.callback()
+
         if self._debounce_handle:
             self._debounce_handle.cancel()
-        self._debounce_handle = self.loop.call_later(self.debounce_delay, _execute_callback)
+        self._debounce_handle = self.loop.call_later(
+            self.debounce_delay, _execute_callback
+        )
