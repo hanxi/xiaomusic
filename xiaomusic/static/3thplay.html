@@ -180,7 +180,7 @@
 </head>
 <body>
  <script> // 连接到服务端 
-    const socket = io("http://192.168.1.10:58091/", { transports: ["websocket"] }); 
+    const socket = io("/", { transports: ["websocket"] }); 
     socket.on('connect', () => {
             console.log('Connected to the server');
             socket.emit('my_event', 'Hello, server!');
