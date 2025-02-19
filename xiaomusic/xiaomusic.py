@@ -36,6 +36,7 @@ from xiaomusic.const import (
     PLAY_TYPE_SEQ,
     PLAY_TYPE_SIN,
     SUPPORT_MUSIC_TYPE,
+    TTS_COMMAND,
 )
 from xiaomusic.crontab import Crontab
 from xiaomusic.plugin import PluginManager
@@ -1926,17 +1927,19 @@ class XiaoMusicDevice:
 
     async def text_to_speech(self, value):
         try:
-            if not self.config.miio_tts_command:
-                self.log.debug("Call MiNAService tts.")
-                await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
-            else:
+            # 有 tts command 优先使用 tts command 说话
+            if self.hardware in TTS_COMMAND:
+                tts_cmd = TTS_COMMAND[self.hardware]
                 self.log.debug("Call MiIOService tts.")
                 value = value.replace(" ", ",")  # 不能有空格
                 await miio_command(
                     self.xiaomusic.miio_service,
                     self.did,
-                    f"{self.config.miio_tts_command} {value}",
+                    f"{tts_cmd} {value}",
                 )
+            else:
+                self.log.debug("Call MiNAService tts.")
+                await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
