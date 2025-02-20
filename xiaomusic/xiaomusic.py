@@ -1031,6 +1031,13 @@ class XiaoMusic:
         self.log.info("gen_music_list ok")
 
     # 删除歌曲
+    async def cmd_del_music(self, did="", arg1="", **kwargs):
+        self.log.info(f"cmd_del_music {arg1}")
+        name = arg1
+        if len(name) == 0:
+            name = self.playingmusic(did)
+        self.del_music(name)
+
     async def del_music(self, name):
         filename = self.get_filename(name)
         if filename == "":
