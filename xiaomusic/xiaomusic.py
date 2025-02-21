@@ -1691,7 +1691,9 @@ class XiaoMusicDevice:
         self.log.info(f"播放 {url}")
         # 有3方设备打开 /static/3thplay.html 通过socketio连接返回true 忽律小爱音箱的播放
         online = await thdplay("play", url, self.xiaomusic.thdtarget)
-        if not online:
+        if online:
+            sec-=3
+        else:
             results = await self.group_player_play(url, name)
             if all(ele is None for ele in results):
                 self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
