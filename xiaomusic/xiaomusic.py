@@ -1692,7 +1692,7 @@ class XiaoMusicDevice:
         # 有3方设备打开 /static/3thplay.html 通过socketio连接返回true 忽律小爱音箱的播放
         online = await thdplay("play", url, self.xiaomusic.thdtarget)
         if online:
-            sec-=3
+            sec -= 3
         else:
             results = await self.group_player_play(url, name)
             if all(ele is None for ele in results):
