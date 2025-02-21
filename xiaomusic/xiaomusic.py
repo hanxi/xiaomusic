@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+tx65t#!/usr/bin/env python3
 import asyncio
 import copy
 import json
@@ -1842,7 +1842,8 @@ class XiaoMusicDevice:
             if not self.config.continue_play:
                 # 重新播放歌曲
                 self.log.info("现在重新播放歌曲")
-                await self._play()
+                name = self.get_cur_music()
+                await self._play(name)
             else:
                 self.log.info(
                     f"继续播放歌曲. self.config.continue_play:{self.config.continue_play}"
