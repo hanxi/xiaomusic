@@ -296,6 +296,7 @@ audio.addEventListener('ended', function() {
     this.pause();
     this.currentTime = 0; // 将时间重置为0
 });
+        
 // 在播放前预处理链接
 function ensureRangeSupport(url) {
   return new Promise((resolve, reject) => {
