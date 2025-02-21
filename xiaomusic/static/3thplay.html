@@ -290,6 +290,12 @@ document.body.addEventListener('touchstart', function initAudio() {
         let isPlaying = false;
         let wakeLock = null;
         let audioContext = null;
+        // 确保音频在播放时不会重复播放
+audio.addEventListener('ended', function() {
+    // 设置为暂停状态，确保音频不再自动播放
+    this.pause();
+    this.currentTime = 0; // 将时间重置为0
+});
 // 在播放前预处理链接
 function ensureRangeSupport(url) {
   return new Promise((resolve, reject) => {
