@@ -291,7 +291,7 @@ document.body.addEventListener('touchstart', function initAudio() {
         let wakeLock = null;
         let audioContext = null;
         // 确保音频在播放时不会重复播放
-audio.addEventListener('ended', function() {
+//audio.addEventListener('ended', function() {
     // 设置为暂停状态，确保音频不再自动播放
     this.pause();
     this.currentTime = 0; // 将时间重置为0
@@ -495,7 +495,7 @@ const volumeSlider = document.getElementById('volumeSlider');
     // 初始化音量（默认1）
     audio.volume = 1;
         // 自动播放下一首
-       audio.addEventListener('ended', nextSong);
+    //   audio.addEventListener('ended', nextSong);
 
         // 初始化
         initPlaylist();
