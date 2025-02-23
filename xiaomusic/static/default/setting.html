@@ -245,6 +245,12 @@ var vConsole = new window.VConsole();
         <label for="recently_added_playlist_len">最近新增的歌曲数量:</label>
         <input id="recently_added_playlist_len" type="number" value="50" />
 
+        <label for="enable_cmd_del_music">开启语音删除歌曲:</label>
+        <select id="enable_cmd_del_music">
+          <option value="true">true</option>
+          <option value="false" selected>false</option>
+        </select>
+
         <label for="music_list_url"  class="setting-label">歌单地址:
           <button class="option-inline mini-button" id="get_music_list">
             <span class="material-icons">sync_alt</span>

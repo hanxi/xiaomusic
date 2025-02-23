@@ -209,6 +209,10 @@ class Config:
     recently_added_playlist_len: int = int(
         os.getenv("XIAOMUSIC_RECENTLY_ADDED_PLAYLIST_LEN", "50")
     )
+    # 开启语音删除歌曲
+    enable_cmd_del_music: bool = (
+        os.getenv("XIAOMUSIC_ENABLE_CMD_DEL_MUSIC", "false").lower() == "true"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):

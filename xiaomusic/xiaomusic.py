@@ -1032,6 +1032,9 @@ class XiaoMusic:
 
     # 删除歌曲
     async def cmd_del_music(self, did="", arg1="", **kwargs):
+        if not self.config.enable_cmd_del_music:
+            await self.do_tts(did, "语音删除歌曲功能未开启")
+            return
         self.log.info(f"cmd_del_music {arg1}")
         name = arg1
         if len(name) == 0:
