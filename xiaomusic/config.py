@@ -32,6 +32,7 @@ def default_key_word_dict():
         "收藏歌曲": "add_to_favorites",
         "取消收藏": "del_from_favorites",
         "播放列表第": "play_music_list_index",
+        "删除歌曲": "cmd_del_music",
     }
 
 
@@ -66,6 +67,7 @@ def default_key_match_order():
         "加入收藏",
         "收藏歌曲",
         "取消收藏",
+        "删除歌曲",
     ]
 
 
@@ -85,7 +87,6 @@ class Config:
     account: str = os.getenv("MI_USER", "")
     password: str = os.getenv("MI_PASS", "")
     mi_did: str = os.getenv("MI_DID", "")  # 逗号分割支持多设备
-    miio_tts_command: str = os.getenv("MIIO_TTS_CMD", "")
     cookie: str = ""
     verbose: bool = os.getenv("XIAOMUSIC_VERBOSE", "").lower() == "true"
     music_path: str = os.getenv("XIAOMUSIC_MUSIC_PATH", "music")

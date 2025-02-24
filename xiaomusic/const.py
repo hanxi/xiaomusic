@@ -5,6 +5,7 @@ SUPPORT_MUSIC_TYPE = [
     ".ape",
     ".ogg",
     ".m4a",
+    ".wma",
 ]
 
 LATEST_ASK_API = "https://userprofile.mina.mi.com/device_profile/v2/conversation?source=dialogu&hardware={hardware}&timestamp={timestamp}&limit=2"
@@ -17,13 +18,33 @@ PLAY_TYPE_SIN = 3  # 单曲播放
 PLAY_TYPE_SEQ = 4  # 顺序播放
 
 # 需要采用 mina 获取对话记录的设备型号
-GET_ASK_BY_MINA = {
+GET_ASK_BY_MINA = [
     "M01",
-}
+]
 
 # 需要使用 play_musci 接口的设备型号
-NEED_USE_PLAY_MUSIC_API = {
+NEED_USE_PLAY_MUSIC_API = [
     "X08C",
     "X08E",
     "X8F",
+]
+
+# 有 tts command 的设备型号
+TTS_COMMAND = {
+    "LX06": "5-1",
+    "S12": "5-1",
+    "L15A": "7-3",
+    "LX5A": "5-1",
+    "LX01": "5-1",
+    "LX05": "5-1",
+    "X10A": "7-3",
+    "L17A": "7-3",
+    "ASX4B": "5-3",
+    "L06A": "5-1",
+    "L05B": "5-3",
+    "L05C": "5-3",
+    "X6A": "7-3",
+    "X08E": "7-3",
+    "L09A": "3-1",
+    "LX04": "5-1",
 }

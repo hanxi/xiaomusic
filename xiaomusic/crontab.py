@@ -71,6 +71,23 @@ class Crontab:
 
         self.add_job(expression, job)
 
+    # 开启或关闭获取对话记录
+    def add_job_set_pull_ask(self, expression, xiaomusic, did, arg1, **kwargs):
+        async def job():
+            if arg1 == "enable":
+                xiaomusic.config.enable_pull_ask = True
+            else:
+                xiaomusic.config.enable_pull_ask = False
+
+        self.add_job(expression, job)
+
+    # 重新初始化
+    def add_job_reinit(self, expression, xiaomusic, did, arg1, **kwargs):
+        async def job():
+            xiaomusic.reinit()
+
+        self.add_job(expression, job)
+
     def add_job_cron(self, xiaomusic, cron):
         expression = cron["expression"]  # cron 计划格式
         name = cron["name"]  # stop, play, play_music_list, tts

@@ -81,13 +81,7 @@ services:
 
 > [!TIP]
 > 海外 RackNerd VPS 机器推荐，可支付宝付款。
->
-> - [🔥1 GB KVM VPS $11.29/年](https://my.racknerd.com/aff.php?aff=1177&pid=903)
-> - [2 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=904)
-> - [3.5 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=905)
-> - [4 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=906)
-> - [6 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=907)
-
+<a href="https://my.racknerd.com/aff.php?aff=11177"><img src="https://racknerd.com/banners/320x50.gif" alt="RackNerd Mobile Leaderboard Banner" width="320" height="50"></a>
 ### 🤐 支持语音口令
 
 - 【播放歌曲】，播放本地的歌曲
