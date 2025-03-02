@@ -14,6 +14,8 @@
 
 <https://github.com/hanxi/xiaomusic>
 
+文档: <https://xdocs.hanxi.cc/>
+
 > [!TIP]
 > 初次安装遇到问题请查阅 [💬 FAQ问题集合](https://github.com/hanxi/xiaomusic/issues/99) ，一般遇到的问题都已经有解决办法。
 
