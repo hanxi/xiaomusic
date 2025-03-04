@@ -893,7 +893,7 @@
 
                         const currentPlaylist = curSelectPlaylist.value;
                         console.log('did', window.did, 'Playing song:', song.id, 'from playlist:', currentPlaylist);
-
+                        // song.id 修复刮削歌曲的歌曲名称和文件名称不一致的问题
                         if (window.did === 'web_device') {
                             // Web播放模式
                             try {
