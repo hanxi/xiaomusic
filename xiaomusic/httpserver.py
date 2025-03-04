@@ -8,7 +8,7 @@ import tempfile
 import urllib.parse
 from contextlib import asynccontextmanager
 from dataclasses import asdict
-from typing import TYPE_CHECKING, TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import socketio
 
