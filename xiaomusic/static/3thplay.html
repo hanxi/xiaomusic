@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- PWA必须的配置 -->
+    <link rel="manifest" href="/manifest.json">
+    <title>Mini音乐播放器</title>
+    <style>
+         /* 新增音量控制样式 */
+    .volume-control {
+        position: relative;
+        align-items: center;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: 30px;
+    }
+
+    .btn-volume {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 20px;
+        padding: 0;
+    }
+
+    .volume-slider {
+        width: 100px;
+        height: 4px;
+        -webkit-appearance: none;
+        background: #ddd;
+        border-radius: 2px;
+        outline: none;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+
+    .volume-slider:hover {
+        opacity: 1;
+    }
+
+    /* 自定义滑动条样式 */
+    .volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 12px;
+        height: 12px;
+        background: #ff4d4d;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+        body {
+            background: #f5f5f5;
+            font-family: Arial, "Microsoft Yahei";
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 播放器容器 */
+        .player {
+            background: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* 封面图片 */
+        .cover {
+            width: 200px;
+            height: 200px;
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            overflow: hidden;
+            background: #ddd;
+        }
+
+        .cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 歌曲信息 */
+        .song-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .song-title {
+            font-size: 18px;
+            margin: 5px 0;
+        }
+
+        .artist {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 进度条 */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: #eee;
+            border-radius: 2px;
+            margin: 15px 0;
+            cursor: pointer;
+        }
+
+        .progress {
+            height: 100%;
+            background: #ff4d4d;
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.1s linear;
+        }
+
+        /* 时间显示 */
+        .time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* 控制按钮 */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .btn-play {
+            background: #ff4d4d;
+            color: white;
+            width: 50px;
+            height: 50px;
+        }
+
+        .btn:hover {
+            background: #ff6666;
+        }
+
+        /* 歌曲列表 */
+        .playlist {
+            margin-top: 20px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .playlist li {
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .playlist li:hover {
+            background: #f8f8f8;
+        }
+
+        .playlist li.playing {
+            background: #ffe5e5;
+            color: #ff4d4d;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+ <script> // 连接到服务端 
+    const socket = io("/", { transports: ["websocket"] }); 
+    socket.on('connect', () => {
+            console.log('Connected to the server');
+            socket.emit('my_event', 'Hello, server!');
+        });
+
+    // 接收广播消息 
+    socket.on("response", (data) => { const div = document.createElement("div"); 
+    div.textContent = `${data.action}: ${data.status}`; 
+  
+ 
+  if( data.action=='play')
+  {
+playlist[0].src=data.args;
+playlist[0].artist="小爱在线"
+playlist[0].title="小爱在线"
+  	console.log(data.args)
+ playSong(0) ;
+  }
+ if( data.action=='stop')
+{
+ togglePlay() 
+}
+  const audio = document.getElementById('audio');
+const volumeSlider = document.getElementById('volumeSlider');
+ if( data.action=='volume')
+{
+
+
+audio.volume=data.args/100
+volumeSlider.value=audio.volume
+}
+  if( data.action=='down')
+{
+ audio.volume=audio.volume-0.2
+volumeSlider.value=audio.volume
+}
+  if( data.action=='up')
+{
+ audio.volume=audio.volume+0.2
+volumeSlider.value=audio.volume
+}
+    document.getElementById("messages").appendChild(div); }); 
+</script>
+
+    <div class="player">
+
+        <div class="cover">
+            <img id="cover-image" src="https://tse4-mm.cn.bing.net/th/id/OIP-C.ou-y715Of4TbrAPN-j96sQHaEj?w=309&h=188&c=7&r=0&o=5&pid=1.7" alt="封面">
+        </div>
+        
+        <div class="song-info">
+            <h2 class="song-title" id="song-title">Let Go</h2>
+            <p class="artist" id="artist">Avril Lavigne</p>
+        </div>
+
+        <div class="progress-container" id="progress-container">
+            <div class="progress" id="progress"></div>
+        </div>
+
+        <div class="time">
+            <span id="current-time">00:00</span>
+            <span id="duration">00:00</span>
+        </div>
+
+        <div class="controls">
+            <div class="btn btn-prev" onclick="prevSong()">⏮</div>
+            <div class="btn btn-play" id="playBtn" onclick="togglePlay()">▶</div>
+            <div class="btn btn-next" onclick="nextSong()">⏭</div>
+        </div>
+<br>
+             <!-- 新增音量控制 -->
+    <div class="volume-control">
+        <button class="btn-volume" onclick="toggleMute()">🔊</button>
+        <input type="range" 
+               id="volumeSlider" 
+               class="volume-slider" 
+               min="0" 
+               max="1" 
+               step="0.1" 
+               value="1">
+    </div>
+        <ul class="playlist" id="playlist"></ul>
+    </div>
+
+    <audio id="audio" src="" ></audio>
+
+
+    <script>
+        // 在初始化代码中添加
+document.body.addEventListener('touchstart', function initAudio() {
+    audio.load(); // iOS需要预加载
+    document.body.removeEventListener('touchstart', initAudio);
+});
+        // 音乐数据
+        const playlist = [
+            {
+                title: "一剪梅",
+                artist: "未知",
+                cover: "https://tse4-mm.cn.bing.net/th/id/OIP-C.ou-y715Of4TbrAPN-j96sQHaEj?w=309&h=188&c=7&r=0&o=5&pid=1.7",
+                src: "/static/3thdplay.mp3"
+            } 
+        ];
+
+        const audio = document.getElementById('audio');
+        const playBtn = document.getElementById('playBtn');
+        let currentSongIndex = 0;
+        let isPlaying = false;
+        let wakeLock = null;
+        let audioContext = null;
+// 在播放前预处理链接
+function ensureRangeSupport(url) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('HEAD', url);
+    xhr.onload = () => {
+      if (xhr.getResponseHeader('Accept-Ranges')) {
+        resolve(url);
+      } else {
+        resolve(`${url}?force_range=true`); // 兼容不支持的服务端
+      }
+    };
+    xhr.send();
+  });
+}
+        // 初始化播放列表
+        function initPlaylist() {
+            const playlistEl = document.getElementById('playlist');
+    playlist.forEach((song, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${song.title} - ${song.artist}`;
+        li.onclick = () => playSong(index);
+        playlistEl.appendChild(li);
+    });
+
+    // 仅加载第一首但不播放
+
+    const firstSong = playlist[0];
+    document.getElementById('song-title').textContent = firstSong.title;
+    document.getElementById('artist').textContent = firstSong.artist;
+    document.getElementById('cover-image').src = firstSong.cover;
+    audio.src = firstSong.src;
+     }
+        let isFirstPlay = true;
+        // 播放歌曲
+        async   function playSong(index) {
+            currentSongIndex = index;
+            const song = playlist[index];
+            const src = await ensureRangeSupport(song.src);
+            document.getElementById('song-title').textContent = song.title;
+            document.getElementById('artist').textContent = song.artist;
+            document.getElementById('cover-image').src = song.cover;
+            audio.src = src
+
+            // 更新播放列表样式
+            document.querySelectorAll('#playlist li').forEach((li, i) => {
+                li.classList.toggle('playing', i === index);
+            });
+// 只有当不是首次播放时才自动播放
+       if (!isFirstPlay) {
+        audio.play().catch(error => {
+            console.log('播放请求被阻止:', error);
+   
+        });
+        playBtn.textContent = '⏸';
+        isPlaying = true;
+    }
+        }
+
+        // 切换播放/暂停
+    async    function togglePlay() {
+            if (isFirstPlay) {
+        // 第一次点击时触发用户手势
+        console.log("---firest play-----")
+     await   audio.play()
+            .then(() => {
+                isFirstPlay = false;
+                isPlaying = true;
+                playBtn.textContent = '⏸';
+            //    audio.play(); // 暂停等待用户操作
+               
+            })
+            .catch(error => {
+                alert('请点击此处开始播放');
+            });
+            if (!audioContext) {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        const source = audioContext.createMediaElementSource(audio);
+                        source.connect(audioContext.destination);
+                        // 请求保持唤醒
+                        console.log('---------init audiocontest')
+                    }
+                await requestWakeLock();
+
+        return;
+    }
+
+    if (isPlaying) {
+        audio.pause();
+        playBtn.textContent = '▶';
+    } else {
+       await audio.play();
+       playBtn.textContent = '⏸';
+    }
+    isPlaying = !isPlaying;
+        }
+
+        // 下一首
+        function nextSong() {
+            currentSongIndex = (currentSongIndex + 1) % playlist.length;
+            playSong(currentSongIndex);
+        }
+
+        // 上一首
+        function prevSong() {
+            currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+            playSong(currentSongIndex);
+        }
+
+        // 播放进度更新
+        audio.addEventListener('timeupdate', function() {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+            
+            document.getElementById('current-time').textContent = 
+                formatTime(audio.currentTime);
+        });
+
+        // 总时长显示
+        audio.addEventListener('loadedmetadata', function() {
+            document.getElementById('duration').textContent = 
+                formatTime(audio.duration);
+        });
+
+        // 点击进度条跳转
+        const progressContainer = document.getElementById('progress-container');
+        progressContainer.addEventListener('click', function(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            audio.currentTime = (clickX / width) * audio.duration;
+        });
+
+        // 格式化时间（秒 → mm:ss）
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            seconds = Math.floor(seconds % 60);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+// 在 JavaScript 中新增以下代码
+const volumeSlider = document.getElementById('volumeSlider');
+    let isMuted = false;
+    let lastVolume = 1;
+
+    // 音量滑动条控制
+    volumeSlider.addEventListener('input', (e) => {
+        audio.volume = e.target.value;
+        if (audio.volume === '0') {
+            document.querySelector('.btn-volume').textContent = '🔇';
+        } else {
+            document.querySelector('.btn-volume').textContent = 
+                audio.volume > 0.5 ? '🔊' : '🔉';
+        }
+        isMuted = false; // 取消静音状态
+    });
+
+    // 静音切换
+    function toggleMute() {
+        isMuted = !isMuted;
+        if (isMuted) {
+            lastVolume = audio.volume;
+            audio.volume = 0;
+            volumeSlider.value = 0;
+            document.querySelector('.btn-volume').textContent = '🔇';
+        } else {
+            audio.volume = lastVolume;
+            volumeSlider.value = lastVolume;
+            document.querySelector('.btn-volume').textContent = 
+                lastVolume > 0.5 ? '🔊' : '🔉';
+        }
+    }
+    async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => {
+                        updateStatus('屏幕锁已释放');
+                    });
+                }
+            } catch (err) {
+                console.warn('Wake Lock 错误:', err);
+            }
+
+            // 兼容iOS处理
+            if (/(iPhone|iPad)/i.test(navigator.userAgent)) {
+                audio.setAttribute('playsinline', 'true');
+                audio.setAttribute('webkit-playsinline', 'true');
+            }
+        }
+       // 初始化Service Worker
+        //console.log('Service Worker 注册成功');
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(() => {
+                console.log('Service Worker 注册成功');
+            });
+        }
+    // 初始化音量（默认1）
+    audio.volume = 1;
+        // 自动播放下一首
+       audio.addEventListener('ended', nextSong);
+
+        // 初始化
+        initPlaylist();
+      //  playSong(0); 
+    </script>
+ <div id="messages"></div>
+</body>
+</html>

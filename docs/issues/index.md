@@ -14,6 +14,8 @@
 
 <https://github.com/hanxi/xiaomusic>
 
+文档: <https://xdocs.hanxi.cc/>
+
 > [!TIP]
 > 初次安装遇到问题请查阅 [💬 FAQ问题集合](https://github.com/hanxi/xiaomusic/issues/99) ，一般遇到的问题都已经有解决办法。
 
@@ -81,13 +83,7 @@ services:
 
 > [!TIP]
 > 海外 RackNerd VPS 机器推荐，可支付宝付款。
->
-> - [🔥1 GB KVM VPS $11.29/年](https://my.racknerd.com/aff.php?aff=1177&pid=903)
-> - [2 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=904)
-> - [3.5 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=905)
-> - [4 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=906)
-> - [6 GB KVM VPS](https://my.racknerd.com/aff.php?aff=1177&pid=907)
-
+<a href="https://my.racknerd.com/aff.php?aff=11177"><img src="https://racknerd.com/banners/320x50.gif" alt="RackNerd Mobile Leaderboard Banner" width="320" height="50"></a>
 ### 🤐 支持语音口令
 
 - 【播放歌曲】，播放本地的歌曲
@@ -263,7 +259,7 @@ docker build -t xiaomusic .
 - [实现原理](https://github.com/yihong0618/gitblog/issues/258)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [awesome-xiaoai](https://github.com/zzz6519003/awesome-xiaoai)
-- [微信小程序: XIAO晓音](https://github.com/F-loat/xiaoplayer)
+- [微信小程序: 卯卯音乐](https://github.com/F-loat/xiaoplayer)
 - [pure 主题 xiaomusicUI](https://github.com/52fisher/xiaomusicUI)
 - [移动端的播放器主题](https://github.com/52fisher/XMusicPlayer)
 - [Tailwind主题](https://github.com/clarencejh/xiaomusic)
