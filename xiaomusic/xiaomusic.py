@@ -266,7 +266,7 @@ class XiaoMusic:
                     device.device_id = device_id
                     device.hardware = hardware
                     device.name = name
-                    device.play_type = PLAY_TYPE_RND
+                    device.play_type = device.get("play_type", PLAY_TYPE_RND)
                     devices[did] = device
             self.config.devices = devices
             self.log.info(f"选中的设备: {devices}")
