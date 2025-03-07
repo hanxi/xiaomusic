@@ -135,7 +135,7 @@ class XiaoMusic:
         if self.public_port == 0:
             self.public_port = self.port
         # 自动3thplay生成播放 post url
-        self.thdtarget = f"{self.hostname}:{self.public_port}/items/"  # "HTTP://192.168.1.10:58091/items/"
+        self.thdtarget = f"{self.hostname}:{self.public_port}/thdaction"  # "HTTP://192.168.1.10:58090/thdaction"
 
         self.active_cmd = self.config.active_cmd.split(",")
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
@@ -2097,8 +2097,7 @@ class XiaoMusicDevice:
             await self.do_tts(self.config.stop_tts_msg)
         await asyncio.sleep(3)  # 等它说完
         # 取消组内所有的下一首歌曲的定时器
-        if await thdplay("stop", "", self.xiaomusic.thdtarget):
-            return
+        await thdplay("stop", "", self.xiaomusic.thdtarget)
         self.cancel_group_next_timer()
         await self.group_force_stop_xiaoai()
         self.log.info("stop now")
