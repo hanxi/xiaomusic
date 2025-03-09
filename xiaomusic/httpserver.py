@@ -151,7 +151,7 @@ async def custom_event(sid, data):
     await sio.emit("response", {"action": "切歌", "status": data})
 
 
-@app.post("thdaction")
+@app.post("/thdaction")
 async def thdaction(item: Item):
     await sio.emit(
         "response",

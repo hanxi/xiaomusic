@@ -241,15 +241,19 @@ async def thdplay(
 ):
     # 接口地址 target,在参数文件指定
     data = {"action": action, "args": args}
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            target, json=data, timeout=5
-        ) as response:  # 增加超时以避免长时间挂起
-            # 如果响应不是200，引发异常
-            response.raise_for_status()
-            # 读取响应文本
-            text = await response.text()
-            return "[]" not in text
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                target, json=data, timeout=5
+            ) as response:  # 增加超时以避免长时间挂起
+                # 如果响应不是200，引发异常
+                response.raise_for_status()
+                # 读取响应文本
+                text = await response.text()
+                return "[]" not in text
+    except Exception as e:
+        log.error(f"Error _get_web_music_duration: {e}")
+    return False
 
 
 async def downloadfile(url):

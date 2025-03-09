@@ -316,7 +316,7 @@ class Config:
 
     @property
     def tag_cache_path(self):
-        if not os.path.exists(self.cache_dir):
+        if (len(self.cache_dir) > 0) and (not os.path.exists(self.cache_dir)):
             os.makedirs(self.cache_dir)
         filename = os.path.join(self.cache_dir, "tag_cache.json")
         return filename
