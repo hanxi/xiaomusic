@@ -252,14 +252,14 @@
                     <!-- 歌曲信息 -->
                     <div class="flex items-center gap-4">
                         <div class="avatar cursor-pointer">
-                            <a href="./now_playing.html" target="_blank">
+                            <!-- <a href="./now_playing.html" target="_blank"> -->
                                 <div class="w-12 rounded-lg">
                                     <img :src="currentSong?.cover" :alt="currentSong?.title" />
                                 </div>
-                            </a>
+                            <!-- </a> -->
                         </div>
                         <div class="cursor-pointer hover:text-primary transition-colors" class="cursor-pointer hover:text-primary transition-colors">
-                            <a href="./now_playing.html" target="_blank">
+                            <!-- <a href="./now_playing.html" target="_blank"> -->
                                 <div class="font-bold">{{ currentSong?.title }}</div>
                                 <div class="text-sm opacity-50">
                                     {{ currentSong?.artist }} - {{ currentSong?.album }}
@@ -267,7 +267,7 @@
                                 <div class="text-sm opacity-50">
                                     {{ currentPlaylist }}
                                 </div>
-                            </a>
+                            <!-- </a> -->
                         </div>
                         <button class="btn btn-ghost btn-circle btn-sm"
                             @click="currentSong && toggleFavorite(currentSong)"
