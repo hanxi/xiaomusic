@@ -82,10 +82,11 @@ services:
 遇到问题可以去 web 设置页面底部点击【下载日志文件】按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
 
 > [!TIP]
-> 🔥【广告:可用于安装 frp 实现内网穿透】
->
-> 🔥 海外 RackNerd VPS 机器推荐，可支付宝付款。
-> <a href="https://my.racknerd.com/aff.php?aff=11177"><img src="https://racknerd.com/banners/320x50.gif" alt="RackNerd Mobile Leaderboard Banner" width="320" height="50"></a>
+> - 🔥【广告:可用于安装 frp 实现内网穿透】
+> - 🔥 海外 RackNerd VPS 机器推荐，可支付宝付款。
+> - <a href="https://my.racknerd.com/aff.php?aff=11177"><img src="https://racknerd.com/banners/320x50.gif" alt="RackNerd Mobile Leaderboard Banner" width="320" height="50"></a>
+> - 也可以用来部署代理，docker 部署方法见 <https://github.com/hanxi/blog/issues/96>
+
 ### 🤐 支持语音口令
 
 - 【播放歌曲】，播放本地的歌曲
