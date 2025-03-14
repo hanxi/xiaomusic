@@ -103,6 +103,9 @@ class Config:
         "XIAOMUSIC_SEARCH", "bilisearch:"
     )  # "bilisearch:" or "ytsearch:"
     ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
+    get_duration_type: str = os.getenv(
+        "XIAOMUSIC_GET_DURATION_TYPE", "ffprobe"
+    )  # mutagen or ffprobe
     active_cmd: str = os.getenv(
         "XIAOMUSIC_ACTIVE_CMD",
         "play,search_play,set_play_type_rnd,playlocal,search_playlocal,play_music_list,play_music_list_index,stop_after_minute,stop",

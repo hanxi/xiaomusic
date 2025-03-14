@@ -465,17 +465,13 @@ class XiaoMusic:
 
         if self.is_web_music(name):
             origin_url = url
-            duration, url = await get_web_music_duration(
-                url, self.config.ffmpeg_location
-            )
+            duration, url = await get_web_music_duration(url, self.config)
             sec = math.ceil(duration)
             self.log.info(f"网络歌曲 {name} : {origin_url} {url} 的时长 {sec} 秒")
         else:
             filename = self.get_filename(name)
             self.log.info(f"get_music_sec_url. name:{name} filename:{filename}")
-            duration = await get_local_music_duration(
-                filename, self.config.ffmpeg_location
-            )
+            duration = await get_local_music_duration(filename, self.config)
             sec = math.ceil(duration)
             self.log.info(f"本地歌曲 {name} : {filename} {url} 的时长 {sec} 秒")
 

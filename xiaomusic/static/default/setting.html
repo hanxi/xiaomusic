@@ -129,6 +129,12 @@ var vConsole = new window.VConsole();
         <label for="proxy">XIAOMUSIC_PROXY(ytsearch需要):</label>
         <input id="proxy" type="text" placeholder="http://192.168.2.5:8080" />
 
+        <label for="get_duration_type">获取时长方式:</label>
+        <select id="get_duration_type">
+          <option value="ffprobe" selected>ffprobe</option>
+          <option value="mutagen">mutagen</option>
+        </select>
+
         <label for="loudnorm">均衡歌曲音量大小(loudnorm滤镜):</label>
         <input id="loudnorm" type="text" placeholder="loudnorm=I=-14:TP=-1.5:LRA=6" />
 
