@@ -85,6 +85,7 @@ services:
 > - 🔥【广告:可用于安装 frp 实现内网穿透】
 > - 🔥 海外 RackNerd VPS 机器推荐，可支付宝付款。
 > - <a href="https://my.racknerd.com/aff.php?aff=11177"><img src="https://racknerd.com/banners/320x50.gif" alt="RackNerd Mobile Leaderboard Banner" width="320" height="50"></a>
+> - 不知道选哪个套餐可以直接买这个最便宜的 <https://my.racknerd.com/aff.php?aff=11177&pid=903>
 > - 也可以用来部署代理，docker 部署方法见 <https://github.com/hanxi/blog/issues/96>
 
 ### 🤐 支持语音口令
