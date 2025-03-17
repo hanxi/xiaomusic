@@ -244,7 +244,11 @@ docker build -t xiaomusic .
 ## 🤔 高级篇
 
 - 自定义口令功能 <https://github.com/hanxi/xiaomusic/issues/105>
-- [ ] 缺少一篇教程 [如何写自定义插件](https://github.com/hanxi/xiaomusic/issues/105)
+- <https://github.com/hanxi/xiaomusic/issues/312>
+- <https://github.com/hanxi/xiaomusic/issues/269>
+- <https://github.com/hanxi/xiaomusic/issues/159>
+
+
 
 ## 📢 讨论区
 
