@@ -90,7 +90,7 @@ services:
 
 
 > [!TIP]
-- 【广告: 一键轻松打造你的专属AI应用】<https://dashi.aliyun.com/activity/aigc?userCode=szqvatm6>
+> - 【广告: 一键轻松打造你的专属AI应用】<https://dashi.aliyun.com/activity/aigc?userCode=szqvatm6>
 
 ### 🤐 支持语音口令
 
