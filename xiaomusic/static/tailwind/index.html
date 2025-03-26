@@ -132,7 +132,7 @@
                     <!-- 系统歌单 -->
                     <ul class="menu gap-1 mb-4">
                         <li v-for="playlist in systemPlaylists" :key="playlist.id">
-                            <a class="flex justify-between" :class="{ active: currentPlaylist === playlist.name }"
+                            <a class="flex justify-between" :class="{ active: curSelectPlaylist === playlist.name }"
                                 @click="selectPlaylist(playlist.name)">
                                 {{ playlist.name }}
                                 <div class="badge badge-sm">{{ playlist.count }}</div>
@@ -144,7 +144,7 @@
                         <div class="divider">自定义歌单</div>
                         <ul class="menu gap-1">
                             <li v-for="playlist in customPlaylists" :key="playlist.name">
-                                <a class="flex justify-between" :class="{ active: currentPlaylist === playlist.name }"
+                                <a class="flex justify-between" :class="{ active: curSelectPlaylist === playlist.name }"
                                     @click="selectPlaylist(playlist.name)">
                                     <span class="truncate flex-1">{{ playlist.name }}</span>
                                     <div class="badge badge-sm">{{ playlist.count }}</div>
@@ -157,7 +157,7 @@
                 <!-- 右侧歌曲列表 -->
                 <div class="flex-1 bg-base-100 rounded-box p-4 shadow-lg overflow-hidden">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold">{{ currentPlaylist }}</h2>
+                        <h2 class="text-xl font-bold">{{ curSelectPlaylist }}</h2>
                     </div>
                     <div class="h-[calc(100vh-240px)] overflow-y-auto">
                         <table class="table w-full">
@@ -252,20 +252,22 @@
                     <!-- 歌曲信息 -->
                     <div class="flex items-center gap-4">
                         <div class="avatar cursor-pointer">
-                            <a href="./now_playing.html" target="_blank">
+                            <!-- <a href="./now_playing.html" target="_blank"> -->
                                 <div class="w-12 rounded-lg">
                                     <img :src="currentSong?.cover" :alt="currentSong?.title" />
                                 </div>
-                            </a>
+                            <!-- </a> -->
                         </div>
-                        <div class="cursor-pointer hover:text-primary transition-colors">
-                            <div class="font-bold">{{ currentSong?.title }}</div>
-                            <div class="text-sm opacity-50">
-                                {{ currentSong?.artist }} - {{ currentSong?.album }}
-                            </div>
-                            <div class="text-sm opacity-50">
-                                {{ currentPlaylist }}
-                            </div>
+                        <div class="cursor-pointer hover:text-primary transition-colors" class="cursor-pointer hover:text-primary transition-colors">
+                            <!-- <a href="./now_playing.html" target="_blank"> -->
+                                <div class="font-bold">{{ currentSong?.title }}</div>
+                                <div class="text-sm opacity-50">
+                                    {{ currentSong?.artist }} - {{ currentSong?.album }}
+                                </div>
+                                <div class="text-sm opacity-50">
+                                    {{ currentPlaylist }}
+                                </div>
+                            <!-- </a> -->
                         </div>
                         <button class="btn btn-ghost btn-circle btn-sm"
                             @click="currentSong && toggleFavorite(currentSong)"
@@ -371,10 +373,11 @@
                 const currentTime = ref(0);
                 const duration = ref(0);
                 const volume = ref(80);
-                const currentPlaylist = ref(localStorage.getItem('cur_playlist') || '所有歌曲');
+                const curSelectPlaylist = ref('所有歌曲');
                 const systemPlaylists = ref([]);
                 const customPlaylists = ref([]);
                 const newPlaylistName = ref('');
+                const currentPlaylist = ref(localStorage.getItem('cur_playlist') || '所有歌曲');
 
                 // 添加音频播放相关状态
                 const audioPlayer = ref(null);
@@ -458,10 +461,10 @@
                 // 优化歌单切换
                 const selectPlaylist = async (name) => {
                     try {
-                        if (name === currentPlaylist.value) return;
+                        if (name === curSelectPlaylist.value) return;
 
-                        currentPlaylist.value = name;
-                        localStorage.setItem('cur_playlist', name);
+                        curSelectPlaylist.value = name;
+                        localStorage.setItem('curSelectPlaylist', name);
 
                         // 获取歌单中的歌曲
                         let songNames = [];
@@ -481,11 +484,13 @@
                         if (window.did === 'web_device') return;
 
                         const data = await API.getPlayingStatus(window.did);
-
+                        
                         if (data.ret === 'OK') {
                             isPlaying.value = data.is_playing;
                             currentTime.value = data.offset || 0;
                             duration.value = data.duration || 0;
+
+                            currentPlaylist.value = data.cur_playlist;
 
                             if (data.cur_music && data.cur_music !== currentSong.value?.title) {
                                 try {
@@ -516,6 +521,7 @@
 
                                 localStorage.setItem('cur_music', data.cur_music);
                                 localStorage.setItem('is_playing', data.is_playing);
+                                localStorage.setItem('cur_playlist', data.cur_playlist);
                             }
                         }
                     } catch (error) {
@@ -530,7 +536,7 @@
                     localStorage.setItem('theme', theme);
                     // 更新 isDarkTheme 状态，用于图标显示
                     isDarkTheme.value = ['dark', 'black', 'luxury', 'dracula', 'night', 'coffee'].includes(theme);
-                    showNotification(`已切换到 ${theme} 主题`, 'alert-success');
+                    showMessage(`已切换到 ${theme} 主题`, 'alert-success');
                 };
 
                 const filteredSongs = computed(() => {
@@ -770,24 +776,74 @@
                 // 音频播放控制方法
                 const initAudioPlayer = async () => {
                     try {
-                        // 创建音频播放器
+                        // 检查是否已经存在音频播放器
+                        let existingPlayer = document.getElementById('audio-player');
+                        if (existingPlayer) {
+                            document.body.removeChild(existingPlayer);
+                        }
+
+                        // 创建新的音频播放器
                         const audio = document.createElement('audio');
                         audio.id = 'audio-player';
+                        
+                        // 设置音频属性
+                        audio.preload = 'auto';  // 预加载
+                        audio.crossOrigin = 'anonymous';  // 允许跨域
+                        
+                        // 添加到文档
                         document.body.appendChild(audio);
+                        audioPlayer.value = audio;
+
+                        // 监听错误事件
+                        audio.addEventListener('error', (e) => {
+                            console.error('Audio playback error:', e);
+                            const error = e.target.error;
+                            let errorMessage = '播放出错';
+                            
+                            if (error) {
+                                switch (error.code) {
+                                    case error.MEDIA_ERR_ABORTED:
+                                        errorMessage = '播放被中断';
+                                        break;
+                                    case error.MEDIA_ERR_NETWORK:
+                                        errorMessage = '网络错误';
+                                        break;
+                                    case error.MEDIA_ERR_DECODE:
+                                        errorMessage = '解码错误';
+                                        break;
+                                    case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                                        errorMessage = '不支持的音频格式';
+                                        break;
+                                }
+                            }
+                            
+                            showMessage(errorMessage, 'alert-error');
+                            isPlaying.value = false;
+                        });
+
+                        // 监听播放状态变化
+                        audio.addEventListener('play', () => {
+                            isPlaying.value = true;
+                            localStorage.setItem('is_playing', 'true');
+                        });
+
+                        audio.addEventListener('pause', () => {
+                            isPlaying.value = false;
+                            localStorage.setItem('is_playing', 'false');
+                        });
 
                         // 监听播放进度
                         audio.addEventListener('timeupdate', () => {
                             currentTime.value = audio.currentTime;
                             duration.value = audio.duration;
+                            // 保存播放进度到localStorage
+                            localStorage.setItem('current_time', audio.currentTime.toString());
                         });
 
-                        // 监听播放状态
-                        audio.addEventListener('play', () => {
-                            isPlaying.value = true;
-                        });
-
-                        audio.addEventListener('pause', () => {
-                            isPlaying.value = false;
+                        // 监听元数据加载
+                        audio.addEventListener('loadedmetadata', () => {
+                            duration.value = audio.duration;
+                            localStorage.setItem('duration', audio.duration.toString());
                         });
 
                         // 监听播放结束
@@ -799,23 +855,31 @@
                             }
                         });
 
-                        // 监听加载元数据
-                        audio.addEventListener('loadedmetadata', () => {
-                            duration.value = audio.duration;
-                        });
-
-                        // 监听错误
-                        audio.addEventListener('error', (e) => {
-                            console.error('Audio playback error:', e);
-                            showNotification('播放出错，请重试', 'alert-error');
-                        });
-
-                        audioPlayer.value = audio;
-
                         // 设置初始音量
                         audio.volume = volume.value / 100;
+
+                        // 恢复上次的播放状态
+                        const lastPlayingState = localStorage.getItem('is_playing') === 'true';
+                        const lastCurrentTime = parseFloat(localStorage.getItem('current_time') || '0');
+                        const lastSong = localStorage.getItem('cur_music');
+
+                        if (lastSong && lastPlayingState) {
+                            try {
+                                const musicInfo = await API.getMusicInfo(lastSong);
+                                if (musicInfo && musicInfo.ret === 'OK' && musicInfo.url) {
+                                    audio.src = musicInfo.url;
+                                    audio.currentTime = lastCurrentTime;
+                                    if (lastPlayingState) {
+                                        await audio.play();
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error restoring last playing state:', error);
+                            }
+                        }
                     } catch (error) {
                         console.error('Error initializing audio player:', error);
+                        showMessage('初始化音频播放器失败', 'alert-error');
                     }
                 };
 
@@ -823,57 +887,125 @@
                     try {
                         if (!song || !song.title) {
                             console.error('Invalid song object:', song);
+                            showMessage('无效的歌曲信息', 'alert-error');
                             return;
                         }
 
-                        const currentPlaylistName = localStorage.getItem("cur_playlist") || "所有歌曲";
-                        console.log('Playing song:', song.title, 'from playlist:', currentPlaylistName);
-
+                        const currentPlaylist = curSelectPlaylist.value;
+                        console.log('did', window.did, 'Playing song:', song.id, 'from playlist:', currentPlaylist);
+                        // song.id 修复刮削歌曲的歌曲名称和文件名称不一致的问题
                         if (window.did === 'web_device') {
                             // Web播放模式
-                            const musicInfo = await API.getMusicInfo(song.title);
-                            if (!musicInfo || musicInfo.ret !== 'OK') {
-                                console.error('Failed to get music info:', musicInfo);
-                                return;
-                            }
+                            try {
+                                const musicInfo = await API.getMusicInfo(song.id);
+                                if (!musicInfo || musicInfo.ret !== 'OK') {
+                                    console.error('Failed to get music info:', musicInfo);
+                                    showMessage('获取歌曲信息失败', 'alert-error');
+                                    return;
+                                }
 
-                            if (audioPlayer.value) {
-                                if (audioPlayer.value.src === musicInfo.url) {
-                                    // 同一首歌，切换播放状态
-                                    if (audioPlayer.value.paused) {
-                                        await audioPlayer.value.play();
-                                        isPlaying.value = true;
-                                    } else {
-                                        audioPlayer.value.pause();
+                                if (!musicInfo.url) {
+                                    console.error('No URL in music info:', musicInfo);
+                                    showMessage('歌曲URL无效', 'alert-error');
+                                    return;
+                                }
+
+                                // 验证URL是否有效
+                                const validUrl = new URL(musicInfo.url);
+                                if (!validUrl.pathname.endsWith('.mp3')) {
+                                    console.error('Invalid music URL format:', validUrl);
+                                    showMessage('音乐文件格式不支持', 'alert-error');
+                                    return;
+                                }
+
+                                if (audioPlayer.value) {
+                                    try {
+                                        if (audioPlayer.value.src === musicInfo.url) {
+                                            // 同一首歌，切换播放状态
+                                            if (audioPlayer.value.paused) {
+                                                await audioPlayer.value.play();
+                                                isPlaying.value = true;
+                                                showMessage('继续播放');
+                                            } else {
+                                                audioPlayer.value.pause();
+                                                isPlaying.value = false;
+                                                showMessage('暂停播放');
+                                            }
+                                        } else {
+                                            // 播放新歌曲
+                                            audioPlayer.value.src = musicInfo.url;
+                                            await audioPlayer.value.play();
+                                            isPlaying.value = true;
+                                            showMessage('开始播放新歌曲');
+                                        }
+
+                                        // 更新当前歌曲和播放状态
+                                        currentSong.value = song;
+                                        localStorage.setItem("cur_music", song.id);
+                                        localStorage.setItem("cur_playlist", currentPlaylist);
+                                        localStorage.setItem("is_playing", "true");
+
+                                        // 高亮当前播放的歌曲
+                                        songs.value = songs.value.map(s => ({
+                                            ...s,
+                                            isPlaying: s.id === song.id
+                                        }));
+                                    } catch (playError) {
+                                        console.error('Error playing audio:', playError);
+                                        showMessage('播放失败: ' + playError.message, 'alert-error');
+                                        // 重置播放状态
                                         isPlaying.value = false;
+                                        localStorage.setItem("is_playing", "false");
                                     }
                                 } else {
-                                    // 播放新歌曲
-                                    audioPlayer.value.src = musicInfo.url;
-                                    await audioPlayer.value.play();
-                                    isPlaying.value = true;
+                                    console.error('Audio player not initialized');
+                                    showMessage('音频播放器未初始化', 'alert-error');
                                 }
+                            } catch (error) {
+                                console.error('Error in web playback:', error);
+                                showMessage('播放出错: ' + error.message, 'alert-error');
                             }
                         } else {
                             // 设备播放模式
-                            const response = await API.playMusicFromList(window.did, currentPlaylistName, song.title);
-                            if (response.ret === 'OK') {
-                                isPlaying.value = true;
+                            try {
+                                // 如果是当前正在播放的歌曲，则切换播放状态
+                                if (currentSong.value && song.id === currentSong.value.id) {
+                                    if (isPlaying.value) {
+                                        const response = await API.sendCommand(window.did, API.commands.PLAY_PAUSE);
+                                        if (response.ret === 'OK') {
+                                            isPlaying.value = false;
+                                            showMessage('暂停播放');
+                                        }
+                                    } else {
+                                        const response = await API.playMusicFromList(window.did, currentPlaylist, song.id);
+                                        if (response.ret === 'OK') {
+                                            isPlaying.value = true;
+                                            showMessage('继续播放');
+                                        }
+                                    }
+                                } else {
+                                    // 播放新的歌曲
+                                    const response = await API.playMusicFromList(window.did, currentPlaylist, song.id);
+                                    if (response.ret === 'OK') {
+                                        isPlaying.value = true;
+                                        currentSong.value = song;
+                                        localStorage.setItem("cur_music", song.id);
+                                        localStorage.setItem("cur_playlist", currentPlaylist);
+                                        localStorage.setItem("is_playing", "true");
+                                        showMessage('开始播放');
+                                    } else {
+                                        console.error('Device playback failed:', response);
+                                        showMessage('设备播放失败', 'alert-error');
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error in device playback:', error);
+                                showMessage('设备播放出错: ' + error.message, 'alert-error');
                             }
                         }
-
-                        // 更新当前歌曲和播放状态
-                        currentSong.value = song;
-                        localStorage.setItem("cur_music", song.title);
-
-                        // 高亮当前播放的歌曲
-                        songs.value = songs.value.map(s => ({
-                            ...s,
-                            isPlaying: s.id === song.id
-                        }));
                     } catch (error) {
-                        console.error('Error playing song:', error);
-                        showNotification('播放失败，请重试', 'alert-error');
+                        console.error('Error in playSong:', error);
+                        showMessage('播放失败，请重试', 'alert-error');
                     }
                 };
 
@@ -891,15 +1023,38 @@
                                 }
                             }
                         } else {
-                            // 设备播放模式
-                            const response = await API.sendCommand(window.did, isPlaying.value ? "暂停播放" : "继续播放");
-                            if (response.ret === 'OK') {
-                                isPlaying.value = !isPlaying.value;
+                            try {
+                                if (isPlaying.value) {
+                                    // 如果正在播放，则暂停
+                                    const response = await API.sendCommand(window.did, API.commands.PLAY_PAUSE)
+                                    if (response.ret === 'OK') {
+                                        isPlaying.value = false
+                                        showMessage('小爱同学: 暂停播放')
+                                    }
+                                } else {
+                                    // 如果当前是暂停状态，获取当前歌曲信息并重新播放
+                                    const status = await API.getPlayingStatus(window.did)
+                                    if (status.ret === 'OK' && status.cur_music && status.cur_playlist) {
+                                        // 使用 playmusiclist 接口重新播放当前歌曲
+                                        const response = await API.playMusicFromList(window.did, status.cur_playlist, status.cur_music)
+                                        if (response.ret === 'OK') {
+                                            isPlaying.value = true
+                                            showMessage('小爱同学: 开始播放')
+                                        } else {
+                                            showMessage('小爱同学: 播放失败', 'error')
+                                        }
+                                    } else {
+                                        showMessage('小爱同学: 获取播放信息失败', 'error')
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error toggling play state:', error)
+                                showMessage('小爱同学: 播放控制失败', 'error')
                             }
                         }
                     } catch (error) {
                         console.error('Error toggling play state:', error);
-                        showNotification('播放控制失败，请重试', 'alert-error');
+                        showMessage('播放控制失败，请重试'  + window.did, 'alert-error');
                     }
                 };
 
@@ -963,7 +1118,7 @@
                         }
                     } catch (error) {
                         console.error('Error playing previous song:', error);
-                        showNotification('切换上一首失败，请重试', 'alert-error');
+                        showMessage('切换上一首失败，请重试', 'alert-error');
                     }
                 };
 
@@ -987,7 +1142,7 @@
                         }
                     } catch (error) {
                         console.error('Error playing next song:', error);
-                        showNotification('切换下一首失败，请重试', 'alert-error');
+                        showMessage('切换下一首失败，请重试', 'alert-error');
                     }
                 };
 
@@ -1000,19 +1155,19 @@
                             // Web播放模式下直接更新
                             currentPlayMode.value = newMode;
                             localStorage.setItem('play_mode', newMode.toString());
-                            showNotification(`已切换到${playModes.value[newMode].cmd}模式`, 'alert-info');
+                            showMessage(`已切换到${playModes.value[newMode].cmd}模式`, 'alert-info');
                         } else {
                             // 设备播放模式
                             const response = await API.sendCommand(window.did, playModes.value[newMode].cmd);
                             if (response.ret === 'OK') {
                                 currentPlayMode.value = newMode;
                                 localStorage.setItem('play_mode', newMode.toString());
-                                showNotification(`已切换到${playModes.value[newMode].cmd}模式`, 'alert-info');
+                                showMessage(`已切换到${playModes.value[newMode].cmd}模式`, 'alert-info');
                             }
                         }
                     } catch (error) {
                         console.error('Error toggling play mode:', error);
-                        showNotification('切换播放模式失败，请重试', 'alert-error');
+                        showMessage('切换播放模式失败，请重试', 'alert-error');
                     }
                 };
 
@@ -1075,17 +1230,17 @@
                 // 修改 toggleFavorite 方法
                 const toggleFavorite = async (song) => {
                     try {
-                        const isLiked = favoriteList.value.includes(song.title);
+                        const isLiked = favoriteList.value.includes(song.id);
                         const cmd = isLiked ? "取消收藏" : "加入收藏";
 
-                        localStorage.setItem("cur_music", song.title);
+                        localStorage.setItem("cur_music", song.id);
 
                         const response = await API.sendCommand(window.did, cmd);
                         if (response.ret === 'OK') {
                             if (isLiked) {
-                                favoriteList.value = favoriteList.value.filter(name => name !== song.title);
+                                favoriteList.value = favoriteList.value.filter(name => name !== song.id);
                             } else {
-                                favoriteList.value.push(song.title);
+                                favoriteList.value.push(song.id);
                             }
 
                             if (currentPlaylist.value === '收藏') {
@@ -1103,7 +1258,7 @@
                 const toastType = ref('alert-info');
 
                 // 添加显示 toast 的方法
-                const showNotification = (message, type = 'alert-info') => {
+                const showMessage = (message, type = 'alert-info') => {
                     toastMessage.value = message;
                     toastType.value = type;
                     showToast.value = true;
@@ -1116,7 +1271,7 @@
                 // 修改 deleteMusic 方法
                 const deleteMusic = async (song) => {
                     try {
-                        if (!confirm(`确定要删除歌曲"${song.title}"吗？`)) {
+                        if (!confirm(`确定要删除歌曲"${song.id}"吗？`)) {
                             return;
                         }
 
@@ -1125,35 +1280,35 @@
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({ name: song.title })
+                            body: JSON.stringify({ name: song.id })
                         });
 
                         const data = await response.json();
                         if (data === 'success' || data.ret === 'OK') {
                             // 如果删除的是当前播放的歌曲，切换到下一首
-                            if (currentSong.value?.title === song.title) {
+                            if (currentSong.value?.id === song.id) {
                                 await playNext();
                             }
 
                             // 从当前列表中移除歌曲
-                            songs.value = songs.value.filter(s => s.title !== song.title);
+                            songs.value = songs.value.filter(s => s.id !== song.id);
 
                             // 如果在收藏列表中，也从收藏列表中移除
-                            if (favoriteList.value.includes(song.title)) {
-                                favoriteList.value = favoriteList.value.filter(name => name !== song.title);
+                            if (favoriteList.value.includes(song.id)) {
+                                favoriteList.value = favoriteList.value.filter(name => name !== song.id);
                             }
 
                             // 刷新歌单信息
                             await loadPlaylists();
 
                             // 显示成功通知
-                            showNotification(`删除歌曲"${song.title}"成功`, 'alert-success');
+                            showMessage(`删除歌曲"${song.id}"成功`, 'alert-success');
                         } else {
                             throw new Error(typeof data === 'string' ? data : (data.msg || '删除失败'));
                         }
                     } catch (error) {
                         console.error('Error deleting song:', error);
-                        showNotification(`删除失败: ${error.message}`, 'alert-error');
+                        showMessage(`删除失败: ${error.message}`, 'alert-error');
                     }
                 };
 
@@ -1226,10 +1381,10 @@
                                 currentTime.value = 0;
                             }
                         }
-                        showNotification('已发送停止播放的请求', 'alert-info');
+                        showMessage('已发送停止播放的请求', 'alert-info');
                     } catch (error) {
                         console.error('Error stopping playback:', error);
-                        showNotification('停止播放失败，请重试', 'alert-error');
+                        showMessage('停止播放失败，请重试', 'alert-error');
                     }
                 };
 
@@ -1352,6 +1507,7 @@
                     playNext,
                     togglePlayMode,
                     playSong,
+                    curSelectPlaylist,
                     currentPlaylist,
                     systemPlaylists,
                     customPlaylists,

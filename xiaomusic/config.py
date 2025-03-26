@@ -103,6 +103,9 @@ class Config:
         "XIAOMUSIC_SEARCH", "bilisearch:"
     )  # "bilisearch:" or "ytsearch:"
     ffmpeg_location: str = os.getenv("XIAOMUSIC_FFMPEG_LOCATION", "./ffmpeg/bin")
+    get_duration_type: str = os.getenv(
+        "XIAOMUSIC_GET_DURATION_TYPE", "ffprobe"
+    )  # mutagen or ffprobe
     active_cmd: str = os.getenv(
         "XIAOMUSIC_ACTIVE_CMD",
         "play,search_play,set_play_type_rnd,playlocal,search_playlocal,play_music_list,play_music_list_index,stop_after_minute,stop",
@@ -209,6 +212,10 @@ class Config:
     recently_added_playlist_len: int = int(
         os.getenv("XIAOMUSIC_RECENTLY_ADDED_PLAYLIST_LEN", "50")
     )
+    # 开启语音删除歌曲
+    enable_cmd_del_music: bool = (
+        os.getenv("XIAOMUSIC_ENABLE_CMD_DEL_MUSIC", "false").lower() == "true"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
@@ -312,7 +319,7 @@ class Config:
 
     @property
     def tag_cache_path(self):
-        if not os.path.exists(self.cache_dir):
+        if (len(self.cache_dir) > 0) and (not os.path.exists(self.cache_dir)):
             os.makedirs(self.cache_dir)
         filename = os.path.join(self.cache_dir, "tag_cache.json")
         return filename

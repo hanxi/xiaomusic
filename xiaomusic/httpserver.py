@@ -15,6 +15,9 @@ import socketio
 if TYPE_CHECKING:
     from xiaomusic.xiaomusic import XiaoMusic
 
+if TYPE_CHECKING:
+    from xiaomusic.xiaomusic import XiaoMusic
+
 import aiofiles
 from fastapi import (
     Depends,
@@ -148,8 +151,8 @@ async def custom_event(sid, data):
     await sio.emit("response", {"action": "切歌", "status": data})
 
 
-@app.post("/items/")
-async def create_item(item: Item):
+@app.post("/thdaction")
+async def thdaction(item: Item):
     await sio.emit(
         "response",
         {"action": item.action, "args": item.args, "status": item.args},
