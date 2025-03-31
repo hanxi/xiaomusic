@@ -793,9 +793,9 @@ class XiaoMusic:
             loop = asyncio.get_event_loop()
         # 延时配置项 file_watch_debounce
         self._file_watch_handler = XiaoMusicPathWatch(
-            callback = self._on_file_change,
-            debounce_delay = self.config.file_watch_debounce,
-            loop = loop,
+            callback=self._on_file_change,
+            debounce_delay=self.config.file_watch_debounce,
+            loop=loop,
         )
         # 创建监控 music_path 目录对象
         self._observer = Observer()
@@ -2198,7 +2198,7 @@ class XiaoMusicPathWatch(FileSystemEventHandler):
         # 处理文件事件
         src_ext = os.path.splitext(event.src_path)[1].lower()
         # 处理移动事件的目标路径
-        if hasattr(event, 'dest_path'):
+        if hasattr(event, "dest_path"):
             dest_ext = os.path.splitext(event.dest_path)[1].lower()
             if dest_ext in SUPPORT_MUSIC_TYPE:
                 self.schedule_callback()
