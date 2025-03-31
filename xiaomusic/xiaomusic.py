@@ -793,9 +793,9 @@ class XiaoMusic:
             loop = asyncio.get_event_loop()
         # 延时配置项 file_watch_debounce
         self._file_watch_handler = XiaoMusicPathWatch(
-            callback=self._on_file_change,
-            debounce_delay=self.config.file_watch_debounce,
-            loop=loop,
+            callback = self._on_file_change,
+            debounce_delay = self.config.file_watch_debounce,
+            loop = loop,
         )
         # 创建监控 music_path 目录对象
         self._observer = Observer()
@@ -806,7 +806,7 @@ class XiaoMusic:
         self.log.info(f"已启动对 {self.music_path} 的目录监控。")
 
     def _on_file_change(self):
-        self.log.info("检测到音乐目录文件变化，正在刷新歌曲列表。")
+        self.log.info("检测到目录音乐文件变化，正在刷新歌曲列表。")
         self._gen_all_music_list()
 
     def stop_file_watch(self):
@@ -2183,7 +2183,7 @@ class XiaoMusicDevice:
         return "全部"
 
 
-# 目录监控类，使用延迟防抖
+# 目录监控类，使用延迟防抖，仅监控音乐文件
 class XiaoMusicPathWatch(FileSystemEventHandler):
     def __init__(self, callback, debounce_delay, loop):
         self.callback = callback
@@ -2192,7 +2192,20 @@ class XiaoMusicPathWatch(FileSystemEventHandler):
         self._debounce_handle = None
 
     def on_any_event(self, event):
-        self.schedule_callback()
+        if event.is_directory:
+            return  # 忽略目录事件
+
+        # 处理文件事件
+        src_ext = os.path.splitext(event.src_path)[1].lower()
+        # 处理移动事件的目标路径
+        if hasattr(event, 'dest_path'):
+            dest_ext = os.path.splitext(event.dest_path)[1].lower()
+            if dest_ext in SUPPORT_MUSIC_TYPE:
+                self.schedule_callback()
+                return
+
+        if src_ext in SUPPORT_MUSIC_TYPE:
+            self.schedule_callback()
 
     def schedule_callback(self):
         def _execute_callback():
