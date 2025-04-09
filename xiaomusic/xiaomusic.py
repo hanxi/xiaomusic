@@ -1715,10 +1715,6 @@ class XiaoMusicDevice:
         self.log.info(f"【{name}】已经开始播放了")
         await self.xiaomusic.analytics.send_play_event(name, sec, self.hardware)
 
-        if self.device.play_type == PLAY_TYPE_SIN:
-            self.log.info(f"【{name}】单曲播放时不会设置下一首歌的定时器")
-            return
-
         # 设置下一首歌曲的播放定时器
         if sec <= 1:
             self.log.info(f"【{name}】不会设置下一首歌的定时器")
@@ -2037,7 +2033,11 @@ class XiaoMusicDevice:
                 self.log.info("定时器时间到了")
                 if self._next_timer:
                     self._next_timer = None
-                    await self._play_next()
+                    if self.device.play_type == PLAY_TYPE_SIN:
+                        self.log.info("单曲播放不继续播放下一首")
+                        await self.stop(arg1="notts")
+                    else:
+                        await self._play_next()
                 else:
                     self.log.info("定时器时间到了但是不见了")
 
