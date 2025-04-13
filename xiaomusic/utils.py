@@ -299,7 +299,7 @@ async def _get_web_music_duration(session, url, config, start=0, end=500):
     with tempfile.NamedTemporaryFile() as tmp:
         tmp.write(array_buffer)
         try:
-            duration = get_local_music_duration(tmp, config)
+            duration = await get_local_music_duration(tmp, config)
         except Exception as e:
             log.error(f"Error _get_web_music_duration: {e}")
     return duration
