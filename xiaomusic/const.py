@@ -28,6 +28,7 @@ NEED_USE_PLAY_MUSIC_API = [
     "X08E",
     "X8F",
     "X4B",
+    "LX05",
 ]
 
 # 有 tts command 的设备型号

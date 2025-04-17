@@ -82,14 +82,15 @@ services:
 遇到问题可以去 web 设置页面底部点击【下载日志文件】按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
 
 > [!TIP]
+>
 > - 🔥【广告:可用于安装 frp 实现内网穿透】
 > - 🔥 海外 RackNerd VPS 机器推荐，可支付宝付款。
 > - <a href="https://my.racknerd.com/aff.php?aff=11177"><img src="https://racknerd.com/banners/320x50.gif" alt="RackNerd Mobile Leaderboard Banner" width="320" height="50"></a>
 > - 不知道选哪个套餐可以直接买这个最便宜的 <https://my.racknerd.com/aff.php?aff=11177&pid=903>
 > - 也可以用来部署代理，docker 部署方法见 <https://github.com/hanxi/blog/issues/96>
 
-
 > [!TIP]
+>
 > - 🔥【广告: 搭建您的专属大模型主页
 告别繁琐配置难题，一键即可畅享稳定流畅的AI体验！】<https://university.aliyun.com/mobile?userCode=szqvatm6>
 
@@ -204,7 +205,7 @@ docker build -t xiaomusic .
 | L05C | [小米小爱音箱Play 增强版](https://home.mi.com/baike/index.html#/detail?model=xiaomi.wifispeaker.l05c)   |
 | L09A | [小米音箱Art](https://home.mi.com/webapp/content/baike/product/index.html?model=xiaomi.wifispeaker.l09a) |
 | LX04 X10A X08A | 已经支持的触屏版 |
-| X08C X08E X8F | 需要设置【型号兼容模式】选项为 true |
+| X08C X08E X8F | 已经不需要设置了. ~需要设置【型号兼容模式】选项为 true~ |
 | M01/XMYX01JY | 小米小爱音箱HD 需要设置【特殊型号获取对话记录】选项为 true 才能语音播放|
 | OH2P | XIAOMI 智能音箱 Pro |
 
@@ -253,8 +254,6 @@ docker build -t xiaomusic .
 - <https://github.com/hanxi/xiaomusic/issues/312>
 - <https://github.com/hanxi/xiaomusic/issues/269>
 - <https://github.com/hanxi/xiaomusic/issues/159>
-
-
 
 ## 📢 讨论区
 
