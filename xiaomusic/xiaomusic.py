@@ -956,7 +956,7 @@ class XiaoMusic:
         self.log.info(f"未匹配到指令 {query} {ctrl_panel}")
         return (None, None)
 
-    def find_real_music_name(self, name, n=100):
+    def find_real_music_name(self, name, n):
         if not self.config.enable_fuzzy_match:
             self.log.debug("没开启模糊匹配")
             return []
@@ -1572,7 +1572,9 @@ class XiaoMusicDevice:
         if exact:
             names = self.xiaomusic.find_real_music_name(name, n=1)
         else:
-            names = self.xiaomusic.find_real_music_name(name)
+            names = self.xiaomusic.find_real_music_name(
+                name, n=self.config.search_music_count
+            )
         if len(names) > 0:
             if not exact:
                 if len(names) > 1:  # 大于一首歌才更新
@@ -1659,7 +1661,9 @@ class XiaoMusicDevice:
         if exact:
             names = self.xiaomusic.find_real_music_name(name, n=1)
         else:
-            names = self.xiaomusic.find_real_music_name(name)
+            names = self.xiaomusic.find_real_music_name(
+                name, n=self.config.search_music_count
+            )
         if len(names) > 0:
             if not exact:
                 if len(names) > 1:  # 大于一首歌才更新

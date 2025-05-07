@@ -216,6 +216,8 @@ class Config:
     enable_cmd_del_music: bool = (
         os.getenv("XIAOMUSIC_ENABLE_CMD_DEL_MUSIC", "false").lower() == "true"
     )
+    # 搜索歌曲数量
+    search_music_count: int = int(os.getenv("XIAOMUSIC_SEARCH_MUSIC_COUNT", "100"))
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):
