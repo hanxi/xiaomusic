@@ -292,16 +292,41 @@ def is_m4a(url):
 
 
 async def _get_web_music_duration(session, url, config, start=0, end=500):
+    """
+    异步获取网络音乐文件的部分内容并估算其时长。
+
+    通过请求 URL 的前几个字节（默认 0-500）下载部分文件，
+    写入临时文件后调用本地工具（如 ffprobe）获取音频时长。
+
+    :param session: aiohttp.ClientSession 实例
+    :param url: 音乐文件的 URL 地址
+    :param config: 包含配置信息的对象（如 ffmpeg 路径）
+    :param start: 请求的起始字节位置
+    :param end: 请求的结束字节位置
+    :return: 返回音频的持续时间（秒），如果失败则返回 0
+    """
     duration = 0
+    # 设置请求头 Range，只请求部分内容（用于快速获取元数据）
     headers = {"Range": f"bytes={start}-{end}"}
+
+    # 使用 aiohttp 异步发起 GET 请求，获取部分音频内容
     async with session.get(url, headers=headers) as response:
-        array_buffer = await response.read()
-    with tempfile.NamedTemporaryFile() as tmp:
-        tmp.write(array_buffer)
-        try:
-            duration = await get_local_music_duration(tmp, config)
-        except Exception as e:
-            log.error(f"Error _get_web_music_duration: {e}")
+        array_buffer = await response.read()  # 读取响应的二进制内容
+
+    # 创建一个命名的临时文件，并禁用自动删除（以便后续读取）
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(array_buffer)  # 将下载的部分内容写入临时文件
+        tmp_path = tmp.name  # 获取该临时文件的真实路径
+
+    try:
+        # 调用 get_local_music_duration 并传入文件路径，而不是文件对象
+        duration = await get_local_music_duration(tmp_path, config)
+    except Exception as e:
+        log.error(f"Error _get_web_music_duration: {e}")
+    finally:
+        # 手动删除临时文件，避免残留
+        os.unlink(tmp_path)
+
     return duration
 
 
