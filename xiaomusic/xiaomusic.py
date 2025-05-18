@@ -1935,7 +1935,7 @@ class XiaoMusicDevice:
             # 有 tts command 优先使用 tts command 说话
             if self.hardware in TTS_COMMAND:
                 tts_cmd = TTS_COMMAND[self.hardware]
-                self.log.debug("Call MiIOService tts.")
+                self.log.info("Call MiIOService tts.")
                 value = value.replace(" ", ",")  # 不能有空格
                 await miio_command(
                     self.xiaomusic.miio_service,

@@ -29,10 +29,13 @@ NEED_USE_PLAY_MUSIC_API = [
     "X8F",
     "X4B",
     "LX05",
+    "OH2",
+    "OH2P",
 ]
 
 # 有 tts command 的设备型号
 TTS_COMMAND = {
+    "OH2": "5-3",
     "OH2P": "7-3",
     "LX06": "5-1",
     "S12": "5-1",
