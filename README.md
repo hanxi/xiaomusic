@@ -208,6 +208,7 @@ docker build -t xiaomusic .
 | X08C X08E X8F | 已经不需要设置了. ~需要设置【型号兼容模式】选项为 true~ |
 | M01/XMYX01JY | 小米小爱音箱HD 需要设置【特殊型号获取对话记录】选项为 true 才能语音播放|
 | OH2P | XIAOMI 智能音箱 Pro |
+| OH2 | XIAOMI 智能音箱 |
 
 型号与产品名称对照可以在这里查询 <https://home.miot-spec.com/s/xiaomi.wifispeaker>
 
