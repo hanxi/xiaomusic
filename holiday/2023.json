@@ -1,0 +1,180 @@
+{
+    "$schema": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/schema.json",
+    "$id": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2023.json",
+    "year": 2023,
+    "papers": [
+        "http://www.gov.cn/zhengce/zhengceku/2022-12/08/content_5730844.htm"
+    ],
+    "days": [
+        {
+            "name": "元旦",
+            "date": "2022-12-31",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2023-01-01",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2023-01-02",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2023-01-21",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2023-01-22",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2023-01-23",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2023-01-24",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2023-01-25",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2023-01-26",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2023-01-27",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2023-01-28",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2023-01-29",
+            "isOffDay": false
+        },
+        {
+            "name": "清明节",
+            "date": "2023-04-05",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2023-04-23",
+            "isOffDay": false
+        },
+        {
+            "name": "劳动节",
+            "date": "2023-04-29",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2023-04-30",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2023-05-01",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2023-05-02",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2023-05-03",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2023-05-06",
+            "isOffDay": false
+        },
+        {
+            "name": "端午节",
+            "date": "2023-06-22",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2023-06-23",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2023-06-24",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2023-06-25",
+            "isOffDay": false
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2023-09-29",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2023-09-30",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2023-10-01",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2023-10-02",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2023-10-03",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2023-10-04",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2023-10-05",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2023-10-06",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2023-10-07",
+            "isOffDay": false
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2023-10-08",
+            "isOffDay": false
+        }
+    ]
+}

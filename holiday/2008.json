@@ -1,0 +1,185 @@
+{
+    "$schema": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/schema.json",
+    "$id": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2008.json",
+    "year": 2008,
+    "papers": [
+        "http://www.gov.cn/zhengce/zhengceku/2008-03/28/content_1645.htm"
+    ],
+    "days": [
+        {
+            "name": "元旦",
+            "date": "2007-12-29",
+            "isOffDay": false
+        },
+        {
+            "name": "元旦",
+            "date": "2007-12-30",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2007-12-31",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2008-01-01",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2008-02-02",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2008-02-03",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2008-02-06",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2008-02-07",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2008-02-08",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2008-02-09",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2008-02-10",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2008-02-11",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2008-02-12",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2008-04-04",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2008-04-05",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2008-04-06",
+            "isOffDay": true
+        },
+        {
+            "name": "“五一”国际劳动节",
+            "date": "2008-05-01",
+            "isOffDay": true
+        },
+        {
+            "name": "“五一”国际劳动节",
+            "date": "2008-05-02",
+            "isOffDay": true
+        },
+        {
+            "name": "“五一”国际劳动节",
+            "date": "2008-05-03",
+            "isOffDay": true
+        },
+        {
+            "name": "“五一”国际劳动节",
+            "date": "2008-05-04",
+            "isOffDay": false
+        },
+        {
+            "name": "端午节",
+            "date": "2008-06-07",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2008-06-08",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2008-06-09",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2008-09-13",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2008-09-14",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2008-09-15",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2008-09-27",
+            "isOffDay": false
+        },
+        {
+            "name": "国庆节",
+            "date": "2008-09-28",
+            "isOffDay": false
+        },
+        {
+            "name": "国庆节",
+            "date": "2008-09-29",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2008-09-30",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2008-10-01",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2008-10-02",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2008-10-03",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2008-10-04",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2008-10-05",
+            "isOffDay": true
+        }
+    ]
+}

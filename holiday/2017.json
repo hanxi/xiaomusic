@@ -1,0 +1,155 @@
+{
+    "$schema": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/schema.json",
+    "$id": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2017.json",
+    "year": 2017,
+    "papers": [
+        "http://www.gov.cn/zhengce/zhengceku/2016-12/01/content_5141603.htm"
+    ],
+    "days": [
+        {
+            "name": "元旦",
+            "date": "2017-01-01",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2017-01-02",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2017-01-22",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2017-01-27",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2017-01-28",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2017-01-29",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2017-01-30",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2017-01-31",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2017-02-01",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2017-02-02",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2017-02-04",
+            "isOffDay": false
+        },
+        {
+            "name": "清明节",
+            "date": "2017-04-01",
+            "isOffDay": false
+        },
+        {
+            "name": "清明节",
+            "date": "2017-04-02",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2017-04-03",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2017-04-04",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2017-05-01",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2017-05-27",
+            "isOffDay": false
+        },
+        {
+            "name": "端午节",
+            "date": "2017-05-28",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2017-05-29",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2017-05-30",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2017-09-30",
+            "isOffDay": false
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2017-10-01",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2017-10-02",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2017-10-03",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2017-10-04",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2017-10-05",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2017-10-06",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2017-10-07",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节、国庆节",
+            "date": "2017-10-08",
+            "isOffDay": true
+        }
+    ]
+}

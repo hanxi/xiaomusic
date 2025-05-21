@@ -1,0 +1,166 @@
+{
+    "$schema": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/schema.json",
+    "$id": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2015.json",
+    "year": 2015,
+    "papers": [
+        "http://www.gov.cn/zhengce/zhengceku/2014-12/16/content_9302.htm",
+        "http://www.gov.cn/zhengce/zhengceku/2015-05/13/content_9742.htm"
+    ],
+    "days": [
+        {
+            "name": "元旦",
+            "date": "2015-01-01",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2015-01-02",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2015-01-03",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2015-01-04",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2015-02-15",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2015-02-18",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2015-02-19",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2015-02-20",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2015-02-21",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2015-02-22",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2015-02-23",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2015-02-24",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2015-02-28",
+            "isOffDay": false
+        },
+        {
+            "name": "清明节",
+            "date": "2015-04-05",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2015-04-06",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2015-05-01",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2015-06-20",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2015-06-22",
+            "isOffDay": true
+        },
+        {
+            "name": "抗日战争暨世界反法西斯战争胜利70周年纪念日",
+            "date": "2015-09-03",
+            "isOffDay": true
+        },
+        {
+            "name": "抗日战争暨世界反法西斯战争胜利70周年纪念日",
+            "date": "2015-09-04",
+            "isOffDay": true
+        },
+        {
+            "name": "抗日战争暨世界反法西斯战争胜利70周年纪念日",
+            "date": "2015-09-05",
+            "isOffDay": true
+        },
+        {
+            "name": "抗日战争暨世界反法西斯战争胜利70周年纪念日",
+            "date": "2015-09-06",
+            "isOffDay": false
+        },
+        {
+            "name": "中秋节",
+            "date": "2015-09-27",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2015-10-01",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2015-10-02",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2015-10-03",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2015-10-04",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2015-10-05",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2015-10-06",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2015-10-07",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2015-10-10",
+            "isOffDay": false
+        }
+    ]
+}

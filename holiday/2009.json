@@ -1,0 +1,175 @@
+{
+    "$schema": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/schema.json",
+    "$id": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2009.json",
+    "year": 2009,
+    "papers": [
+        "http://www.gov.cn/zhengce/zhengceku/2008-12/10/content_1572.htm"
+    ],
+    "days": [
+        {
+            "name": "元旦",
+            "date": "2009-01-01",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2009-01-02",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2009-01-03",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2009-01-04",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2009-01-24",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2009-01-25",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2009-01-26",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2009-01-27",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2009-01-28",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2009-01-29",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2009-01-30",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2009-01-31",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2009-02-01",
+            "isOffDay": false
+        },
+        {
+            "name": "清明节",
+            "date": "2009-04-04",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2009-04-05",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2009-04-06",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2009-05-01",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2009-05-02",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2009-05-03",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2009-05-28",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2009-05-29",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2009-05-30",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2009-05-31",
+            "isOffDay": false
+        },
+        {
+            "name": "国庆节、中秋节",
+            "date": "2009-09-27",
+            "isOffDay": false
+        },
+        {
+            "name": "国庆节、中秋节",
+            "date": "2009-10-01",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节、中秋节",
+            "date": "2009-10-02",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节、中秋节",
+            "date": "2009-10-03",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节、中秋节",
+            "date": "2009-10-04",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节、中秋节",
+            "date": "2009-10-05",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节、中秋节",
+            "date": "2009-10-06",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节、中秋节",
+            "date": "2009-10-07",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节、中秋节",
+            "date": "2009-10-08",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节、中秋节",
+            "date": "2009-10-10",
+            "isOffDay": false
+        }
+    ]
+}

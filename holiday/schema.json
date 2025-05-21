@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/schema.json",
+  "type": "object",
+  "properties": {
+    "year": {
+      "type": "number",
+      "description": "年份"
+    },
+    "papers": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "所用国务院文件网址列表"
+    },
+    "days": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "节日名称" },
+          "date": { "type": "string", "description": "ISO 8601 日期" },
+          "isOffDay": { "type": "boolean", "description": "是否为休息日" }
+        },
+        "required": ["name", "date", "isOffDay"]
+      }
+    }
+  },
+  "required": ["year", "papers", "days"]
+}

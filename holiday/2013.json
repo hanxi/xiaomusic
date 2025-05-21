@@ -1,0 +1,215 @@
+{
+    "$schema": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/schema.json",
+    "$id": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2013.json",
+    "year": 2013,
+    "papers": [
+        "http://www.gov.cn/zhengce/zhengceku/2012-12/10/content_1353.htm"
+    ],
+    "days": [
+        {
+            "name": "元旦",
+            "date": "2013-01-01",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2013-01-02",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2013-01-03",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2013-01-05",
+            "isOffDay": false
+        },
+        {
+            "name": "元旦",
+            "date": "2013-01-06",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2013-02-09",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2013-02-10",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2013-02-11",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2013-02-12",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2013-02-13",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2013-02-14",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2013-02-15",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2013-02-16",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2013-02-17",
+            "isOffDay": false
+        },
+        {
+            "name": "清明节",
+            "date": "2013-04-04",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2013-04-05",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2013-04-06",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2013-04-07",
+            "isOffDay": false
+        },
+        {
+            "name": "劳动节",
+            "date": "2013-04-27",
+            "isOffDay": false
+        },
+        {
+            "name": "劳动节",
+            "date": "2013-04-28",
+            "isOffDay": false
+        },
+        {
+            "name": "劳动节",
+            "date": "2013-04-29",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2013-04-30",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2013-05-01",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2013-06-08",
+            "isOffDay": false
+        },
+        {
+            "name": "端午节",
+            "date": "2013-06-09",
+            "isOffDay": false
+        },
+        {
+            "name": "端午节",
+            "date": "2013-06-10",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2013-06-11",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2013-06-12",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2013-09-19",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2013-09-20",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2013-09-21",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2013-09-22",
+            "isOffDay": false
+        },
+        {
+            "name": "国庆节",
+            "date": "2013-09-29",
+            "isOffDay": false
+        },
+        {
+            "name": "国庆节",
+            "date": "2013-10-01",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2013-10-02",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2013-10-03",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2013-10-04",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2013-10-05",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2013-10-06",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2013-10-07",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2013-10-12",
+            "isOffDay": false
+        }
+    ]
+}
