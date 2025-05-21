@@ -1,0 +1,190 @@
+{
+    "$schema": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/schema.json",
+    "$id": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2024.json",
+    "year": 2024,
+    "papers": [
+        "https://www.gov.cn/zhengce/zhengceku/202310/content_6911528.htm"
+    ],
+    "days": [
+        {
+            "name": "元旦",
+            "date": "2024-01-01",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2024-02-04",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2024-02-10",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2024-02-11",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2024-02-12",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2024-02-13",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2024-02-14",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2024-02-15",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2024-02-16",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2024-02-17",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2024-02-18",
+            "isOffDay": false
+        },
+        {
+            "name": "清明节",
+            "date": "2024-04-04",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2024-04-05",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2024-04-06",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2024-04-07",
+            "isOffDay": false
+        },
+        {
+            "name": "劳动节",
+            "date": "2024-04-28",
+            "isOffDay": false
+        },
+        {
+            "name": "劳动节",
+            "date": "2024-05-01",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2024-05-02",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2024-05-03",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2024-05-04",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2024-05-05",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2024-05-11",
+            "isOffDay": false
+        },
+        {
+            "name": "端午节",
+            "date": "2024-06-10",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2024-09-14",
+            "isOffDay": false
+        },
+        {
+            "name": "中秋节",
+            "date": "2024-09-15",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2024-09-16",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2024-09-17",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2024-09-29",
+            "isOffDay": false
+        },
+        {
+            "name": "国庆节",
+            "date": "2024-10-01",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2024-10-02",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2024-10-03",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2024-10-04",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2024-10-05",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2024-10-06",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2024-10-07",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2024-10-12",
+            "isOffDay": false
+        }
+    ]
+}

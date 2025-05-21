@@ -1,7 +1,59 @@
 import json
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.base import BaseTrigger
 from apscheduler.triggers.cron import CronTrigger
+
+from xiaomusic.holiday import is_off_day, is_working_day
+
+
+class CustomCronTrigger(BaseTrigger):
+    """自定义触发器，支持workday/offday特殊值"""
+
+    def __init__(self, cron_expression, holiday_checker=None):
+        self.cron_expression = cron_expression
+        self.holiday_checker = holiday_checker
+
+        # 分离表达式和注释
+        expr_parts = cron_expression.split("#", 1)
+        self.base_expression = expr_parts[0].strip()
+        self.annotation = expr_parts[1].strip().lower() if len(expr_parts) > 1 else ""
+
+        # 检查注释中是否包含特殊值
+        self.check_workday = "workday" in self.annotation
+        self.check_offday = "offday" in self.annotation
+
+        # 构建基础Cron触发器
+        try:
+            self.base_trigger = CronTrigger.from_crontab(self.base_expression)
+        except Exception as e:
+            raise ValueError(f"无效的Cron表达式: {self.base_expression}") from e
+
+    def get_next_fire_time(self, previous_fire_time, now):
+        # 获取基础Cron表达式的下一个触发时间
+        next_time = self.base_trigger.get_next_fire_time(previous_fire_time, now)
+
+        if not next_time:
+            return None
+
+        # 如果需要检查工作日/休息日
+        if self.check_workday or self.check_offday:
+            year = next_time.year
+            month = next_time.month
+            day = next_time.day
+
+            if self.check_workday:
+                valid = is_working_day(year, month, day)
+            else:  # check_offday
+                valid = is_off_day(year, month, day)
+
+            # 如果日期有效，返回时间；否则寻找下一个有效时间
+            if valid:
+                return next_time
+            else:
+                return self.get_next_fire_time(next_time, next_time)
+
+        return next_time
 
 
 class Crontab:
@@ -14,12 +66,19 @@ class Crontab:
 
     def add_job(self, expression, job):
         try:
-            trigger = CronTrigger.from_crontab(expression)
+            # 检查表达式中是否包含注释标记
+            if "#" in expression and (
+                "workday" in expression.lower() or "offday" in expression.lower()
+            ):
+                trigger = CustomCronTrigger(expression)
+            else:
+                trigger = CronTrigger.from_crontab(expression)
+
             self.scheduler.add_job(job, trigger)
         except ValueError as e:
             self.log.error(f"Invalid crontab expression {e}")
         except Exception as e:
-            self.log.exception(f"Execption {e}")
+            self.log.exception(f"Exception {e}")
 
     # 添加关机任务
     def add_job_stop(self, expression, xiaomusic, did, **kwargs):
@@ -98,7 +157,7 @@ class Crontab:
         if callable(func):
             func(expression, xiaomusic, did=did, arg1=arg1)
             self.log.info(
-                f"crontab add_job_cron ok. did:{did}, name:{name}, arg1:{arg1}"
+                f"crontab add_job_cron ok. did:{did}, name:{name}, arg1:{arg1} expression:{expression}"
             )
         else:
             self.log.error(

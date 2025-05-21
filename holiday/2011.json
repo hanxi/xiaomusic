@@ -1,0 +1,180 @@
+{
+    "$schema": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/schema.json",
+    "$id": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2011.json",
+    "year": 2011,
+    "papers": [
+        "http://www.gov.cn/zhengce/zhengceku/2010-12/10/content_1423.htm"
+    ],
+    "days": [
+        {
+            "name": "元旦",
+            "date": "2011-01-01",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2011-01-02",
+            "isOffDay": true
+        },
+        {
+            "name": "元旦",
+            "date": "2011-01-03",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2011-01-30",
+            "isOffDay": false
+        },
+        {
+            "name": "春节",
+            "date": "2011-02-02",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2011-02-03",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2011-02-04",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2011-02-05",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2011-02-06",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2011-02-07",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2011-02-08",
+            "isOffDay": true
+        },
+        {
+            "name": "春节",
+            "date": "2011-02-12",
+            "isOffDay": false
+        },
+        {
+            "name": "清明节",
+            "date": "2011-04-02",
+            "isOffDay": false
+        },
+        {
+            "name": "清明节",
+            "date": "2011-04-03",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2011-04-04",
+            "isOffDay": true
+        },
+        {
+            "name": "清明节",
+            "date": "2011-04-05",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2011-04-30",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2011-05-01",
+            "isOffDay": true
+        },
+        {
+            "name": "劳动节",
+            "date": "2011-05-02",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2011-06-04",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2011-06-05",
+            "isOffDay": true
+        },
+        {
+            "name": "端午节",
+            "date": "2011-06-06",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2011-09-10",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2011-09-11",
+            "isOffDay": true
+        },
+        {
+            "name": "中秋节",
+            "date": "2011-09-12",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2011-10-01",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2011-10-02",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2011-10-03",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2011-10-04",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2011-10-05",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2011-10-06",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2011-10-07",
+            "isOffDay": true
+        },
+        {
+            "name": "国庆节",
+            "date": "2011-10-08",
+            "isOffDay": false
+        },
+        {
+            "name": "国庆节",
+            "date": "2011-10-09",
+            "isOffDay": false
+        }
+    ]
+}
