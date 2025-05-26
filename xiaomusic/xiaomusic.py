@@ -173,7 +173,10 @@ class XiaoMusic:
         if os.path.exists(log_file):
             os.remove(log_file)
         handler = RotatingFileHandler(
-            self.config.log_file, maxBytes=10 * 1024 * 1024, backupCount=1,encoding='utf-8'
+            self.config.log_file,
+            maxBytes=10 * 1024 * 1024,
+            backupCount=1,
+            encoding="utf-8",
         )
         handler.stream.flush()
         handler.setFormatter(formatter)
