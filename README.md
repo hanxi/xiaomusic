@@ -94,6 +94,10 @@ services:
 > - 🔥【广告: 搭建您的专属大模型主页
 告别繁琐配置难题，一键即可畅享稳定流畅的AI体验！】<https://university.aliyun.com/mobile?userCode=szqvatm6>
 
+> [!TIP]
+> - 免费主机 <https://dartnode.com/>
+> -  <a href="https://dartnode.com/"><img src="https://dartnode.com/assets/dash/images/brand/favicon2.png" width="30" height="30"></a>
+
 ### 🤐 支持语音口令
 
 - 【播放歌曲】，播放本地的歌曲
