@@ -552,7 +552,8 @@ async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verificat
         bili_fav_list = await check_bili_fav_list(data.url)
         download_proc_list = []
         if bili_fav_list:
-            for bvurl, title in bili_fav_list.items():
+            for bvid, title in bili_fav_list.items():
+                bvurl  = f"https://www.bilibili.com/video/{bvid}"
                 download_proc_list[title] = await download_one_music(config, bvurl, os.path.join(data.dirname, title))
             for  title, download_proc_sigle in download_proc_list.items():
                 exit_code = await download_proc_sigle.wait()
