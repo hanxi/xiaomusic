@@ -47,6 +47,7 @@ from xiaomusic.utils import (
     deepcopy_data_no_sensitive_info,
     download_one_music,
     download_playlist,
+    check_bili_fav_list,
     downloadfile,
     get_latest_version,
     is_mp3,
@@ -548,7 +549,23 @@ class DownloadPlayList(BaseModel):
 @app.post("/downloadplaylist")
 async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verification)):
     try:
-        download_proc = await download_playlist(config, data.url, data.dirname)
+        bili_fav_list = await check_bili_fav_list(data.url)
+        download_proc_list = []
+        if bili_fav_list:
+            for bvid, title in bili_fav_list.items():
+                bvurl  = f"https://www.bilibili.com/video/{bvid}"
+                download_proc_list[title] = await download_one_music(config, bvurl, os.path.join(data.dirname, title))
+            for  title, download_proc_sigle in download_proc_list.items():
+                exit_code = await download_proc_sigle.wait()
+                log.info(f"Download completed {title} with exit code {exit_code}")
+            dir_path = os.path.join(config.download_path, data.dirname)
+            log.debug(f"Download dir_path: {dir_path}")
+            # 可能只是部分失败，都需要整理下载目录
+            remove_common_prefix(dir_path)
+            chmoddir(dir_path)
+            return {"ret": "OK"}
+        else:
+            download_proc = await download_playlist(config, data.url, data.dirname)
 
         async def check_download_proc():
             # 等待子进程完成
