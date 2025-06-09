@@ -1,12 +1,11 @@
-FROM python:3.10-slim
-ENV DEBIAN_FRONTEND=noninteractive
+FROM python:3.10.18-alpine3.22
 
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache  bash\
     wget \
-    xz-utils \
-    libtiff6 \
-    libopenjp2-7 \
-    libxcb1 \
+    xz \
+    tiff \
+    openjpeg \
+    libxcb \
     supervisor \
     vim \
     && rm -rf /var/lib/apt/lists/*
