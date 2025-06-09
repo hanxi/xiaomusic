@@ -10,6 +10,9 @@ on:
       - '.github/workflows/build-base-image.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-image:
     runs-on: ubuntu-latest
