@@ -8,6 +8,7 @@ RUN apk add --no-cache  bash\
     libxcb \
     supervisor \
     vim \
+    libc6-compat \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
