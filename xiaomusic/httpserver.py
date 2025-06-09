@@ -42,12 +42,12 @@ from starlette.responses import FileResponse, Response
 
 from xiaomusic import __version__
 from xiaomusic.utils import (
+    check_bili_fav_list,
     chmoddir,
     convert_file_to_mp3,
     deepcopy_data_no_sensitive_info,
     download_one_music,
     download_playlist,
-    check_bili_fav_list,
     downloadfile,
     get_latest_version,
     is_mp3,
@@ -553,9 +553,11 @@ async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verificat
         download_proc_list = []
         if bili_fav_list:
             for bvid, title in bili_fav_list.items():
-                bvurl  = f"https://www.bilibili.com/video/{bvid}"
-                download_proc_list[title] = await download_one_music(config, bvurl, os.path.join(data.dirname, title))
-            for  title, download_proc_sigle in download_proc_list.items():
+                bvurl = f"https://www.bilibili.com/video/{bvid}"
+                download_proc_list[title] = await download_one_music(
+                    config, bvurl, os.path.join(data.dirname, title)
+                )
+            for title, download_proc_sigle in download_proc_list.items():
                 exit_code = await download_proc_sigle.wait()
                 log.info(f"Download completed {title} with exit code {exit_code}")
             dir_path = os.path.join(config.download_path, data.dirname)
