@@ -96,7 +96,7 @@ services:
 
 > [!TIP]
 > - 免费主机
-> - [![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com "Powered by DartNode - Free VPS for Open Source")
+> - <a href="https://dartnode.com"><img src="https://dartnode.com/branding/DN-Open-Source-sm.png" alt="Powered by DartNode - Free VPS for Open Source" width="320"></a>
 
 
 ### 🤐 支持语音口令
