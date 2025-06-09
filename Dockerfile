@@ -1,4 +1,4 @@
-FROM morkerjay/xiaomusic:builder AS builder
+FROM hanxi/xiaomusic:builder AS builder
 RUN pip install -U pdm
 ENV PDM_CHECK_UPDATE=false
 WORKDIR /app
@@ -9,7 +9,7 @@ COPY holiday/ ./holiday/
 COPY xiaomusic.py .
 RUN pdm install --prod --no-editable
 
-FROM morkerjay/xiaomusic:runtime
+FROM hanxi/xiaomusic:runtime
 WORKDIR /app
 COPY --from=builder /app/.venv ./.venv
 COPY --from=builder /app/xiaomusic/ ./xiaomusic/
