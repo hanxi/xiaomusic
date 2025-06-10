@@ -1,6 +1,6 @@
 FROM python:3.10.18-alpine3.22 AS builder
 
-RUN apk add --no-cache --virtual .build-deps build-base python3-dev libffi-dev openssl-dev zlib-dev jpeg-dev libc6-compat
+RUN apk add --no-cache --virtual .build-deps build-base python3-dev libffi-dev openssl-dev zlib-dev jpeg-dev libc6-compat gcc
 RUN pip install -U pdm
 ENV PDM_CHECK_UPDATE=false
 WORKDIR /app
