@@ -1,4 +1,4 @@
-FROM python:3.10.18-alpine3.22
+FROM python:3.12-alpine3.20
 RUN pip install -U pdm
 ENV PDM_CHECK_UPDATE=false
 WORKDIR /app
