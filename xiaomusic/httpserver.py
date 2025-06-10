@@ -54,6 +54,7 @@ from xiaomusic.utils import (
     remove_common_prefix,
     remove_id3_tags,
     restart_xiaomusic,
+    safe_join_path,
     try_add_access_control_param,
     update_version,
 )
@@ -560,10 +561,10 @@ async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verificat
             for title, download_proc_sigle in download_proc_list.items():
                 exit_code = await download_proc_sigle.wait()
                 log.info(f"Download completed {title} with exit code {exit_code}")
-            dir_path = os.path.join(config.download_path, data.dirname)
+            dir_path = safe_join_path(config.download_path, data.dirname)
             log.debug(f"Download dir_path: {dir_path}")
             # 可能只是部分失败，都需要整理下载目录
-            remove_common_prefix(config.download_path, dir_path)
+            remove_common_prefix(dir_path)
             chmoddir(dir_path)
             return {"ret": "OK"}
         else:
@@ -574,10 +575,10 @@ async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verificat
             exit_code = await download_proc.wait()
             log.info(f"Download completed with exit code {exit_code}")
 
-            dir_path = os.path.join(config.download_path, data.dirname)
+            dir_path = safe_join_path(config.download_path, data.dirname)
             log.debug(f"Download dir_path: {dir_path}")
             # 可能只是部分失败，都需要整理下载目录
-            remove_common_prefix(config.download_path, dir_path)
+            remove_common_prefix(dir_path)
             chmoddir(dir_path)
 
         asyncio.create_task(check_download_proc())

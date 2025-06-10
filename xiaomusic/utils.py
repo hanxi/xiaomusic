@@ -1107,14 +1107,19 @@ def _longest_common_prefix(file_names):
     return prefix
 
 
-# 移除目录下文件名前缀相同的
-def remove_common_prefix(safe_root, directory):
+def safe_join_path(safe_root, directory):
+    directory = os.path.join(safe_root, directory)
     # Normalize the directory path
     normalized_directory = os.path.normpath(directory)
     # Ensure the directory is within the safe root
     if not normalized_directory.startswith(os.path.normpath(safe_root)):
         raise ValueError(f"Access to directory '{directory}' is not allowed.")
-    files = os.listdir(normalized_directory)
+    return normalized_directory
+
+
+# 移除目录下文件名前缀相同的
+def remove_common_prefix(directory):
+    files = os.listdir(directory)
 
     # 获取所有文件的前缀
     common_prefix = _longest_common_prefix(files)
