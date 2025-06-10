@@ -1,3 +1,11 @@
+# docker 镜像 [https://hub.docker.com/r/morkerjay/xiaomusic](https://hub.docker.com/r/morkerjay/xiaomusic) 支持 arm64/amd64
+
+```
+mkdir /opt/xiaomusic
+docker run -p 8090:8090 -v /opt/xiaomusic/xiaomusic_music:/app/music -v /opt/xiaomusic/xiaomusic_conf:/app/conf  morkerjay/xiaomusic:latest
+```
+
+
 # XiaoMusic: 无限听歌，解放小爱音箱
 
 [![GitHub License](https://img.shields.io/github/license/hanxi/xiaomusic)](https://github.com/hanxi/xiaomusic)
