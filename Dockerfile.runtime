@@ -1,4 +1,4 @@
-FROM python:3.10.18-alpine3.22
+FROM python:3.12-alpine3.22
 
 RUN apk add --no-cache  bash\
     wget \
