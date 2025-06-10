@@ -1108,9 +1108,7 @@ def _longest_common_prefix(file_names):
 
 
 # 移除目录下文件名前缀相同的
-def remove_common_prefix(directory):
-    # Define the safe root directory
-    safe_root = config.download_path
+def remove_common_prefix(safe_root, directory):
     # Normalize the directory path
     normalized_directory = os.path.normpath(directory)
     # Ensure the directory is within the safe root

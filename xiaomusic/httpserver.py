@@ -563,7 +563,7 @@ async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verificat
             dir_path = os.path.join(config.download_path, data.dirname)
             log.debug(f"Download dir_path: {dir_path}")
             # 可能只是部分失败，都需要整理下载目录
-            remove_common_prefix(dir_path)
+            remove_common_prefix(config.download_path, dir_path)
             chmoddir(dir_path)
             return {"ret": "OK"}
         else:
@@ -577,7 +577,7 @@ async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verificat
             dir_path = os.path.join(config.download_path, data.dirname)
             log.debug(f"Download dir_path: {dir_path}")
             # 可能只是部分失败，都需要整理下载目录
-            remove_common_prefix(dir_path)
+            remove_common_prefix(config.download_path, dir_path)
             chmoddir(dir_path)
 
         asyncio.create_task(check_download_proc())
