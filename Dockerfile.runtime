@@ -1,4 +1,4 @@
-FROM python:3.10.18-alpine3.22
+FROM python:3.12-alpine3.20
 
 RUN apk add --no-cache  bash\
     wget \
@@ -7,9 +7,8 @@ RUN apk add --no-cache  bash\
     openjpeg \
     libxcb \
     supervisor \
-    vim \
-    && rm -rf /var/lib/apt/lists/*
-
+    vim
+RUN mkdir -p  /app/ffmpeg/bin
+COPY --from=mwader/static-ffmpeg:latest /ffmpeg /app/ffmpeg/bin/
+COPY --from=mwader/static-ffmpeg:latest /ffprobe /app/ffmpeg/bin/
 WORKDIR /app
-COPY install_dependencies.sh .
-RUN bash install_dependencies.sh
