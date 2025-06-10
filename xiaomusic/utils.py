@@ -948,7 +948,7 @@ async def check_bili_fav_list(url):
     path = parsed_url.path
     # 提取查询参数
     query_params = parse_qs(parsed_url.query)
-    if "space.bilibili.com" in url:
+    if parsed_url.hostname == "space.bilibili.com":
         if "/favlist" in path:
             lid = query_params.get("fid", [None])[0]
             type = query_params.get("ctype", [None])[0]
