@@ -8,6 +8,7 @@ import aiohttp
 from ga4mp import GtagMP
 
 from xiaomusic import __version__
+from xiaomusic.const import ANALYTICS_ENABLED
 
 
 class Analytics:
@@ -16,9 +17,14 @@ class Analytics:
         self.current_date = None
         self.log = log
         self.config = config
+        self.enabled = ANALYTICS_ENABLED
         self.init()
 
     def init(self):
+        if not self.enabled:
+            self.log.info("analytics disabled")
+            return
+
         if self.gtag is not None:
             return
 
@@ -33,11 +39,15 @@ class Analytics:
         self.log.info("analytics init ok")
 
     async def send_startup_event(self):
+        if not self.enabled:
+            return
         event = self.gtag.create_new_event(name="startup")
         event.set_event_param(name="version", value=__version__)
         await self._send(event)
 
     async def send_daily_event(self):
+        if not self.enabled:
+            return
         current_date = datetime.now().strftime("%Y-%m-%d")
         if self.current_date == current_date:
             return
@@ -49,6 +59,8 @@ class Analytics:
         self.current_date = current_date
 
     async def send_play_event(self, name, sec, hardware):
+        if not self.enabled:
+            return
         event = self.gtag.create_new_event(name="play")
         event.set_event_param(name="version", value=__version__)
         event.set_event_param(name="music", value=name)
@@ -57,6 +69,8 @@ class Analytics:
         await self._send(event)
 
     async def _send(self, event):
+        if not self.enabled:
+            return
         asyncio.create_task(self.post_to_umami(event))
         await self.run_with_cancel(self._google_send, [event])
 

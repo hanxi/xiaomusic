@@ -54,3 +54,6 @@ TTS_COMMAND = {
     "L09A": "3-1",
     "LX04": "5-1",
 }
+
+# 统计分析上报开关
+ANALYTICS_ENABLED = False
