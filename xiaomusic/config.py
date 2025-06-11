@@ -191,6 +191,9 @@ class Config:
     enable_save_tag: bool = (
         os.getenv("XIAOMUSIC_ENABLE_SAVE_TAG", "false").lower() == "true"
     )
+    enable_analytics: bool = (
+        os.getenv("XIAOMUSIC_ENABLE_ANALYTICS", "true").lower() == "true"
+    )
     get_ask_by_mina: bool = (
         os.getenv("XIAOMUSIC_GET_ASK_BY_MINA", "false").lower() == "true"
     )
