@@ -9,8 +9,10 @@ RUN apk add --no-cache  bash\
     supervisor \
     vim \
     libc6-compat \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY install_dependencies.sh .
-RUN bash install_dependencies.sh
+RUN mkdir -p /app/ffmpeg/bin \
+    && ln -s /usr/bin/ffmpeg /app/ffmpeg/bin/ffmpeg \
+    && ln -s /usr/bin/ffprobe /app/ffmpeg/bin/ffprobe
