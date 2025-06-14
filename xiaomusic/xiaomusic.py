@@ -171,7 +171,10 @@ class XiaoMusic:
         if log_path and not os.path.exists(log_path):
             os.makedirs(log_path)
         if os.path.exists(log_file):
-            os.remove(log_file)
+            try:
+                os.remove(log_file)
+            except Exception as e:
+                self.log.warning(f"无法删除旧日志文件: {log_file} {e}")
         handler = RotatingFileHandler(
             self.config.log_file,
             maxBytes=10 * 1024 * 1024,
