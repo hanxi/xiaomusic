@@ -15,7 +15,7 @@ from logging.handlers import RotatingFileHandler
 
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService, miio_command
-from watchdog.events import FileSystemEventHandler
+from watchdog.events import FileSystemEventHandler, FileCreatedEvent, FileDeletedEvent, FileMovedEvent
 from watchdog.observers import Observer
 
 from xiaomusic import __version__
@@ -2207,6 +2207,10 @@ class XiaoMusicPathWatch(FileSystemEventHandler):
         self._debounce_handle = None
 
     def on_any_event(self, event):
+        # 只处理文件的创建、删除和移动事件
+        if not isinstance(event, (FileCreatedEvent, FileDeletedEvent, FileMovedEvent)):
+            return
+
         if event.is_directory:
             return  # 忽略目录事件
 
