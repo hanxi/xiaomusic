@@ -97,6 +97,10 @@ services:
 > - 🔥【广告: 搭建您的专属大模型主页
 告别繁琐配置难题，一键即可畅享稳定流畅的AI体验！】<https://university.aliyun.com/mobile?userCode=szqvatm6>
 
+> [!TIP]
+> - 免费主机
+> - <a href="https://dartnode.com"><img src="https://dartnode.com/branding/DN-Open-Source-sm.png" alt="Powered by DartNode - Free VPS for Open Source" width="320"></a>
+
 
 ### 🤐 支持语音口令
 
