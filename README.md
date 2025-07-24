@@ -99,7 +99,7 @@ services:
 
 > [!TIP]
 > - 免费主机
-> - <a href="https://dartnode.com"><img src="https://dartnode.com/branding/DN-Open-Source-sm.png" alt="Powered by DartNode - Free VPS for Open Source" width="320"></a>
+> - <a href="https://dartnode.com?aff=SnappyPigeon570"><img src="https://dartnode.com/branding/DN-Open-Source-sm.png" alt="Powered by DartNode - Free VPS for Open Source" width="320"></a>
 
 
 ### 🤐 支持语音口令
