@@ -1176,11 +1176,11 @@ class XiaoMusic:
     # 定时关机
     async def stop_after_minute(self, did="", arg1=0, **kwargs):
         try:
-            # 尝试转换中文数字
-            minute = chinese_to_number(str(arg1))
-        except (KeyError, ValueError):
-            # 如果中文数字转换失败，尝试阿拉伯数字
+            # 尝试阿拉伯数字转换中文数字
             minute = int(arg1)
+        except (KeyError, ValueError):
+            # 如果阿拉伯数字转换失败，尝试中文数字
+            minute = chinese_to_number(str(arg1))
         return await self.devices[did].stop_after_minute(minute)
 
     # 添加歌曲到收藏列表
