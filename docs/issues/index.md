@@ -86,6 +86,10 @@ services:
 
 > [!TIP]
 >
+> 喜欢听书的可以配合这个工具使用 <https://github.com/hanxi/epub2mp3>
+
+> [!TIP]
+>
 > - 🔥【广告:可用于安装 frp 实现内网穿透】
 > - 🔥 海外 RackNerd VPS 机器推荐，可支付宝付款。
 > - <a href="https://my.racknerd.com/aff.php?aff=11177"><img src="https://racknerd.com/banners/320x50.gif" alt="RackNerd Mobile Leaderboard Banner" width="320" height="50"></a>
