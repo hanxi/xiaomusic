@@ -382,6 +382,19 @@ function playUrl() {
   });
 }
 
+function playProxyUrl() {
+  const origin_url = $("#music-url").val();
+  const protocol = window.location.protocol;
+  const host= window.location.host;
+  const baseUrl = `${protocol}//${host}`;
+  const urlb64 = btoa(origin_url);
+  const url = `${baseUrl}/proxy?urlb64=${urlb64}`;
+  const encoded_url = encodeURIComponent(url);
+  $.get(`/playurl?url=${encoded_url}&did=${did}`, function (data, status) {
+    console.log(data);
+  });
+}
+
 function playTts() {
   var value = $("#text-tts").val();
   $.get(`/playtts?text=${value}&did=${did}`, function (data, status) {

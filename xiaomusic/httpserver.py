@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import hashlib
 import json
 import os
@@ -9,6 +10,7 @@ import urllib.parse
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from typing import TYPE_CHECKING, Annotated
+from urllib.parse import urlparse
 
 import socketio
 
@@ -19,6 +21,7 @@ if TYPE_CHECKING:
     from xiaomusic.xiaomusic import XiaoMusic
 
 import aiofiles
+import aiohttp
 from fastapi import (
     Depends,
     FastAPI,
@@ -32,7 +35,7 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -859,3 +862,84 @@ async def get_redoc_documentation(Verifcation=Depends(verification)):
 @app.get("/openapi.json", include_in_schema=False)
 async def openapi(Verifcation=Depends(verification)):
     return get_openapi(title=app.title, version=app.version, routes=app.routes)
+
+
+@app.get("/proxy", summary="基于正常下载逻辑的代理接口")
+async def proxy(urlb64: str):
+    try:
+        # 将Base64编码的URL解码为字符串
+        url_bytes = base64.b64decode(urlb64)
+        url = url_bytes.decode("utf-8")
+        print(f"解码后的代理请求: {url}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Base64解码失败: {str(e)}") from e
+
+    log.info(f"代理请求: {url}")
+
+    parsed_url = urlparse(url)
+    if not parsed_url.scheme or not parsed_url.netloc:
+        # Fixed: Use a new exception instance since 'e' from previous block is out of scope
+        invalid_url_exc = ValueError("URL缺少协议或域名")
+        raise HTTPException(
+            status_code=400, detail="无效的URL格式"
+        ) from invalid_url_exc
+
+    # 创建会话并确保关闭
+    session = aiohttp.ClientSession(
+        timeout=aiohttp.ClientTimeout(total=600),
+        connector=aiohttp.TCPConnector(ssl=False),
+    )
+
+    # 复用经过验证的请求头配置
+    def get_wget_headers(parsed_url):
+        return {
+            "User-Agent": "Wget/1.21.3",
+            "Accept": "*/*",
+            "Accept-Encoding": "identity",
+            "Host": parsed_url.netloc,
+            "Connection": "Keep-Alive",
+        }
+
+    async def close_session():
+        if not session.closed:
+            await session.close()
+
+    try:
+        # 复用download_file中的请求逻辑
+        headers = get_wget_headers(parsed_url)
+        resp = await session.get(url, headers=headers, allow_redirects=True)
+
+        if resp.status not in (200, 206):
+            await close_session()
+            status_exc = ValueError(f"服务器返回状态码: {resp.status}")
+            raise HTTPException(
+                status_code=resp.status, detail=f"下载失败，状态码: {resp.status}"
+            ) from status_exc
+
+        # 流式生成器，与download_file的分块逻辑一致
+        async def stream_generator():
+            try:
+                async for data in resp.content.iter_chunked(4096):
+                    yield data
+            finally:
+                await close_session()
+
+        # 提取文件名
+        filename = parsed_url.path.split("/")[-1].split("?")[0] or "output.mp3"
+
+        return StreamingResponse(
+            stream_generator(),
+            media_type=resp.headers.get("Content-Type", "audio/mpeg"),
+            headers={"Content-Disposition": f'inline; filename="{filename}"'},
+            background=BackgroundTask(close_session),
+        )
+
+    except aiohttp.ClientConnectionError as e:
+        await close_session()
+        raise HTTPException(status_code=502, detail=f"连接错误: {str(e)}") from e
+    except asyncio.TimeoutError as e:
+        await close_session()
+        raise HTTPException(status_code=504, detail="下载超时") from e
+    except Exception as e:
+        await close_session()
+        raise HTTPException(status_code=500, detail=f"发生错误: {str(e)}") from e
