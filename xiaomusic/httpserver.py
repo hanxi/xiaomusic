@@ -887,7 +887,7 @@ async def proxy(urlb64: str):
     # 创建会话并确保关闭
     session = aiohttp.ClientSession(
         timeout=aiohttp.ClientTimeout(total=600),
-        connector=aiohttp.TCPConnector(ssl=False),
+        connector=aiohttp.TCPConnector(ssl=True),
     )
 
     # 复用经过验证的请求头配置
@@ -896,7 +896,6 @@ async def proxy(urlb64: str):
             "User-Agent": "Wget/1.21.3",
             "Accept": "*/*",
             "Accept-Encoding": "identity",
-            "Host": parsed_url.netloc,
             "Connection": "Keep-Alive",
         }
 

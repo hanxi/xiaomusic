@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import base64
 import copy
 import json
 import logging
@@ -533,6 +534,12 @@ class XiaoMusic:
         if self.is_web_music(name):
             url = self.all_music[name]
             self.log.info(f"get_music_url web music. name:{name}, url:{url}")
+            if self.config.web_music_proxy:
+                urlb64 = base64.b64encode(url.encode("utf-8")).decode("utf-8")
+                url = f"{self.hostname}:{self.public_port}/proxy?urlb64={urlb64}"
+                self.log.info(
+                    f"get_music_url web music by proxy. name:{name}, url:{url}"
+                )
             return url
 
         filename = self.get_filename(name)
