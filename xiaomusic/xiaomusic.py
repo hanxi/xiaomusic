@@ -477,7 +477,12 @@ class XiaoMusic:
 
         if self.is_web_music(name):
             origin_url = url
-            duration, url = await get_web_music_duration(url, self.config)
+            if self.config.web_music_proxy:
+                origin_url = self.all_music[name]
+                # 代理播放模式使用原始地址获取歌曲时长
+                duration, _ = await get_web_music_duration(origin_url, self.config)
+            else:
+                duration, url = await get_web_music_duration(origin_url, self.config)
             sec = math.ceil(duration)
             self.log.info(f"网络歌曲 {name} : {origin_url} {url} 的时长 {sec} 秒")
         else:
