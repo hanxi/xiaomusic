@@ -18,7 +18,9 @@ import shutil
 import string
 import subprocess
 import tempfile
+import time
 import urllib.parse
+from collections import OrderedDict
 from collections.abc import AsyncIterator
 from dataclasses import asdict, dataclass
 from http.cookies import SimpleCookie
@@ -1308,3 +1310,140 @@ def chmoddir(dir_path: str):
                 log.info(f"Changed permissions of file: {item_path}")
             except Exception as e:
                 log.info(f"chmoddir failed: {e}")
+
+
+async def fetch_json_get(url, headers):
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url, headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    log.info(f"fetch_json_get: {url} success {data}")
+
+                    # 可选：确保是 dict
+                    if isinstance(data, dict):
+                        return data
+                    else:
+                        log.warning(f"Expected dict, but got {type(data)}: {data}")
+                        return {}
+                else:
+                    log.error(f"HTTP Error: {response.status} {url}")
+                    return {}
+        except aiohttp.ClientError as e:
+            log.error(f"ClientError fetching {url}: {e}")
+            return {}
+        except asyncio.TimeoutError:
+            log.error(f"Timeout fetching {url}")
+            return {}
+        except Exception as e:
+            log.error(f"Unexpected error fetching {url}: {e}")
+            return {}
+
+
+class LRUCache(OrderedDict):
+    def __init__(self, max_size=1000):
+        super().__init__()
+        self.max_size = max_size
+
+    def __setitem__(self, key, value):
+        if key in self:
+            # 移动到末尾(最近使用)
+            self.move_to_end(key)
+        super().__setitem__(key, value)
+        # 如果超出大小限制,删除最早使用的项
+        if len(self) > self.max_size:
+            self.popitem(last=False)
+
+    def __getitem__(self, key):
+        # 访问时移动到末尾(最近使用)
+        if key in self:
+            self.move_to_end(key)
+        return super().__getitem__(key)
+
+
+class MusicUrlCache:
+    def __init__(self, default_expire_days=1, max_size=1000):
+        self.cache = LRUCache(max_size)
+        self.default_expire_days = default_expire_days
+        self.log = logging.getLogger(__name__)
+
+    def get(self, url: str, headers: dict = None) -> str:
+        """获取URL(优先从缓存获取,没有则请求API)
+
+        Args:
+            url: 原始URL
+            headers: API请求需要的headers
+        Returns:
+            str: 真实播放URL
+        """
+        # 先查询缓存
+        cached_url = self._get_from_cache(url)
+        if cached_url:
+            self.log.info(f"Using cached url: {cached_url}")
+            return cached_url
+
+        # 缓存未命中,请求API
+        return self._fetch_from_api(url, headers)
+
+    def _get_from_cache(self, url: str) -> str:
+        """从缓存中获取URL"""
+        try:
+            cached_url, expire_time = self.cache[url]
+            if time.time() > expire_time:
+                # 缓存过期,删除
+                del self.cache[url]
+                return ""
+            return cached_url
+        except KeyError:
+            return ""
+
+    def _fetch_from_api(self, url: str, headers: dict = None) -> str:
+        """从API获取真实URL"""
+        data = fetch_json_get(url, headers or {})
+
+        if not isinstance(data, dict):
+            self.log.error(f"Invalid API response format: {data}")
+            return ""
+
+        real_url = data.get("url")
+        if not real_url:
+            self.log.error(f"No url in API response: {data}")
+            return ""
+
+        # 获取过期时间
+        expire_time = self._parse_expire_time(data)
+
+        # 缓存结果
+        self._set_cache(url, real_url, expire_time)
+        self.log.info(
+            f"Cached url, expire_time: {expire_time}, cache size: {len(self.cache)}"
+        )
+        return real_url
+
+    def _parse_expire_time(self, data: dict) -> float | None:
+        """解析API返回的过期时间"""
+        try:
+            extra = data.get("extra", {})
+            expire_info = extra.get("expire", {})
+            if expire_info and expire_info.get("canExpire"):
+                expire_time = expire_info.get("time")
+                if expire_time:
+                    return float(expire_time)
+        except Exception as e:
+            self.log.warning(f"Failed to parse expire time: {e}")
+        return None
+
+    def _set_cache(self, url: str, real_url: str, expire_time: float = None):
+        """设置缓存"""
+        if expire_time is None:
+            expire_time = time.time() + (self.default_expire_days * 24 * 3600)
+        self.cache[url] = (real_url, expire_time)
+
+    def clear(self):
+        """清空缓存"""
+        self.cache.clear()
+
+    @property
+    def size(self) -> int:
+        """当前缓存大小"""
+        return len(self.cache)

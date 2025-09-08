@@ -48,6 +48,7 @@ from xiaomusic.crontab import Crontab
 from xiaomusic.plugin import PluginManager
 from xiaomusic.utils import (
     Metadata,
+    MusicUrlCache,
     chinese_to_number,
     chmodfile,
     custom_sort_key,
@@ -82,9 +83,11 @@ class XiaoMusic:
         self.miio_service = None
         self.polling_event = asyncio.Event()
         self.new_record_event = asyncio.Event()
+        self.url_cache = MusicUrlCache()
 
         self.all_music = {}
         self._all_radio = {}  # 电台列表
+        self._web_music_api = {}  # 需要通过api获取播放链接的列表
         self.music_list = {}  # 播放列表 key 为目录名, value 为 play_list
         self.default_music_list_names = []  # 非自定义个歌单
         self.devices = {}  # key 为 did
@@ -466,35 +469,9 @@ class XiaoMusic:
         url = self.all_music[name]
         return url.startswith(("http://", "https://"))
 
-    # 获取歌曲播放时长，播放地址
-    async def get_music_sec_url(self, name):
-        sec = 0
-        url = self.get_music_url(name)
-        self.log.info(f"get_music_sec_url. name:{name} url:{url}")
-        if self.is_web_radio_music(name):
-            self.log.info("电台不会有播放时长")
-            return 0, url
-
-        if self.is_web_music(name):
-            origin_url = url
-            if self.config.web_music_proxy:
-                origin_url = self.all_music[name]
-                # 代理播放模式使用原始地址获取歌曲时长
-                duration, _ = await get_web_music_duration(origin_url, self.config)
-            else:
-                duration, url = await get_web_music_duration(origin_url, self.config)
-            sec = math.ceil(duration)
-            self.log.info(f"网络歌曲 {name} : {origin_url} {url} 的时长 {sec} 秒")
-        else:
-            filename = self.get_filename(name)
-            self.log.info(f"get_music_sec_url. name:{name} filename:{filename}")
-            duration = await get_local_music_duration(filename, self.config)
-            sec = math.ceil(duration)
-            self.log.info(f"本地歌曲 {name} : {filename} {url} 的时长 {sec} 秒")
-
-        if sec <= 0:
-            self.log.warning(f"获取歌曲时长失败 {name} {url}")
-        return sec, url
+    # 是否是需要通过api获取播放链接的网络歌曲
+    def is_need_use_play_music_api(self, name):
+        return name in self._web_music_api
 
     def get_music_tags(self, name):
         tags = copy.copy(self.all_music_tags.get(name, asdict(Metadata())))
@@ -535,21 +512,106 @@ class XiaoMusic:
         self.try_save_tag_cache()
         return "OK"
 
-    def get_music_url(self, name):
-        if self.is_web_music(name):
-            url = self.all_music[name]
-            self.log.info(f"get_music_url web music. name:{name}, url:{url}")
-            if self.config.web_music_proxy:
-                urlb64 = base64.b64encode(url.encode("utf-8")).decode("utf-8")
-                url = f"{self.hostname}:{self.public_port}/proxy?urlb64={urlb64}"
-                self.log.info(
-                    f"get_music_url web music by proxy. name:{name}, url:{url}"
-                )
-            return url
+    async def get_music_sec_url(self, name):
+        """获取歌曲播放时长和播放地址
 
+        Args:
+            name: 歌曲名称
+        Returns:
+            tuple: (播放时长(秒), 播放地址)
+        """
+        url, origin_url = self.get_music_url(name)
+        self.log.info(f"get_music_sec_url. name:{name} url:{url}")
+
+        # 电台直接返回
+        if self.is_web_radio_music(name):
+            self.log.info("电台不会有播放时长")
+            return 0, url
+
+        # 获取播放时长
+        if self.is_web_music(name):
+            sec = await self._get_web_music_duration(name, url, origin_url)
+        else:
+            sec = await self._get_local_music_duration(name, url)
+
+        if sec <= 0:
+            self.log.warning(f"获取歌曲时长失败 {name} {url}")
+        return sec, url
+
+    async def _get_web_music_duration(self, name, url, origin_url):
+        """获取网络音乐时长"""
+        if not origin_url:
+            origin_url = url if url else self.all_music[name]
+
+        if self.config.web_music_proxy:
+            # 代理模式使用原始地址获取时长
+            duration, _ = await get_web_music_duration(origin_url, self.config)
+        else:
+            duration, url = await get_web_music_duration(origin_url, self.config)
+
+        sec = math.ceil(duration)
+        self.log.info(f"网络歌曲 {name} : {origin_url} {url} 的时长 {sec} 秒")
+        return sec
+
+    async def _get_local_music_duration(self, name, url):
+        """获取本地音乐时长"""
+        filename = self.get_filename(name)
+        self.log.info(f"get_music_sec_url. name:{name} filename:{filename}")
+        duration = await get_local_music_duration(filename, self.config)
+        sec = math.ceil(duration)
+        self.log.info(f"本地歌曲 {name} : {filename} {url} 的时长 {sec} 秒")
+        return sec
+
+    def get_music_url(self, name):
+        """获取音乐播放地址
+
+        Args:
+            name: 歌曲名称
+        Returns:
+            tuple: (播放地址, 原始地址) - 网络音乐时可能有原始地址
+        """
+        if self.is_web_music(name):
+            return self._get_web_music_url(name)
+        return self._get_local_music_url(name), None
+
+    def _get_web_music_url(self, name):
+        """获取网络音乐播放地址"""
+        url = self.all_music[name]
+        self.log.info(f"get_music_url web music. name:{name}, url:{url}")
+
+        # 需要通过API获取真实播放地址
+        if self.is_need_use_play_music_api(name):
+            url = self._get_url_from_api(name, url)
+            if not url:
+                return "", None
+
+        # 是否需要代理
+        if self.config.web_music_proxy:
+            proxy_url = self._get_proxy_url(url)
+            return proxy_url, url
+
+        return url, None
+
+    def _get_url_from_api(self, name, url):
+        """通过API获取真实播放地址"""
+        headers = self._all_web_music_api[name].get("headers", {})
+        url = self.url_cache.get(url, headers)
+        if not url:
+            self.log.error(f"get_music_url use api fail. name:{name}, url:{url}")
+        return url
+
+    def _get_proxy_url(self, origin_url):
+        """获取代理URL"""
+        urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
+        proxy_url = f"{self.hostname}:{self.public_port}/proxy?urlb64={urlb64}"
+        self.log.info(f"Using proxy url: {proxy_url}")
+        return proxy_url
+
+    def _get_local_music_url(self, name):
+        """获取本地音乐播放地址"""
         filename = self.get_filename(name)
 
-        # 构造音乐文件的URL
+        # 处理文件路径
         if filename.startswith(self.config.music_path):
             filename = filename[len(self.config.music_path) :]
         filename = filename.replace("\\", "/")
@@ -558,11 +620,10 @@ class XiaoMusic:
 
         self.log.info(f"get_music_url local music. name:{name}, filename:{filename}")
 
+        # 构造URL
         encoded_name = urllib.parse.quote(filename)
-        return try_add_access_control_param(
-            self.config,
-            f"{self.hostname}:{self.public_port}/music/{encoded_name}",
-        )
+        url = f"{self.hostname}:{self.public_port}/music/{encoded_name}"
+        return try_add_access_control_param(self.config, url)
 
     # 给前端调用
     def refresh_music_tag(self):
@@ -771,6 +832,7 @@ class XiaoMusic:
             return
 
         self._all_radio = {}
+        self._web_music_api = {}
         music_list = json.loads(self.config.music_list_json)
         try:
             for item in music_list:
@@ -791,6 +853,8 @@ class XiaoMusic:
                     # 处理电台列表
                     if music_type == "radio":
                         self._all_radio[name] = url
+                    if music.get("api"):
+                        self._web_music_api[name] = music
                 self.log.debug(one_music_list)
                 # 歌曲名字相同会覆盖
                 self.music_list[list_name] = one_music_list
