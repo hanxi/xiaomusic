@@ -1312,15 +1312,30 @@ def chmoddir(dir_path: str):
                 log.info(f"chmoddir failed: {e}")
 
 
-async def fetch_json_get(url, headers):
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.get(url, headers=headers) as response:
+async def fetch_json_get(url, headers, config):
+    connector = None
+    proxy = None
+    if config and config.proxy:
+        connector = aiohttp.TCPConnector(
+            ssl=False,  # 如需验证SSL证书，可改为True（需确保代理支持）
+            limit=10,
+        )
+        proxy = config.proxy
+    try:
+        # 2. 传入代理配置创建ClientSession
+        async with aiohttp.ClientSession(connector=connector) as session:
+            # 3. 发起带代理的GET请求
+            async with session.get(
+                url,
+                headers=headers,
+                proxy=proxy,  # 传入格式化后的代理参数
+                timeout=10,  # 超时时间（秒），避免无限等待
+            ) as response:
                 if response.status == 200:
                     data = await response.json()
                     log.info(f"fetch_json_get: {url} success {data}")
 
-                    # 可选：确保是 dict
+                    # 确保返回结果为dict
                     if isinstance(data, dict):
                         return data
                     else:
@@ -1329,15 +1344,19 @@ async def fetch_json_get(url, headers):
                 else:
                     log.error(f"HTTP Error: {response.status} {url}")
                     return {}
-        except aiohttp.ClientError as e:
-            log.error(f"ClientError fetching {url}: {e}")
-            return {}
-        except asyncio.TimeoutError:
-            log.error(f"Timeout fetching {url}")
-            return {}
-        except Exception as e:
-            log.error(f"Unexpected error fetching {url}: {e}")
-            return {}
+    except aiohttp.ClientError as e:
+        log.error(f"ClientError fetching {url} (proxy: {proxy}): {e}")
+        return {}
+    except asyncio.TimeoutError:
+        log.error(f"Timeout fetching {url} (proxy: {proxy})")
+        return {}
+    except Exception as e:
+        log.error(f"Unexpected error fetching {url} (proxy: {proxy}): {e}")
+        return {}
+    finally:
+        # 4. 关闭连接器（避免资源泄漏）
+        if connector and not connector.closed:
+            await connector.close()
 
 
 class LRUCache(OrderedDict):
@@ -1367,7 +1386,7 @@ class MusicUrlCache:
         self.default_expire_days = default_expire_days
         self.log = logging.getLogger(__name__)
 
-    def get(self, url: str, headers: dict = None) -> str:
+    async def get(self, url: str, headers: dict = None, config=None) -> str:
         """获取URL(优先从缓存获取,没有则请求API)
 
         Args:
@@ -1383,7 +1402,7 @@ class MusicUrlCache:
             return cached_url
 
         # 缓存未命中,请求API
-        return self._fetch_from_api(url, headers)
+        return await self._fetch_from_api(url, headers, config)
 
     def _get_from_cache(self, url: str) -> str:
         """从缓存中获取URL"""
@@ -1397,9 +1416,9 @@ class MusicUrlCache:
         except KeyError:
             return ""
 
-    def _fetch_from_api(self, url: str, headers: dict = None) -> str:
+    async def _fetch_from_api(self, url: str, headers: dict = None, config=None) -> str:
         """从API获取真实URL"""
-        data = fetch_json_get(url, headers or {})
+        data = await fetch_json_get(url, headers or {}, config)
 
         if not isinstance(data, dict):
             self.log.error(f"Invalid API response format: {data}")

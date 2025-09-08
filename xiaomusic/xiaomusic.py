@@ -520,8 +520,10 @@ class XiaoMusic:
         Returns:
             tuple: (播放时长(秒), 播放地址)
         """
-        url, origin_url = self.get_music_url(name)
-        self.log.info(f"get_music_sec_url. name:{name} url:{url}")
+        url, origin_url = await self.get_music_url(name)
+        self.log.info(
+            f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
+        )
 
         # 电台直接返回
         if self.is_web_radio_music(name):
@@ -562,7 +564,7 @@ class XiaoMusic:
         self.log.info(f"本地歌曲 {name} : {filename} {url} 的时长 {sec} 秒")
         return sec
 
-    def get_music_url(self, name):
+    async def get_music_url(self, name):
         """获取音乐播放地址
 
         Args:
@@ -571,17 +573,17 @@ class XiaoMusic:
             tuple: (播放地址, 原始地址) - 网络音乐时可能有原始地址
         """
         if self.is_web_music(name):
-            return self._get_web_music_url(name)
+            return await self._get_web_music_url(name)
         return self._get_local_music_url(name), None
 
-    def _get_web_music_url(self, name):
+    async def _get_web_music_url(self, name):
         """获取网络音乐播放地址"""
         url = self.all_music[name]
         self.log.info(f"get_music_url web music. name:{name}, url:{url}")
 
         # 需要通过API获取真实播放地址
         if self.is_need_use_play_music_api(name):
-            url = self._get_url_from_api(name, url)
+            url = await self._get_url_from_api(name, url)
             if not url:
                 return "", None
 
@@ -592,10 +594,10 @@ class XiaoMusic:
 
         return url, None
 
-    def _get_url_from_api(self, name, url):
+    async def _get_url_from_api(self, name, url):
         """通过API获取真实播放地址"""
-        headers = self._all_web_music_api[name].get("headers", {})
-        url = self.url_cache.get(url, headers)
+        headers = self._web_music_api[name].get("headers", {})
+        url = await self.url_cache.get(url, headers, self.config)
         if not url:
             self.log.error(f"get_music_url use api fail. name:{name}, url:{url}")
         return url
@@ -618,7 +620,9 @@ class XiaoMusic:
         if filename.startswith("/"):
             filename = filename[1:]
 
-        self.log.info(f"get_music_url local music. name:{name}, filename:{filename}")
+        self.log.info(
+            f"_get_local_music_url local music. name:{name}, filename:{filename}"
+        )
 
         # 构造URL
         encoded_name = urllib.parse.quote(filename)
