@@ -342,7 +342,7 @@ async def musiclist(Verifcation=Depends(verification)):
 async def musicinfo(
     name: str, musictag: bool = False, Verifcation=Depends(verification)
 ):
-    url = await xiaomusic.get_music_url(name)
+    url, _ = await xiaomusic.get_music_url(name)
     info = {
         "ret": "OK",
         "name": name,
@@ -361,7 +361,7 @@ async def musicinfos(
 ):
     ret = []
     for music_name in name:
-        url = await xiaomusic.get_music_url(music_name)
+        url, _ = await xiaomusic.get_music_url(music_name)
         info = {
             "name": music_name,
             "url": url,
