@@ -332,11 +332,10 @@ function refresh_music_list() {
     searchInput.value = oriValue;
     searchInput.dispatchEvent(inputEvent);
     searchInput.placeholder = oriPlaceHolder;
-    // 每3秒获取下正在播放的音乐
-    get_playing_music();
-    setInterval(() => {
-      get_playing_music();
-    }, 3000);
+    // 获取下正在播放的音乐
+    if (did != "web_device") {
+      connectWebSocket(did);
+    }
   });
 }
 
@@ -579,47 +578,6 @@ function handleSearch() {
 
 handleSearch();
 
-function get_playing_music() {
-  $.get(`/playingmusic?did=${did}`, function (data, status) {
-    console.log(data);
-    if (data.ret == "OK") {
-      if (data.is_playing) {
-        $("#playering-music").text(`【播放中】 ${data.cur_music}`);
-        isPlaying = true;
-      } else {
-        $("#playering-music").text(`【空闲中】 ${data.cur_music}`);
-        isPlaying = false;
-      }
-      offset = data.offset;
-      duration = data.duration;
-      //检查歌曲是否在收藏中，如果是，设置收藏按钮为选中状态
-      console.log(
-        "%cmd.js:614 object",
-        "color: #007acc;",
-        favoritelist.includes(data.cur_music)
-      );
-      if (favoritelist.includes(data.cur_music)) {
-        $(".favorite").addClass("favorite-active");
-      } else {
-        $(".favorite").removeClass("favorite-active");
-      }
-      localStorage.setItem("cur_music", data.cur_music);
-    }
-  });
-}
-setInterval(() => {
-  if (duration > 0) {
-    if (isPlaying) {
-      offset++;
-      $("#progress").val((offset / duration) * 100);
-      $("#current-time").text(formatTime(offset));
-    }
-    $("#duration").text(formatTime(duration));
-  } else {
-    $("#current-time").text(formatTime(0));
-    $("#duration").text(formatTime(0));
-  }
-}, 1000);
 function formatTime(seconds) {
   var minutes = Math.floor(seconds / 60);
   var remainingSeconds = Math.floor(seconds % 60);
@@ -734,4 +692,73 @@ function confirmSearch() {
   do_play_music(filename, search_key);
   toggleSearch();
 }
+
+
+let ws = null;
+// 启动 WebSocket 连接
+function connectWebSocket(did) {
+  fetch(`/generate_ws_token?did=${did}`)
+    .then((res) => res.json())
+    .then((data) => {
+      const token = data.token;
+      startWebSocket(did, token);
+    })
+    .catch((err) => {
+      console.error("获取 token 失败:", err);
+      setTimeout(() => connectWebSocket(did), 5000);
+    });
+}
+
+function startWebSocket(did, token) {
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  const wsUrl = `${protocol}://${window.location.host}/ws/playingmusic?token=${token}`;
+  ws = new WebSocket(wsUrl);
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.ret !== "OK") return;
+
+    isPlaying = data.is_playing;
+    let cur_music = data.cur_music || "";
+
+    $("#playering-music").text(
+      isPlaying ? `【播放中】 ${cur_music}` : `【空闲中】 ${cur_music}`
+    );
+
+    offset = data.offset || 0;
+    duration = data.duration || 0;
+
+    if (favoritelist.includes(cur_music)) {
+      $(".favorite").addClass("favorite-active");
+    } else {
+      $(".favorite").removeClass("favorite-active");
+    }
+
+    localStorage.setItem("cur_music", cur_music);
+    updateProgressUI();
+  };
+
+  ws.onclose = () => {
+    console.log("WebSocket 已断开，正在重连...");
+    setTimeout(() => startWebSocket(did, token), 3000);
+  };
+
+  ws.onerror = (err) => console.error("WebSocket 错误:", err);
+}
+
+// 每秒更新播放进度
+function updateProgressUI() {
+  const progressPercent = duration > 0 ? (offset / duration) * 100 : 0;
+  $("#progress").val(progressPercent);
+  $("#current-time").text(formatTime(offset));
+  $("#duration").text(formatTime(duration));
+}
+
+setInterval(() => {
+  if (duration > 0 && isPlaying) {
+    offset++;
+    if (offset > duration) offset = duration;
+    updateProgressUI();
+  }
+}, 1000);
 
