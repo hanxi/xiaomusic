@@ -1125,7 +1125,7 @@ class XiaoMusic:
         name = arg1
         if len(name) == 0:
             name = self.playingmusic(did)
-        self.del_music(name)
+        await self.del_music(name)
 
     async def del_music(self, name):
         filename = self.get_filename(name)
