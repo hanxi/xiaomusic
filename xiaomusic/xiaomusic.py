@@ -81,6 +81,8 @@ class XiaoMusic:
         self.cookie_jar = None
         self.mina_service = None
         self.miio_service = None
+        self.login_acount = None
+        self.login_password = None
         self.polling_event = asyncio.Event()
         self.new_record_event = asyncio.Event()
         self.url_cache = MusicUrlCache()
@@ -241,12 +243,26 @@ class XiaoMusic:
 
     async def init_all_data(self, session):
         self.mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
-        await self.login_miboy(session)
+        if self.need_login():
+            await self.login_miboy(session)
+        else:
+            self.log.info("already logined")
         await self.try_update_device_id()
         cookie_jar = self.get_cookie()
         if cookie_jar:
             session.cookie_jar.update_cookies(cookie_jar)
         self.cookie_jar = session.cookie_jar
+
+    def need_login(self):
+        if self.mina_service is None:
+            return True
+        if self.mina_service is None:
+            return True
+        if self.login_acount != self.config.account:
+            return True
+        if self.login_password != self.config.password:
+            return True
+        return False
 
     async def login_miboy(self, session):
         try:
@@ -260,7 +276,11 @@ class XiaoMusic:
             await account.login("micoapi")
             self.mina_service = MiNAService(account)
             self.miio_service = MiIOService(account)
+            self.login_acount = self.config.account
+            self.login_password = self.config.password
         except Exception as e:
+            self.mina_service = None
+            self.miio_service = None
             self.log.warning(f"可能登录失败. {e}")
 
     async def try_update_device_id(self):
