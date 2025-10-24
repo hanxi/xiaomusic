@@ -635,48 +635,6 @@ function timedShutDown(cmd) {
   }, 3000);
 }
 
-// 绑定点击事件，显示弹窗
-$('#version').on('click', function () {
-  $.get("https://xdocs.hanxi.cc/versions.json", function (data, status) {
-    console.log(data);
-    const versionSelect = document.getElementById("update-version");
-    versionSelect.innerHTML = "";
-    data.forEach((item) => {
-      const option = document.createElement("option");
-      option.value = item.version;
-      option.textContent = item.version;
-      versionSelect.appendChild(option);
-    });
-  });
-  $('#update-component').show();
-});
-
-// 关闭更新弹窗
-function toggleUpdate() {
-  $('#update-component').hide();
-}
-
-function doUpdates() {
-  const version = $("#update-version").val();
-  let lite = $("#lite").val();
-  $.ajax({
-    type: "POST",
-    url: `/updateversion?version=${version}&lite=${lite}`,
-    contentType: "application/json; charset=utf-8",
-    success: (data) => {
-      if (data.ret == "OK") {
-        alert(`更新成功,请刷新页面`);
-        location.reload();
-      } else {
-        alert(`更新失败: ${data.ret}`);
-      }
-    },
-    error: () => {
-      alert(`更新失败`);
-    },
-  });
-}
-
 function confirmSearch() {
   var search_key = $("#search").val();
   if (search_key == null) {
