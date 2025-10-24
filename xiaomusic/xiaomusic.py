@@ -402,31 +402,20 @@ class XiaoMusic:
     async def get_latest_ask_by_mina(self, device_id):
         try:
             did = self.get_did(device_id)
-            response = await self.mina_service.ubus_request(
-                device_id, "nlp_result_get", "mibrain", {}
-            )
+            messages = await self.mina_service.get_latest_ask(device_id)
             self.log.debug(
-                f"get_latest_ask_by_mina device_id:{device_id} did:{did} response:{response}"
+                f"get_latest_ask_by_mina device_id:{device_id} did:{did} messages:{messages}"
             )
-            if d := response.get("data", {}).get("info", {}):
-                result = json.loads(d).get("result", [{}])
-                if result and len(result) > 0 and result[0].get("nlp"):
-                    answers = (
-                        json.loads(result[0]["nlp"])
-                        .get("response", {})
-                        .get("answer", [{}])
-                    )
-                    if answers:
-                        query = answers[0].get("intention", {}).get("query", "").strip()
-                        timestamp = result[0]["timestamp"] * 1000
-                        answer = answers[0].get("content", {}).get("to_speak")
-                        last_record = {
-                            "time": timestamp,
-                            "did": did,
-                            "query": query,
-                            "answer": answer,
-                        }
-                        self._check_last_query(last_record)
+            for message in messages:
+                query = message.response.answer[0].question
+                answer = message.response.answer[0].content
+                last_record = {
+                    "time": message.timestamp_ms,
+                    "did": did,
+                    "query": query,
+                    "answer": answer,
+                }
+                self._check_last_query(last_record)
         except Exception as e:
             self.log.warning(f"get_latest_ask_by_mina {e}")
         return
