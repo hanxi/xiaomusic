@@ -243,7 +243,8 @@ class XiaoMusic:
 
     async def init_all_data(self, session):
         self.mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
-        if self.need_login():
+        is_need_login = await self.need_login()
+        if is_need_login:
             await self.login_miboy(session)
         else:
             self.log.info("already logined")
@@ -253,7 +254,7 @@ class XiaoMusic:
             session.cookie_jar.update_cookies(cookie_jar)
         self.cookie_jar = session.cookie_jar
 
-    def need_login(self):
+    async def need_login(self):
         if self.mina_service is None:
             return True
         if self.mina_service is None:
@@ -261,6 +262,12 @@ class XiaoMusic:
         if self.login_acount != self.config.account:
             return True
         if self.login_password != self.config.password:
+            return True
+
+        try:
+            await self.mina_service.device_list()
+        except Exception as e:
+            self.log.warning(f"可能登录失败. {e}")
             return True
         return False
 
