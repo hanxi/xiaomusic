@@ -446,7 +446,7 @@ class XiaoMusic:
         did = last_record["did"]
         timestamp = last_record.get("time")
         query = last_record.get("query", "").strip()
-        self.log.debug(f"获取到最后一条对话记录：{query} {timestamp}")
+        self.log.debug(f"{did} 获取到最后一条对话记录：{query} {timestamp}")
 
         if timestamp > self.last_timestamp[did]:
             self.last_timestamp[did] = timestamp
