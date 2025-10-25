@@ -6,7 +6,7 @@ ENV PDM_CHECK_UPDATE=false
 WORKDIR /app
 COPY pyproject.toml README.md ./
 
-RUN pdm install --prod --no-editable
+RUN pdm install --prod --no-editable -v
 
 COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/
