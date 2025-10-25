@@ -77,9 +77,9 @@ extend-immutable-calls = [
 ]
 
 [tool.pdm.scripts]
-lint = "ruff check ."
-fmt = "ruff format ."
-lintfmt = {composite = ["ruff check --fix .", "ruff format ."]}
+lint = "ruff check . --exclude MiService"
+fmt = "ruff format . --exclude MiService"
+lintfmt = {composite = ["ruff check --fix . --exclude MiService", "ruff format . --exclude MiService"]}
 
 [tool.commitizen]
 name = "cz_conventional_commits"

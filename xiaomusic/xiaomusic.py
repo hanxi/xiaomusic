@@ -2061,6 +2061,8 @@ class XiaoMusicDevice:
                 await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
         except Exception as e:
             self.log.exception(f"Execption {e}")
+            # 重新初始化
+            await self.xiaomusic.reinit()
 
     # 同一组设备播放
     async def group_player_play(self, url, name=""):
