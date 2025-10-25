@@ -7,7 +7,6 @@ authors = [
 ]
 dependencies = [
     "aiohttp>=3.8.6",
-    "miservice-fork>=2.7.0",
     "watchdog>=6.0.0",
     "mutagen>=1.47.0",
     "yt-dlp[default]>=2024.12.1.232904.dev0",
@@ -24,7 +23,8 @@ dependencies = [
     "sentry-sdk[fastapi]==1.45.1",
     "python-socketio>=5.12.1",
     "pyjwt>=2.10.1",
-    "fake-useragent>=2.2.0", 
+    "fake-useragent>=2.2.0",
+    "miservice-fork @ file:///${PROJECT_ROOT}/MiService",
 ]
 requires-python = ">=3.10"
 readme = "README.md"

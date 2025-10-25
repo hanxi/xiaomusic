@@ -245,6 +245,7 @@ class XiaoMusic:
         self.mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
         is_need_login = await self.need_login()
         if is_need_login:
+            self.log.info("try login")
             await self.login_miboy(session)
         else:
             self.log.info("already logined")
@@ -285,6 +286,7 @@ class XiaoMusic:
             self.miio_service = MiIOService(account)
             self.login_acount = self.config.account
             self.login_password = self.config.password
+            self.log.info(f"登录完成. {self.login_acount}")
         except Exception as e:
             self.mina_service = None
             self.miio_service = None

@@ -1,0 +1,3 @@
+[submodule "MiService"]
+	path = MiService
+	url = git@github.com:hanxi/MiService.git
