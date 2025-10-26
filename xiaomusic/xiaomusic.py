@@ -15,7 +15,7 @@ from dataclasses import asdict
 from logging.handlers import RotatingFileHandler
 
 from aiohttp import ClientSession, ClientTimeout
-from miservice import MiAccount, MiIOService, MiNAService, miio_command
+from miservice import MiAccount, MiIOService, MiNAService
 from watchdog.events import (
     FileCreatedEvent,
     FileDeletedEvent,
@@ -42,7 +42,6 @@ from xiaomusic.const import (
     PLAY_TYPE_SEQ,
     PLAY_TYPE_SIN,
     SUPPORT_MUSIC_TYPE,
-    TTS_COMMAND,
 )
 from xiaomusic.crontab import Crontab
 from xiaomusic.plugin import PluginManager
@@ -2047,22 +2046,22 @@ class XiaoMusicDevice:
     async def text_to_speech(self, value):
         try:
             # 有 tts command 优先使用 tts command 说话
-            if self.hardware in TTS_COMMAND:
-                tts_cmd = TTS_COMMAND[self.hardware]
-                self.log.info("Call MiIOService tts.")
-                value = value.replace(" ", ",")  # 不能有空格
-                await miio_command(
-                    self.xiaomusic.miio_service,
-                    self.did,
-                    f"{tts_cmd} {value}",
-                )
-            else:
-                self.log.debug("Call MiNAService tts.")
-                await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
+            # if self.hardware in TTS_COMMAND:
+            #     tts_cmd = TTS_COMMAND[self.hardware]
+            #     self.log.info("Call MiIOService tts.")
+            #     value = value.replace(" ", ",")  # 不能有空格
+            #     await miio_command(
+            #         self.xiaomusic.miio_service,
+            #         self.did,
+            #         f"{tts_cmd} {value}",
+            #     )
+            # else:
+            self.log.debug("Call MiNAService tts.")
+            await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
         except Exception as e:
             self.log.exception(f"Execption {e}")
             # 重新初始化
-            await self.xiaomusic.reinit()
+            # await self.xiaomusic.reinit()
 
     # 同一组设备播放
     async def group_player_play(self, url, name=""):

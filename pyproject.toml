@@ -25,6 +25,7 @@ dependencies = [
     "pyjwt>=2.10.1",
     "fake-useragent>=2.2.0",
     "miservice-fork @ file:///${PROJECT_ROOT}/MiService",
+    "edge-tts>=7.2.3",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
