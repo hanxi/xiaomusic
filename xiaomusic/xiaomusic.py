@@ -32,7 +32,6 @@ from xiaomusic.config import (
     Device,
 )
 from xiaomusic.const import (
-    TTS_COMMAND,
     COOKIE_TEMPLATE,
     GET_ASK_BY_MINA,
     LATEST_ASK_API,
@@ -43,6 +42,7 @@ from xiaomusic.const import (
     PLAY_TYPE_SEQ,
     PLAY_TYPE_SIN,
     SUPPORT_MUSIC_TYPE,
+    TTS_COMMAND,
 )
 from xiaomusic.crontab import Crontab
 from xiaomusic.plugin import PluginManager
