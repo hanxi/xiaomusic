@@ -7,7 +7,6 @@ COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/
 COPY holiday/ ./holiday/
 COPY xiaomusic.py .
-COPY MiService/ ./MiService/
 RUN pdm install --prod --no-editable -v
 
 FROM hanxi/xiaomusic:runtime
