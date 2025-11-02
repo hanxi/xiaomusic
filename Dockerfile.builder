@@ -5,12 +5,10 @@ RUN pip install -U pdm
 ENV PDM_CHECK_UPDATE=false
 WORKDIR /app
 COPY pyproject.toml README.md ./
-COPY MiService/ ./MiService/
 
 RUN pdm install --prod --no-editable -v
 
 COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/
 COPY holiday/ ./holiday/
-COPY MiService/ ./MiService/
 COPY xiaomusic.py .
