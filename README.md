@@ -271,8 +271,6 @@ docker build -t xiaomusic .
 ## 📢 讨论区
 
 - [点击链接加入QQ频道【xiaomusic】](https://pd.qq.com/s/e2jybz0ss)
-- [点击链接加入群聊【满 xiaomusic官方交流群1】 604526973](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=13St5PLVcTxYlWTAs_iAawazjtdD1l-a&authKey=dJWEpaT2fDBDpdUUOWj%2FLt6NS1ePBfShDfz7a6seNURi05VvVnAGQzXF%2FM%2F5HgIm&noverify=0&group_code=604526973)
-- [点击链接加入群聊【满 xiaomusic官方交流群2】1021062499](https://qm.qq.com/q/BmVNqhDL3M)
 - [点击链接加入群聊【xiaomusic官方交流群3】 1072151477](https://qm.qq.com/q/lxIhquqbza)
 - <https://github.com/hanxi/xiaomusic/issues>
 - [微信群二维码](https://github.com/hanxi/xiaomusic/issues/86)
@@ -290,6 +288,7 @@ docker build -t xiaomusic .
 - [pure 主题 xiaomusicUI](https://github.com/52fisher/xiaomusicUI)
 - [移动端的播放器主题](https://github.com/52fisher/XMusicPlayer)
 - [Tailwind主题](https://github.com/clarencejh/xiaomusic)
+- [SoundScape主题](https://github.com/jhao0413/SoundScape)
 - [一个第三方的主题](https://github.com/DarrenWen/xiaomusicui)
 - [Umami 统计](https://github.com/umami-software/umami)
 - [Sentry 报错监控](https://github.com/getsentry/sentry)

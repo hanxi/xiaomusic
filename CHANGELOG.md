@@ -1,3 +1,11 @@
+## v0.3.99 (2025-11-02)
+
+### Feat
+
+- 新增 SoundScape 主题
+- add path aliases and base URL configuration in Vite（SoundSpace） (#569)
+- SoundSpace Theme (#568)
+
 ## v0.3.98 (2025-11-02)
 
 ## v0.3.97 (2025-11-01)
