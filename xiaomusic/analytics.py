@@ -58,7 +58,7 @@ class Analytics:
 
     async def _send(self, event):
         if self.config.enable_analytics:
-            asyncio.create_task(self.post_to_umami(event))
+            # asyncio.create_task(self.post_to_umami(event))
             await self.run_with_cancel(self._google_send, [event])
         else:
             self.log.info("analytics is disabled, skip sending event")
