@@ -205,6 +205,9 @@ $(function () {
   $("#auto-hostname").on("click", () => {
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
+    if (hostname == '127.0.0.1' || hostname == 'localhost') {
+      alert("hostname 不能是 127.0.0.1 或者 localhost");
+    }
     const baseUrl = `${protocol}//${hostname}`;
     console.log(baseUrl);
     $("#hostname").val(baseUrl);
