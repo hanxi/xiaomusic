@@ -212,6 +212,14 @@ $(function () {
 
   $("#auto-port").on("click", () => {
     const port = window.location.port;
+    if (port == 0) {
+      const protocol = window.location.protocol;
+      if (protocol == 'https:') {
+        port = 443;
+      } else {
+        port = 80;
+      }
+    }
     console.log(port);
     $("#public_port").val(port);
   });
