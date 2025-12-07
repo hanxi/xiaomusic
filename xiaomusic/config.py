@@ -80,6 +80,7 @@ class Device:
     play_type: int = PLAY_TYPE_RND
     cur_music: str = ""
     cur_playlist: str = ""
+    playlist2music: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass

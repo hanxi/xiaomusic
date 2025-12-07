@@ -1809,6 +1809,7 @@ class XiaoMusicDevice:
 
         self._playing = True
         self.device.cur_music = name
+        self.device.playlist2music[self.device.cur_playlist] = name
 
         self.log.info(f"cur_music {self.get_cur_music()}")
         sec, url = await self.xiaomusic.get_music_sec_url(name)
@@ -2202,6 +2203,8 @@ class XiaoMusicDevice:
         self._last_cmd = "play_music_list"
         self.device.cur_playlist = list_name
         self.update_playlist()
+        if not music_name:
+            music_name = self.device.playlist2music[list_name]
         self.log.info(f"开始播放列表{list_name} {music_name}")
         await self._play(music_name, exact=True)
 
