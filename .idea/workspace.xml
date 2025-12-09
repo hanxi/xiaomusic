@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d257eee2-67e8-4c8c-a136-db6c7a180f62" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="pr2upstream-bak" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;boluofan&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/boluofan/xiaomusic-online.git&quot;,
+    &quot;accountId&quot;: &quot;a39888ba-8d9d-4847-a6ab-952a4c224c20&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="37xPAJYESc696P1Tq6PMHMlbE7U" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.js_plugin_manager.executor": "Debug",
+    "Python.xiaomusic.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "Rebasing pr2upstream",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/dev/boluofan/xiaomusic-online",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.3091954",
+    "settings.editor.selected.configurable": "configurable.group.appearance",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2024.1.7\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\dev\boluofan\xiaomusic-online" />
+      <recent name="C:\dev\boluofan\xiaomusic-online\xiaomusic\static\onlineSearch" />
+      <recent name="C:\dev\boluofan\xiaomusic-online\xiaomusic" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\dev\boluofan\xiaomusic-online\xiaomusic\utils" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.xiaomusic">
+    <configuration name="final_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="xiaomusic-online" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/final_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="online_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="xiaomusic-online" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/online_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="xiaomusic" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="xiaomusic-online" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.10" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/xiaomusic.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.xiaomusic" />
+      <item itemvalue="Python.final_test" />
+      <item itemvalue="Python.online_test" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.online_test" />
+        <item itemvalue="Python.final_test" />
+        <item itemvalue="Python.online_test" />
+        <item itemvalue="Python.final_test" />
+        <item itemvalue="Python.online_test" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.19416.15" />
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-IU-241.19416.15" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d257eee2-67e8-4c8c-a136-db6c7a180f62" name="Changes" comment="" />
+      <created>1767841603717</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1767841603717</updated>
+      <workItem from="1767841606128" duration="79000" />
+      <workItem from="1767841700292" duration="14087000" />
+      <workItem from="1767919422405" duration="26002000" />
+      <workItem from="1768114474155" duration="11271000" />
+      <workItem from="1768179072840" duration="6995000" />
+      <workItem from="1768201510678" duration="2943000" />
+      <workItem from="1768264618681" duration="18160000" />
+      <workItem from="1768289713965" duration="20900000" />
+      <workItem from="1768400893897" duration="14374000" />
+      <workItem from="1768526224173" duration="4326000" />
+    </task>
+    <task id="LOCAL-00001" summary="合并上游项目">
+      <option name="closed" value="true" />
+      <created>1767935545695</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1767935545695</updated>
+    </task>
+    <task id="LOCAL-00002" summary="刷新插件功能强制刷新">
+      <option name="closed" value="true" />
+      <created>1767937455889</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1767937455889</updated>
+    </task>
+    <task id="LOCAL-00003" summary="1. 更新文档；&#10;2. 增加版本标识&#10;3. 修复插件卸载bug：强制刷新缓存">
+      <option name="closed" value="true" />
+      <created>1767948634732</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1767948634732</updated>
+    </task>
+    <task id="LOCAL-00004" summary="修复【启用】网络歌曲过代理后，在线歌曲播放链接被base编码两次bug">
+      <option name="closed" value="true" />
+      <created>1768118350991</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1768118350991</updated>
+    </task>
+    <task id="LOCAL-00005" summary="更新版本标识">
+      <option name="closed" value="true" />
+      <created>1768119377174</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1768119377174</updated>
+    </task>
+    <task id="LOCAL-00006" summary="修复开放接口部分音源链接不能直接播放bug">
+      <option name="closed" value="true" />
+      <created>1768144293156</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1768144293156</updated>
+    </task>
+    <task id="LOCAL-00007" summary="修复异常未加载插件无法禁用bug">
+      <option name="closed" value="true" />
+      <created>1768145017107</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1768145017107</updated>
+    </task>
+    <task id="LOCAL-00008" summary="更新版本标识">
+      <option name="closed" value="true" />
+      <created>1768145696500</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1768145696500</updated>
+    </task>
+    <task id="LOCAL-00009" summary="更新版本标识">
+      <option name="closed" value="true" />
+      <created>1768179338109</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1768179338109</updated>
+    </task>
+    <task id="LOCAL-00010" summary="更新TODO列表">
+      <option name="closed" value="true" />
+      <created>1768198876057</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1768198876057</updated>
+    </task>
+    <task id="LOCAL-00011" summary="1. 增加插件【订阅源】配置及管理；&#10;2. 修复【WY】插件无法加载、使用Bug">
+      <option name="closed" value="true" />
+      <created>1768283429396</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1768283429396</updated>
+    </task>
+    <task id="LOCAL-00012" summary="1. 将开放平台搜索与插件搜索融合展示&#10;2. 优化聚合展示，开放平台优先级 &gt; 插件">
+      <option name="closed" value="true" />
+      <created>1768286334683</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1768286334683</updated>
+    </task>
+    <task id="LOCAL-00013" summary="1. 开放接口调用跳过SSL验证&#10;2. Docker依赖改用: boluofandocker/xiaomusic-online:runtime&#10;3. 增加图标">
+      <option name="closed" value="true" />
+      <created>1768354412042</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1768354412042</updated>
+    </task>
+    <task id="LOCAL-00014" summary="修复WY音源插件代理接口拼接错误Bug">
+      <option name="closed" value="true" />
+      <created>1768362188324</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1768362188324</updated>
+    </task>
+    <task id="LOCAL-00015" summary=".">
+      <option name="closed" value="true" />
+      <created>1768402468951</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1768402468951</updated>
+    </task>
+    <task id="LOCAL-00016" summary="优化插件源展示及配置">
+      <option name="closed" value="true" />
+      <created>1768464650324</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1768464650324</updated>
+    </task>
+    <task id="LOCAL-00017" summary="移除 /openapi-url接口，使用公用代理接口">
+      <option name="closed" value="true" />
+      <created>1768467930804</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1768467930804</updated>
+    </task>
+    <task id="LOCAL-00018" summary="移除 /m4s-to-mp3接口">
+      <option name="closed" value="true" />
+      <created>1768528383733</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1768528383733</updated>
+    </task>
+    <task id="LOCAL-00019" summary="更新版本号，合并上游分支前的最后一版">
+      <option name="closed" value="true" />
+      <created>1768529458676</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1768529458676</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ID_ORDER">
+      <list>
+        <option value="Default.Root" />
+        <option value="Default.Author" />
+        <option value="Default.Date" />
+        <option value="Default.Subject" />
+        <option value="GitHub.CommitStatus" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="dev" />
+                </option>
+              </RecentGroup>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="origin/dev" />
+                </option>
+              </RecentGroup>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="origin/main" />
+                </option>
+              </RecentGroup>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="origin/upstream2pr" />
+                </option>
+              </RecentGroup>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="upstream2pr" />
+                </option>
+              </RecentGroup>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="upstream-main" />
+                </option>
+              </RecentGroup>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="upstream/main" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+        <entry key="User">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="*" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="dev" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="合并上游项目" />
+    <MESSAGE value="刷新插件功能强制刷新" />
+    <MESSAGE value="修复【】" />
+    <MESSAGE value="修复【启用】网络歌曲过代理后，在线歌曲播放链接被base编码两次bug" />
+    <MESSAGE value="1. 更新文档；&#10;2. 增加版本标识&#10;3. 修复插件卸载bug：强制刷新缓存" />
+    <MESSAGE value="修复开放接口部分音源链接不能直接播放bug" />
+    <MESSAGE value="修复异常未加载插件无法禁用bug" />
+    <MESSAGE value="更新版本标识" />
+    <MESSAGE value="更新TODO列表" />
+    <MESSAGE value="1. 增加插件【订阅源】配置及管理；&#10;2. 修复【WY】插件无法加载、使用Bug" />
+    <MESSAGE value="1. 将开放平台搜索与插件搜索融合展示&#10;2. 优化聚合展示，开放平台优先级 &gt; 插件" />
+    <MESSAGE value="1. 开放接口调用跳过SSL验证&#10;2. Docker依赖改用: boluofandocker/xiaomusic-online:runtime&#10;3. 增加图标" />
+    <MESSAGE value="修复WY音源插件代理接口拼接错误Bug" />
+    <MESSAGE value="." />
+    <MESSAGE value="优化插件源展示及配置" />
+    <MESSAGE value="移除 /openapi-url接口，使用公用代理接口" />
+    <MESSAGE value="移除 /m4s-to-mp3接口" />
+    <MESSAGE value="更新版本号，合并上游分支前的最后一版" />
+    <option name="LAST_COMMIT_MESSAGE" value="更新版本号，合并上游分支前的最后一版" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/xiaomusic_online$js_plugin_manager.coverage" NAME="js_plugin_manager Coverage Results" MODIFIED="1767843658290" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/xiaomusic" />
+    <SUITE FILE_PATH="coverage/xiaomusic_online$xiaomusic.coverage" NAME="xiaomusic Coverage Results" MODIFIED="1768467258390" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+  </component>
+</project>

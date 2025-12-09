@@ -4,6 +4,7 @@ JS 插件管理器
 负责加载、管理和运行 MusicFree JS 插件
 """
 
+<<<<<<< HEAD
 import json
 import logging
 import os
@@ -12,6 +13,18 @@ import subprocess
 import threading
 import time
 from typing import Any
+=======
+import subprocess
+import json
+import os
+import threading
+import time
+import psutil
+from typing import Dict, Any, Optional, List
+import logging
+import asyncio
+from urllib.parse import urlparse
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
 
 
 class JSPluginManager:
@@ -19,12 +32,17 @@ class JSPluginManager:
 
     def __init__(self, xiaomusic):
         self.xiaomusic = xiaomusic
+<<<<<<< HEAD
         base_path = self.xiaomusic.config.conf_path
         self.log = logging.getLogger(__name__)
         # JS插件文件夹：
         self.plugins_dir = os.path.join(base_path, "js_plugins")
         # 插件配置Json：
         self.plugins_config_path = os.path.join(base_path, "plugins-config.json")
+=======
+        self.log = logging.getLogger(__name__)
+        self.plugins_dir = os.path.join(os.path.dirname(__file__), "js_plugins")
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         self.plugins = {}  # 插件状态信息
         self.node_process = None
         self.message_queue = []
@@ -32,12 +50,15 @@ class JSPluginManager:
         self._lock = threading.Lock()
         self.request_id = 0
         self.pending_requests = {}
+<<<<<<< HEAD
         self._is_shutting_down = False  # 添加关闭标志
 
         # ... 配置文件相关 ...
         self._config_cache = None
         self._config_cache_time = 0
         self._config_cache_ttl = 3 * 60  # 缓存有效期5秒，可根据需要调整
+=======
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
 
         # 启动 Node.js 子进程
         self._start_node_process()
@@ -54,14 +75,24 @@ class JSPluginManager:
 
         try:
             self.node_process = subprocess.Popen(
+<<<<<<< HEAD
                 ["node", "--max-old-space-size=128", runner_path],
+=======
+                ['node', '--max-old-space-size=128', runner_path],
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+<<<<<<< HEAD
                 encoding="utf-8",
                 errors="replace",
                 bufsize=1,  # 行缓冲
+=======
+                encoding='utf-8',
+                errors='replace',
+                bufsize=1  # 行缓冲
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
             )
 
             self.log.info("Node.js process started successfully")
@@ -76,17 +107,26 @@ class JSPluginManager:
     def _monitor_node_process(self):
         """监控 Node.js 进程状态"""
         while True:
+<<<<<<< HEAD
             if self._is_shutting_down:
                 break
             if self.node_process and self.node_process.poll() is not None:
                 if not self._is_shutting_down:
                     self.log.warning("Node.js process died, restarting...")
                     self._start_node_process()
+=======
+            if self.node_process and self.node_process.poll() is not None:
+                self.log.warning("Node.js process died, restarting...")
+                self._start_node_process()
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
             time.sleep(5)
 
     def _start_message_handler(self):
         """启动消息处理线程"""
+<<<<<<< HEAD
 
+=======
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         def stdout_handler():
             while True:
                 if self.node_process and self.node_process.stdout:
@@ -97,6 +137,7 @@ class JSPluginManager:
                             self._handle_response(response)
                     except json.JSONDecodeError as e:
                         # 捕获非 JSON 输出（可能是插件的调试信息或错误信息）
+<<<<<<< HEAD
                         self.log.warning(
                             f"Non-JSON output from Node.js process: {line.strip()}, error: {e}"
                         )
@@ -104,6 +145,13 @@ class JSPluginManager:
                         self.log.error(f"Message handler error: {e}")
                 time.sleep(0.1)
 
+=======
+                        self.log.warning(f"Non-JSON output from Node.js process: {line.strip()}, error: {e}")
+                    except Exception as e:
+                        self.log.error(f"Message handler error: {e}")
+                time.sleep(0.1)
+        
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         def stderr_handler():
             """处理 Node.js 进程的错误输出"""
             while True:
@@ -111,6 +159,7 @@ class JSPluginManager:
                     try:
                         error_line = self.node_process.stderr.readline()
                         if error_line:
+<<<<<<< HEAD
                             self.log.error(
                                 f"Node.js process error output: {error_line.strip()}"
                             )
@@ -124,12 +173,24 @@ class JSPluginManager:
     def _send_message(
         self, message: dict[str, Any], timeout: int = 30
     ) -> dict[str, Any]:
+=======
+                            self.log.error(f"Node.js process error output: {error_line.strip()}")
+                    except Exception as e:
+                        self.log.error(f"Error handler error: {e}")
+                time.sleep(0.1)
+        
+        threading.Thread(target=stdout_handler, daemon=True).start()
+        threading.Thread(target=stderr_handler, daemon=True).start()
+
+    def _send_message(self, message: Dict[str, Any], timeout: int = 30) -> Dict[str, Any]:
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         """发送消息到 Node.js 子进程"""
         with self._lock:
             if not self.node_process or self.node_process.poll() is not None:
                 raise Exception("Node.js process not available")
 
             message_id = f"msg_{int(time.time() * 1000)}"
+<<<<<<< HEAD
             message["id"] = message_id
 
             # 记录发送的消息
@@ -143,16 +204,36 @@ class JSPluginManager:
 
             # 发送消息
             self.node_process.stdin.write(json.dumps(message) + "\n")
+=======
+            message['id'] = message_id
+
+            # 记录发送的消息
+            self.log.info(f"JS Plugin Manager sending message: {message.get('action', 'unknown')} for plugin: {message.get('pluginName', 'unknown')}")
+            if 'params' in message:
+                self.log.info(f"JS Plugin Manager search params: {message['params']}")
+            elif 'musicItem' in message:
+                self.log.info(f"JS Plugin Manager music item: {message['musicItem']}")
+
+            # 发送消息
+            self.node_process.stdin.write(json.dumps(message) + '\n')
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
             self.node_process.stdin.flush()
 
             # 等待响应
             response = self._wait_for_response(message_id, timeout)
+<<<<<<< HEAD
             self.log.info(
                 f"JS Plugin Manager received response for message {message_id}: {response.get('success', 'unknown')}"
             )
             return response
 
     def _wait_for_response(self, message_id: str, timeout: int) -> dict[str, Any]:
+=======
+            self.log.info(f"JS Plugin Manager received response for message {message_id}: {response.get('success', 'unknown')}")
+            return response
+
+    def _wait_for_response(self, message_id: str, timeout: int) -> Dict[str, Any]:
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         """等待特定消息的响应"""
         start_time = time.time()
 
@@ -164,6 +245,7 @@ class JSPluginManager:
 
         raise TimeoutError(f"Message {message_id} timeout")
 
+<<<<<<< HEAD
     def _handle_response(self, response: dict[str, Any]):
         """处理 Node.js 进程的响应"""
         message_id = response.get("id")
@@ -315,10 +397,44 @@ class JSPluginManager:
         self._config_cache = None
         self._config_cache_time = 0
 
+=======
+    def _handle_response(self, response: Dict[str, Any]):
+        """处理 Node.js 进程的响应"""
+        message_id = response.get('id')
+        self.log.debug(f"JS Plugin Manager received raw response: {response}")  # 添加原始响应日志
+        
+        # 添加更严格的数据验证
+        if not isinstance(response, dict):
+            self.log.error(f"JS Plugin Manager received invalid response type: {type(response)}, value: {response}")
+            return
+            
+        if 'id' not in response:
+            self.log.error(f"JS Plugin Manager received response without id: {response}")
+            return
+            
+        # 确保 success 字段存在
+        if 'success' not in response:
+            self.log.warning(f"JS Plugin Manager received response without success field: {response}")
+            response['success'] = False
+            
+        # 如果有 result 字段，验证其结构
+        if 'result' in response and response['result'] is not None:
+            result = response['result']
+            if isinstance(result, dict):
+                # 对搜索结果进行特殊处理
+                if 'data' in result and not isinstance(result['data'], list):
+                    self.log.warning(f"JS Plugin Manager received result with invalid data type: {type(result['data'])}, setting to empty list")
+                    result['data'] = []
+        
+        if message_id:
+            self.response_handlers[message_id] = response
+
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
     def _load_plugins(self):
         """加载所有插件"""
         if not os.path.exists(self.plugins_dir):
             os.makedirs(self.plugins_dir)
+<<<<<<< HEAD
 
         # 读取、加载插件配置Json
         if not os.path.exists(self.plugins_config_path):
@@ -351,10 +467,24 @@ class JSPluginManager:
                 try:
                     # 如果是重要插件或没有指定重要插件列表，则加载
                     if not enabled_plugins or plugin_name in enabled_plugins:
+=======
+            return
+
+        # 只加载指定的重要插件，避免加载所有插件导致超时
+        important_plugins = ['wy', 'qq']  # 可以根据需要添加更多
+
+        for filename in os.listdir(self.plugins_dir):
+            if filename.endswith('.js'):
+                try:
+                    plugin_name = os.path.splitext(filename)[0]
+                    # 如果是重要插件或没有指定重要插件列表，则加载
+                    if not important_plugins or plugin_name in important_plugins:
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
                         try:
                             self.log.info(f"Loading plugin: {plugin_name}")
                             self.load_plugin(plugin_name)
                         except Exception as e:
+<<<<<<< HEAD
                             self.log.error(
                                 f"Failed to load important plugin {plugin_name}: {e}"
                             )
@@ -375,15 +505,40 @@ class JSPluginManager:
                             "enabled": False,
                             "loaded": False,
                             "error": "Not loaded (not in important plugins list)",
+=======
+                            self.log.error(f"Failed to load important plugin {plugin_name}: {e}")
+                            # 即使加载失败也记录插件信息
+                            self.plugins[plugin_name] = {
+                                'name': plugin_name,
+                                'enabled': False,
+                                'loaded': False,
+                                'error': str(e)
+                            }
+                    else:
+                        self.log.debug(f"Skipping plugin (not in important list): {plugin_name}")
+                        # 标记为未加载但可用
+                        self.plugins[plugin_name] = {
+                            'name': plugin_name,
+                            'enabled': False,
+                            'loaded': False,
+                            'error': 'Not loaded (not in important plugins list)'
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
                         }
                 except Exception as e:
                     self.log.error(f"Failed to load plugin {filename}: {e}")
                     # 即使加载失败也记录插件信息
                     self.plugins[plugin_name] = {
+<<<<<<< HEAD
                         "name": plugin_name,
                         "enabled": False,
                         "loaded": False,
                         "error": str(e),
+=======
+                        'name': plugin_name,
+                        'enabled': False,
+                        'loaded': False,
+                        'error': str(e)
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
                     }
 
     def load_plugin(self, plugin_name: str) -> bool:
@@ -394,6 +549,7 @@ class JSPluginManager:
             raise FileNotFoundError(f"Plugin file not found: {plugin_file}")
 
         try:
+<<<<<<< HEAD
             with open(plugin_file, encoding="utf-8") as f:
                 js_code = f.read()
 
@@ -406,19 +562,40 @@ class JSPluginManager:
                     "status": "loaded",
                     "load_time": time.time(),
                     "enabled": True,
+=======
+            with open(plugin_file, 'r', encoding='utf-8') as f:
+                js_code = f.read()
+
+            response = self._send_message({
+                'action': 'load',
+                'name': plugin_name,
+                'code': js_code
+            })
+
+            if response['success']:
+                self.plugins[plugin_name] = {
+                    'status': 'loaded',
+                    'load_time': time.time(),
+                    'enabled': True
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
                 }
                 self.log.info(f"Loaded JS plugin: {plugin_name}")
                 return True
             else:
+<<<<<<< HEAD
                 self.log.error(
                     f"Failed to load JS plugin {plugin_name}: {response['error']}"
                 )
+=======
+                self.log.error(f"Failed to load JS plugin {plugin_name}: {response['error']}")
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
                 return False
 
         except Exception as e:
             self.log.error(f"Failed to load JS plugin {plugin_name}: {e}")
             return False
 
+<<<<<<< HEAD
     def refresh_plugin_list(self) -> list[dict[str, Any]]:
         """刷新插件列表，强制重新加载配置数据"""
         # 强制使缓存失效，重新加载配置
@@ -483,12 +660,39 @@ class JSPluginManager:
         except Exception as e:
             self.log.error(f"Failed to read enabled plugins from config: {e}")
             return False
+=======
+    def get_plugin_list(self) -> List[Dict[str, Any]]:
+        """获取插件列表"""
+        result = []
+        for name, info in self.plugins.items():
+            # 确保 info 是字典格式
+            if not isinstance(info, dict):
+                info = {'name': name, 'enabled': False, 'loaded': False}
+
+            result.append({
+                'name': name,
+                'status': info.get('status', 'loaded' if info.get('loaded', False) else 'not_loaded'),
+                'enabled': info.get('enabled', False),
+                'load_time': info.get('load_time'),
+                'loaded': info.get('loaded', False),
+                'error': info.get('error')
+            })
+        return result
+
+    def get_enabled_plugins(self) -> List[str]:
+        """获取启用的插件列表"""
+        return [
+            name for name, info in self.plugins.items()
+            if info.get('enabled', False) and info.get('status') == 'loaded'
+        ]
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
 
     def search(self, plugin_name: str, keyword: str, page: int = 1, limit: int = 20):
         """搜索音乐"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
+<<<<<<< HEAD
         self.log.info(
             f"JS Plugin Manager starting search in plugin {plugin_name} for keyword: {keyword}"
         )
@@ -508,11 +712,29 @@ class JSPluginManager:
             self.log.error(
                 f"JS Plugin Manager search failed in plugin {plugin_name}: {response['error']}"
             )
+=======
+        self.log.info(f"JS Plugin Manager starting search in plugin {plugin_name} for keyword: {keyword}")
+        response = self._send_message({
+            'action': 'search',
+            'pluginName': plugin_name,
+            'params': {
+                'keywords': keyword,
+                'page': page,
+                'limit': limit
+            }
+        })
+
+        self.log.debug(f"JS Plugin Manager search response: {response}")  # 使用 debug 级别，减少日志量
+
+        if not response['success']:
+            self.log.error(f"JS Plugin Manager search failed in plugin {plugin_name}: {response['error']}")
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
             # 添加详细的错误信息
             self.log.error(f"JS Plugin Manager full error response: {response}")
             raise Exception(f"Search failed: {response['error']}")
         else:
             # 检查返回的数据结构
+<<<<<<< HEAD
             result_data = response["result"]
             self.log.debug(
                 f"JS Plugin Manager search raw result: {result_data}"
@@ -720,10 +942,34 @@ class JSPluginManager:
         return result_data
 
     def get_media_source(self, plugin_name: str, music_item: dict[str, Any], quality):
+=======
+            result_data = response['result']
+            self.log.debug(f"JS Plugin Manager search raw result: {result_data}")  # 使用 debug 级别
+            data_list = result_data.get('data', [])
+            is_end = result_data.get('isEnd', True)
+            self.log.info(f"JS Plugin Manager search completed in plugin {plugin_name}, isEnd: {is_end}, found {len(data_list)} results")
+            # 检查数据类型是否正确
+            if not isinstance(data_list, list):
+                self.log.error(f"JS Plugin Manager search returned invalid data type: {type(data_list)}, value: {data_list}")
+            else:
+                self.log.debug(f"JS Plugin Manager search data sample: {data_list[:2] if len(data_list) > 0 else 'No results'}")
+                # 额外检查 resources 字段
+                if data_list:
+                    for i, item in enumerate(data_list[:3]):  # 检查前3个项目
+                        if 'resources' not in item:
+                            self.log.debug(f"JS Plugin Manager item {i} missing 'resources' field: {item}")  # 降级为 debug 级别，避免过多日志
+                        else:
+                            self.log.debug(f"JS Plugin Manager item {i} 'resources' field: {type(item.get('resources'))}")
+
+        return response['result']
+
+    def get_media_source(self, plugin_name: str, music_item: Dict[str, Any]):
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         """获取媒体源"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
+<<<<<<< HEAD
         self.log.debug(
             f"JS Plugin Manager getting media source in plugin {plugin_name} for item: {music_item.get('title', 'unknown')} by {music_item.get('artist', 'unknown')}"
         )
@@ -749,10 +995,29 @@ class JSPluginManager:
         return response["result"]
 
     def get_lyric(self, plugin_name: str, music_item: dict[str, Any]):
+=======
+        self.log.debug(f"JS Plugin Manager getting media source in plugin {plugin_name} for item: {music_item.get('title', 'unknown')} by {music_item.get('artist', 'unknown')}")
+        response = self._send_message({
+            'action': 'getMediaSource',
+            'pluginName': plugin_name,
+            'musicItem': music_item
+        })
+
+        if not response['success']:
+            self.log.error(f"JS Plugin Manager getMediaSource failed in plugin {plugin_name}: {response['error']}")
+            raise Exception(f"getMediaSource failed: {response['error']}")
+        else:
+            self.log.debug(f"JS Plugin Manager getMediaSource completed in plugin {plugin_name}, URL length: {len(response['result'].get('url', '')) if response['result'] else 0}")
+
+        return response['result']
+
+    def get_lyric(self, plugin_name: str, music_item: Dict[str, Any]):
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         """获取歌词"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
+<<<<<<< HEAD
         self.log.debug(
             f"JS Plugin Manager getting lyric in plugin {plugin_name} for music: {music_item.get('title', 'unknown')}"
         )
@@ -769,10 +1034,27 @@ class JSPluginManager:
         return response["result"]
 
     def get_music_info(self, plugin_name: str, music_item: dict[str, Any]):
+=======
+        self.log.debug(f"JS Plugin Manager getting lyric in plugin {plugin_name} for music: {music_item.get('title', 'unknown')}")
+        response = self._send_message({
+            'action': 'getLyric',
+            'pluginName': plugin_name,
+            'musicItem': music_item
+        })
+
+        if not response['success']:
+            self.log.error(f"JS Plugin Manager getLyric failed in plugin {plugin_name}: {response['error']}")
+            raise Exception(f"getLyric failed: {response['error']}")
+
+        return response['result']
+
+    def get_music_info(self, plugin_name: str, music_item: Dict[str, Any]):
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         """获取音乐详情"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
+<<<<<<< HEAD
         self.log.debug(
             f"JS Plugin Manager getting music info in plugin {plugin_name} for music: {music_item.get('title', 'unknown')}"
         )
@@ -795,10 +1077,27 @@ class JSPluginManager:
     def get_album_info(
         self, plugin_name: str, album_info: dict[str, Any], page: int = 1
     ):
+=======
+        self.log.debug(f"JS Plugin Manager getting music info in plugin {plugin_name} for music: {music_item.get('title', 'unknown')}")
+        response = self._send_message({
+            'action': 'getMusicInfo',
+            'pluginName': plugin_name,
+            'musicItem': music_item
+        })
+
+        if not response['success']:
+            self.log.error(f"JS Plugin Manager getMusicInfo failed in plugin {plugin_name}: {response['error']}")
+            raise Exception(f"getMusicInfo failed: {response['error']}")
+
+        return response['result']
+
+    def get_album_info(self, plugin_name: str, album_info: Dict[str, Any], page: int = 1):
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         """获取专辑详情"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
+<<<<<<< HEAD
         self.log.debug(
             f"JS Plugin Manager getting album info in plugin {plugin_name} for album: {album_info.get('title', 'unknown')}"
         )
@@ -821,10 +1120,27 @@ class JSPluginManager:
     def get_music_sheet_info(
         self, plugin_name: str, playlist_info: dict[str, Any], page: int = 1
     ):
+=======
+        self.log.debug(f"JS Plugin Manager getting album info in plugin {plugin_name} for album: {album_info.get('title', 'unknown')}")
+        response = self._send_message({
+            'action': 'getAlbumInfo',
+            'pluginName': plugin_name,
+            'albumInfo': album_info
+        })
+
+        if not response['success']:
+            self.log.error(f"JS Plugin Manager getAlbumInfo failed in plugin {plugin_name}: {response['error']}")
+            raise Exception(f"getAlbumInfo failed: {response['error']}")
+
+        return response['result']
+
+    def get_music_sheet_info(self, plugin_name: str, playlist_info: Dict[str, Any], page: int = 1):
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         """获取歌单详情"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
+<<<<<<< HEAD
         self.log.debug(
             f"JS Plugin Manager getting music sheet info in plugin {plugin_name} for playlist: {playlist_info.get('title', 'unknown')}"
         )
@@ -851,10 +1167,27 @@ class JSPluginManager:
         page: int = 1,
         type_: str = "music",
     ):
+=======
+        self.log.debug(f"JS Plugin Manager getting music sheet info in plugin {plugin_name} for playlist: {playlist_info.get('title', 'unknown')}")
+        response = self._send_message({
+            'action': 'getMusicSheetInfo',
+            'pluginName': plugin_name,
+            'playlistInfo': playlist_info
+        })
+
+        if not response['success']:
+            self.log.error(f"JS Plugin Manager getMusicSheetInfo failed in plugin {plugin_name}: {response['error']}")
+            raise Exception(f"getMusicSheetInfo failed: {response['error']}")
+
+        return response['result']
+
+    def get_artist_works(self, plugin_name: str, artist_item: Dict[str, Any], page: int = 1, type_: str = 'music'):
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         """获取作者作品"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
+<<<<<<< HEAD
         self.log.debug(
             f"JS Plugin Manager getting artist works in plugin {plugin_name} for artist: {artist_item.get('title', 'unknown')}"
         )
@@ -875,12 +1208,29 @@ class JSPluginManager:
             raise Exception(f"getArtistWorks failed: {response['error']}")
 
         return response["result"]
+=======
+        self.log.debug(f"JS Plugin Manager getting artist works in plugin {plugin_name} for artist: {artist_item.get('title', 'unknown')}")
+        response = self._send_message({
+            'action': 'getArtistWorks',
+            'pluginName': plugin_name,
+            'artistItem': artist_item,
+            'page': page,
+            'type': type_
+        })
+
+        if not response['success']:
+            self.log.error(f"JS Plugin Manager getArtistWorks failed in plugin {plugin_name}: {response['error']}")
+            raise Exception(f"getArtistWorks failed: {response['error']}")
+
+        return response['result']
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
 
     def import_music_item(self, plugin_name: str, url_like: str):
         """导入单曲"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
+<<<<<<< HEAD
         self.log.debug(
             f"JS Plugin Manager importing music item in plugin {plugin_name} from: {url_like}"
         )
@@ -899,12 +1249,27 @@ class JSPluginManager:
             raise Exception(f"importMusicItem failed: {response['error']}")
 
         return response["result"]
+=======
+        self.log.debug(f"JS Plugin Manager importing music item in plugin {plugin_name} from: {url_like}")
+        response = self._send_message({
+            'action': 'importMusicItem',
+            'pluginName': plugin_name,
+            'urlLike': url_like
+        })
+
+        if not response['success']:
+            self.log.error(f"JS Plugin Manager importMusicItem failed in plugin {plugin_name}: {response['error']}")
+            raise Exception(f"importMusicItem failed: {response['error']}")
+
+        return response['result']
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
 
     def import_music_sheet(self, plugin_name: str, url_like: str):
         """导入歌单"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
+<<<<<<< HEAD
         self.log.debug(
             f"JS Plugin Manager importing music sheet in plugin {plugin_name} from: {url_like}"
         )
@@ -923,6 +1288,20 @@ class JSPluginManager:
             raise Exception(f"importMusicSheet failed: {response['error']}")
 
         return response["result"]
+=======
+        self.log.debug(f"JS Plugin Manager importing music sheet in plugin {plugin_name} from: {url_like}")
+        response = self._send_message({
+            'action': 'importMusicSheet',
+            'pluginName': plugin_name,
+            'urlLike': url_like
+        })
+
+        if not response['success']:
+            self.log.error(f"JS Plugin Manager importMusicSheet failed in plugin {plugin_name}: {response['error']}")
+            raise Exception(f"importMusicSheet failed: {response['error']}")
+
+        return response['result']
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
 
     def get_top_lists(self, plugin_name: str):
         """获取榜单列表"""
@@ -930,6 +1309,7 @@ class JSPluginManager:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
         self.log.debug(f"JS Plugin Manager getting top lists in plugin {plugin_name}")
+<<<<<<< HEAD
         response = self._send_message(
             {"action": "getTopLists", "pluginName": plugin_name}
         )
@@ -945,10 +1325,25 @@ class JSPluginManager:
     def get_top_list_detail(
         self, plugin_name: str, top_list_item: dict[str, Any], page: int = 1
     ):
+=======
+        response = self._send_message({
+            'action': 'getTopLists',
+            'pluginName': plugin_name
+        })
+
+        if not response['success']:
+            self.log.error(f"JS Plugin Manager getTopLists failed in plugin {plugin_name}: {response['error']}")
+            raise Exception(f"getTopLists failed: {response['error']}")
+
+        return response['result']
+
+    def get_top_list_detail(self, plugin_name: str, top_list_item: Dict[str, Any], page: int = 1):
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
         """获取榜单详情"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
+<<<<<<< HEAD
         self.log.debug(
             f"JS Plugin Manager getting top list detail in plugin {plugin_name} for list: {top_list_item.get('title', 'unknown')}"
         )
@@ -1168,6 +1563,38 @@ class JSPluginManager:
         except Exception as e:
             self.log.error(f"Failed to update plugin config: {e}")
 
+=======
+        self.log.debug(f"JS Plugin Manager getting top list detail in plugin {plugin_name} for list: {top_list_item.get('title', 'unknown')}")
+        response = self._send_message({
+            'action': 'getTopListDetail',
+            'pluginName': plugin_name,
+            'topListItem': top_list_item,
+            'page': page
+        })
+
+        if not response['success']:
+            self.log.error(f"JS Plugin Manager getTopListDetail failed in plugin {plugin_name}: {response['error']}")
+            raise Exception(f"getTopListDetail failed: {response['error']}")
+
+        return response['result']
+
+    def enable_plugin(self, plugin_name: str) -> bool:
+        """启用插件"""
+        if plugin_name in self.plugins:
+            self.plugins[plugin_name]['enabled'] = True
+            self.log.info(f"Plugin {plugin_name} enabled")
+            return True
+        return False
+
+    def disable_plugin(self, plugin_name: str) -> bool:
+        """禁用插件"""
+        if plugin_name in self.plugins:
+            self.plugins[plugin_name]['enabled'] = False
+            self.log.info(f"Plugin {plugin_name} disabled")
+            return True
+        return False
+
+>>>>>>> 18578c4 (增加musicfree插件集成功能)
     def shutdown(self):
         """关闭插件管理器"""
         if self.node_process:

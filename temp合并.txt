@@ -1,0 +1,15 @@
+# 1. 获取上游
+git fetch upstream
+
+# 2. 基于 upstream/main 创建新分支
+git checkout -b upstream-main upstream/main
+
+# 3. 【关键修正】只获取你在 dev 中新增(A)或修改(M)的文件，并恢复
+git diff --name-only --diff-filter=AM upstream/main dev | xargs -r git checkout dev --
+
+# 4. 检查、测试、提交
+git status
+# ... 测试通过后 ...
+git add .
+git commit -m "feat: apply my changes on latest upstream"
+git push -u origin upstream-main
