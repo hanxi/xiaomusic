@@ -171,3 +171,4 @@ cache
 tmp/
 xiaomusic.log.txt*
 node_modules
+js_plugins/

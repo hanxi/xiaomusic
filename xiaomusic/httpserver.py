@@ -252,6 +252,147 @@ def searchmusic(name: str = "", Verifcation=Depends(verification)):
     return xiaomusic.searchmusic(name)
 
 
+@app.get("/api/search/online")
+async def search_online_music(
+    keyword: str = Query(..., description="搜索关键词"),
+    plugin: str = Query("all", description="指定插件名称，all表示搜索所有插件"),
+    page: int = Query(1, description="页码"),
+    limit: int = Query(20, description="每页数量"),
+    Verifcation=Depends(verification)
+):
+    """在线音乐搜索API"""
+    try:
+        if not keyword:
+            return {"success": False, "error": "Keyword required"}
+        
+        if not hasattr(xiaomusic, 'js_plugin_manager') or not xiaomusic.js_plugin_manager:
+            return {"success": False, "error": "JS Plugin Manager not available"}
+        
+        # 调用搜索功能
+        if plugin == "all":
+            # 搜索所有插件
+            results = []
+            sources = {}
+            total_count = 0
+            
+            for plugin_name in xiaomusic.js_plugin_manager.get_enabled_plugins():
+                try:
+                    plugin_results = xiaomusic.js_plugin_manager.search(plugin_name, keyword)
+                    plugin_data = plugin_results.get('data', [])
+                    results.extend(plugin_data)
+                    sources[plugin_name] = len(plugin_data)
+                    total_count += len(plugin_data)
+                except Exception as e:
+                    xiaomusic.log.error(f"Plugin {plugin_name} search failed: {e}")
+            
+            return {
+                "success": True,
+                "data": results,
+                "total": total_count,
+                "sources": sources,
+                "page": page,
+                "limit": limit
+            }
+        else:
+            # 搜索指定插件
+            try:
+                results = xiaomusic.js_plugin_manager.search(plugin, keyword)
+                return {
+                    "success": True,
+                    "data": results.get('data', []),
+                    "total": results.get('total', 0),
+                    "page": page,
+                    "limit": limit
+                }
+            except Exception as e:
+                xiaomusic.log.error(f"Plugin {plugin} search failed: {e}")
+                return {"success": False, "error": str(e)}
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/play/online")
+async def play_online_music(
+    request: Request,
+    Verifcation=Depends(verification)
+):
+    """播放在线音乐API"""
+    try:
+        # 获取请求数据
+        data = await request.json()
+        if not data:
+            return {"success": False, "error": "Music item required"}
+        
+        music_item = data
+        music_id = f"online_{music_item.get('plugin_name')}_{music_item.get('id')}"
+        
+        # 添加到 all_music
+        xiaomusic.all_music[music_id] = {
+            **music_item,
+            'source': 'online'
+        }
+        
+        # 获取设备信息
+        did = data.get('did', '')
+        if not did and xiaomusic.devices:
+            # 使用第一个可用设备
+            did = list(xiaomusic.devices.keys())[0]
+        
+        if not did:
+            return {"success": False, "error": "No device available"}
+        
+        # 调用播放功能
+        await xiaomusic.do_play_music_list(did, 'temp', music_id)
+        
+        return {"success": True, "message": "Playing online music"}
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/js-plugins")
+def get_js_plugins(Verifcation=Depends(verification)):
+    """获取插件列表"""
+    try:
+        if not hasattr(xiaomusic, 'js_plugin_manager') or not xiaomusic.js_plugin_manager:
+            return {"success": False, "error": "JS Plugin Manager not available"}
+        
+        plugins = xiaomusic.js_plugin_manager.get_plugin_list()
+        return {"success": True, "data": plugins}
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.put("/api/js-plugins/{plugin_name}/enable")
+def enable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
+    """启用插件"""
+    try:
+        if not hasattr(xiaomusic, 'js_plugin_manager') or not xiaomusic.js_plugin_manager:
+            return {"success": False, "error": "JS Plugin Manager not available"}
+        
+        success = xiaomusic.js_plugin_manager.enable_plugin(plugin_name)
+        return {"success": success}
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.put("/api/js-plugins/{plugin_name}/disable")
+def disable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
+    """禁用插件"""
+    try:
+        if not hasattr(xiaomusic, 'js_plugin_manager') or not xiaomusic.js_plugin_manager:
+            return {"success": False, "error": "JS Plugin Manager not available"}
+        
+        success = xiaomusic.js_plugin_manager.disable_plugin(plugin_name)
+        return {"success": success}
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 @app.get("/playingmusic")
 def playingmusic(did: str = "", Verifcation=Depends(verification)):
     if not xiaomusic.did_exist(did):

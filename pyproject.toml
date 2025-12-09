@@ -26,6 +26,7 @@ dependencies = [
     "fake-useragent>=2.2.0",
     "miservice-fork",
     "edge-tts>=7.2.3",
+    "psutil>=5.9.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"

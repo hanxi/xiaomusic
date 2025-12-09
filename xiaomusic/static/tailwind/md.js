@@ -38,7 +38,7 @@ function startProgressUpdate() {
   if (progressInterval) {
     clearInterval(progressInterval);
   }
-  
+
   // 每秒更新一次进度条
   progressInterval = setInterval(() => {
     if (duration > 0) {
@@ -66,18 +66,18 @@ function stopProgressUpdate() {
 window.playMusic = function(songName) {
   const currentPlaylist = localStorage.getItem("cur_playlist");
   console.log(`播放音乐: ${songName}, 播放列表: ${currentPlaylist}`);
-  
+
   // 检查是否是当前播放的歌曲
   const currentPlayingSong = localStorage.getItem("cur_music");
   const isCurrentSong = currentPlayingSong === songName;
-  
+
   if (window.did === 'web_device') {
     // Web播放模式
     $.get(`/musicinfo?name=${songName}`, function (data, status) {
       if (data.ret == "OK") {
         if (validHost(data.url)) {
           const audio = $("#audio")[0];
-          
+
           // 如果是同一首歌，切换播放/暂停状态
           if (audio.src && audio.src === data.url) {
             if (audio.paused) {
@@ -148,25 +148,25 @@ function do_play_music_list(listname, musicname) {
 // 更新播放信息
 function updatePlayingInfo(songName, isPlaying) {
   if (!songName) return;
-  
+
   // 更新播放栏信息
   const displayText = isPlaying ? `【播放中】 ${songName}` : `【暂停中】 ${songName}`;
   $("#playering-music").text(displayText);
   $("#playering-music-mobile").text(displayText);
-  
+
   // 更新播放按钮图标
   $(".play").text(isPlaying ? "pause_circle_outline" : "play_circle_outline");
-  
+
   // 更新收藏状态
   updateFavoriteStatus(songName);
-  
+
   // 高亮当前播放的歌曲
   highlightPlayingSong(songName, isPlaying);
-  
+
   // 保存当前播放的歌曲
   localStorage.setItem("cur_music", songName);
   localStorage.setItem("is_playing", isPlaying);
-  
+
   // 根据播放状态控制进度条更新
   if (isPlaying) {
     startProgressUpdate();
@@ -179,10 +179,10 @@ function updatePlayingInfo(songName, isPlaying) {
 function highlightPlayingSong(songName, isPlaying) {
   // 移除所有歌曲的高亮状态
   $(".song-item").removeClass("bg-blue-50 dark:bg-blue-900/20");
-  
+
   // 重置所有播放按钮为播放图标（只选择播放按钮中的图标）
   $(".play-icon").text("play_arrow");
-  
+
   // 高亮当前歌曲，无论是播放还是暂停状态
   $(".song-item").each(function() {
     const itemSongName = $(this).find("h3").text();
@@ -249,33 +249,33 @@ function nextTrack() {
 
 function togglePlayMode(isSend = true) {
   console.log('切换播放模式...');
-  
+
   // 从本地存储获取当前播放模式，如果没有则使用默认值2（随机播放）
   if (playModeIndex === undefined || playModeIndex === null) {
     playModeIndex = parseInt(localStorage.getItem("playModeIndex")) || 2;
   }
-  
+
   // 计算下一个播放模式索引：2 -> 3 -> 4 -> 2
   const nextModeIndex = playModeIndex >= 4 ? 2 : playModeIndex + 1;
-  
+
   // 获取下一个播放模式
   const nextMode = playModes[nextModeIndex];
   console.log('切换到播放模式:', nextModeIndex, nextMode.cmd);
-  
+
   // 更新按钮图标和提示文本
   const modeBtn = $("#modeBtn");
   const modeBtnIcon = modeBtn.find(".material-icons");
   const tooltip = modeBtn.find(".tooltip");
-  
+
   modeBtnIcon.text(nextMode.icon);
   tooltip.text(nextMode.cmd);
-  
+
   // 如果需要发送命令，则发送到设备
   if (isSend && window.did !== 'web_device') {
     console.log('发送播放模式命令:', nextMode.cmd);
     sendcmd(nextMode.cmd);
   }
-  
+
   // 保存新的播放模式到本地存储和全局变量
   localStorage.setItem("playModeIndex", nextModeIndex);
   playModeIndex = nextModeIndex;
@@ -287,7 +287,7 @@ function addToFavorites() {
 
   const isLiked = favoritelist.includes(currentSong);
   const cmd = isLiked ? "取消收藏" : "加入收藏";
-  
+
   // 发送收藏命令
   $.ajax({
     type: "POST",
@@ -299,7 +299,7 @@ function addToFavorites() {
     }),
     success: () => {
       console.log(`${cmd}成功: ${currentSong}`);
-      
+
       // 更新本地收藏列表
       if (isLiked) {
         // 取消收藏
@@ -312,7 +312,7 @@ function addToFavorites() {
         }
         $(".favorite").addClass("favorite-active");
       }
-      
+
       // 如果当前在收藏列表页面，刷新列表
       if (localStorage.getItem("cur_playlist") === "收藏") {
         refresh_music_list();
@@ -390,23 +390,23 @@ $.get("/getsetting", function (data, status) {
   if (data.mi_did != null) {
     dids = data.mi_did.split(",");
   }
-  
+
   if (did != "web_device" && dids.length > 0 && (did == null || did == "" || !dids.includes(did))) {
     did = dids[0];
     localStorage.setItem("cur_did", did);
   }
 
   window.did = did;
-  
+
   // 渲染设备按钮
   renderDeviceButtons(data.devices, did);
-  
+
   // 获取音量
   $.get(`/getvolume?did=${did}`, function (data, status) {
     console.log(data, status, data["volume"]);
     $("#volume").val(data.volume);
   });
-  
+
   // 刷新音乐列表
   refresh_music_list();
 
@@ -459,7 +459,7 @@ function _refresh_music_list(callback) {
       console.error("未获取到音乐列表数据");
       return;
     }
-    
+
     favoritelist = data["收藏"] || [];
 
     // 设置默认播放列表
@@ -521,7 +521,7 @@ function renderSystemPlaylists(data) {
     const songs = data[playlist.name] || [];
     const count = songs.length;
     const isActive = playlist.name === currentPlaylist;
-    
+
     const button = $(`
       <button 
         onclick="showPlaylist('${playlist.name}')" 
@@ -543,7 +543,7 @@ function renderSystemPlaylists(data) {
         ${isActive ? '<span class="material-icons ml-2 text-blue-500 text-sm hidden md:inline">check</span>' : ''}
       </button>
     `);
-    
+
     container.append(button);
   });
 }
@@ -551,35 +551,35 @@ function renderSystemPlaylists(data) {
 // 渲染专辑列表
 function renderAlbumList(data) {
   const container = $("#album-list");
-  
+
   if (!data || typeof data !== 'object') {
     return;
   }
-  
+
   container.empty();
-  
+
   // 系统预设的播放列表，这些不在专辑列表中显示
   const systemPlaylists = [
     '收藏', '最近新增', '所有歌曲', '临时搜索列表',
     '所有电台', '全部', '下载', '其他'
   ];
-  
+
   const currentPlaylist = localStorage.getItem("cur_playlist");
-  
+
   // 遍历所有播放列表
   for (const [listName, songs] of Object.entries(data)) {
     // 跳过系统预设列表
     if (systemPlaylists.includes(listName)) {
       continue;
     }
-    
+
     // 跳过空列表
     if (songs.length === 0) {
       continue;
     }
-    
+
     const isActive = listName === currentPlaylist;
-    
+
     const button = $(`
       <button 
         onclick="showPlaylist('${listName}')" 
@@ -605,7 +605,7 @@ function renderAlbumList(data) {
         ${isActive ? '<span class="material-icons flex-shrink-0 text-blue-500 text-sm">check</span>' : ''}
       </button>
     `);
-    
+
     container.append(button);
   }
 }
@@ -625,10 +625,10 @@ window.showPlaylist = function(listName) {
     // 渲染歌曲列表
     const songs = data[listName] || [];
     renderSongList(songs);
-    
+
     // 保存当前播放列表
     localStorage.setItem("cur_playlist", listName);
-    
+
     // 重新渲染系统播放列表和专辑列表以更新高亮状态
     renderSystemPlaylists(data);
     renderAlbumList(data);
@@ -641,10 +641,10 @@ function refresh_music_list() {
   // 刷新列表时清空并临时禁用搜索框
   const searchInput = document.getElementById("search-input");
   if (!searchInput) {
-    console.error("未找到搜索输入框");
+    // console.error("未找到搜索输入框");
     return;
   }
-  
+
   const oriPlaceHolder = searchInput.placeholder;
   const oriValue = searchInput.value;
   const inputEvent = new Event("input", { bubbles: true });
@@ -802,7 +802,7 @@ function handleSearch() {
     console.log("搜索输入框不存在");
     return;
   }
-
+  console.log("触发搜索：：！")
   searchInput.addEventListener(
     "input",
     debounce(function () {
@@ -831,18 +831,18 @@ function get_playing_music() {
     console.log(data);
     if (data.ret == "OK" && data.cur_music) {  // 确保cur_music存在
       updatePlayingInfo(data.cur_music, data.is_playing);
-      
+
       // 更新进度条和时间显示
       offset = data.offset || 0;
       duration = data.duration || 0;
-      
+
       if (duration > 0) {
         // 更新进度条
         $("#progress").val((offset / duration) * 100);
         // 更新时间显示
         $("#current-time").text(formatTime(offset));
         $("#duration").text(formatTime(duration));
-        
+
         // 如果正在播放，启动进度条更新
         if (data.is_playing) {
           startProgressUpdate();
@@ -856,7 +856,7 @@ function get_playing_music() {
         $("#duration").text("00:00");
         stopProgressUpdate();
       }
-      
+
       // 更新收藏状态
       if (favoritelist.includes(data.cur_music)) {
         $(".favorite").addClass("favorite-active");
@@ -906,7 +906,7 @@ window.stopPlay = function() {
     sendcmd("停止");
     updatePlayingInfo(currentSong, false);
   }
-  
+
   // 重置进度条和时间显示
   $("#progress").val(0);
   $("#current-time").text("00:00");
@@ -1051,7 +1051,7 @@ function adjustVolume(value) {
     audio.volume = value;
     localStorage.setItem('volume', value);
   }
-  
+
   // 更新设备音量
   if (window.did && window.did !== 'web_device') {
     $.ajax({
@@ -1112,7 +1112,7 @@ document.getElementById('volume-slider')?.addEventListener('input', function() {
 function renderDeviceButtons(devices, currentDid) {
   const container = $("#device-buttons");
   container.empty();
-  
+
   // 切换设备函数
   function switchDevice(did) {
     // 只有在切换到不同设备时才刷新页面
@@ -1122,7 +1122,7 @@ function renderDeviceButtons(devices, currentDid) {
       location.reload();
     }
   }
-  
+
   // 添加设备按钮
   Object.values(devices).forEach(device => {
     const isActive = device.did === currentDid;
@@ -1148,14 +1148,14 @@ function renderDeviceButtons(devices, currentDid) {
         ${isActive ? '<span class="material-icons flex-shrink-0 text-blue-500 text-sm">check</span>' : ''}
       </button>
     `);
-    
+
     button.click(function() {
       switchDevice(device.did);
     });
-    
+
     container.append(button);
   });
-  
+
   // 添加本机播放按钮
   const isWebDevice = currentDid === 'web_device';
   const webDeviceButton = $(`
@@ -1180,11 +1180,11 @@ function renderDeviceButtons(devices, currentDid) {
       ${isWebDevice ? '<span class="material-icons flex-shrink-0 text-blue-500 text-sm">check</span>' : ''}
     </button>
   `);
-  
+
   webDeviceButton.click(function() {
     switchDevice('web_device');
   });
-  
+
   container.append(webDeviceButton);
 }
 
@@ -1194,7 +1194,7 @@ function showPlaylist(type) {
   $('.playlist-button').removeClass('bg-blue-50 dark:bg-blue-900/20');
   // 添加当前按钮的活动状态
   $(`[data-playlist="${type}"]`).addClass('bg-blue-50 dark:bg-blue-900/20');
-  
+
   switch(type) {
     case 'all':
       // 显示所有歌曲
@@ -1268,12 +1268,12 @@ function renderSongList(songs) {
           </div>
         </div>
     `);
-    
+
     // 添加播放按钮点击事件
     songItem.find('.play-button').on('click', function() {
       playMusic(song);
     });
-    
+
     // 添加删除按钮点击事件
     songItem.find('.delete-button').on('click', function() {
       if (confirm(`确定要删除歌曲 "${song}" 吗？`)) {
@@ -1293,7 +1293,7 @@ function renderSongList(songs) {
         });
       }
     });
-    
+
     container.append(songItem);
   });
 }
@@ -1302,18 +1302,18 @@ function renderSongList(songs) {
 window.playMusic = function(songName) {
   const currentPlaylist = localStorage.getItem("cur_playlist");
   console.log(`播放音乐: ${songName}, 播放列表: ${currentPlaylist}`);
-  
+
   // 检查是否是当前播放的歌曲
   const currentPlayingSong = localStorage.getItem("cur_music");
   const isCurrentSong = currentPlayingSong === songName;
-  
+
   if (window.did === 'web_device') {
     // Web播放模式
     $.get(`/musicinfo?name=${songName}`, function (data, status) {
       if (data.ret == "OK") {
         if (validHost(data.url)) {
           const audio = $("#audio")[0];
-          
+
           // 如果是同一首歌，切换播放/暂停状态
           if (audio.src && audio.src === data.url) {
             if (audio.paused) {
@@ -1362,25 +1362,25 @@ window.playMusic = function(songName) {
 // 更新播放信息
 function updatePlayingInfo(songName, isPlaying) {
   if (!songName) return;
-  
+
   // 更新播放栏信息
   const displayText = isPlaying ? `【播放中】 ${songName}` : `【暂停中】 ${songName}`;
   $("#playering-music").text(displayText);
   $("#playering-music-mobile").text(displayText);
-  
+
   // 更新播放按钮图标
   $(".play").text(isPlaying ? "pause_circle_outline" : "play_circle_outline");
-  
+
   // 更新收藏状态
   updateFavoriteStatus(songName);
-  
+
   // 高亮当前播放的歌曲
   highlightPlayingSong(songName, isPlaying);
-  
+
   // 保存当前播放的歌曲
   localStorage.setItem("cur_music", songName);
   localStorage.setItem("is_playing", isPlaying);
-  
+
   // 根据播放状态控制进度条更新
   if (isPlaying) {
     startProgressUpdate();
@@ -1393,10 +1393,10 @@ function updatePlayingInfo(songName, isPlaying) {
 function highlightPlayingSong(songName, isPlaying) {
   // 移除所有歌曲的高亮状态
   $(".song-item").removeClass("bg-blue-50 dark:bg-blue-900/20");
-  
+
   // 重置所有播放按钮为播放图标（只选择播放按钮中的图标）
   $(".play-icon").text("play_arrow");
-  
+
   // 高亮当前歌曲，无论是播放还是暂停状态
   $(".song-item").each(function() {
     const itemSongName = $(this).find("h3").text();
@@ -1456,7 +1456,7 @@ window.stopPlay = function() {
     sendcmd("停止");
     updatePlayingInfo(currentSong, false);
   }
-  
+
   // 重置进度条和时间显示
   $("#progress").val(0);
   $("#current-time").text("00:00");
@@ -1490,12 +1490,12 @@ window.prevTrack = function() {
     const currentPlaylist = localStorage.getItem("cur_playlist");
     $.get("/musiclist", function (data, status) {
       if (!data || !data[currentPlaylist]) return;
-      
+
       const songs = data[currentPlaylist];
       const currentSong = $("#playering-music").text().replace('当前播放歌曲：', '');
       const currentIndex = songs.indexOf(currentSong);
       const prevIndex = currentIndex > 0 ? currentIndex - 1 : songs.length - 1;
-      
+
       playMusic(songs[prevIndex]);
     });
   } else {
@@ -1510,12 +1510,12 @@ window.nextTrack = function() {
     const currentPlaylist = localStorage.getItem("cur_playlist");
     $.get("/musiclist", function (data, status) {
       if (!data || !data[currentPlaylist]) return;
-      
+
       const songs = data[currentPlaylist];
       const currentSong = $("#playering-music").text().replace('当前播放歌曲：', '');
       const currentIndex = songs.indexOf(currentSong);
       const nextIndex = currentIndex < songs.length - 1 ? currentIndex + 1 : 0;
-      
+
       playMusic(songs[nextIndex]);
     });
   } else {
@@ -1530,10 +1530,10 @@ window.toggleFavorite = function() {
 
   const favoriteIcon = document.querySelector('.favorite-icon');
   const isFavorite = favoriteIcon.textContent === 'favorite';
-  
+
   // 切换图标
   favoriteIcon.textContent = isFavorite ? 'favorite_border' : 'favorite';
-  
+
   // 发送收藏/取消收藏请求
   $.ajax({
     type: "POST",
