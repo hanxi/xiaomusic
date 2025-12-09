@@ -1,0 +1,10 @@
+{
+  "account": "",
+  "password": "",
+  "openapi_info": {
+    "search_url": "https://music-dl.sayqz.com/api/",
+    "enabled": true
+  },
+  "enabled_plugins": [],
+  "plugins_info": []
+}

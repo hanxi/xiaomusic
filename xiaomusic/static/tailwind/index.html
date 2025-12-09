@@ -254,7 +254,8 @@
                         <div class="avatar cursor-pointer">
                             <!-- <a href="./now_playing.html" target="_blank"> -->
                                 <div class="w-12 rounded-lg">
-                                    <img :src="currentSong?.cover" :alt="currentSong?.title" />
+<!--                                    <img :src="currentSong?.cover" :alt="currentSong?.title" />-->
+                                    <img :src="currentSong?.cover || '/static/xiaoai.png'" :alt="currentSong?.title" />
                                 </div>
                             <!-- </a> -->
                         </div>
@@ -484,7 +485,7 @@
                         if (window.did === 'web_device') return;
 
                         const data = await API.getPlayingStatus(window.did);
-                        
+
                         if (data.ret === 'OK') {
                             isPlaying.value = data.is_playing;
                             currentTime.value = data.offset || 0;
@@ -785,11 +786,11 @@
                         // 创建新的音频播放器
                         const audio = document.createElement('audio');
                         audio.id = 'audio-player';
-                        
+
                         // 设置音频属性
                         audio.preload = 'auto';  // 预加载
                         audio.crossOrigin = 'anonymous';  // 允许跨域
-                        
+
                         // 添加到文档
                         document.body.appendChild(audio);
                         audioPlayer.value = audio;
@@ -799,7 +800,7 @@
                             console.error('Audio playback error:', e);
                             const error = e.target.error;
                             let errorMessage = '播放出错';
-                            
+
                             if (error) {
                                 switch (error.code) {
                                     case error.MEDIA_ERR_ABORTED:
@@ -816,7 +817,7 @@
                                         break;
                                 }
                             }
-                            
+
                             showMessage(errorMessage, 'alert-error');
                             isPlaying.value = false;
                         });

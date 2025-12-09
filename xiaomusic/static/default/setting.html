@@ -108,7 +108,7 @@ var vConsole = new window.VConsole();
         <input id="log_file" type="text" value="xiaomusic.log.txt" />
 
         <label for="active_cmd">允许唤醒的命令:</label>
-        <input id="active_cmd" type="text" value="play,random_play,playlocal,play_music_list,stop" />
+        <input id="active_cmd" type="text" value="play,online_play,random_play,playlocal,play_music_list,stop" />
 
         <label for="exclude_dirs">忽略目录(逗号分割):</label>
         <input id="exclude_dirs" type="text" value="@eaDir,tmp" />
@@ -231,6 +231,8 @@ var vConsole = new window.VConsole();
         <input id="keywords_search_playlocal" type="text" value="本地搜索播放" />
         <label for="keywords_search_play">搜索播放口令(会产生临时播放列表):</label>
         <input id="keywords_search_play" type="text" value="搜索播放" />
+        <label for="keywords_online_play">在线播放口令(在线搜索接口或插件):</label>
+        <input id="keywords_online_play" type="text" value="在线播放" />
 
         <label for="enable_yt_dlp_cookies">启用yt-dlp-cookies(需要先上传yt-dlp-cookies.txt文件):</label>
         <select id="enable_yt_dlp_cookies">
@@ -300,20 +302,20 @@ var vConsole = new window.VConsole();
         <button onclick="location.href='/static/default/index.html';">返回首页</button>
         <button class="save-button">保存</button>
       </div>
-  
+
       <div class="button-group">
         <button id="refresh_music_tag">刷新tag</button>
         <button id="clear_cache">清空缓存</button>
         <a href="/downloadlog" download="xiaomusic.txt"><button>下载日志文件</button></a>
       </div>
-  
+
       <div class="button-group">
         <a href="/docs" target="_blank"><button>接口文档</button></a>
         <a href="./m3u.html" target="_blank"><button>m3u转换</button></a>
         <a href="./downloadtool.html" target="_blank"><button>歌曲下载工具</button></a>
         <a href="./merge/index.html" target="_blank"><button>歌单合并工具</button></a>
       </div>
-  
+
       <div class="button-group">
         <a href="./debug.html" target="_blank"><button>调试工具</button></a>
         <a href="https://afdian.com/a/imhanxi" target="_blank"><button>💰 爱发电</button></a>
