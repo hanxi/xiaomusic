@@ -4,16 +4,85 @@ JS 插件管理器
 负责加载、管理和运行 MusicFree JS 插件
 """
 
-import subprocess
 import json
+import logging
 import os
+import subprocess
 import threading
 import time
-import psutil
-from typing import Dict, Any, Optional, List
-import logging
-import asyncio
-from urllib.parse import urlparse
+from typing import Dict, Any, List
+
+
+def optimize_search_results(
+        result_data: Dict[str, Any],
+        search_keyword: str = ""
+) -> Dict[str, Any]:
+    """
+    优化搜索结果排序函数
+    根据歌曲名(title)和专辑名(album)的匹配度进行智能排序
+    """
+    if not result_data or 'data' not in result_data or not result_data['data']:
+        return result_data
+
+    if not search_keyword.strip():
+        # 关键词为空或仅空白，无需排序
+        return result_data
+
+    data_list: List[Dict[str, Any]] = result_data['data']
+
+    def calculate_match_score(item):
+        """计算匹配分数"""
+        title = item.get('title', '').lower()
+        album = item.get('album', '').lower()
+        keyword = search_keyword.lower()
+
+        if not keyword:
+            return 0
+        score = 0
+
+        # 歌曲名匹配权重(十位数级别: 10-90分)
+        if keyword in title:
+            # 完全匹配得最高分
+            if title == keyword:
+                score += 90
+            # 开头匹配
+            elif title.startswith(keyword):
+                score += 70
+            # 结尾匹配
+            elif title.endswith(keyword):
+                score += 50
+            # 包含匹配
+            else:
+                score += 30
+        # 部分字符匹配
+        elif any(char in title for char in keyword.split()):
+            score += 10
+
+        # 专辑名匹配权重(个位数级别: 1-9分)
+        if keyword in album:
+            # 完全匹配
+            if album == keyword:
+                score += 9
+            # 开头匹配
+            elif album.startswith(keyword):
+                score += 7
+            # 结尾匹配
+            elif album.endswith(keyword):
+                score += 5
+            # 包含匹配
+            else:
+                score += 3
+        # 部分字符匹配
+        elif any(char in album for char in keyword.split()):
+            score += 1
+
+        return score
+
+    # 排序：高分在前
+    sorted_data = sorted(data_list, key=calculate_match_score, reverse=True)
+    result_data['data'] = sorted_data
+
+    return result_data
 
 
 class JSPluginManager:
@@ -89,7 +158,7 @@ class JSPluginManager:
                     except Exception as e:
                         self.log.error(f"Message handler error: {e}")
                 time.sleep(0.1)
-        
+
         def stderr_handler():
             """处理 Node.js 进程的错误输出"""
             while True:
@@ -101,7 +170,7 @@ class JSPluginManager:
                     except Exception as e:
                         self.log.error(f"Error handler error: {e}")
                 time.sleep(0.1)
-        
+
         threading.Thread(target=stdout_handler, daemon=True).start()
         threading.Thread(target=stderr_handler, daemon=True).start()
 
@@ -146,21 +215,21 @@ class JSPluginManager:
         """处理 Node.js 进程的响应"""
         message_id = response.get('id')
         self.log.debug(f"JS Plugin Manager received raw response: {response}")  # 添加原始响应日志
-        
+
         # 添加更严格的数据验证
         if not isinstance(response, dict):
             self.log.error(f"JS Plugin Manager received invalid response type: {type(response)}, value: {response}")
             return
-            
+
         if 'id' not in response:
             self.log.error(f"JS Plugin Manager received response without id: {response}")
             return
-            
+
         # 确保 success 字段存在
         if 'success' not in response:
             self.log.warning(f"JS Plugin Manager received response without success field: {response}")
             response['success'] = False
-            
+
         # 如果有 result 字段，验证其结构
         if 'result' in response and response['result'] is not None:
             result = response['result']
@@ -169,7 +238,7 @@ class JSPluginManager:
                 if 'data' in result and not isinstance(result['data'], list):
                     self.log.warning(f"JS Plugin Manager received result with invalid data type: {type(result['data'])}, setting to empty list")
                     result['data'] = []
-        
+
         if message_id:
             self.response_handlers[message_id] = response
 
@@ -180,8 +249,9 @@ class JSPluginManager:
             return
 
         # 只加载指定的重要插件，避免加载所有插件导致超时
-        important_plugins = ['wy', 'qq']  # 可以根据需要添加更多
-
+        important_plugins = ['kw', 'qq-yuanli']  # 可以根据需要添加更多
+        # TODO 后面改成读取配置文件配置
+        # important_plugins = []
         for filename in os.listdir(self.plugins_dir):
             if filename.endswith('.js'):
                 try:
@@ -314,13 +384,9 @@ class JSPluginManager:
                 self.log.debug(f"JS Plugin Manager search data sample: {data_list[:2] if len(data_list) > 0 else 'No results'}")
                 # 额外检查 resources 字段
                 if data_list:
-                    for i, item in enumerate(data_list[:3]):  # 检查前3个项目
-                        if 'resources' not in item:
-                            self.log.debug(f"JS Plugin Manager item {i} missing 'resources' field: {item}")  # 降级为 debug 级别，避免过多日志
-                        else:
-                            self.log.debug(f"JS Plugin Manager item {i} 'resources' field: {type(item.get('resources'))}")
-
-        return response['result']
+                    # 优化搜索结果排序后输出
+                    result_data = optimize_search_results(result_data, search_keyword=keyword)
+        return result_data
 
     def get_media_source(self, plugin_name: str, music_item: Dict[str, Any]):
         """获取媒体源"""

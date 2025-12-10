@@ -259,7 +259,7 @@ class PluginRunner {
         return capabilities;
     }
 
-            async search(pluginName, params) {
+    async search(pluginName, params) {
         const plugin = this.plugins.get(pluginName);
         if (!plugin) {
             throw new Error(`Plugin ${pluginName} not found`);
@@ -268,7 +268,7 @@ class PluginRunner {
         // 检查插件是否有 search 方法 - 参考 MusicFreeDesktop 实现
         if (!plugin.search || typeof plugin.search !== 'function') {
             // 只在详细模式下输出调试信息
-            // console.debug(`[JS_PLUGIN_RUNNER] Plugin ${pluginName} does not have a search function`);
+            console.debug(`[JS_PLUGIN_RUNNER] Plugin ${pluginName} does not have a search function`);
             return {
                 isEnd: true,
                 data: []
@@ -295,6 +295,9 @@ class PluginRunner {
             // console.debug(`[JS_PLUGIN_RUNNER] Calling search with query: ${query}, page: ${page}, type: ${type}`);
             const result = await plugin.search(query, page, type);
 
+            // 将调试信息写入日志文件而不是控制台
+            fs.appendFileSync('00-plugin_debug.log', `===========================${pluginName}插件原始返回结果：===================================\n`);
+            fs.appendFileSync('00-plugin_debug.log', `${JSON.stringify(result, null, 2)}\n`);
             // 严格验证返回结果 - 参考 MusicFreeDesktop 实现
             if (!result || typeof result !== 'object') {
                 console.error(`[JS_PLUGIN_RUNNER] Invalid search result from plugin ${pluginName}:`, typeof result);
@@ -303,10 +306,13 @@ class PluginRunner {
 
             // 确保返回正确的数据结构 - 参考 MusicFreeDesktop 实现
             const validatedResult = {
-                isEnd: result.isEnd === false ? false : true,  // 默认为 true，除非明确设置为 false
+                isEnd: result.isEnd !== false,  // 默认为 true，除非明确设置为 false
                 data: Array.isArray(result.data) ? result.data : []  // 确保 data 是数组
             };
-
+            //为 validatedResult中data的 每个元素添加一个 platform 属性
+            validatedResult.data.forEach(item => {
+                item.platform = pluginName;
+            });
             // 不输出调试信息以避免干扰通信
             return validatedResult;
         } catch (error) {
