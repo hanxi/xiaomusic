@@ -66,11 +66,7 @@ class PluginRunner {
                     result = await this.search(message.pluginName, message.params);
                     break;
                 case 'getMediaSource':
-<<<<<<< HEAD
-                    result = await this.getMediaSource(message.pluginName, message.musicItem, message.quality);
-=======
                     result = await this.getMediaSource(message.pluginName, message.musicItem);
->>>>>>> 18578c4 (增加musicfree插件集成功能)
                     break;
                 case 'getLyric':
                     result = await this.getLyric(message.pluginName, message.musicItem);
@@ -263,11 +259,7 @@ class PluginRunner {
         return capabilities;
     }
 
-<<<<<<< HEAD
     async search(pluginName, params) {
-=======
-            async search(pluginName, params) {
->>>>>>> 18578c4 (增加musicfree插件集成功能)
         const plugin = this.plugins.get(pluginName);
         if (!plugin) {
             throw new Error(`Plugin ${pluginName} not found`);
@@ -276,11 +268,7 @@ class PluginRunner {
         // 检查插件是否有 search 方法 - 参考 MusicFreeDesktop 实现
         if (!plugin.search || typeof plugin.search !== 'function') {
             // 只在详细模式下输出调试信息
-<<<<<<< HEAD
             console.debug(`[JS_PLUGIN_RUNNER] Plugin ${pluginName} does not have a search function`);
-=======
-            // console.debug(`[JS_PLUGIN_RUNNER] Plugin ${pluginName} does not have a search function`);
->>>>>>> 18578c4 (增加musicfree插件集成功能)
             return {
                 isEnd: true,
                 data: []
@@ -307,12 +295,9 @@ class PluginRunner {
             // console.debug(`[JS_PLUGIN_RUNNER] Calling search with query: ${query}, page: ${page}, type: ${type}`);
             const result = await plugin.search(query, page, type);
 
-<<<<<<< HEAD
             // 将调试信息写入日志文件而不是控制台
             fs.appendFileSync('00-plugin_debug.log', `===========================${pluginName}插件原始返回结果：===================================\n`);
             fs.appendFileSync('00-plugin_debug.log', `${JSON.stringify(result, null, 2)}\n`);
-=======
->>>>>>> 18578c4 (增加musicfree插件集成功能)
             // 严格验证返回结果 - 参考 MusicFreeDesktop 实现
             if (!result || typeof result !== 'object') {
                 console.error(`[JS_PLUGIN_RUNNER] Invalid search result from plugin ${pluginName}:`, typeof result);
@@ -321,7 +306,6 @@ class PluginRunner {
 
             // 确保返回正确的数据结构 - 参考 MusicFreeDesktop 实现
             const validatedResult = {
-<<<<<<< HEAD
                 isEnd: result.isEnd !== false,  // 默认为 true，除非明确设置为 false
                 data: Array.isArray(result.data) ? result.data : []  // 确保 data 是数组
             };
@@ -329,12 +313,6 @@ class PluginRunner {
             validatedResult.data.forEach(item => {
                 item.platform = pluginName;
             });
-=======
-                isEnd: result.isEnd === false ? false : true,  // 默认为 true，除非明确设置为 false
-                data: Array.isArray(result.data) ? result.data : []  // 确保 data 是数组
-            };
-
->>>>>>> 18578c4 (增加musicfree插件集成功能)
             // 不输出调试信息以避免干扰通信
             return validatedResult;
         } catch (error) {
@@ -345,11 +323,7 @@ class PluginRunner {
     }
 
 
-<<<<<<< HEAD
-    async getMediaSource(pluginName, musicItem, quality) {
-=======
     async getMediaSource(pluginName, musicItem) {
->>>>>>> 18578c4 (增加musicfree插件集成功能)
         const plugin = this.plugins.get(pluginName);
         if (!plugin) {
             throw new Error(`Plugin ${pluginName} not found`);
@@ -362,11 +336,7 @@ class PluginRunner {
         }
 
         try {
-<<<<<<< HEAD
-            const result = await plugin.getMediaSource(musicItem,quality);
-=======
             const result = await plugin.getMediaSource(musicItem);
->>>>>>> 18578c4 (增加musicfree插件集成功能)
             // 参考 MusicFreeDesktop 实现，验证结果
             if (result === null || result === undefined) {
                 return null;
@@ -677,19 +647,11 @@ const runner = new PluginRunner();
 
 // 处理进程退出
 process.on('SIGINT', () => {
-<<<<<<< HEAD
-    // 不输出任何内容，避免干扰 JSON 通信
-=======
     console.log('Received SIGINT, shutting down gracefully');
->>>>>>> 18578c4 (增加musicfree插件集成功能)
     process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-<<<<<<< HEAD
-    // 不输出任何内容，避免干扰 JSON 通信
-=======
     console.log('Received SIGTERM, shutting down gracefully');
->>>>>>> 18578c4 (增加musicfree插件集成功能)
     process.exit(0);
 });
