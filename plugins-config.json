@@ -1,0 +1,29 @@
+{
+  "account": "111",
+  "password": "3333",
+  "enabled_plugins": [
+    "kg"
+  ],
+  "plugins_info": [
+    {
+      "name": "kg",
+      "file": "kg.js",
+      "enabled": true
+    },
+    {
+      "name": "qq",
+      "file": "qq.js",
+      "enabled": false
+    },
+    {
+      "name": "qq-yuanli",
+      "file": "qq-yuanli.js",
+      "enabled": false
+    },
+    {
+      "name": "kw",
+      "file": "kw.js",
+      "enabled": false
+    }
+  ]
+}

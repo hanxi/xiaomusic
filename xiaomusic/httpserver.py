@@ -273,7 +273,6 @@ async def search_online_music(
             # 搜索所有插件
             results = []
             sources = {}
-            total_count = 0
             enabled_plugins = xiaomusic.js_plugin_manager.get_enabled_plugins()
             if not enabled_plugins:
                 return {"success": False, "error": "No enabled plugins exist"}
@@ -286,121 +285,87 @@ async def search_online_music(
             for plugin_name in enabled_plugins:
                 try:
                     plugin_results = xiaomusic.js_plugin_manager.search(plugin_name, keyword, page, item_limit)
-                    plugin_data = plugin_results.get('data', [])
-                    results.extend(plugin_data)
-                    sources[plugin_name] = len(plugin_data)
-                    total_count += len(plugin_data)
+                    data_list = plugin_results.get('data', [])
+                    if data_list:
+                        plugin_data = plugin_results.get('data', [])
+                        results.extend(plugin_data)
+                        sources[plugin_name] = len(plugin_data)
                 except Exception as e:
                     xiaomusic.log.error(f"Plugin {plugin_name} search failed: {e}")
+
+            # 统一排序并提取前limit条数据
+            if results:
+                unified_result = {"data": results}
+                optimized_result = xiaomusic.js_plugin_manager.optimize_search_results(unified_result, search_keyword=keyword, limit=limit)
+                results = optimized_result.get('data', [])
 
             return {
                 "success": True,
                 "data": results,
-                "total": total_count,
+                "total": len(results),
                 "sources": sources,
                 "page": page,
                 "limit": limit
             }
         else:
-            # 搜索指定插件
-            try:
-                results = xiaomusic.js_plugin_manager.search(plugin, keyword, page, limit)
-                return {
-                    "success": True,
-                    "data": results.get('data', []),
-                    "total": results.get('total', 0),
-                    "page": page,
-                    "limit": limit
-                }
-            except Exception as e:
-                xiaomusic.log.error(f"Plugin {plugin} search failed: {e}")
-                return {"success": False, "error": str(e)}
-
+                # 搜索指定插件
+                try:
+                    results = xiaomusic.js_plugin_manager.search(plugin, keyword, page, limit)
+                    # 额外检查 resources 字段
+                    data_list = results.get('data', [])
+                    if data_list:
+                        # 优化搜索结果排序后输出
+                        results = xiaomusic.js_plugin_manager.optimize_search_results(results, search_keyword=keyword, limit=limit)
+                    return {
+                        "success": True,
+                        "data": results.get('data', []),
+                        "total": results.get('total', 0),
+                        "page": page,
+                        "limit": limit
+                    }
+                except Exception as e:
+                    xiaomusic.log.error(f"Plugin {plugin} search failed: {e}")
+                    return {"success": False, "error": str(e)}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
 @app.post("/api/play/getMediaSource")
 async def get_media_source(
-        request: Request,
-        Verifcation=Depends(verification)
+        request: Request,Verifcation=Depends(verification)
 ):
     """获取音乐真实播放URL"""
     try:
         # 获取请求数据
         data = await request.json()
-        if not data:
-            return {"success": False, "error": "Music item required"}
-
-        music_item = data
-        plugin_name = music_item.get('platform')
-
-        # 检查插件是否启用
-        enabled_plugins = xiaomusic.js_plugin_manager.get_enabled_plugins()
-        if plugin_name not in enabled_plugins:
-            return {"success": False, "error": f"Plugin {plugin_name} not enabled"}
-
-        try:
-            # 获取媒体源信息
-            media_source = xiaomusic.js_plugin_manager.get_media_source(plugin_name, music_item)
-
-            if not media_source or not media_source.get('url'):
-                return {"success": False, "error": "Failed to get media source URL"}
-
-            # 返回播放URL
-            return {
-                "success": True,
-                "url": media_source['url'],
-                "quality": media_source.get('quality'),
-                "format": media_source.get('format')
-            }
-
-        except Exception as e:
-            xiaomusic.log.error(f"Plugin {plugin_name} get media source failed: {e}")
-            return {"success": False, "error": str(e)}
-
+        # 调用公共函数处理
+        return await xiaomusic.get_media_source_url(data)
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
 @app.post("/api/play/online")
 async def play_online_music(
-    request: Request,
-    Verifcation=Depends(verification)
+    request: Request,Verifcation=Depends(verification)
 ):
-    """播放在线音乐API"""
+    """设备端在线播放插件音乐"""
     try:
         # 获取请求数据
         data = await request.json()
-        if not data:
-            return {"success": False, "error": "Music item required"}
-
-        music_item = data
-        music_id = f"online_{music_item.get('plugin_name')}_{music_item.get('id')}"
-
-        # 添加到 all_music
-        xiaomusic.all_music[music_id] = {
-            **music_item,
-            'source': 'online'
-        }
-
-        # 获取设备信息
-        did = data.get('did', '')
-        if not did and xiaomusic.devices:
-            # 使用第一个可用设备
-            did = list(xiaomusic.devices.keys())[0]
-
-        if not did:
-            return {"success": False, "error": "No device available"}
-
-        # 调用播放功能
-        await xiaomusic.do_play_music_list(did, 'temp', music_id)
-
-        return {"success": True, "message": "Playing online music"}
-
+        did = data.get('did')
+        # if not xiaomusic.did_exist(did):
+        #     return {"ret": "Did not exist"}
+        # 调用公共函数处理,获取音乐真实播放URL
+        media_source = await xiaomusic.get_media_source_url(data)
+        if not media_source or not media_source.get('url'):
+            return {"success": False, "error": "Failed to get media source URL"}
+        url = media_source.get('url')
+        decoded_url = urllib.parse.unquote(url)
+        return await xiaomusic.play_url(did=did, arg1=decoded_url)
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+# =====================================插件入口函数===============
 
 @app.get("/api/js-plugins")
 def get_js_plugins(
@@ -411,6 +376,8 @@ def get_js_plugins(
     try:
         if not hasattr(xiaomusic, 'js_plugin_manager') or not xiaomusic.js_plugin_manager:
             return {"success": False, "error": "JS Plugin Manager not available"}
+        # 重新加载插件
+        # xiaomusic.js_plugin_manager.reload_plugins()
 
         if enabled_only:
             plugins = xiaomusic.js_plugin_manager.get_enabled_plugins()
@@ -449,6 +416,49 @@ def disable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+
+@app.post("/api/js-plugins/upload")
+async def upload_js_plugin(
+        file: UploadFile = File(...),
+        verification=Depends(verification)
+):
+    """上传 JS 插件"""
+    try:
+        # 验证文件扩展名
+        if not file.filename.endswith('.js'):
+            raise HTTPException(status_code=400, detail="只允许上传 .js 文件")
+
+        # 使用 JSPluginManager 中定义的插件目录
+        if not hasattr(xiaomusic, 'js_plugin_manager') or not xiaomusic.js_plugin_manager:
+            raise HTTPException(status_code=500, detail="JS Plugin Manager not available")
+
+        plugin_dir = xiaomusic.js_plugin_manager.plugins_dir
+        os.makedirs(plugin_dir, exist_ok=True)
+        file_path = os.path.join(plugin_dir, file.filename)
+        # 校验是否已存在同名js插件 存在则提示，停止上传
+        if os.path.exists(file_path):
+            raise HTTPException(status_code=409, detail=f"插件 {file.filename} 已存在，请重命名后再上传")
+        file_path = os.path.join(plugin_dir, file.filename)
+
+        # 写入文件内容
+        async with aiofiles.open(file_path, 'wb') as f:
+            content = await file.read()
+            await f.write(content)
+
+        # 更新插件配置文件
+        plugin_name = os.path.splitext(file.filename)[0]
+        xiaomusic.js_plugin_manager.update_plugin_config(plugin_name, file.filename)
+
+        # 重新加载插件
+        xiaomusic.js_plugin_manager.reload_plugins()
+
+        return {"success": True, "message": "插件上传成功"}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# =====================================插件入口函数END===============
 
 @app.get("/playingmusic")
 def playingmusic(did: str = "", Verifcation=Depends(verification)):

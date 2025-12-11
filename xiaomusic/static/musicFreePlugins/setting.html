@@ -271,6 +271,10 @@
             <a href="./index.html" class="header-btn">
                 返回搜索
             </a>
+            <!-- 插件导入 -->
+            <button class="header-btn" onclick="uploadPlugins()">
+                导入插件
+            </button>
             <!-- 修改为刷新插件按钮 -->
             <button class="header-btn" onclick="loadPlugins()">
                 刷新插件
@@ -316,6 +320,58 @@
         }
     }
 
+    /// 在现有的 script 标签中添加以下函数
+
+    // 插件导入功能
+    function uploadPlugins() {
+        // 创建文件输入元素
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.js'; // 只允许上传 js 文件
+        fileInput.style.display = 'none';
+
+        // 监听文件选择事件
+        fileInput.onchange = async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 验证文件类型
+            if (!file.name.endsWith('.js')) {
+                alert('只允许上传 .js 格式的文件');
+                return;
+            }
+
+            // 创建 FormData 对象
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // 上传文件
+                const response = await fetch('/api/js-plugins/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('插件导入成功');
+                    // 自动刷新插件列表
+                    loadPlugins();
+                } else {
+                    alert(`插件导入失败: ${data.error}`);
+                }
+            } catch (error) {
+                alert(`插件导入出错: ${error.message}`);
+            }
+        };
+
+        // 触发文件选择对话框
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
+    }
+
     // 显示插件列表
     function displayPlugins(plugins) {
         const container = document.getElementById('plugins-container');
@@ -333,7 +389,6 @@
                             <span class="plugin-status ${plugin.enabled ? 'status-enabled' : 'status-disabled'}">
                                 ${plugin.enabled ? '已启用' : '已禁用'}
                             </span>
-                            ${plugin.status ? ` | 状态: ${plugin.status}` : ''}
                             ${plugin.error ? ` | 错误: ${plugin.error}` : ''}
                         </div>
                     </div>
