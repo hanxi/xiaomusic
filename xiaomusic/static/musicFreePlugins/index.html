@@ -106,7 +106,7 @@
         }
         .play-btn {
             padding: 8px 15px;
-            background: #31c27c;
+            background: #1976d2;/*31c27c*/
             color: white;
             border: none;
             border-radius: 4px;
@@ -114,11 +114,11 @@
             font-size: 12px;
         }
         .play-btn:hover {
-            background: #28a869;
+            background: #1565c0;/*28a869*/
         }
         .web-play-btn {
             padding: 8px 15px;
-            background: #1976d2;
+            background: #31c27c;
             color: white;
             border: none;
             border-radius: 4px;
@@ -126,7 +126,7 @@
             font-size: 12px;
         }
         .web-play-btn:hover {
-            background: #1565c0;
+            background: #28a869;
         }
         .source-tag {
             padding: 2px 8px;
@@ -167,7 +167,7 @@
             padding: 8px 16px;
             background: #fff;
             color: #31c27c;
-            border: 1px solid #31c27c;
+            border: 1px solid #31c27c;/*31c27c*/
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
@@ -198,16 +198,97 @@
             align-items: center;
             gap: 15px;
         }
+        audio {
+            width: 100%;
+            outline: none;
+            margin-right: 10px;
+        }
+        audio::-webkit-media-controls-panel {
+            background: white;
+        }
+        /* 优化播放/暂停按钮样式 */
+        .player-play-pause {
+            background: #31c27c;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+            box-sizing: border-box; /* 添加此行确保padding/border不影响尺寸 */
+            flex-shrink: 0; /* 防止在flex容器中被压缩 */
+        }
+
+        .player-play-pause:hover {
+            background: #28a869;/*1565c0*/
+            transform: scale(1.05);
+        }
+
+        /* 调整播放按钮内 SVG 图标大小 */
+        .player-play-pause svg {
+            width: 24px;
+            height: 24px;
+            fill: white; /* 添加此行将图标颜色设为白色 */
+        }
+
+        /* 优化播放器整体样式 */
+        .music-player {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #eee;
+            padding: 12px 20px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* 优化播放器封面图样式 */
+        .player-cover {
+            width: 50px;
+            height: 50px;
+            border-radius: 4px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #999;
+            margin-right: 15px;
+            border: 1px solid #eee;
+        }
+
+        .player-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* 优化播放器信息显示 */
         .player-info {
             flex: 1;
             min-width: 0;
+            overflow: hidden;
         }
+
         .player-info .title {
             font-weight: bold;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            font-size: 14px;
+            color: #333;
         }
+
         .player-info .artist {
             font-size: 12px;
             color: #666;
@@ -215,34 +296,77 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        /* 优化播放器控制区域 */
         .player-controls {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
         }
+
+        /* 优化关闭按钮 */
         .player-close {
             background: #f5f5f5;
             border: none;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s ease;
         }
+
         .player-close:hover {
             background: #e0e0e0;
+            transform: scale(1.05);
         }
-        audio {
-            width: 100%;
-            outline: none;
+        /* 返回顶部按钮样式 */
+        .back-to-top {
+            position: fixed;
+            bottom: 120px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: #31c27c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
-        audio::-webkit-media-controls-panel {
-            background: white;
+
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            background: #28a869;
+            transform: translateY(-2px);
+        }
+
+        .back-to-top svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
         }
     </style>
 </head>
+<!-- 返回顶部按钮 -->
+<button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+    </svg>
+</button>
 <body>
 <div class="container">
     <div class="header">
@@ -284,11 +408,25 @@
 <!-- 音乐播放器 -->
 <div class="music-player" id="musicPlayer">
     <div class="player-content">
+        <!-- 增加封面图展示 -->
+        <div class="player-cover" id="playerCover">
+            <img src="" alt="专辑封面" id="coverImage" style="width: 50px; height: 50px; border-radius: 4px; object-fit: cover; display: none;">
+            <div id="coverPlaceholder" style="font-size: 12px; color: #999;"></div>
+        </div>
         <div class="player-info">
             <div class="title" id="playerTitle">未知歌曲</div>
             <div class="artist" id="playerArtist">未知艺术家</div>
         </div>
         <div class="player-controls">
+            <!-- 增加播放/暂停按钮 -->
+            <button class="player-play-pause" id="playPauseBtn" onclick="togglePlayPause()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" id="playIcon">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" id="pauseIcon" style="display: none;">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+            </button>
             <audio id="audioPlayer" controls></audio>
             <button class="player-close" onclick="closePlayer()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -299,11 +437,67 @@
     </div>
 </div>
 
+
 <script>
     // 页面加载时获取插件列表
     window.onload = function() {
         loadPlugins();
     };
+
+    // 显示/隐藏返回顶部按钮
+    window.addEventListener('scroll', function() {
+        const backToTopButton = document.getElementById('backToTop');
+        if (window.pageYOffset > 300) {
+            backToTopButton.classList.add('show');
+        } else {
+            backToTopButton.classList.remove('show');
+        }
+    });
+
+    // 平滑滚动到顶部
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
+    // 页面加载完成后初始化按钮状态
+    window.addEventListener('load', function() {
+        const backToTopButton = document.getElementById('backToTop');
+        if (window.pageYOffset > 300) {
+            backToTopButton.classList.add('show');
+        }
+    });
+
+
+    // 切换播放/暂停状态
+    function togglePlayPause() {
+        const audio = document.getElementById('audioPlayer');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+
+        if (audio.paused) {
+            audio.play();
+            playIcon.style.display = 'none';
+            pauseIcon.style.display = 'block';
+        } else {
+            audio.pause();
+            playIcon.style.display = 'block';
+            pauseIcon.style.display = 'none';
+        }
+    }
+
+    // 监听音频播放状态变化，同步按钮图标
+    document.getElementById('audioPlayer').addEventListener('play', function() {
+        document.getElementById('playIcon').style.display = 'none';
+        document.getElementById('pauseIcon').style.display = 'block';
+    });
+
+    document.getElementById('audioPlayer').addEventListener('pause', function() {
+        document.getElementById('playIcon').style.display = 'block';
+        document.getElementById('pauseIcon').style.display = 'none';
+    });
 
     // 加载插件列表
     async function loadPlugins() {
@@ -367,7 +561,7 @@
                     <div class="music-cover">
                         ${item.artwork ?
             `<img src="${item.artwork}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">` :
-            '封面'
+            '暂无封面'
         }
                     </div>
                     <div class="music-info">
@@ -427,6 +621,7 @@
     }
 
     // 网页播放音乐
+    // 网页播放音乐
     async function webPlayMusic(mediaItem) {
         try {
             // 获取音乐的真实播放链接
@@ -443,14 +638,33 @@
                 // 显示播放器
                 const player = document.getElementById('musicPlayer');
                 player.style.display = 'block';
+                // 指定底部高度，解决播放器显示问题
+                const container = document.querySelector('.container');
+                container.style.paddingBottom = '80px';
 
                 // 设置播放信息
                 document.getElementById('playerTitle').textContent = mediaItem.title;
                 document.getElementById('playerArtist').textContent = mediaItem.artist;
 
+                // 设置封面图
+                const coverImage = document.getElementById('coverImage');
+                const coverPlaceholder = document.getElementById('coverPlaceholder');
+                if (mediaItem.artwork) {
+                    coverPlaceholder.textContent = '';
+                    coverImage.src = mediaItem.artwork;
+                    coverImage.style.display = 'block'; // 显示图片
+                } else {
+                    coverPlaceholder.textContent = '暂无封面';
+                    coverImage.style.display = 'none'; // 隐藏图片，显示默认文本
+                }
+
                 // 设置音频源
                 const audio = document.getElementById('audioPlayer');
                 audio.src = data.url;
+
+                // 重置播放按钮图标
+                document.getElementById('playIcon').style.display = 'none';
+                document.getElementById('pauseIcon').style.display = 'block';
 
                 // 开始播放
                 audio.play();
@@ -467,6 +681,8 @@
     function closePlayer() {
         const player = document.getElementById('musicPlayer');
         const audio = document.getElementById('audioPlayer');
+        const container = document.querySelector('.container');
+        container.style.paddingBottom = '0'; // 移除底部间距
         audio.pause();
         player.style.display = 'none';
     }
