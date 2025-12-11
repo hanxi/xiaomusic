@@ -514,7 +514,7 @@ class XiaoMusic:
         picture = tags["picture"]
         if picture:
             if picture.startswith(self.config.picture_cache_path):
-                picture = picture[len(self.config.picture_cache_path) :]
+                picture = picture[len(self.config.picture_cache_path):]
             picture = picture.replace("\\", "/")
             if picture.startswith("/"):
                 picture = picture[1:]
@@ -701,7 +701,7 @@ class XiaoMusic:
 
         # 处理文件路径
         if filename.startswith(self.config.music_path):
-            filename = filename[len(self.config.music_path) :]
+            filename = filename[len(self.config.music_path):]
         filename = filename.replace("\\", "/")
         if filename.startswith("/"):
             filename = filename[1:]
@@ -791,7 +791,7 @@ class XiaoMusic:
                         # TODO: 网络歌曲获取歌曲额外信息
                         pass
                     elif os.path.exists(file_or_url) and not_in_dirs(
-                        file_or_url, ignore_tag_absolute_dirs
+                            file_or_url, ignore_tag_absolute_dirs
                     ):
                         all_music_tags[name] = extract_audio_metadata(
                             file_or_url, self.config.picture_cache_path
@@ -828,7 +828,7 @@ class XiaoMusic:
             if dir_name == os.path.basename(self.music_path):
                 dir_name = "其他"
             if self.music_path != self.download_path and dir_name == os.path.basename(
-                self.download_path
+                    self.download_path
             ):
                 dir_name = "下载"
             if dir_name not in all_music_by_dir:
@@ -1002,7 +1002,7 @@ class XiaoMusic:
             self.start_file_watch()
         analytics_task = asyncio.create_task(self.analytics_task_daily())
         assert (
-            analytics_task is not None
+                analytics_task is not None
         )  # to keep the reference to task, do not remove this
         async with ClientSession() as session:
             self.session = session
@@ -1125,11 +1125,11 @@ class XiaoMusic:
             opvalue = self.config.key_word_dict.get(opkey)
 
             if (
-                (not ctrl_panel)
-                and (not self.isplaying(did))
-                and self.active_cmd
-                and (opvalue not in self.active_cmd)
-                and (opkey not in self.active_cmd)
+                    (not ctrl_panel)
+                    and (not self.isplaying(did))
+                    and self.active_cmd
+                    and (opvalue not in self.active_cmd)
+                    and (opkey not in self.active_cmd)
             ):
                 self.log.info(f"不在激活命令中 {opvalue}")
                 continue
@@ -1236,6 +1236,52 @@ class XiaoMusic:
         # TODO: 这里可以优化性能
         self._gen_all_music_list()
 
+    # ===========================MusicFree插件函数================================
+
+    # 调用MusicFree插件获取真实播放url
+    async def get_media_source_url(self, music_item):
+        """获取音乐项的媒体源URL
+
+        Args:
+            music_item : MusicFree插件定义的 IMusicItem
+
+        Returns:
+            dict: 包含成功状态和URL信息的字典
+        """
+        if not music_item:
+            return {"success": False, "error": "Music item required"}
+
+        plugin_name = music_item.get('platform')
+
+        # 检查插件是否启用
+        if not self.js_plugin_manager:
+            return {"success": False, "error": "JS Plugin Manager not available"}
+
+        enabled_plugins = self.js_plugin_manager.get_enabled_plugins()
+        if plugin_name not in enabled_plugins:
+            return {"success": False, "error": f"Plugin {plugin_name} not enabled"}
+
+        try:
+            # 获取媒体源信息
+            media_source = self.js_plugin_manager.get_media_source(plugin_name, music_item)
+
+            if not media_source or not media_source.get('url'):
+                return {"success": False, "error": "Failed to get media source URL"}
+
+            # 返回播放URL
+            return {
+                "success": True,
+                "url": media_source['url'],
+                "quality": media_source.get('quality'),
+                "format": media_source.get('format')
+            }
+
+        except Exception as e:
+            # 记录错误日志
+            self.log.error(f"Plugin {plugin_name} get media source failed: {e}")
+            return {"success": False, "error": str(e)}
+    # ===========================================================
+
     def _find_real_music_list_name(self, list_name):
         if not self.config.enable_fuzzy_match:
             self.log.debug("没开启模糊匹配")
@@ -1266,14 +1312,14 @@ class XiaoMusic:
         return await self.do_play_music_list(did, list_name, music_name)
 
     async def do_play_music_list(self, did, list_name, music_name=""):
-    # 查找并获取真实的音乐列表名称
+        # 查找并获取真实的音乐列表名称
         list_name = self._find_real_music_list_name(list_name)
-    # 检查音乐列表是否存在，如果不存在则进行语音提示并返回
+        # 检查音乐列表是否存在，如果不存在则进行语音提示并返回
         if list_name not in self.music_list:
             await self.do_tts(did, f"播放列表{list_name}不存在")
             return
 
-    # 调用设备播放音乐列表的方法
+        # 调用设备播放音乐列表的方法
         await self.devices[did].play_music_list(list_name, music_name)
 
     # 播放一个播放列表里第几个
@@ -1328,7 +1374,7 @@ class XiaoMusic:
 
     # 后台搜索播放
     async def do_play(
-        self, did, name, search_key="", exact=False, update_cur_list=False
+            self, did, name, search_key="", exact=False, update_cur_list=False
     ):
         return await self.devices[did].play(name, search_key, exact, update_cur_list)
 
@@ -1769,7 +1815,7 @@ class XiaoMusicDevice:
             # 更新总播放列表，为了UI显示
             self.xiaomusic.music_list["临时搜索列表"] = copy.copy(self._play_list)
         elif (
-            self.device.cur_playlist == "临时搜索列表" and len(self._play_list) == 0
+                self.device.cur_playlist == "临时搜索列表" and len(self._play_list) == 0
         ) or (self.device.cur_playlist not in self.xiaomusic.music_list):
             self.device.cur_playlist = "全部"
         else:
@@ -1855,13 +1901,13 @@ class XiaoMusicDevice:
         self.log.info("开始播放下一首")
         name = self.get_cur_music()
         if (
-            self.device.play_type == PLAY_TYPE_ALL
-            or self.device.play_type == PLAY_TYPE_RND
-            or self.device.play_type == PLAY_TYPE_SEQ
-            or name == ""
-            or (
+                self.device.play_type == PLAY_TYPE_ALL
+                or self.device.play_type == PLAY_TYPE_RND
+                or self.device.play_type == PLAY_TYPE_SEQ
+                or name == ""
+                or (
                 (name not in self._play_list) and self.device.play_type != PLAY_TYPE_ONE
-            )
+        )
         ):
             name = self.get_next_music()
         self.log.info(f"_play_next. name:{name}, cur_music:{self.get_cur_music()}")
@@ -1878,10 +1924,10 @@ class XiaoMusicDevice:
         self.log.info("开始播放上一首")
         name = self.get_cur_music()
         if (
-            self.device.play_type == PLAY_TYPE_ALL
-            or self.device.play_type == PLAY_TYPE_RND
-            or name == ""
-            or (name not in self._play_list)
+                self.device.play_type == PLAY_TYPE_ALL
+                or self.device.play_type == PLAY_TYPE_RND
+                or name == ""
+                or (name not in self._play_list)
         ):
             name = self.get_prev_music()
         self.log.info(f"_play_prev. name:{name}, cur_music:{self.get_cur_music()}")
@@ -1951,9 +1997,9 @@ class XiaoMusicDevice:
                 self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
                 await asyncio.sleep(1)
                 if (
-                    self.isplaying()
-                    and self._last_cmd != "stop"
-                    and self._play_failed_cnt < 10
+                        self.isplaying()
+                        and self._last_cmd != "stop"
+                        and self._play_failed_cnt < 10
                 ):
                     self._play_failed_cnt = self._play_failed_cnt + 1
                     await self._play_next()
@@ -2007,8 +2053,8 @@ class XiaoMusicDevice:
         self.log.info(playing_info)
         # WTF xiaomi api
         is_playing = (
-            json.loads(playing_info.get("data", {}).get("info", "{}")).get("status", -1)
-            == 1
+                json.loads(playing_info.get("data", {}).get("info", "{}")).get("status", -1)
+                == 1
         )
         return is_playing
 
@@ -2127,8 +2173,8 @@ class XiaoMusicDevice:
             if direction == "next":
                 new_index = index + 1
                 if (
-                    self.device.play_type == PLAY_TYPE_SEQ
-                    and new_index >= play_list_len
+                        self.device.play_type == PLAY_TYPE_SEQ
+                        and new_index >= play_list_len
                 ):
                     self.log.info("顺序播放结束")
                     return ""
@@ -2215,7 +2261,7 @@ class XiaoMusicDevice:
                     f"play_one_url continue_play device_id:{device_id} ret:{ret} url:{url} audio_id:{audio_id}"
                 )
             elif self.config.use_music_api or (
-                self.hardware in NEED_USE_PLAY_MUSIC_API
+                    self.hardware in NEED_USE_PLAY_MUSIC_API
             ):
                 ret = await self.xiaomusic.mina_service.play_by_music_url(
                     device_id, url, audio_id=audio_id
@@ -2422,7 +2468,7 @@ class XiaoMusicDevice:
             return "最近新增"
         for list_name, play_list in self.xiaomusic.music_list.items():
             if (list_name not in ["全部", "所有歌曲", "所有电台", "临时搜索列表"]) and (
-                name in play_list
+                    name in play_list
             ):
                 return list_name
         if name in self.xiaomusic.music_list.get("所有歌曲", []):
@@ -2470,3 +2516,7 @@ class XiaoMusicPathWatch(FileSystemEventHandler):
         self._debounce_handle = self.loop.call_later(
             self.debounce_delay, _execute_callback
         )
+
+    # ===================================================================
+
+

@@ -13,85 +13,16 @@ import time
 from typing import Dict, Any, List
 
 
-def optimize_search_results(
-        result_data: Dict[str, Any],
-        search_keyword: str = ""
-) -> Dict[str, Any]:
-    """
-    优化搜索结果排序函数
-    根据歌曲名(title)和专辑名(album)的匹配度进行智能排序
-    """
-    if not result_data or 'data' not in result_data or not result_data['data']:
-        return result_data
-
-    if not search_keyword.strip():
-        # 关键词为空或仅空白，无需排序
-        return result_data
-
-    data_list: List[Dict[str, Any]] = result_data['data']
-
-    def calculate_match_score(item):
-        """计算匹配分数"""
-        title = item.get('title', '').lower()
-        album = item.get('album', '').lower()
-        keyword = search_keyword.lower()
-
-        if not keyword:
-            return 0
-        score = 0
-
-        # 歌曲名匹配权重(十位数级别: 10-90分)
-        if keyword in title:
-            # 完全匹配得最高分
-            if title == keyword:
-                score += 90
-            # 开头匹配
-            elif title.startswith(keyword):
-                score += 70
-            # 结尾匹配
-            elif title.endswith(keyword):
-                score += 50
-            # 包含匹配
-            else:
-                score += 30
-        # 部分字符匹配
-        elif any(char in title for char in keyword.split()):
-            score += 10
-
-        # 专辑名匹配权重(个位数级别: 1-9分)
-        if keyword in album:
-            # 完全匹配
-            if album == keyword:
-                score += 9
-            # 开头匹配
-            elif album.startswith(keyword):
-                score += 7
-            # 结尾匹配
-            elif album.endswith(keyword):
-                score += 5
-            # 包含匹配
-            else:
-                score += 3
-        # 部分字符匹配
-        elif any(char in album for char in keyword.split()):
-            score += 1
-
-        return score
-
-    # 排序：高分在前
-    sorted_data = sorted(data_list, key=calculate_match_score, reverse=True)
-    result_data['data'] = sorted_data
-
-    return result_data
-
-
 class JSPluginManager:
     """JS 插件管理器"""
 
     def __init__(self, xiaomusic):
+        base_path = os.path.dirname(os.path.dirname(__file__))
         self.xiaomusic = xiaomusic
         self.log = logging.getLogger(__name__)
-        self.plugins_dir = os.path.join(os.path.dirname(__file__), "js_plugins")
+        self.plugins_dir = os.path.join(base_path, "js_plugins")
+        # 修改第二行代码为：
+        self.plugins_config_path = os.path.join(base_path, "plugins-config.json")
         self.plugins = {}  # 插件状态信息
         self.node_process = None
         self.message_queue = []
@@ -144,6 +75,7 @@ class JSPluginManager:
 
     def _start_message_handler(self):
         """启动消息处理线程"""
+
         def stdout_handler():
             while True:
                 if self.node_process and self.node_process.stdout:
@@ -184,7 +116,8 @@ class JSPluginManager:
             message['id'] = message_id
 
             # 记录发送的消息
-            self.log.info(f"JS Plugin Manager sending message: {message.get('action', 'unknown')} for plugin: {message.get('pluginName', 'unknown')}")
+            self.log.info(
+                f"JS Plugin Manager sending message: {message.get('action', 'unknown')} for plugin: {message.get('pluginName', 'unknown')}")
             if 'params' in message:
                 self.log.info(f"JS Plugin Manager search params: {message['params']}")
             elif 'musicItem' in message:
@@ -196,7 +129,8 @@ class JSPluginManager:
 
             # 等待响应
             response = self._wait_for_response(message_id, timeout)
-            self.log.info(f"JS Plugin Manager received response for message {message_id}: {response.get('success', 'unknown')}")
+            self.log.info(
+                f"JS Plugin Manager received response for message {message_id}: {response.get('success', 'unknown')}")
             return response
 
     def _wait_for_response(self, message_id: str, timeout: int) -> Dict[str, Any]:
@@ -236,7 +170,8 @@ class JSPluginManager:
             if isinstance(result, dict):
                 # 对搜索结果进行特殊处理
                 if 'data' in result and not isinstance(result['data'], list):
-                    self.log.warning(f"JS Plugin Manager received result with invalid data type: {type(result['data'])}, setting to empty list")
+                    self.log.warning(
+                        f"JS Plugin Manager received result with invalid data type: {type(result['data'])}, setting to empty list")
                     result['data'] = []
 
         if message_id:
@@ -244,20 +179,21 @@ class JSPluginManager:
 
     def _load_plugins(self):
         """加载所有插件"""
+        global plugin_name
         if not os.path.exists(self.plugins_dir):
             os.makedirs(self.plugins_dir)
             return
 
-        # 只加载指定的重要插件，避免加载所有插件导致超时
-        important_plugins = ['kw', 'qq-yuanli']  # 可以根据需要添加更多
+        # 只加载指定的插件，避免加载所有插件导致超时
+        # enabled_plugins = ['kw', 'qq-yuanli']  # 可以根据需要添加更多
         # TODO 后面改成读取配置文件配置
-        # important_plugins = []
+        enabled_plugins = self.get_enabled_plugins()
         for filename in os.listdir(self.plugins_dir):
             if filename.endswith('.js'):
                 try:
                     plugin_name = os.path.splitext(filename)[0]
                     # 如果是重要插件或没有指定重要插件列表，则加载
-                    if not important_plugins or plugin_name in important_plugins:
+                    if not enabled_plugins or plugin_name in enabled_plugins:
                         try:
                             self.log.info(f"Loading plugin: {plugin_name}")
                             self.load_plugin(plugin_name)
@@ -323,29 +259,31 @@ class JSPluginManager:
             return False
 
     def get_plugin_list(self) -> List[Dict[str, Any]]:
-        """获取插件列表"""
+        """获取启用的插件列表"""
         result = []
-        for name, info in self.plugins.items():
-            # 确保 info 是字典格式
-            if not isinstance(info, dict):
-                info = {'name': name, 'enabled': False, 'loaded': False}
-
-            result.append({
-                'name': name,
-                'status': info.get('status', 'loaded' if info.get('loaded', False) else 'not_loaded'),
-                'enabled': info.get('enabled', False),
-                'load_time': info.get('load_time'),
-                'loaded': info.get('loaded', False),
-                'error': info.get('error')
-            })
+        try:
+            # 读取配置文件中的启用插件列表
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, 'r', encoding='utf-8') as f:
+                    config_data = json.load(f)
+                result = config_data.get("plugins_info", [])
+        except Exception as e:
+            self.log.error(f"Failed to read enabled plugins from config: {e}")
         return result
 
     def get_enabled_plugins(self) -> List[str]:
         """获取启用的插件列表"""
-        return [
-            name for name, info in self.plugins.items()
-            if info.get('enabled', False) and info.get('status') == 'loaded'
-        ]
+        try:
+            # 读取配置文件中的启用插件列表
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, 'r', encoding='utf-8') as f:
+                    config_data = json.load(f)
+                return config_data.get("enabled_plugins", [])
+            else:
+                return []
+        except Exception as e:
+            self.log.error(f"Failed to read enabled plugins from config: {e}")
+            return []
 
     def search(self, plugin_name: str, keyword: str, page: int = 1, limit: int = 20):
         """搜索音乐"""
@@ -376,16 +314,101 @@ class JSPluginManager:
             self.log.debug(f"JS Plugin Manager search raw result: {result_data}")  # 使用 debug 级别
             data_list = result_data.get('data', [])
             is_end = result_data.get('isEnd', True)
-            self.log.info(f"JS Plugin Manager search completed in plugin {plugin_name}, isEnd: {is_end}, found {len(data_list)} results")
+            self.log.info(
+                f"JS Plugin Manager search completed in plugin {plugin_name}, isEnd: {is_end}, found {len(data_list)} results")
             # 检查数据类型是否正确
             if not isinstance(data_list, list):
-                self.log.error(f"JS Plugin Manager search returned invalid data type: {type(data_list)}, value: {data_list}")
+                self.log.error(
+                    f"JS Plugin Manager search returned invalid data type: {type(data_list)}, value: {data_list}")
             else:
-                self.log.debug(f"JS Plugin Manager search data sample: {data_list[:2] if len(data_list) > 0 else 'No results'}")
-                # 额外检查 resources 字段
-                if data_list:
-                    # 优化搜索结果排序后输出
-                    result_data = optimize_search_results(result_data, search_keyword=keyword)
+                self.log.debug(
+                    f"JS Plugin Manager search data sample: {data_list[:2] if len(data_list) > 0 else 'No results'}")
+        return result_data
+
+    def optimize_search_results(self,
+                                result_data: Dict[str, Any],
+                                search_keyword: str = "",
+                                limit: int = 1
+                                ) -> Dict[str, Any]:
+        """
+        优化搜索结果排序函数
+        根据歌曲名(title)和专辑名(album)的匹配度进行智能排序
+        """
+        if not result_data or 'data' not in result_data or not result_data['data']:
+            return result_data
+
+        if not search_keyword.strip():
+            # 关键词为空或仅空白，无需排序
+            return result_data
+
+        data_list: List[Dict[str, Any]] = result_data['data']
+
+        def calculate_match_score(item):
+            """计算匹配分数"""
+            title = item.get('title', '').lower()
+            artist = item.get('artist', '').lower()
+            platform = item.get('platform', '')
+            keyword = search_keyword.lower()
+
+            if not keyword:
+                return 0
+            score = 0
+
+            # 平台匹配权重(百位数级别: 100-900)
+            import_plugins = self.get_enabled_plugins()
+            # TODO 后续改为读取配置文件 取前9个值。越靠前分数越高
+            check_plugins = import_plugins[:9]
+            if platform in check_plugins:
+                # 根据平台在列表中的位置给予不同分数，越靠前分数越高
+                platform_index = check_plugins.index(platform)
+                # 给予平台匹配分数，例如: 第一个平台给900分，第二个给800分，以此类推
+                score += 900 - (platform_index * 100)
+
+            # 歌曲名匹配权重(十位数级别: 10-90分)
+            if keyword in title:
+                # 完全匹配得最高分
+                if title == keyword:
+                    score += 90
+                # 开头匹配
+                elif title.startswith(keyword):
+                    score += 70
+                # 结尾匹配
+                elif title.endswith(keyword):
+                    score += 50
+                # 包含匹配
+                else:
+                    score += 30
+            # 部分字符匹配
+            elif any(char in title for char in keyword.split()):
+                score += 10
+
+            # 艺术家名匹配权重(个位数级别: 1-9分)
+            if keyword in artist:
+                # 完全匹配
+                if artist == keyword:
+                    score += 9
+                # 开头匹配
+                elif artist.startswith(keyword):
+                    score += 7
+                # 结尾匹配
+                elif artist.endswith(keyword):
+                    score += 5
+                # 包含匹配
+                else:
+                    score += 3
+            # 部分字符匹配
+            elif any(char in artist for char in keyword.split()):
+                score += 1
+
+            return score
+
+        # 排序：高分在前
+        sorted_data = sorted(data_list, key=calculate_match_score, reverse=True)
+        # 取前 limit 数量的数据
+        if 0 < limit < len(sorted_data):
+            sorted_data = sorted_data[:limit]
+        result_data['data'] = sorted_data
+
         return result_data
 
     def get_media_source(self, plugin_name: str, music_item: Dict[str, Any]):
@@ -393,7 +416,8 @@ class JSPluginManager:
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
-        self.log.debug(f"JS Plugin Manager getting media source in plugin {plugin_name} for item: {music_item.get('title', 'unknown')} by {music_item.get('artist', 'unknown')}")
+        self.log.debug(
+            f"JS Plugin Manager getting media source in plugin {plugin_name} for item: {music_item.get('title', 'unknown')} by {music_item.get('artist', 'unknown')}")
         response = self._send_message({
             'action': 'getMediaSource',
             'pluginName': plugin_name,
@@ -404,7 +428,8 @@ class JSPluginManager:
             self.log.error(f"JS Plugin Manager getMediaSource failed in plugin {plugin_name}: {response['error']}")
             raise Exception(f"getMediaSource failed: {response['error']}")
         else:
-            self.log.debug(f"JS Plugin Manager getMediaSource completed in plugin {plugin_name}, URL length: {len(response['result'].get('url', '')) if response['result'] else 0}")
+            self.log.debug(
+                f"JS Plugin Manager getMediaSource completed in plugin {plugin_name}, URL length: {len(response['result'].get('url', '')) if response['result'] else 0}")
 
         return response['result']
 
@@ -413,7 +438,8 @@ class JSPluginManager:
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
-        self.log.debug(f"JS Plugin Manager getting lyric in plugin {plugin_name} for music: {music_item.get('title', 'unknown')}")
+        self.log.debug(
+            f"JS Plugin Manager getting lyric in plugin {plugin_name} for music: {music_item.get('title', 'unknown')}")
         response = self._send_message({
             'action': 'getLyric',
             'pluginName': plugin_name,
@@ -431,7 +457,8 @@ class JSPluginManager:
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
-        self.log.debug(f"JS Plugin Manager getting music info in plugin {plugin_name} for music: {music_item.get('title', 'unknown')}")
+        self.log.debug(
+            f"JS Plugin Manager getting music info in plugin {plugin_name} for music: {music_item.get('title', 'unknown')}")
         response = self._send_message({
             'action': 'getMusicInfo',
             'pluginName': plugin_name,
@@ -449,7 +476,8 @@ class JSPluginManager:
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
-        self.log.debug(f"JS Plugin Manager getting album info in plugin {plugin_name} for album: {album_info.get('title', 'unknown')}")
+        self.log.debug(
+            f"JS Plugin Manager getting album info in plugin {plugin_name} for album: {album_info.get('title', 'unknown')}")
         response = self._send_message({
             'action': 'getAlbumInfo',
             'pluginName': plugin_name,
@@ -467,7 +495,8 @@ class JSPluginManager:
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
-        self.log.debug(f"JS Plugin Manager getting music sheet info in plugin {plugin_name} for playlist: {playlist_info.get('title', 'unknown')}")
+        self.log.debug(
+            f"JS Plugin Manager getting music sheet info in plugin {plugin_name} for playlist: {playlist_info.get('title', 'unknown')}")
         response = self._send_message({
             'action': 'getMusicSheetInfo',
             'pluginName': plugin_name,
@@ -485,7 +514,8 @@ class JSPluginManager:
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
-        self.log.debug(f"JS Plugin Manager getting artist works in plugin {plugin_name} for artist: {artist_item.get('title', 'unknown')}")
+        self.log.debug(
+            f"JS Plugin Manager getting artist works in plugin {plugin_name} for artist: {artist_item.get('title', 'unknown')}")
         response = self._send_message({
             'action': 'getArtistWorks',
             'pluginName': plugin_name,
@@ -558,7 +588,8 @@ class JSPluginManager:
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
-        self.log.debug(f"JS Plugin Manager getting top list detail in plugin {plugin_name} for list: {top_list_item.get('title', 'unknown')}")
+        self.log.debug(
+            f"JS Plugin Manager getting top list detail in plugin {plugin_name} for list: {top_list_item.get('title', 'unknown')}")
         response = self._send_message({
             'action': 'getTopListDetail',
             'pluginName': plugin_name,
@@ -572,21 +603,139 @@ class JSPluginManager:
 
         return response['result']
 
+    # 启用插件
     def enable_plugin(self, plugin_name: str) -> bool:
-        """启用插件"""
         if plugin_name in self.plugins:
             self.plugins[plugin_name]['enabled'] = True
-            self.log.info(f"Plugin {plugin_name} enabled")
+            # 读取、修改 插件配置json文件：① 将plugins_info属性中对于的插件状态改为禁用、2：将 enabled_plugins中对应插件移除
+            # 同步更新配置文件
+            try:
+                # 使用自定义的配置文件路径
+                config_file_path = self.plugins_config_path
+
+                # 读取现有配置
+                if os.path.exists(config_file_path):
+                    with open(config_file_path, 'r', encoding='utf-8') as f:
+                        config_data = json.load(f)
+
+                    # 更新plugins_info中对应插件的状态
+                    for plugin_info in config_data.get("plugins_info", []):
+                        if plugin_info.get("name") == plugin_name:
+                            plugin_info["enabled"] = True
+
+                    # 添加到enabled_plugins中（如果不存在）
+                    if "enabled_plugins" not in config_data:
+                        config_data["enabled_plugins"] = []
+
+                    if plugin_name not in config_data["enabled_plugins"]:
+                        # 追加到list的第一个
+                        config_data["enabled_plugins"].insert(0, plugin_name)
+
+                    # 写回配置文件
+                    with open(config_file_path, 'w', encoding='utf-8') as f:
+                        json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+                    self.log.info(f"Plugin config updated for enabled plugin {plugin_name}")
+
+            except Exception as e:
+                self.log.error(f"Failed to update plugin config when enabling {plugin_name}: {e}")
             return True
         return False
 
+    # 禁用插件
     def disable_plugin(self, plugin_name: str) -> bool:
-        """禁用插件"""
+
         if plugin_name in self.plugins:
             self.plugins[plugin_name]['enabled'] = False
-            self.log.info(f"Plugin {plugin_name} disabled")
+            # 读取、修改 插件配置json文件：① 将plugins_info属性中对于的插件状态改为禁用、2：将 enabled_plugins中对应插件移除
+            # 同步更新配置文件
+            try:
+                # 使用自定义的配置文件路径
+                config_file_path = self.plugins_config_path
+
+                # 读取现有配置
+                if os.path.exists(config_file_path):
+                    with open(config_file_path, 'r', encoding='utf-8') as f:
+                        config_data = json.load(f)
+
+                    # 更新plugins_info中对应插件的状态
+                    for plugin_info in config_data.get("plugins_info", []):
+                        if plugin_info.get("name") == plugin_name:
+                            plugin_info["enabled"] = False
+
+                    # 添加到enabled_plugins中（如果不存在）
+                    if "enabled_plugins" not in config_data:
+                        config_data["enabled_plugins"] = []
+
+                    if plugin_name in config_data["enabled_plugins"]:
+                        # 移除对应的插件名
+                        config_data["enabled_plugins"].remove(plugin_name)
+
+                    # 写回配置文件
+                    with open(config_file_path, 'w', encoding='utf-8') as f:
+                        json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+                    self.log.info(f"Plugin config updated for enabled plugin {plugin_name}")
+
+            except Exception as e:
+                self.log.error(f"Failed to update plugin config when enabling {plugin_name}: {e}")
             return True
         return False
+
+    def reload_plugins(self):
+        """重新加载所有插件"""
+        self.log.info("Reloading all plugins...")
+        # 清空现有插件状态
+        self.plugins.clear()
+        # 重新加载插件
+        self._load_plugins()
+        self.log.info("Plugins reloaded successfully")
+
+    def update_plugin_config(self, plugin_name: str, plugin_file: str):
+        """更新插件配置文件"""
+        try:
+            # 使用自定义的配置文件路径
+            config_file_path = self.plugins_config_path
+            # 如果配置文件不存在，创建一个基础配置
+            if not os.path.exists(config_file_path):
+                base_config = {
+                    "account": "",
+                    "password": "",
+                    "enabled_plugins": [],
+                    "plugins_info": []
+                }
+                with open(config_file_path, 'w', encoding='utf-8') as f:
+                    json.dump(base_config, f, ensure_ascii=False, indent=2)
+
+            # 读取现有配置
+            with open(config_file_path, 'r', encoding='utf-8') as f:
+                config_data = json.load(f)
+
+            # 检查是否已存在该插件信息
+            plugin_exists = False
+            for plugin_info in config_data.get("plugins_info", []):
+                if plugin_info.get("name") == plugin_name:
+                    plugin_exists = True
+                    break
+
+            # 如果不存在，则添加新的插件信息
+            if not plugin_exists:
+                new_plugin_info = {
+                    "name": plugin_name,
+                    "file": plugin_file,
+                    "enabled": False  # 默认不启用
+                }
+                if "plugins_info" not in config_data:
+                    config_data["plugins_info"] = []
+                config_data["plugins_info"].append(new_plugin_info)
+                # 写回配置文件
+                with open(config_file_path, 'w', encoding='utf-8') as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+            self.log.info(f"Plugin config updated for {plugin_name}")
+
+        except Exception as e:
+            self.log.error(f"Failed to update plugin config: {e}")
 
     def shutdown(self):
         """关闭插件管理器"""

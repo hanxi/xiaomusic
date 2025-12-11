@@ -326,7 +326,7 @@
         .back-to-top {
             position: fixed;
             bottom: 120px;
-            left: 20px;
+            right: 20px;
             width: 40px;
             height: 40px;
             background: #31c27c;
@@ -374,10 +374,10 @@
         <p>通过 MusicFree 音源插件搜索在线音乐</p>
         <!-- 三个居中按钮 -->
         <div class="header-buttons">
-            <a href="/" target="_blank" class="header-btn">
+            <a href="/" class="header-btn">
                 返回首页
             </a>
-            <a href="./setting.html" target="_blank" class="header-btn">
+            <a href="./setting.html" class="header-btn">
                 插件设置
             </a>
             <a href="https://github.com/maotoumao/MusicFreePlugins" target="_blank" class="header-btn">
@@ -585,7 +585,7 @@
                     </div>
                     <div class="music-actions">
                         <span class="source-tag">${item.platform || 'online'}</span>
-                        <button class="play-btn" onclick="playMusic('${item.id}', '${item.platform}')">播放</button>
+                        <button class="play-btn" onclick="playMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">播放</button>
                         <button class="web-play-btn" onclick="webPlayMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">网页播放</button>
 
                     </div>
@@ -595,18 +595,30 @@
         resultsDiv.innerHTML = html;
     }
 
+    // 获取当前选中的设备ID
+    function getCurrentDeviceId() {
+        // 从 localStorage 获取当前设备ID
+        return localStorage.getItem('cur_did') || '';
+    }
+
     // 播放音乐（设备播放）
-    async function playMusic(musicId, pluginName) {
+    async function playMusic(mediaItem) {
         try {
+            const deviceId = getCurrentDeviceId();
+            if (!deviceId || deviceId === '') {
+                alert('请先设置设备!');
+                return;
+            }
+            // 构造正确的请求数据
+            const requestData = {...mediaItem, did: deviceId};
+            console.log("请求参数：：",requestData)
+
             const response = await fetch('/api/play/online', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    id: musicId,
-                    plugin_name: pluginName
-                })
+                body: JSON.stringify(requestData)
             });
 
             const data = await response.json();
