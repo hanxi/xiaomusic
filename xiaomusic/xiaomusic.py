@@ -202,8 +202,7 @@ class XiaoMusic:
             try:
                 os.remove(log_file)
             except Exception as e:
-                # 在 self.log 初始化之前，使用基础的日志功能
-                logging.warning(f"无法删除旧日志文件: {log_file} {e}")
+                self.log.warning(f"无法删除旧日志文件: {log_file} {e}")
         handler = RotatingFileHandler(
             self.config.log_file,
             maxBytes=10 * 1024 * 1024,
@@ -608,59 +607,10 @@ class XiaoMusic:
         Returns:
             tuple: (播放地址, 原始地址) - 网络音乐时可能有原始地址
         """
-        if self.is_online_music(name):
-            return await self._get_online_music_url(name)
-        elif self.is_web_music(name):
+        if self.is_web_music(name):
             return await self._get_web_music_url(name)
         return self._get_local_music_url(name), None
 
-    def is_online_music(self, name):
-        """判断是否为在线音乐"""
-        music_info = self.all_music.get(name, {})
-        return music_info.get('source') == 'online'
-
-    async def _get_online_music_url(self, name):
-        """获取在线音乐播放地址"""
-        music_info = self.all_music.get(name, {})
-        if not music_info or music_info.get('source') != 'online':
-            return "", None
-
-        try:
-            plugin_name = music_info.get('plugin_name')
-            original_data = music_info.get('original_data', {})
-
-            # 使用适配器转换音乐项
-            from .js_adapter import JSAdapter
-            if not hasattr(self, 'js_adapter'):
-                self.js_adapter = JSAdapter(self)
-
-            plugin_music_item = self.js_adapter.convert_music_item_for_plugin(music_info)
-
-            # 通过插件获取播放链接
-            media_source = self.js_plugin_manager.get_media_source(plugin_name, plugin_music_item)
-
-            # 使用适配器格式化媒体源结果
-            formatted_source = self.js_adapter.format_media_source_result(media_source, music_info)
-
-            if not formatted_source or not formatted_source.get('url'):
-                self.log.error(f"Failed to get media source for {name}")
-                return "", None
-
-            url = formatted_source['url']
-            origin_url = url
-
-            # 是否需要代理
-            if self.config.web_music_proxy:
-                proxy_url = self._get_proxy_url(url)
-                return proxy_url, origin_url
-
-            return url, origin_url
-
-        except Exception as e:
-            self.log.error(f"Error getting online music URL for {name}: {e}")
-            import traceback
-            self.log.error(f"Full traceback: {traceback.format_exc()}")
-            return "", None
 
     async def _get_web_music_url(self, name):
         """获取网络音乐播放地址"""
@@ -1058,15 +1008,6 @@ class XiaoMusic:
         await asyncio.gather(*self.running_task, return_exceptions=True)
         self.running_task = []
 
-    def shutdown(self):
-        """关闭 xiaomusic 服务"""
-        # 关闭 JS 插件管理器
-        if hasattr(self, 'js_plugin_manager') and self.js_plugin_manager:
-            self.js_plugin_manager.shutdown()
-
-        # 关闭其他资源
-        if hasattr(self, 'session') and self.session:
-            asyncio.run(self.session.close())
 
     async def is_task_finish(self):
         if len(self.running_task) == 0:
@@ -1571,58 +1512,11 @@ class XiaoMusic:
 
     # 搜索音乐
     def searchmusic(self, name):
-        """扩展搜索音乐功能，集成在线音乐源"""
-        self.log.info(f"Starting search for: {name}")
         all_music_list = list(self.all_music.keys())
-        self.log.info(f"Local music count: {len(all_music_list)}")
-
-        # 1. 现有本地音乐搜索
         search_list = fuzzyfinder(name, all_music_list, self._extra_index_search)
-        self.log.info(f"Local search results count: {len(search_list)}")
-
-        # 2. 【新增】JS 插件在线搜索
-        if hasattr(self, 'js_plugin_manager') and self.js_plugin_manager:
-            try:
-                online_results = self._search_online_music(name)
-                self.log.info(f"Online search results count: {len(online_results)}")
-                # 合并结果，优先级：JS插件 > 本地
-                search_list = online_results + search_list
-                self.log.info(f"Total search results count: {len(search_list)}")
-            except Exception as e:
-                self.log.error(f"Online music search failed: {e}")
-        else:
-            self.log.warning("JS Plugin Manager not available")
-
         self.log.debug(f"searchmusic. name:{name} search_list:{search_list}")
         return search_list
 
-    def _search_online_music(self, name):
-        """搜索在线音乐"""
-        self.log.info(f"Starting online music search for: {name}")
-        online_results = []
-
-        enabled_plugins = self.js_plugin_manager.get_enabled_plugins()
-        self.log.info(f"Enabled plugins: {enabled_plugins}")
-
-        # 并行搜索所有启用的插件
-        for plugin_name in enabled_plugins:
-            try:
-                self.log.info(f"Searching in plugin: {plugin_name}")
-                plugin_results = self.js_plugin_manager.search(plugin_name, name)
-                formatted_results = self._format_online_results(plugin_results.get('data', []), plugin_name)
-                self.log.info(f"Plugin {plugin_name} returned {len(formatted_results)} results")
-                online_results.extend(formatted_results)
-            except Exception as e:
-                self.log.error(f"Plugin {plugin_name} search failed: {e}")
-                import traceback
-                self.log.error(f"Full traceback: {traceback.format_exc()}")
-
-        self.log.info(f"Total online results: {len(online_results)}")
-        return online_results
-
-    def _format_online_results(self, results, plugin_name):
-        """格式化在线搜索结果为 xiaomusic 格式"""
-        return self.js_adapter.format_search_results(results, plugin_name)
 
     # 获取播放列表
     def get_music_list(self):
