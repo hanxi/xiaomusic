@@ -622,10 +622,17 @@
             });
 
             const data = await response.json();
-            if (data.success) {
-                alert('开始播放音乐');
+            // 根据新返回结构调整处理逻辑
+            if (data && data[0]) {
+                let itemResult = data[0];
+                if (itemResult.code == 0) {
+                    // 显示服务端返回的具体消息而不是通用提示
+                    alert('推送成功！');
+                } else {
+                    alert('播放失败: '+itemResult.msg);
+                }
             } else {
-                alert('播放失败: ' + data.error);
+                alert('播放失败: ' + (data.error || '未知错误'));
             }
         } catch (error) {
             alert('播放出错: ' + error.message);
