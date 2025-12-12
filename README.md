@@ -33,6 +33,12 @@ docker run -p 58090:8090 -e XIAOMUSIC_PUBLIC_PORT=58090 -v /xiaomusic_music:/app
 docker run -p 58090:8090 -e XIAOMUSIC_PUBLIC_PORT=58090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf docker.hanxi.cc/hanxi/xiaomusic
 ```
 
+测试版：
+
+```
+docker run -p 58090:8090 -e XIAOMUSIC_PUBLIC_PORT=58090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf hanxi/xiaomusic:main
+```
+
 对应的 docker compose 配置如下：
 
 ```yaml
@@ -56,6 +62,23 @@ services:
 services:
   xiaomusic:
     image: docker.hanxi.cc/hanxi/xiaomusic
+    container_name: xiaomusic
+    restart: unless-stopped
+    ports:
+      - 58090:8090
+    environment:
+      XIAOMUSIC_PUBLIC_PORT: 58090
+    volumes:
+      - /xiaomusic_music:/app/music
+      - /xiaomusic_conf:/app/conf
+```
+
+测试版：
+
+```yaml
+services:
+  xiaomusic:
+    image: hanxi/xiaomusic:main
     container_name: xiaomusic
     restart: unless-stopped
     ports:
