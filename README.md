@@ -112,6 +112,9 @@ services:
 > 作者的另一个适用于 NAS 上安装的开源工具： <https://github.com/hanxi/tiny-nav>
 
 > [!TIP]
+> PVE 移动端 UI 界面：<https://github.com/hanxi/pve-touch>
+
+> [!TIP]
 >
 > 喜欢听书的可以配合这个工具使用 <https://github.com/hanxi/epub2mp3>
 
