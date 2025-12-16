@@ -636,6 +636,8 @@ class JSPluginManager:
                         json.dump(config_data, f, ensure_ascii=False, indent=2)
 
                     self.log.info(f"Plugin config updated for enabled plugin {plugin_name}")
+                    # 更新插件引擎
+                    self.reload_plugins()
 
             except Exception as e:
                 self.log.error(f"Failed to update plugin config when enabling {plugin_name}: {e}")
@@ -676,7 +678,8 @@ class JSPluginManager:
                         json.dump(config_data, f, ensure_ascii=False, indent=2)
 
                     self.log.info(f"Plugin config updated for enabled plugin {plugin_name}")
-
+                    # 更新插件引擎
+                    self.reload_plugins()
             except Exception as e:
                 self.log.error(f"Failed to update plugin config when enabling {plugin_name}: {e}")
             return True

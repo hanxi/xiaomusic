@@ -611,7 +611,6 @@
             }
             // 构造正确的请求数据
             const requestData = {...mediaItem, did: deviceId};
-            console.log("请求参数：：",requestData)
 
             const response = await fetch('/api/play/online', {
                 method: 'POST',
