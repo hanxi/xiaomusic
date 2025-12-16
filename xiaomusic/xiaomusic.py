@@ -611,7 +611,6 @@ class XiaoMusic:
             return await self._get_web_music_url(name)
         return self._get_local_music_url(name), None
 
-
     async def _get_web_music_url(self, name):
         """获取网络音乐播放地址"""
         url = self.all_music[name]
@@ -1008,7 +1007,6 @@ class XiaoMusic:
         await asyncio.gather(*self.running_task, return_exceptions=True)
         self.running_task = []
 
-
     async def is_task_finish(self):
         if len(self.running_task) == 0:
             return True
@@ -1179,6 +1177,138 @@ class XiaoMusic:
 
     # ===========================MusicFree插件函数================================
 
+    # 调用MusicFree插件获取歌曲列表
+    async def get_music_list_mf(self, plugin="all", keyword="", page=1, limit=20, **kwargs):
+        self.log.info(f"通过MusicFree插件搜索音乐列表!")
+        """
+        通过MusicFree插件搜索音乐列表
+
+        Args:
+            plugin: 插件名称，"all"表示所有插件
+            keyword: 搜索关键词
+            page: 页码
+            limit: 每页数量
+            **kwargs: 其他参数
+
+        Returns:
+            dict: 搜索结果
+        """
+        # 检查JS插件管理器是否可用
+        if not self.js_plugin_manager:
+            return {"success": False, "error": "JS插件管理器不可用"}
+
+        try:
+            if plugin == "all":
+                # 搜索所有启用的插件
+                return await self._search_all_plugins(keyword, page, limit)
+            else:
+                # 搜索指定插件
+                return await self._search_specific_plugin(plugin, keyword, page, limit)
+        except Exception as e:
+            self.log.error(f"搜索音乐时发生错误: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def _search_all_plugins(self, keyword, page, limit):
+        """搜索所有启用的插件"""
+        enabled_plugins = self.js_plugin_manager.get_enabled_plugins()
+        if not enabled_plugins:
+            return {"success": False, "error": "没有启用的插件"}
+
+        results = []
+        sources = {}
+
+        # 计算每个插件的限制数量
+        plugin_count = len(enabled_plugins)
+        item_limit = max(1, limit // plugin_count) if plugin_count > 0 else limit
+
+        # 并行搜索所有插件
+        search_tasks = [
+            self._search_plugin_task(plugin_name, keyword, page, item_limit)
+            for plugin_name in enabled_plugins
+        ]
+
+        plugin_results = await asyncio.gather(*search_tasks, return_exceptions=True)
+
+        # 处理搜索结果
+        for i, result in enumerate(plugin_results):
+            plugin_name = list(enabled_plugins)[i]
+
+            # 检查是否为异常对象
+            if isinstance(result, Exception):
+                self.log.error(f"插件 {plugin_name} 搜索失败: {result}")
+                continue
+
+            # 检查是否为有效的搜索结果（修改这里的判断逻辑）
+            if result and isinstance(result, dict):
+                # 检查是否有错误信息
+                if "error" in result:
+                    self.log.error(f"插件 {plugin_name} 搜索失败: {result.get('error', '未知错误')}")
+                    continue
+
+                # 处理成功的搜索结果
+                data_list = result.get("data", [])
+                if data_list:
+                    results.extend(data_list)
+                    sources[plugin_name] = len(data_list)
+                # 如果没有data字段但有其他数据，也认为是成功的结果
+                elif result:  # 非空字典
+                    results.append(result)
+                    sources[plugin_name] = 1
+
+        # 统一排序并提取前limit条数据
+        if results:
+            unified_result = {"data": results}
+            optimized_result = self.js_plugin_manager.optimize_search_results(
+                unified_result,
+                search_keyword=keyword,
+                limit=limit
+            )
+            results = optimized_result.get('data', [])
+
+        return {
+            "success": True,
+            "data": results,
+            "total": len(results),
+            "sources": sources,
+            "page": page,
+            "limit": limit
+        }
+
+    async def _search_specific_plugin(self, plugin, keyword, page, limit):
+        """搜索指定插件"""
+        try:
+            results = self.js_plugin_manager.search(plugin, keyword, page, limit)
+
+            # 额外检查 resources 字段
+            data_list = results.get('data', [])
+            if data_list:
+                # 优化搜索结果排序
+                results = self.js_plugin_manager.optimize_search_results(
+                    results,
+                    search_keyword=keyword,
+                    limit=limit
+                )
+
+            return {
+                "success": True,
+                "data": results.get('data', []),
+                "total": results.get('total', 0),
+                "page": page,
+                "limit": limit
+            }
+        except Exception as e:
+            self.log.error(f"插件 {plugin} 搜索失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def _search_plugin_task(self, plugin_name, keyword, page, limit):
+        """单个插件搜索任务"""
+        try:
+            return self.js_plugin_manager.search(plugin_name, keyword, page, limit)
+        except Exception as e:
+            # 直接抛出异常，让 asyncio.gather 处理
+            raise e
+
+
     # 调用MusicFree插件获取真实播放url
     async def get_media_source_url(self, music_item):
         """获取音乐项的媒体源URL
@@ -1221,6 +1351,40 @@ class XiaoMusic:
             # 记录错误日志
             self.log.error(f"Plugin {plugin_name} get media source failed: {e}")
             return {"success": False, "error": str(e)}
+
+    # 调用MusicFree插件搜索并播放
+    async def play_by_music_free(self, search_key):
+        """调用MusicFree插件搜索并播放
+
+        Args:
+            search_key (str): 搜索关键词
+        Returns:
+            dict: 包含成功状态和URL信息的字典
+        """
+
+        try:
+            # 获取歌曲列表
+            result = await self.get_music_list_mf(keyword=search_key, limit=10)
+            if result.get('success') and result.get('total') > 0:
+                # 打印输出 result.data
+                self.log.info(f"歌曲列表: {result.get('data')}")
+                # 获取第一个歌曲的播放链接
+                music_item = result.get('data')[0]
+                media_source = await self.get_media_source_url(music_item)
+                if media_source.get('success'):
+                    # 播放歌曲
+                    await self.play_url(media_source.get('url'))
+                    return {"success": True, "url": media_source.get('url')}
+                else:
+                    return {"success": False, "error": media_source.get('error')}
+            else:
+                return {"success": False, "error": "未找到歌曲"}
+
+        except Exception as e:
+            # 记录错误日志
+            self.log.error(f"searchKey {search_key} get media source failed: {e}")
+            return {"success": False, "error": str(e)}
+
     # ===========================================================
 
     def _find_real_music_list_name(self, list_name):
@@ -1517,7 +1681,6 @@ class XiaoMusic:
         self.log.debug(f"searchmusic. name:{name} search_list:{search_list}")
         return search_list
 
-
     # 获取播放列表
     def get_music_list(self):
         return self.music_list
@@ -1751,7 +1914,7 @@ class XiaoMusicDevice:
                 return
             else:
                 name = self.get_cur_music()
-        self.log.info(f"play. search_key:{search_key} name:{name}")
+        self.log.info(f"play. search_key:{search_key} name:{name}: exact:{exact}")
 
         # 本地歌曲不存在时下载
         if exact:
@@ -1782,9 +1945,13 @@ class XiaoMusicDevice:
             if self.config.disable_download:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
-            await self.download(search_key, name)
-            # 把文件插入到播放列表里
-            await self.add_download_music(name)
+            # TODO 先调用插件搜索关键字，搜索到播放url后推送给小爱
+            result = await self.xiaomusic.play_by_music_free(search_key)
+            # 如果插件播放失败，则执行下载流程
+            if not result.get("success", False):
+                await self.download(search_key, name)
+                # 把文件插入到播放列表里
+                await self.add_download_music(name)
         await self._playmusic(name)
 
     # 下一首
@@ -2412,5 +2579,3 @@ class XiaoMusicPathWatch(FileSystemEventHandler):
         )
 
     # ===================================================================
-
-
