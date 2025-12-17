@@ -402,28 +402,39 @@ async def get_duration_by_mutagen(file_path):
 def get_duration_by_ffprobe(file_path, ffmpeg_location):
     duration = 0
     try:
+        # 构造 ffprobe 命令参数
+        cmd_args = [
+            os.path.join(ffmpeg_location, "ffprobe"),
+            "-v",
+            "error",  # 只输出错误信息，避免混杂在其他输出中
+            "-show_entries",
+            "format=duration",  # 仅显示时长
+            "-of",
+            "json",  # 以 JSON 格式输出
+            file_path,
+        ]
+
+        # 输出待执行的完整命令
+        full_command = " ".join(cmd_args)
+        log.info(f"待执行的完整命令 ffprobe command: {full_command}")
+
         # 使用 ffprobe 获取文件的元数据，并以 JSON 格式输出
         result = subprocess.run(
-            [
-                os.path.join(ffmpeg_location, "ffprobe"),
-                "-v",
-                "error",  # 只输出错误信息，避免混杂在其他输出中
-                "-show_entries",
-                "format=duration",  # 仅显示时长
-                "-of",
-                "json",  # 以 JSON 格式输出
-                file_path,
-            ],
+            cmd_args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
         )
+
+        # 输出命令执行结果
+        log.info(f"命令执行结果 command result - return code: {result.returncode}, stdout: {result.stdout}")
 
         # 解析 JSON 输出
         ffprobe_output = json.loads(result.stdout)
 
         # 获取时长
         duration = float(ffprobe_output["format"]["duration"])
+        log.info(f"Successfully extracted duration: {duration} seconds for file: {file_path}")
 
     except Exception as e:
         log.warning(f"Error getting local music {file_path} duration: {e}")
