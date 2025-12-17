@@ -603,21 +603,22 @@ class XiaoMusic:
         Returns:
             tuple: (播放时长(秒), 播放地址)
         """
-        url, origin_url = await self.get_music_url(name)
-        self.log.info(
-            f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
-        )
-
-        # 电台直接返回
-        if self.is_web_radio_music(name):
-            self.log.info("电台不会有播放时长")
-            return 0, url
 
         # 获取播放时长
         if true_url is not None:
+            url = true_url
             sec = await self._get_online_music_duration(name, true_url)
             self.log.info(f"在线歌曲时长获取：：{name} ；sec：：{sec}")
         else:
+            url, origin_url = await self.get_music_url(name)
+            self.log.info(
+                f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
+            )
+
+            # 电台直接返回
+            if self.is_web_radio_music(name):
+                self.log.info("电台不会有播放时长")
+                return 0, url
             if self.is_web_music(name):
                 sec = await self._get_web_music_duration(name, url, origin_url)
             else:
@@ -1418,7 +1419,7 @@ class XiaoMusic:
                 # 打印输出 result.data
                 self.log.info(f"歌曲列表: {result.get('data')}")
                 # 根据搜素关键字，智能搜索出最符合的一条music_item
-                music_item = self._search_top_one(result.get('data'), search_key, name)
+                music_item = await self._search_top_one(result.get('data'), search_key, name)
                 # 验证 music_item 是否为字典类型
                 if not isinstance(music_item, dict):
                     self.log.error(f"music_item should be a dict, but got {type(music_item)}: {music_item}")
@@ -1443,7 +1444,7 @@ class XiaoMusic:
             if not music_items:
                 return None
 
-            self.log.info(f"搜索关键字: {music_items}；歌名：{name}")
+            self.log.info(f"搜索关键字: {search_key}；歌名：{name}")
             # 如果只有一个项目，直接返回
             if len(music_items) == 1:
                 return music_items[0]
@@ -2065,12 +2066,16 @@ class XiaoMusicDevice:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
             # 先调用插件搜索关键字，搜索到播放url后推送给小爱
+            # http://192.168.31.241:8090/static/silence.mp3
+            silence = "http://192.168.31.241:8090/static/silence.mp3"
+            await self.xiaomusic.play_url("726061334",silence)
             result = await self.xiaomusic.search_by_music_free(search_key, name)
             # 如果插件播放成功，则直接播放
             if result.get("success", False):
                 url = result.get("url", "")
+                self.log.error(f"--播放歌曲：{name}：：链接::{url}")
                 # 播放歌曲
-                await self.xiaomusic.play_url(url)
+                await self.xiaomusic.play_url("726061334",url)
                 await self._playmusic(name, true_url=url)
             else:
                 # 如果插件播放失败，则执行下载流程
@@ -2180,6 +2185,8 @@ class XiaoMusicDevice:
         self.log.info(f"播放 {url}")
         # 有3方设备打开 /static/3thplay.html 通过socketio连接返回true 忽律小爱音箱的播放
         online = await thdplay("play", url, self.xiaomusic.thdtarget)
+        self.log.error(f"IS online {online}")
+
         if not online:
             results = await self.group_player_play(url, name)
             if all(ele is None for ele in results):
