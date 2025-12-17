@@ -287,6 +287,20 @@ async def get_media_source(
         return {"success": False, "error": str(e)}
 
 
+@app.post("/api/play/getLyric")
+async def get_media_lyric(
+        request: Request, Verifcation=Depends(verification)
+):
+    """获取音乐真实播放URL"""
+    try:
+        # 获取请求数据
+        data = await request.json()
+        # 调用公共函数处理
+        return await xiaomusic.get_media_lyric(data)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 @app.post("/api/play/online")
 async def play_online_music(
         request: Request, Verifcation=Depends(verification)
