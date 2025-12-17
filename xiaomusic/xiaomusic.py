@@ -146,6 +146,53 @@ class XiaoMusic:
         if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
 
+    # 私有方法：调用插件方法的通用封装
+    async def __call_plugin_method(self, plugin_name: str, method_name: str, music_item: dict, result_key: str,
+                                   required_field: str = None):
+        """
+        通用方法：调用 JS 插件的方法并返回结果
+
+        Args:
+            plugin_name: 插件名称
+            method_name: 插件方法名（如 get_media_source 或 get_lyric）
+            music_item: 音乐项数据
+            result_key: 返回结果中的字段名（如 'url' 或 'rawLrc'）
+            required_field: 必须存在的字段（用于校验）
+
+        Returns:
+            dict: 包含 success 和对应字段的字典
+        """
+        if not music_item:
+            return {"success": False, "error": "Music item required"}
+
+        # 检查插件管理器是否可用
+        if not self.js_plugin_manager:
+            return {"success": False, "error": "JS Plugin Manager not available"}
+
+        enabled_plugins = self.js_plugin_manager.get_enabled_plugins()
+        if plugin_name not in enabled_plugins:
+            return {"success": False, "error": f"Plugin {plugin_name} not enabled"}
+
+        try:
+            # 调用插件方法
+            result = getattr(self.js_plugin_manager, method_name)(plugin_name, music_item)
+            if not result or not result.get(result_key) or result.get(result_key) == 'None':
+                return {"success": False, "error": f"Failed to get {result_key}"}
+
+            # 如果指定了必填字段，则额外校验
+            if required_field and not result.get(required_field):
+                return {"success": False, "error": f"Missing required field: {required_field}"}
+
+            return {
+                "success": True,
+                result_key: result[result_key],
+                "translation": result.get("translation")  # 可选字段统一返回
+            }
+
+        except Exception as e:
+            self.log.error(f"Plugin {plugin_name} {method_name} failed: {e}")
+            return {"success": False, "error": str(e)}
+
     def init_config(self):
         self.music_path = self.config.music_path
         self.download_path = self.config.download_path
@@ -547,11 +594,12 @@ class XiaoMusic:
         self.try_save_tag_cache()
         return "OK"
 
-    async def get_music_sec_url(self, name):
+    async def get_music_sec_url(self, name, true_url):
         """获取歌曲播放时长和播放地址
 
         Args:
             name: 歌曲名称
+            true_url: 真实播放URL
         Returns:
             tuple: (播放时长(秒), 播放地址)
         """
@@ -566,10 +614,14 @@ class XiaoMusic:
             return 0, url
 
         # 获取播放时长
-        if self.is_web_music(name):
-            sec = await self._get_web_music_duration(name, url, origin_url)
+        if true_url is not None:
+            sec = await self._get_online_music_duration(name, true_url)
+            self.log.info(f"在线歌曲时长获取：：{name} ；sec：：{sec}")
         else:
-            sec = await self._get_local_music_duration(name, url)
+            if self.is_web_music(name):
+                sec = await self._get_web_music_duration(name, url, origin_url)
+            else:
+                sec = await self._get_local_music_duration(name, url)
 
         if sec <= 0:
             self.log.warning(f"获取歌曲时长失败 {name} {url}")
@@ -597,6 +649,14 @@ class XiaoMusic:
         duration = await get_local_music_duration(filename, self.config)
         sec = math.ceil(duration)
         self.log.info(f"本地歌曲 {name} : {filename} {url} 的时长 {sec} 秒")
+        return sec
+
+    async def _get_online_music_duration(self, name, url):
+        """获取在线音乐时长"""
+        self.log.info(f"get_music_sec_url. name:{name}")
+        duration = await get_local_music_duration(url, self.config)
+        sec = math.ceil(duration)
+        self.log.info(f"在线歌曲 {name} : {url} 的时长 {sec} 秒")
         return sec
 
     async def get_music_url(self, name):
@@ -1308,72 +1368,63 @@ class XiaoMusic:
             # 直接抛出异常，让 asyncio.gather 处理
             raise e
 
-
     # 调用MusicFree插件获取真实播放url
     async def get_media_source_url(self, music_item):
         """获取音乐项的媒体源URL
-
         Args:
             music_item : MusicFree插件定义的 IMusicItem
-
         Returns:
             dict: 包含成功状态和URL信息的字典
         """
-        if not music_item:
-            return {"success": False, "error": "Music item required"}
+        return await self.__call_plugin_method(
+            plugin_name=music_item.get('platform'),
+            method_name="get_media_source",
+            music_item=music_item,
+            result_key="url",
+            required_field="url"
+        )
 
-        plugin_name = music_item.get('platform')
+    # 调用MusicFree插件获取歌词
+    async def get_media_lyric(self, music_item):
+        """获取音乐项的歌词 Lyric
+        Args:
+            music_item : MusicFree插件定义的 IMusicItem
+        Returns:
+            dict: 包含成功状态和URL信息的字典
+        """
+        return await self.__call_plugin_method(
+            plugin_name=music_item.get('platform'),
+            method_name="get_lyric",
+            music_item=music_item,
+            result_key="rawLrc",
+            required_field="rawLrc"
+        )
 
-        # 检查插件是否启用
-        if not self.js_plugin_manager:
-            return {"success": False, "error": "JS Plugin Manager not available"}
-
-        enabled_plugins = self.js_plugin_manager.get_enabled_plugins()
-        if plugin_name not in enabled_plugins:
-            return {"success": False, "error": f"Plugin {plugin_name} not enabled"}
-
-        try:
-            # 获取媒体源信息
-            media_source = self.js_plugin_manager.get_media_source(plugin_name, music_item)
-
-            if not media_source or not media_source.get('url'):
-                return {"success": False, "error": "Failed to get media source URL"}
-
-            # 返回播放URL
-            return {
-                "success": True,
-                "url": media_source['url'],
-                "quality": media_source.get('quality'),
-                "format": media_source.get('format')
-            }
-
-        except Exception as e:
-            # 记录错误日志
-            self.log.error(f"Plugin {plugin_name} get media source failed: {e}")
-            return {"success": False, "error": str(e)}
-
-    # 调用MusicFree插件搜索并播放
-    async def play_by_music_free(self, search_key):
-        """调用MusicFree插件搜索并播放
+    # 调用MusicFree插件搜索歌曲
+    async def search_by_music_free(self, search_key, name):
+        """调用MusicFree插件搜索歌曲
 
         Args:
             search_key (str): 搜索关键词
+            name (str): 歌曲名
         Returns:
             dict: 包含成功状态和URL信息的字典
         """
 
         try:
             # 获取歌曲列表
-            result = await self.get_music_list_mf(keyword=search_key, limit=10)
+            result = await self.get_music_list_mf(keyword=name, limit=10)
             if result.get('success') and result.get('total') > 0:
                 # 打印输出 result.data
                 self.log.info(f"歌曲列表: {result.get('data')}")
-                # 获取第一个歌曲的播放链接
-                music_item = result.get('data')[0]
+                # 根据搜素关键字，智能搜索出最符合的一条music_item
+                music_item = self._search_top_one(result.get('data'), search_key, name)
+                # 验证 music_item 是否为字典类型
+                if not isinstance(music_item, dict):
+                    self.log.error(f"music_item should be a dict, but got {type(music_item)}: {music_item}")
+                    return {"success": False, "error": "Invalid music item format"}
                 media_source = await self.get_media_source_url(music_item)
                 if media_source.get('success'):
-                    # 播放歌曲
-                    await self.play_url(media_source.get('url'))
                     return {"success": True, "url": media_source.get('url')}
                 else:
                     return {"success": False, "error": media_source.get('error')}
@@ -1384,6 +1435,74 @@ class XiaoMusic:
             # 记录错误日志
             self.log.error(f"searchKey {search_key} get media source failed: {e}")
             return {"success": False, "error": str(e)}
+
+    async def _search_top_one(self, music_items, search_key, name):
+        """智能搜索出最符合的一条music_item"""
+        try:
+            # 如果没有音乐项目，返回None
+            if not music_items:
+                return None
+
+            self.log.info(f"搜索关键字: {music_items}；歌名：{name}")
+            # 如果只有一个项目，直接返回
+            if len(music_items) == 1:
+                return music_items[0]
+
+            # 计算每个项目的匹配分数
+            def calculate_match_score(item):
+                """计算匹配分数"""
+                title = item.get('title', '').lower() if item.get('title') else ''
+                artist = item.get('artist', '').lower() if item.get('artist') else ''
+                keyword = search_key.lower()
+
+                if not keyword:
+                    return 0
+
+                score = 0
+                # 歌曲名匹配权重
+                if keyword in title:
+                    # 完全匹配得最高分
+                    if title == keyword:
+                        score += 90
+                    # 开头匹配
+                    elif title.startswith(keyword):
+                        score += 70
+                    # 结尾匹配
+                    elif title.endswith(keyword):
+                        score += 50
+                    # 包含匹配
+                    else:
+                        score += 30
+                # 部分字符匹配
+                elif any(char in title for char in keyword.split()):
+                    score += 10
+                # 艺术家名匹配权重
+                if keyword in artist:
+                    # 完全匹配
+                    if artist == keyword:
+                        score += 9
+                    # 开头匹配
+                    elif artist.startswith(keyword):
+                        score += 7
+                    # 结尾匹配
+                    elif artist.endswith(keyword):
+                        score += 5
+                    # 包含匹配
+                    else:
+                        score += 3
+                # 部分字符匹配
+                elif any(char in artist for char in keyword.split()):
+                    score += 1
+                return score
+
+            # 按匹配分数排序，返回分数最高的项目
+            sorted_items = sorted(music_items, key=calculate_match_score, reverse=True)
+            return sorted_items[0]
+
+        except Exception as e:
+            self.log.error(f"_search_top_one error: {e}")
+            # 出现异常时返回第一个项目
+            return music_items[0] if music_items else None
 
     # ===========================================================
 
@@ -1945,14 +2064,23 @@ class XiaoMusicDevice:
             if self.config.disable_download:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
-            # TODO 先调用插件搜索关键字，搜索到播放url后推送给小爱
-            result = await self.xiaomusic.play_by_music_free(search_key)
-            # 如果插件播放失败，则执行下载流程
-            if not result.get("success", False):
+            # 先调用插件搜索关键字，搜索到播放url后推送给小爱
+            result = await self.xiaomusic.search_by_music_free(search_key, name)
+            # 如果插件播放成功，则直接播放
+            if result.get("success", False):
+                url = result.get("url", "")
+                # 播放歌曲
+                await self.xiaomusic.play_url(url)
+                await self._playmusic(name, true_url=url)
+            else:
+                # 如果插件播放失败，则执行下载流程
                 await self.download(search_key, name)
                 # 把文件插入到播放列表里
                 await self.add_download_music(name)
-        await self._playmusic(name)
+                await self._playmusic(name)
+        else:
+            # 本地存在歌曲，直接播放
+            await self._playmusic(name)
 
     # 下一首
     async def play_next(self):
@@ -2039,7 +2167,7 @@ class XiaoMusicDevice:
             return
         await self._playmusic(name)
 
-    async def _playmusic(self, name):
+    async def _playmusic(self, name, true_url=None):
         # 取消组内所有的下一首歌曲的定时器
         self.cancel_group_next_timer()
 
@@ -2047,7 +2175,7 @@ class XiaoMusicDevice:
         self.device.cur_music = name
 
         self.log.info(f"cur_music {self.get_cur_music()}")
-        sec, url = await self.xiaomusic.get_music_sec_url(name)
+        sec, url = await self.xiaomusic.get_music_sec_url(name, true_url)
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
         # 有3方设备打开 /static/3thplay.html 通过socketio连接返回true 忽律小爱音箱的播放
