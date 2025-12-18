@@ -218,6 +218,13 @@
         .disable-btn:hover {
             background: #da190b;
         }
+        .uninstall-btn {
+            background: gray;
+            color: white;
+        }
+        .uninstall-btn:hover {
+            background: dimgray;
+        }
         .refresh-btn {
             display: block;
             margin: 20px auto;
@@ -382,24 +389,25 @@
         }
 
         const html = plugins.map(plugin => `
-                <div class="plugin-item">
-                    <div class="plugin-info">
-                        <div class="plugin-name">${plugin.name}</div>
-                        <div class="plugin-details">
-                            <span class="plugin-status ${plugin.enabled ? 'status-enabled' : 'status-disabled'}">
-                                ${plugin.enabled ? '已启用' : '已禁用'}
-                            </span>
-                            ${plugin.error ? ` | 错误: ${plugin.error}` : ''}
-                        </div>
-                    </div>
-                    <div class="plugin-actions">
-                        ${plugin.enabled ?
-            `<button class="action-btn disable-btn" onclick="togglePlugin('${plugin.name}', false)">禁用</button>` :
-            `<button class="action-btn enable-btn" onclick="togglePlugin('${plugin.name}', true)">启用</button>`
-        }
+            <div class="plugin-item">
+                <div class="plugin-info">
+                    <div class="plugin-name">${plugin.name}</div>
+                    <div class="plugin-details">
+                        <span class="plugin-status ${plugin.enabled ? 'status-enabled' : 'status-disabled'}">
+                            ${plugin.enabled ? '已启用' : '已禁用'}
+                        </span>
+                        ${plugin.error ? ` | 错误: ${plugin.error}` : ''}
                     </div>
                 </div>
-            `).join('');
+                <div class="plugin-actions">
+                    ${plugin.enabled ?
+            `<button class="action-btn disable-btn" onclick="togglePlugin('${plugin.name}', false)">禁用</button>` :
+            `<button class="action-btn enable-btn" onclick="togglePlugin('${plugin.name}', true)">启用</button>
+         <button class="action-btn uninstall-btn" onclick="uninstallPlugin('${plugin.name}')">卸载</button>`
+        }
+                </div>
+            </div>
+        `).join('');
 
         container.innerHTML = `<div class="plugin-list">${html}</div>`;
     }
@@ -426,6 +434,31 @@
             alert(`${enable ? '启用' : '禁用'}插件出错: ${error.message}`);
         }
     }
+
+    // 卸载插件功能
+    async function uninstallPlugin(pluginName) {
+        if (!confirm(`确定要卸载插件 "${pluginName}" 吗？此操作不可恢复。`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/js-plugins/${pluginName}/uninstall`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                alert('插件卸载成功');
+                // 重新加载插件列表
+                loadPlugins();
+            } else {
+                alert(`插件卸载失败: ${data.error}`);
+            }
+        } catch (error) {
+            alert(`插件卸载出错: ${error.message}`);
+        }
+    }
+
 </script>
 </body>
 </html>
