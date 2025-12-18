@@ -685,6 +685,53 @@ class JSPluginManager:
             return True
         return False
 
+    # 卸载插件
+    def uninstall_plugin(self, plugin_name: str) -> bool:
+        """卸载插件：移除配置信息并删除插件文件"""
+        if plugin_name in self.plugins:
+            try:
+                # 从内存中移除插件
+                self.plugins.pop(plugin_name)
+
+                # 使用自定义的配置文件路径
+                config_file_path = self.plugins_config_path
+
+                # 读取现有配置
+                if os.path.exists(config_file_path):
+                    with open(config_file_path, 'r', encoding='utf-8') as f:
+                        config_data = json.load(f)
+
+                    # 移除plugins_info属性中对应的插件项目
+                    if "plugins_info" in config_data:
+                        config_data["plugins_info"] = [
+                            plugin_info for plugin_info in config_data["plugins_info"]
+                            if plugin_info.get("name") != plugin_name
+                        ]
+
+                    # 从enabled_plugins中移除插件（如果存在）
+                    if "enabled_plugins" in config_data and plugin_name in config_data["enabled_plugins"]:
+                        config_data["enabled_plugins"].remove(plugin_name)
+
+                    # 回写配置文件
+                    with open(config_file_path, 'w', encoding='utf-8') as f:
+                        json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+                    self.log.info(f"Plugin config updated for uninstalled plugin {plugin_name}")
+
+                # 删除插件文件夹中的指定插件文件
+                plugin_file_path = os.path.join(self.plugins_dir, f"{plugin_name}.js")
+                if os.path.exists(plugin_file_path):
+                    os.remove(plugin_file_path)
+                    self.log.info(f"Plugin file removed: {plugin_file_path}")
+                else:
+                    self.log.warning(f"Plugin file not found: {plugin_file_path}")
+
+                return True
+            except Exception as e:
+                self.log.error(f"Failed to uninstall plugin {plugin_name}: {e}")
+                return False
+        return False
+
     def reload_plugins(self):
         """重新加载所有插件"""
         self.log.info("Reloading all plugins...")

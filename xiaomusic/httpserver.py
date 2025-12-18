@@ -375,6 +375,19 @@ def disable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
         return {"success": False, "error": str(e)}
 
 
+@app.delete("/api/js-plugins/{plugin_name}/uninstall")
+def uninstall_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
+    """卸载插件"""
+    try:
+        if not hasattr(xiaomusic, 'js_plugin_manager') or not xiaomusic.js_plugin_manager:
+            return {"success": False, "error": "JS Plugin Manager not available"}
+
+        success = xiaomusic.js_plugin_manager.uninstall_plugin(plugin_name)
+        return {"success": success}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @app.post("/api/js-plugins/upload")
 async def upload_js_plugin(
         file: UploadFile = File(...),
