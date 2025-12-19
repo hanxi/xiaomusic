@@ -66,7 +66,7 @@ class PluginRunner {
                     result = await this.search(message.pluginName, message.params);
                     break;
                 case 'getMediaSource':
-                    result = await this.getMediaSource(message.pluginName, message.musicItem);
+                    result = await this.getMediaSource(message.pluginName, message.musicItem, message.quality);
                     break;
                 case 'getLyric':
                     result = await this.getLyric(message.pluginName, message.musicItem);
@@ -323,7 +323,7 @@ class PluginRunner {
     }
 
 
-    async getMediaSource(pluginName, musicItem) {
+    async getMediaSource(pluginName, musicItem, quality) {
         const plugin = this.plugins.get(pluginName);
         if (!plugin) {
             throw new Error(`Plugin ${pluginName} not found`);
@@ -336,7 +336,7 @@ class PluginRunner {
         }
 
         try {
-            const result = await plugin.getMediaSource(musicItem);
+            const result = await plugin.getMediaSource(musicItem,quality);
             // 参考 MusicFreeDesktop 实现，验证结果
             if (result === null || result === undefined) {
                 return null;
