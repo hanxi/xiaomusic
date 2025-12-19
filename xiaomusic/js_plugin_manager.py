@@ -266,10 +266,27 @@ class JSPluginManager:
             if os.path.exists(self.plugins_config_path):
                 with open(self.plugins_config_path, 'r', encoding='utf-8') as f:
                     config_data = json.load(f)
-                result = config_data.get("plugins_info", [])
+                plugin_infos = config_data.get("plugins_info", [])
+                enabled_plugins = config_data.get("enabled_plugins", [])
+
+                # 创建一个映射，用于快速查找插件在 enabled_plugins 中的位置
+                enabled_order = {name: i for i, name in enumerate(enabled_plugins)}
+
+                # 先按 enabled 属性排序（True 在前）
+                # 再按 enabled_plugins 顺序排序（启用的插件才参与此排序）
+                def sort_key(plugin_info):
+                    name = plugin_info['name']
+                    is_enabled = plugin_info.get('enabled', False)
+                    order = enabled_order.get(name, len(enabled_plugins)) if is_enabled else len(enabled_plugins)
+                    # (-is_enabled) 将 True(1) 放到前面，False(0) 放到后面
+                    # order 控制启用插件间的相对顺序
+                    return -is_enabled, order
+
+                result = sorted(plugin_infos, key=sort_key)
         except Exception as e:
             self.log.error(f"Failed to read enabled plugins from config: {e}")
         return result
+
 
     def get_enabled_plugins(self) -> List[str]:
         """获取启用的插件列表"""
