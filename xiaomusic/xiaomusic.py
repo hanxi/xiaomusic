@@ -93,6 +93,7 @@ class XiaoMusic:
         self.music_list = {}  # 播放列表 key 为目录名, value 为 play_list
         self.default_music_list_names = []  # 非自定义个歌单
         self.devices = {}  # key 为 did
+        self._cur_did = None  # 当前设备did
         self.running_task = []
         self.all_music_tags = {}  # 歌曲额外信息
         self._tag_generation_task = False
@@ -183,12 +184,9 @@ class XiaoMusic:
             # 如果指定了必填字段，则额外校验
             if required_field and not result.get(required_field):
                 return {"success": False, "error": f"Missing required field: {required_field}"}
-
-            return {
-                "success": True,
-                result_key: result[result_key],
-                "translation": result.get("translation")  # 可选字段统一返回
-            }
+            # 追加属性后返回
+            result["success"] = True
+            return result
 
         except Exception as e:
             self.log.error(f"Plugin {plugin_name} {method_name} failed: {e}")
@@ -373,6 +371,8 @@ class XiaoMusic:
                 if device_id and hardware and did and (did in mi_dids):
                     device = self.config.devices.get(did, Device())
                     device.did = did
+                    # 将did存一下 方便其他地方调用
+                    self._cur_did = did
                     device.device_id = device_id
                     device.hardware = hardware
                     device.name = name
@@ -2072,16 +2072,23 @@ class XiaoMusicDevice:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
             # 先调用插件搜索关键字，搜索到播放url后推送给小爱
+            config = self.xiaomusic.config
+            if config and hasattr(config, 'hostname') and hasattr(config, 'public_port'):
+                proxy_base = f"{config.hostname}:{config.public_port}"
+            else:
+                proxy_base = "http://192.168.31.241:8090"
+            search_key = f"{proxy_base}/search/"
+            # 播放静音
             # http://192.168.31.241:8090/static/silence.mp3
-            silence = "http://192.168.31.241:8090/static/silence.mp3"
-            await self.xiaomusic.play_url("726061334",silence)
+            silence = search_key+"/silence.mp3"
+            await self.xiaomusic.play_url(self.xiaomusic.get_cur_did(), silence)
             result = await self.xiaomusic.search_by_music_free(search_key, name)
             # 如果插件播放成功，则直接播放
             if result.get("success", False):
                 url = result.get("url", "")
                 self.log.error(f"--播放歌曲：{name}：：链接::{url}")
                 # 播放歌曲
-                await self.xiaomusic.play_url("726061334",url)
+                await self.xiaomusic.play_url(self.xiaomusic.get_cur_did(),url)
                 await self._playmusic(name, true_url=url)
             else:
                 # 如果插件播放失败，则执行下载流程

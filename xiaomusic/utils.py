@@ -200,7 +200,7 @@ def custom_sort_key(s):
 
 def _get_depth_path(root, directory, depth):
     # 计算当前目录的深度
-    relative_path = root[len(directory) :].strip(os.sep)
+    relative_path = root[len(directory):].strip(os.sep)
     path_parts = relative_path.split(os.sep)
     if len(path_parts) >= depth:
         return os.path.join(directory, *path_parts[:depth])
@@ -231,7 +231,7 @@ def traverse_music_directory(directory, depth, exclude_dirs, support_extension):
         dirs[:] = [d for d in dirs if d not in exclude_dirs]
 
         # 计算当前目录的深度
-        current_depth = root[len(directory) :].count(os.sep) + 1
+        current_depth = root[len(directory):].count(os.sep) + 1
         if current_depth > depth:
             depth_path = _get_depth_path(root, directory, depth - 1)
             _append_files_result(result, depth_path, root, files, support_extension)
@@ -242,14 +242,14 @@ def traverse_music_directory(directory, depth, exclude_dirs, support_extension):
 
 # 发送给网页3thplay，用于三者设备播放
 async def thdplay(
-    action, args="/static/3thdplay.mp3", target="HTTP://192.168.1.10:58090/thdaction"
+        action, args="/static/3thdplay.mp3", target="HTTP://192.168.1.10:58090/thdaction"
 ):
     # 接口地址 target,在参数文件指定
     data = {"action": action, "args": args}
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                target, json=data, timeout=5
+                    target, json=data, timeout=5
             ) as response:  # 增加超时以避免长时间挂起
                 # 如果响应不是200，引发异常
                 response.raise_for_status()
@@ -276,7 +276,7 @@ async def downloadfile(url):
     # 使用 aiohttp 创建一个客户端会话来发起请求
     async with aiohttp.ClientSession() as session:
         async with session.get(
-            cleaned_url, timeout=5
+                cleaned_url, timeout=5
         ) as response:  # 增加超时以避免长时间挂起
             # 如果响应不是200，引发异常
             response.raise_for_status()
@@ -345,11 +345,11 @@ async def get_web_music_duration(url, config):
             cleaned_url = parsed_url.geturl()
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    cleaned_url,
-                    allow_redirects=True,
-                    headers={
-                        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
-                    },
+                        cleaned_url,
+                        allow_redirects=True,
+                        headers={
+                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
+                        },
                 ) as response:
                     url = str(response.url)
         # 设置总超时时间为3秒
@@ -499,8 +499,8 @@ def remove_id3_tags(input_file: str, config) -> str:
 
     # 检查是否存在ID3 v2.3或v2.4标签
     if not (
-        audio.tags
-        and (audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0))
+            audio.tags
+            and (audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0))
     ):
         return None
 
@@ -1148,7 +1148,7 @@ def remove_common_prefix(directory):
         # 检查文件名是否以共同前缀开头
         if filename.startswith(common_prefix):
             # 构造新的文件名
-            new_filename = filename[len(common_prefix) :]
+            new_filename = filename[len(common_prefix):]
             match = pattern.search(new_filename.strip())
             if match:
                 num = match.group(1)
@@ -1339,10 +1339,10 @@ async def fetch_json_get(url, headers, config):
         async with aiohttp.ClientSession(connector=connector) as session:
             # 3. 发起带代理的GET请求
             async with session.get(
-                url,
-                headers=headers,
-                proxy=proxy,  # 传入格式化后的代理参数
-                timeout=10,  # 超时时间（秒），避免无限等待
+                    url,
+                    headers=headers,
+                    proxy=proxy,  # 传入格式化后的代理参数
+                    timeout=10,  # 超时时间（秒），避免无限等待
             ) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -1482,7 +1482,7 @@ class MusicUrlCache:
 
 
 async def text_to_mp3(
-    text: str, save_dir: str, voice: str = "zh-CN-XiaoxiaoNeural"
+        text: str, save_dir: str, voice: str = "zh-CN-XiaoxiaoNeural"
 ) -> str:
     """
     使用edge-tts将文本转换为MP3语音文件

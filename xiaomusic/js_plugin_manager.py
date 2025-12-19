@@ -186,7 +186,7 @@ class JSPluginManager:
 
         # 只加载指定的插件，避免加载所有插件导致超时
         # enabled_plugins = ['kw', 'qq-yuanli']  # 可以根据需要添加更多
-        # TODO 后面改成读取配置文件配置
+        # 读取配置文件配置
         enabled_plugins = self.get_enabled_plugins()
         for filename in os.listdir(self.plugins_dir):
             if filename.endswith('.js'):
@@ -356,7 +356,7 @@ class JSPluginManager:
 
             # 平台匹配权重(百位数级别: 100-900)
             import_plugins = self.get_enabled_plugins()
-            # TODO 后续改为读取配置文件 取前9个值。越靠前分数越高
+            # 读取配置文件 取前9个值。越靠前分数越高
             check_plugins = import_plugins[:9]
             if platform in check_plugins:
                 # 根据平台在列表中的位置给予不同分数，越靠前分数越高
