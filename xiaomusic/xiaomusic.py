@@ -148,7 +148,7 @@ class XiaoMusic:
 
     # 私有方法：调用插件方法的通用封装
     async def __call_plugin_method(self, plugin_name: str, method_name: str, music_item: dict, result_key: str,
-                                   required_field: str = None):
+                                   required_field: str = None, **kwargs):
         """
         通用方法：调用 JS 插件的方法并返回结果
 
@@ -158,6 +158,7 @@ class XiaoMusic:
             music_item: 音乐项数据
             result_key: 返回结果中的字段名（如 'url' 或 'rawLrc'）
             required_field: 必须存在的字段（用于校验）
+            **kwargs: 传递给插件方法的额外参数
 
         Returns:
             dict: 包含 success 和对应字段的字典
@@ -174,8 +175,8 @@ class XiaoMusic:
             return {"success": False, "error": f"Plugin {plugin_name} not enabled"}
 
         try:
-            # 调用插件方法
-            result = getattr(self.js_plugin_manager, method_name)(plugin_name, music_item)
+            # 调用插件方法，传递额外参数
+            result = getattr(self.js_plugin_manager, method_name)(plugin_name, music_item, **kwargs)
             if not result or not result.get(result_key) or result.get(result_key) == 'None':
                 return {"success": False, "error": f"Failed to get {result_key}"}
 
@@ -192,6 +193,7 @@ class XiaoMusic:
         except Exception as e:
             self.log.error(f"Plugin {plugin_name} {method_name} failed: {e}")
             return {"success": False, "error": str(e)}
+
 
     def init_config(self):
         self.music_path = self.config.music_path
@@ -1370,19 +1372,23 @@ class XiaoMusic:
             raise e
 
     # 调用MusicFree插件获取真实播放url
-    async def get_media_source_url(self, music_item):
+    async def get_media_source_url(self, music_item, quality: str = 'standard'):
         """获取音乐项的媒体源URL
         Args:
             music_item : MusicFree插件定义的 IMusicItem
+            quality: 音质参数
         Returns:
             dict: 包含成功状态和URL信息的字典
         """
+        # kwargs可追加
+        kwargs = {'quality': quality}
         return await self.__call_plugin_method(
             plugin_name=music_item.get('platform'),
             method_name="get_media_source",
             music_item=music_item,
             result_key="url",
-            required_field="url"
+            required_field="url",
+            **kwargs
         )
 
     # 调用MusicFree插件获取歌词

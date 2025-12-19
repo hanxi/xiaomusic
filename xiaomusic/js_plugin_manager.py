@@ -411,7 +411,7 @@ class JSPluginManager:
 
         return result_data
 
-    def get_media_source(self, plugin_name: str, music_item: Dict[str, Any]):
+    def get_media_source(self, plugin_name: str, music_item: Dict[str, Any], quality):
         """获取媒体源"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
@@ -421,7 +421,8 @@ class JSPluginManager:
         response = self._send_message({
             'action': 'getMediaSource',
             'pluginName': plugin_name,
-            'musicItem': music_item
+            'musicItem': music_item,
+            'quality': quality
         })
 
         if not response['success']:
