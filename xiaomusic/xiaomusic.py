@@ -1476,7 +1476,7 @@ class XiaoMusic:
         )
 
     # 调用在线搜索歌曲，并优化返回
-    async def search_by_music_free(self, search_key, name):
+    async def search_music_online(self, search_key, name):
         """调用MusicFree插件搜索歌曲
 
         Args:
@@ -1678,6 +1678,34 @@ class XiaoMusic:
         return await self.do_play(
             did, name, search_key, exact=False, update_cur_list=False
         )
+
+    # 在线播放：在线搜索、播放
+    async def online_play(self, did="", arg1="", **kwargs):
+        # 先推送默认【搜索中】音频，搜索到播放url后推送给小爱
+        config = self.config
+        if config and hasattr(config, 'hostname') and hasattr(config, 'public_port'):
+            proxy_base = f"{config.hostname}:{config.public_port}"
+        else:
+            proxy_base = "http://192.168.31.241:8090"
+        search_audio = proxy_base + "/static/search.mp3"
+        silence_audio = proxy_base + "/static/silence.mp3"
+        await self.play_url(self.get_cur_did(), search_audio)
+
+        # TODO 添加一个定时器，4秒后触发
+
+        # 获取搜索关键词
+        parts = arg1.split("|")
+        search_key = parts[0]
+        name = parts[1] if len(parts) > 1 else search_key
+        if not name:
+            name = search_key
+        self.log.info(f"搜索关键字{search_key},搜索歌名{name}")
+        result = await self.search_music_online(search_key, name)
+        # 搜索成功，则直接推送url播放
+        if result.get("success", False):
+            url = result.get("url", "")
+            # 播放歌曲
+            await self.devices[did].play_music(name, true_url=url)
 
     # 后台搜索播放
     async def do_play(
@@ -2067,6 +2095,9 @@ class XiaoMusicDevice:
         offset = time.time() - self._start_time - self._paused_time
         return offset, duration
 
+    async def play_music(self, name, true_url=None):
+        return await self._playmusic(name, true_url=true_url)
+
     # 初始化播放列表
     def update_playlist(self, reorder=True):
         # 没有重置 list 且非初始化
@@ -2147,23 +2178,6 @@ class XiaoMusicDevice:
             if self.config.disable_download:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
-            # 先调用插件搜索关键字，搜索到播放url后推送给小爱
-            config = self.xiaomusic.config
-            if config and hasattr(config, 'hostname') and hasattr(config, 'public_port'):
-                proxy_base = f"{config.hostname}:{config.public_port}"
-            else:
-                proxy_base = "http://192.168.31.241:8090"
-            # 播放静音
-            # http://192.168.31.241:8090/static/silence.mp3
-            silence = proxy_base + "/static/silence.mp3"
-            await self.xiaomusic.play_url(self.xiaomusic.get_cur_did(), silence)
-            result = await self.xiaomusic.search_by_music_free(search_key, name)
-            # 如果插件播放成功，则直接播放
-            if result.get("success", False):
-                url = result.get("url", "")
-                # 播放歌曲
-                # await self.xiaomusic.play_url(self.xiaomusic.get_cur_did(), url)
-                await self._playmusic(name, true_url=url)
             else:
                 # 如果插件播放失败，则执行下载流程
                 await self.download(search_key, name)
