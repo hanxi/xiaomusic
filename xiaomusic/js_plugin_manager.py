@@ -287,6 +287,23 @@ class JSPluginManager:
             self.log.error(f"Failed to read enabled plugins from config: {e}")
         return result
 
+    def get_openapi_info(self) -> Dict[str, Any]:
+        """获取开放接口配置信息
+        Returns:
+            Dict[str, Any]: 包含 OpenAPI 配置信息的字典，包括启用状态和搜索 URL
+        """
+        try:
+            # 读取配置文件中的 OpenAPI 配置信息
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, 'r', encoding='utf-8') as f:
+                    config_data = json.load(f)
+                # 返回 openapi_info 配置项
+                return config_data.get("openapi_info", {})
+            else:
+                return {"enabled": False}
+        except Exception as e:
+            self.log.error(f"Failed to read OpenAPI info from config: {e}")
+            return {}
 
     def get_enabled_plugins(self) -> List[str]:
         """获取启用的插件列表"""
@@ -341,6 +358,92 @@ class JSPluginManager:
                 self.log.debug(
                     f"JS Plugin Manager search data sample: {data_list[:2] if len(data_list) > 0 else 'No results'}")
         return result_data
+
+    async def openapi_search(self, url: str, keyword: str, limit: int = 5):
+        """直接调用在线接口进行音乐搜索
+
+        Args:
+            url (str): 在线搜索接口地址
+            keyword (str): 搜索关键词
+            limit (int): 每页数量，默认为5
+        Returns:
+            Dict[str, Any]: 搜索结果，数据结构与search函数一致
+        """
+        import aiohttp
+        import asyncio
+
+        try:
+            # 构造请求参数
+            params = {
+                'type': "aggregateSearch",
+                'keyword': keyword,
+                'limit': limit
+            }
+
+            # 使用aiohttp发起异步HTTP GET请求
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                    response.raise_for_status()  # 抛出HTTP错误
+                    # 解析响应数据
+                    raw_data = await response.json()
+
+            self.log.info(f"在线接口返回Json: {raw_data}")
+
+            # 检查API调用是否成功
+            if raw_data.get('code') != 200:
+                raise Exception(f"API request failed with code: {raw_data.get('code', 'unknown')}")
+
+            # 提取实际的搜索结果
+            api_data = raw_data.get('data', {})
+            results = api_data.get('results', [])
+
+            # 转换数据格式以匹配插件系统的期望格式
+            converted_data = []
+            for item in results:
+                converted_item = {
+                    'title': item.get('name', ''),
+                    'artist': item.get('artist', ''),
+                    'album': item.get('album', ''),
+                    'id': item.get('id', ''),
+                    'platform': 'OpenAPI',
+                    'url': item.get('url', ''),
+                    'artwork': item.get('pic', ''),
+                    'lrc': item.get('lrc', '')
+                }
+                converted_data.append(converted_item)
+
+            # 返回统一格式的数据
+            return {
+                "success": True,
+                "data": converted_data,
+                "total": len(converted_data),
+                "sources": {"OpenAPI": len(converted_data)},
+                "page": 1,
+                "limit": limit
+            }
+
+        except asyncio.TimeoutError as e:
+            self.log.error(f"OpenAPI search timeout at URL {url}: {e}")
+            return {
+                "success": False,
+                "error": f"OpenAPI search timeout: {str(e)}",
+                "data": [],
+                "total": 0,
+                "sources": {},
+                "page": 1,
+                "limit": limit
+            }
+        except Exception as e:
+            self.log.error(f"OpenAPI search error at URL {url}: {e}")
+            return {
+                "success": False,
+                "error": f"OpenAPI search error: {str(e)}",
+                "data": [],
+                "total": 0,
+                "sources": {},
+                "page": 1,
+                "limit": limit
+            }
 
     def optimize_search_results(self,
                                 result_data: Dict[str, Any],
