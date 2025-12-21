@@ -265,12 +265,27 @@ async def search_online_music(
         if not keyword:
             return {"success": False, "error": "Keyword required"}
 
-        if not hasattr(xiaomusic, 'js_plugin_manager') or not xiaomusic.js_plugin_manager:
-            return {"success": False, "error": "JS Plugin Manager not available"}
-
-        return await xiaomusic.get_music_list_mf(keyword=keyword, plugin=plugin, page=page, limit=limit)
+        return await xiaomusic.get_music_list_online(keyword=keyword, plugin=plugin, page=page, limit=limit)
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+@app.get("/api/proxy/real-music-url")
+async def get_real_music_url(url: str = Query(..., description="音乐下载URL"),
+                             Verifcation=Depends(verification)):
+    """通过服务端代理获取真实的音乐播放URL，避免CORS问题"""
+    try:
+        # 获取真实的音乐播放URL
+        return await xiaomusic.get_real_url_of_openapi(url)
+
+    except Exception as e:
+        log.error(f"获取真实音乐URL失败: {e}")
+        # 如果代理获取失败，仍然返回原始URL
+        return {
+            "success": False,
+            "realUrl": url,
+            "error": str(e)
+        }
 
 
 @app.post("/api/play/getMediaSource")
@@ -310,10 +325,12 @@ async def play_online_music(
         # 获取请求数据
         data = await request.json()
         did = data.get('did')
-        # if not xiaomusic.did_exist(did):
-        #     return {"ret": "Did not exist"}
-        # 调用公共函数处理,获取音乐真实播放URL
-        media_source = await xiaomusic.get_media_source_url(data)
+        openapi_info = xiaomusic.js_plugin_manager.get_openapi_info()
+        if openapi_info.get("enabled", False):
+            media_source = await xiaomusic.get_real_url_of_openapi(data.get('url'))
+        else:
+            # 调用公共函数处理,获取音乐真实播放URL
+            media_source = await xiaomusic.get_media_source_url(data)
         if not media_source or not media_source.get('url'):
             return {"success": False, "error": "Failed to get media source URL"}
         url = media_source.get('url')
@@ -387,6 +404,7 @@ def uninstall_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
 
     except Exception as e:
         return {"success": False, "error": str(e)}
+
 
 @app.post("/api/js-plugins/upload")
 async def upload_js_plugin(

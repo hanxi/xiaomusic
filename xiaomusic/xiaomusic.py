@@ -192,7 +192,6 @@ class XiaoMusic:
             self.log.error(f"Plugin {plugin_name} {method_name} failed: {e}")
             return {"success": False, "error": str(e)}
 
-
     def init_config(self):
         self.music_path = self.config.music_path
         self.download_path = self.config.download_path
@@ -1183,6 +1182,7 @@ class XiaoMusic:
 
     # 播放一个 url
     async def play_url(self, did="", arg1="", **kwargs):
+        self.log.info(f"手动播放链接：{arg1}")
         url = arg1
         return await self.devices[did].group_player_play(url)
 
@@ -1239,6 +1239,74 @@ class XiaoMusic:
         self._gen_all_music_list()
 
     # ===========================MusicFree插件函数================================
+
+    # 在线获取歌曲列表
+    async def get_music_list_online(self, plugin="all", keyword="", page=1, limit=20, **kwargs):
+        self.log.info(f"在线获取歌曲列表!")
+        """
+        在线获取歌曲列表
+
+        Args:
+            plugin: 插件名称，"OpenAPI"表示 通过开放接口获取，其他为插件在线搜索
+            keyword: 搜索关键词
+            page: 页码
+            limit: 每页数量
+            **kwargs: 其他参数
+        Returns:
+            dict: 搜索结果
+        """
+        openapi_info = self.js_plugin_manager.get_openapi_info()
+        if openapi_info.get("enabled", False) and openapi_info.get("search_url", "") != "":
+            # 开放接口获取
+            return await self.js_plugin_manager.openapi_search(openapi_info.get("search_url"), keyword)
+        else:
+            if not self.js_plugin_manager:
+                return {"success": False, "error": "JS Plugin Manager not available"}
+            # 插件在线搜索
+            return await self.get_music_list_mf(plugin, keyword, page, limit)
+
+    @staticmethod
+    async def get_real_url_of_openapi(url: str, timeout: int = 10) -> dict:
+        """
+        通过服务端代理获取开放接口真实的音乐播放URL，避免CORS问题
+        Args:
+            url (str): 原始音乐URL
+            timeout (int): 请求超时时间(秒)
+
+        Returns:
+            dict: 包含success、realUrl、statusCode等信息的字典
+        """
+        import aiohttp
+        from urllib.parse import urlparse
+
+        try:
+            # 验证URL格式
+            parsed_url = urlparse(url)
+            if not parsed_url.scheme or not parsed_url.netloc:
+                return {
+                    "success": False,
+                    "url": url,
+                    "error": "Invalid URL format"
+                }
+            # 创建aiohttp客户端会话
+            async with aiohttp.ClientSession() as session:
+                # 发送HEAD请求跟随重定向
+                async with session.head(url, allow_redirects=True,
+                                        timeout=aiohttp.ClientTimeout(total=timeout)) as response:
+                    # 获取最终重定向后的URL
+                    final_url = str(response.url)
+
+                    return {
+                        "success": True,
+                        "url": final_url,
+                        "statusCode": response.status
+                    }
+        except Exception as e:
+            return {
+                "success": False,
+                "url": url,
+                "error": f"Error occurred: {str(e)}"
+            }
 
     # 调用MusicFree插件获取歌曲列表
     async def get_music_list_mf(self, plugin="all", keyword="", page=1, limit=20, **kwargs):
@@ -1407,7 +1475,7 @@ class XiaoMusic:
             required_field="rawLrc"
         )
 
-    # 调用MusicFree插件搜索歌曲
+    # 调用在线搜索歌曲，并优化返回
     async def search_by_music_free(self, search_key, name):
         """调用MusicFree插件搜索歌曲
 
@@ -1420,7 +1488,9 @@ class XiaoMusic:
 
         try:
             # 获取歌曲列表
-            result = await self.get_music_list_mf(keyword=name, limit=10)
+            result = await self.get_music_list_online(keyword=name, limit=10)
+            self.log.info(f"在线搜索歌曲列表: {result}")
+
             if result.get('success') and result.get('total') > 0:
                 # 打印输出 result.data
                 self.log.info(f"歌曲列表: {result.get('data')}")
@@ -1430,11 +1500,17 @@ class XiaoMusic:
                 if not isinstance(music_item, dict):
                     self.log.error(f"music_item should be a dict, but got {type(music_item)}: {music_item}")
                     return {"success": False, "error": "Invalid music item format"}
-                media_source = await self.get_media_source_url(music_item)
-                if media_source.get('success'):
-                    return {"success": True, "url": media_source.get('url')}
+
+                # 如果是OpenAPI，则需要转换播放链接
+                openapi_info = self.js_plugin_manager.get_openapi_info()
+                if openapi_info.get("enabled", False):
+                    return await self.get_real_url_of_openapi(music_item.get('url'))
                 else:
-                    return {"success": False, "error": media_source.get('error')}
+                    media_source = await self.get_media_source_url(music_item)
+                    if media_source.get('success'):
+                        return {"success": True, "url": media_source.get('url')}
+                    else:
+                        return {"success": False, "error": media_source.get('error')}
             else:
                 return {"success": False, "error": "未找到歌曲"}
 
@@ -2077,18 +2153,16 @@ class XiaoMusicDevice:
                 proxy_base = f"{config.hostname}:{config.public_port}"
             else:
                 proxy_base = "http://192.168.31.241:8090"
-            search_key = f"{proxy_base}/search/"
             # 播放静音
             # http://192.168.31.241:8090/static/silence.mp3
-            silence = search_key+"/silence.mp3"
+            silence = proxy_base + "/static/silence.mp3"
             await self.xiaomusic.play_url(self.xiaomusic.get_cur_did(), silence)
             result = await self.xiaomusic.search_by_music_free(search_key, name)
             # 如果插件播放成功，则直接播放
             if result.get("success", False):
                 url = result.get("url", "")
-                self.log.error(f"--播放歌曲：{name}：：链接::{url}")
                 # 播放歌曲
-                await self.xiaomusic.play_url(self.xiaomusic.get_cur_did(),url)
+                # await self.xiaomusic.play_url(self.xiaomusic.get_cur_did(), url)
                 await self._playmusic(name, true_url=url)
             else:
                 # 如果插件播放失败，则执行下载流程
