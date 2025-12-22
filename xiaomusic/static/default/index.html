@@ -12,10 +12,10 @@
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments)};
-    gtag('js', new Date());
-    gtag('config', 'G-Z09NC1K7ZW');
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments) };
+        gtag('js', new Date());
+        gtag('config', 'G-Z09NC1K7ZW');
     </script>
 
     <!-- umami -->
@@ -25,7 +25,8 @@
 <body class="index_page">
     <div class="player">
         <h1>小爱音箱播放器
-            <a id="version" href="https://xdocs.hanxi.cc/issues/changelog.html" target="_blank">0.3.0</a><span id="versionnew" class="new-badge"></span>
+            <a id="version" href="https://xdocs.hanxi.cc/issues/changelog.html" target="_blank">0.3.0</a><span
+                id="versionnew" class="new-badge"></span>
         </h1>
 
         <label for="did">选择播放设备:</label>
@@ -33,7 +34,7 @@
             <option value="default">默认设备</option>
         </select>
 
-        <label for="music_list" style="display: flex;align-items: center;">选择播放列表: 
+        <label for="music_list" style="display: flex;align-items: center;">选择播放列表:
             <div class="option-inline" onclick="sendcmd('刷新列表')">
                 <span class="material-icons">refresh</span>
                 <span class="tooltip">刷新列表</span>
@@ -43,21 +44,29 @@
         </select>
 
         <label for="music_name" style="display: flex;align-items: center;">选择歌曲:
-            <div class="option-inline" onclick="toggleDelete()">
-                <span class="material-icons">delete</span>
-                <span class="tooltip">删除歌曲</span>
+            <div style="display: flex;align-items: center;margin-left: auto;">
+                <div class="option-inline" onclick="triggerUpload()">
+                    <span class="material-icons">file_upload</span>
+                    <span class="tooltip">上传歌曲</span>
+                </div>
+                <div  class="option-inline" onclick="toggleDelete()">
+                    <span class="material-icons">delete</span>
+                    <span class="tooltip">删除歌曲</span>
+                </div>
             </div>
         </label>
         <select id="music_name" class="song-selector">
         </select>
 
+        <input id="upload-file" type="file" accept=".mp3,.m4a,.wav,.flac,.aac,.ogg,.ape" style="display:none" />
+
         <div id="device-audio">
-          <progress class="progress" id="progress" value="0" max="100"></progress>
-          <div style="display: flex; justify-content: space-between; width: 100%;">
-              <span class="current-time" id="current-time">0:00</span>
-              <div class="current-song" id="playering-music">当前播放歌曲：无</div>
-              <span class="duration" id="duration">00:00</span>
-          </div>
+            <progress class="progress" id="progress" value="0" max="100"></progress>
+            <div style="display: flex; justify-content: space-between; width: 100%;">
+                <span class="current-time" id="current-time">0:00</span>
+                <div class="current-song" id="playering-music">当前播放歌曲：无</div>
+                <span class="duration" id="duration">00:00</span>
+            </div>
         </div>
         <audio id="audio" controls src="" autoplay></audio>
 
@@ -148,16 +157,15 @@
         <input type="text" id="music-url" class="search-input" placeholder="请输入播放链接"
             value="https://lhttp.qtfm.cn/live/4915/64k.mp3">
         <h2>播放文字</h2>
-        <input type="text" id="text-tts" class="search-input" placeholder="请输入文字"
-            value="播放文字测试">
+        <input type="text" id="text-tts" class="search-input" placeholder="请输入文字" value="播放文字测试">
 
         <div class="component-button-group">
-          <button onclick="playUrl()">播放链接</button>
-          <button onclick="playProxyUrl()">代理播放链接</button>
+            <button onclick="playUrl()">播放链接</button>
+            <button onclick="playProxyUrl()">代理播放链接</button>
         </div>
         <div class="component-button-group">
-          <button onclick="playTts()">播放文字</button>
-          <button onclick="togglePlayLink()">关闭</button>
+            <button onclick="playTts()">播放文字</button>
+            <button onclick="togglePlayLink()">关闭</button>
         </div>
     </div>
 
@@ -187,13 +195,13 @@
         <p>当前HOST: <span id="local-host"></span></p>
         <p>设置中的HOST: <span id="setting-host"></span></p>
         <div class="component-button-group">
-          <a href="./setting.html" target="_blank"><button>立即修改</button></a>
-          <button onclick="nowarning()">继续并不再显示</button>
-          <button onclick="toggleWarning()">取消</button>
+            <a href="./setting.html" target="_blank"><button>立即修改</button></a>
+            <button onclick="nowarning()">继续并不再显示</button>
+            <button onclick="toggleWarning()">取消</button>
         </div>
     </div>
     <div class="footer">
-      Powered by XiaoMusic
+        Powered by XiaoMusic
     </div>
 
     <script src="./md.js?version=1766282679">

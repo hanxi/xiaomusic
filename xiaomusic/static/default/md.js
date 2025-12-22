@@ -420,6 +420,47 @@ function do_play_music(musicname, searchkey) {
   });
 }
 
+// 上传功能：触发文件选择并提交到后端
+function triggerUpload() {
+  const uploadInput = document.getElementById("upload-file");
+  if (uploadInput) {
+    uploadInput.value = null;
+    uploadInput.click();
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const uploadInput = document.getElementById("upload-file");
+  if (uploadInput) {
+    uploadInput.addEventListener("change", async function (e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      const playlist = $("#music_list").val();
+      const form = new FormData();
+      form.append("playlist", playlist);
+      form.append("file", file);
+      try {
+        const resp = await fetch('/uploadmusic', {
+          method: 'POST',
+          body: form,
+        });
+        if (!resp.ok) throw new Error('网络错误');
+        const data = await resp.json();
+        if (data && data.ret === 'OK') {
+          alert('上传成功: ' + data.filename);
+          refresh_music_list();
+        } else {
+          alert('上传失败');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('上传失败');
+      }
+    });
+  }
+});
+
 $("#play").on("click", () => {
   var search_key = $("#music-name").val();
   if (search_key == null) {
