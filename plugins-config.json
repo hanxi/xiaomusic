@@ -1,6 +1,7 @@
 {
   "account": "111",
   "password": "3333",
+  "openapi_info": {},
   "enabled_plugins": [],
   "plugins_info": []
 }
