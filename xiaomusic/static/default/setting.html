@@ -4,9 +4,9 @@
     <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width">
     <title>小爱音箱操控面板</title>
-    <script src="./jquery-3.7.1.min.js?version=1768490795"></script>
-    <script src="./setting.js?version=1768490795"></script>
-    <link rel="stylesheet" type="text/css" href="./main.css?version=1768490795">
+    <script src="./jquery-3.7.1.min.js?version=1764602141"></script>
+    <script src="./setting.js?version=1764602141"></script>
+    <link rel="stylesheet" type="text/css" href="./main.css?version=1764602141">
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
@@ -48,9 +48,6 @@ var vConsole = new window.VConsole();
 
         <label for="password">*小米密码:</label>
         <input id="password" type="password" placeholder="填写小米登录密码" />
-
-        <label for="cookie">Cookie (可选):</label>
-        <input id="cookie" type="text" placeholder="可选：粘贴完整的 Cookie 字符串" />
 
         <label for="hostname" class="setting-label">*NAS的IP或域名:
           <button class="option-inline mini-button" id="auto-hostname">
@@ -99,35 +96,10 @@ var vConsole = new window.VConsole();
         <input id="conf_path" type="text" />
 
         <label for="cache_dir">缓存文件目录:</label>
-        <input id="cache_dir" type="text" value='music/cache' />
+        <input id="cache_dir" type="text" value='cache' />
 
         <label for="temp_path">临时文件目录:</label>
         <input id="temp_path" type="text" value="music/tmp" />
-
-        <label for="enable_auto_clean_temp">启用定时清理临时文件(每日凌晨3点):</label>
-        <select id="enable_auto_clean_temp">
-          <option value="true" selected>开启</option>
-          <option value="false">关闭</option>
-        </select>
-
-        <label for="edge_tts_voice">Edge-TTS 语音角色:</label>
-        <select id="edge_tts_voice">
-          <option value="" selected>不使用(默认)</option>
-          <option value="zh-CN-XiaoxiaoNeural">晓晓 (女声,温柔)</option>
-          <option value="zh-CN-XiaoyiNeural">晓伊 (女声,活泼)</option>
-          <option value="zh-CN-YunjianNeural">云健 (男声,成熟)</option>
-          <option value="zh-CN-YunxiNeural">云希 (男声,阳光)</option>
-          <option value="zh-CN-YunxiaNeural">云夏 (男声,少年)</option>
-          <option value="zh-CN-YunyangNeural">云扬 (男声,新闻)</option>
-          <option value="zh-CN-liaoning-XiaobeiNeural">晓北 (女声,东北)</option>
-          <option value="zh-CN-shaanxi-XiaoniNeural">晓妮 (女声,陕西)</option>
-          <option value="zh-HK-HiuGaaiNeural">曉佳 (女声,粤语)</option>
-          <option value="zh-HK-HiuMaanNeural">曉曼 (女声,粤语)</option>
-          <option value="zh-HK-WanLungNeural">雲龍 (男声,粤语)</option>
-          <option value="zh-TW-HsiaoChenNeural">曉臻 (女声,台湾)</option>
-          <option value="zh-TW-YunJheNeural">雲哲 (男声,台湾)</option>
-          <option value="zh-TW-HsiaoYuNeural">曉雨 (女声,台湾)</option>
-        </select>
 
         <label for="ffmpeg_location">ffmpeg路径:</label>
         <input id="ffmpeg_location" type="text" value="./ffmpeg/bin" />
@@ -224,8 +196,8 @@ var vConsole = new window.VConsole();
 
         <label for="enable_pull_ask">获取对话记录:</label>
         <select id="enable_pull_ask">
-          <option value="true">true</option>
-          <option value="false selected">false</option>
+          <option value="true" selected>true</option>
+          <option value="false">false</option>
         </select>
 
         <label for="pull_ask_sec">获取对话记录间隔(秒):</label>
@@ -260,9 +232,7 @@ var vConsole = new window.VConsole();
         <label for="keywords_search_play">搜索播放口令(会产生临时播放列表):</label>
         <input id="keywords_search_play" type="text" value="搜索播放" />
         <label for="keywords_online_play">在线播放口令(在线搜索接口或插件):</label>
-        <input id="keywords_online_play" type="text" value="在线播放" />
-        <label for="keywords_singer_play">播放歌手口令(会搜索歌手并创建歌单):</label>
-        <input id="keywords_singer_play" type="text" value="播放歌手" />
+        <input id="keywords_online_play" type="text" value="播放,在线播放" />
 
         <label for="enable_yt_dlp_cookies">启用yt-dlp-cookies(需要先上传yt-dlp-cookies.txt文件):</label>
         <select id="enable_yt_dlp_cookies">
@@ -299,8 +269,8 @@ var vConsole = new window.VConsole();
 
         <label for="web_music_proxy">网络歌曲过代理:</label>
         <select id="web_music_proxy">
-          <option value="true" selected>true</option>
-          <option value="false">false</option>
+          <option value="true">true</option>
+          <option value="false" selected>false</option>
         </select>
 
         <label for="music_list_url"  class="setting-label">歌单地址:
@@ -336,7 +306,6 @@ var vConsole = new window.VConsole();
       <div class="button-group">
         <button id="refresh_music_tag">刷新tag</button>
         <button id="clear_cache">清空缓存</button>
-        <button id="cleantempdir">清空临时目录</button>
         <a href="/downloadlog" download="xiaomusic.txt"><button>下载日志文件</button></a>
       </div>
 
