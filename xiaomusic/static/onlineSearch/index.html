@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MusicFree 插件在线搜索</title>
+    <title>在线音乐搜索</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -406,14 +406,17 @@
 <div class="container">
     <div class="header">
         <h1>在线音乐搜索</h1>
-        <p>通过 MusicFree 音源插件搜索在线音乐</p>
+        <p>通过 MusicFree音源插件、开放音乐接口 搜索在线音乐</p>
         <!-- 三个居中按钮 -->
         <div class="header-buttons">
             <a href="/" class="header-btn">
                 返回首页
             </a>
             <a href="./setting.html" target="_blank" class="header-btn">
-                插件设置
+                搜索配置
+            </a>
+            <a href="https://api.tunefree.fun/" target="_blank" class="header-btn">
+                OpenAPI
             </a>
             <a href="https://github.com/maotoumao/MusicFreePlugins" target="_blank" class="header-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -689,7 +692,6 @@
                 //playUrl = mediaItem.url
                 // 嗅探真实的音乐URL
                 playUrl = await sniffRealMusicUrl(mediaItem.url);
-                console.log("获取后的链接：： ",playUrl)
             } else {//插件方式
                 const response = await fetch('/api/play/getMediaSource', {
                     method: 'POST',
@@ -794,7 +796,6 @@
                         'Content-Type': 'text/lrc'
                     }
                 })
-                console.log("response::: ",response)
                 // 使用 await 获取实际的歌词文本内容
                 lrcText = await response.text();
             } else {
@@ -811,7 +812,6 @@
                     lrcText = lyricData.rawLrc
                 }
             }
-            console.log("最终歌词：",lrcText)
 
             if (lrcText) {
                 parseAndDisplayLyrics(lrcText);
@@ -831,7 +831,6 @@
             const response = await fetch(`/api/proxy/real-music-url?url=${encodeURIComponent(downloadUrl)}`);
             const data = await response.json();
             if (data.success) {
-                console.log("服务端获取的真实URL:", data.realUrl);
                 return data.url;
             } else {
                 return downloadUrl; // 返回原始URL

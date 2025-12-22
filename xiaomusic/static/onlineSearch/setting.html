@@ -147,6 +147,7 @@
         .section-title {
             font-size: 18px;
             font-weight: bold;
+            margin-top: 15px;
             margin-bottom: 15px;
             color: #333;
             border-bottom: 1px solid #eee;
@@ -179,6 +180,7 @@
             border-radius: 12px;
             font-size: 12px;
             font-weight: bold;
+            margin-top: 5px; /* 添加上边距 */
         }
         .status-enabled {
             background: #e8f5e9;
@@ -266,13 +268,21 @@
         .material-icons {
             font-size: 20px;
         }
+        .edit-btn {
+            background: #2196f3;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #1976d2;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>MusicFree 插件设置</h1>
-        <p>管理您的 MusicFree 插件</p>
+        <h1>插件&接口设置</h1>
+        <p>管理您的插件和在线接口</p>
         <!-- 三个居中按钮 -->
         <div class="header-buttons">
             <a href="./index.html" class="header-btn">
@@ -286,6 +296,9 @@
             <button class="header-btn" onclick="loadPlugins()">
                 刷新插件
             </button>
+            <a href="https://api.tunefree.fun/" target="_blank" class="header-btn">
+                OpenAPI
+            </a>
             <a href="https://github.com/maotoumao/MusicFreePlugins" target="_blank" class="header-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
@@ -295,7 +308,26 @@
     </div>
 
     <div class="plugins-section">
-        <div class="section-title">插件列表</div>
+        <div class="section-title">接口配置</div>
+        <!-- 接口配置 内容 -->
+        <div id="openapi-info">
+            <div class="plugin-item">
+                <div class="plugin-info">
+                    <div class="plugin-details">
+                        <div><strong>接口地址: </strong> <span id="openapi-url"></span></div>
+                        <div><strong>接口状态: </strong> <span id="openapi-status" class="plugin-status"></span></div>
+                    </div>
+                </div>
+                <div class="plugin-actions">
+                    <button class="action-btn" id="toggle-openapi-btn" onclick="toggleOpenApi()"></button>
+                    <!-- 新增编辑按钮 -->
+                    <button class="action-btn edit-btn" id="edit-openapi-btn" onclick="editOpenApiUrl()" style="display: none;">编辑</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 插件配置 内容 -->
+        <div class="section-title">插件配置</div>
         <div id="plugins-container">
             <div class="loading">加载中...</div>
         </div>
@@ -306,7 +338,116 @@
     // 页面加载时获取插件列表
     window.onload = function() {
         loadPlugins();
+        loadOpenApiConfig();
     };
+    /*============================开放接口函数=================================*/
+    // 加载 OpenAPI 配置
+    async function loadOpenApiConfig() {
+        const container = document.getElementById('openapi-info');
+        try {
+            const response = await fetch('/api/openapi/load');
+            const data = await response.json();
+            if (data.success) {
+                displayOpenApiConfig(data.data);
+            } else {
+                container.innerHTML = `<div class="error">加载失败: ${data.error}</div>`;
+            }
+        } catch (error) {
+            container.innerHTML = `<div class="error">加载出错: ${error.message}</div>`;
+        }
+    }
+
+    // 显示 OpenAPI 配置
+    function displayOpenApiConfig(config) {
+        document.getElementById('openapi-url').textContent = config.search_url || '';
+
+        const statusElement = document.getElementById('openapi-status');
+        const buttonElement = document.getElementById('toggle-openapi-btn');
+        const editButtonElement = document.getElementById('edit-openapi-btn'); // 新增编辑按钮引用
+
+        if (config.enabled) {
+            statusElement.className = 'plugin-status status-enabled';
+            statusElement.textContent = '已启用';
+            buttonElement.className = 'action-btn disable-btn';
+            buttonElement.textContent = '禁用';
+            // 启用时隐藏编辑按钮
+            editButtonElement.style.display = 'none';
+        } else {
+            statusElement.className = 'plugin-status status-disabled';
+            statusElement.textContent = '已禁用';
+            buttonElement.className = 'action-btn enable-btn';
+            buttonElement.textContent = '启用';
+            // 禁用时显示编辑按钮
+            editButtonElement.style.display = 'inline-block';
+        }
+    }
+
+
+    // 切换 OpenAPI 状态
+    async function toggleOpenApi() {
+        try {
+            const urlElement = document.getElementById('openapi-url');
+            const currentUrl = urlElement.textContent;
+            if (!currentUrl) {
+                alert('请先设置接口地址！');
+                return;
+            }
+            const response = await fetch('/api/openapi/toggle', {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                // 操作成功，重新加载配置
+                await loadOpenApiConfig();
+            } else {
+                alert(`切换失败: ${data.error}`);
+            }
+        } catch (error) {
+            alert(`操作出错: ${error.message}`);
+        }
+    }
+
+    // 编辑OpenAPI地址功能
+    function editOpenApiUrl() {
+        const urlElement = document.getElementById('openapi-url');
+        const currentUrl = urlElement.textContent;
+        const newUrl = prompt('请输入新的接口地址:', currentUrl);
+        // 校验newUrl格式
+        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+        if (newUrl && urlPattern.test(newUrl)) {
+            // 更新接口地址
+            updateOpenApiUrl(newUrl);
+        }else {
+            alert('请输入有效的接口地址！');
+        }
+    }
+
+    // 更新OpenAPI地址
+    async function updateOpenApiUrl(newUrl) {
+        try {
+            const response = await fetch('/api/openapi/updateUrl', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ search_url: newUrl })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                // 更新成功，重新加载配置
+                await loadOpenApiConfig();
+            } else {
+                alert(`更新失败: ${data.error}`);
+            }
+        } catch (error) {
+            alert(`更新出错: ${error.message}`);
+        }
+    }
+
+
+    /*============================插件函数=================================*/
 
     // 加载插件列表
     async function loadPlugins() {
@@ -364,7 +505,7 @@
                 if (data.success) {
                     alert('插件导入成功');
                     // 自动刷新插件列表
-                    loadPlugins();
+                    await loadPlugins();
                 } else {
                     alert(`插件导入失败: ${data.error}`);
                 }
@@ -426,7 +567,7 @@
 
             if (data.success) {
                 // 操作成功，重新加载插件列表
-                loadPlugins();
+                await loadPlugins();
             } else {
                 alert(`${enable ? '启用' : '禁用'}插件失败: ${data.error}`);
             }
@@ -450,7 +591,7 @@
             if (data.success) {
                 alert('插件卸载成功');
                 // 重新加载插件列表
-                loadPlugins();
+                await loadPlugins();
             } else {
                 alert(`插件卸载失败: ${data.error}`);
             }

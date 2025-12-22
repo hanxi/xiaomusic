@@ -447,7 +447,43 @@ async def upload_js_plugin(
         return {"success": False, "error": str(e)}
 
 
-# =====================================插件入口函数END===============
+# =====================================开放接口配置函数===============
+
+@app.get("/api/openapi/load")
+def get_openapi_info(
+        Verifcation=Depends(verification)
+):
+    """获取开放接口配置信息"""
+    try:
+        openapi_info = xiaomusic.js_plugin_manager.get_openapi_info()
+        return {"success": True, "data": openapi_info}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/openapi/toggle")
+def toggle_openapi(Verifcation=Depends(verification)):
+    """开放接口状态切换"""
+    try:
+        return xiaomusic.js_plugin_manager.toggle_openapi()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/openapi/updateUrl")
+async def update_openapi_url(request: Request,  Verifcation=Depends(verification)):
+    """更新开放接口地址"""
+    try:
+        request_json = await request.json()
+        search_url = request_json.get('search_url')
+        if not request_json or 'search_url' not in request_json:
+            return {"success": False, "error": "Missing 'search_url' in request body"}
+        return xiaomusic.js_plugin_manager.update_openapi_url(search_url)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# =====================================开放接口函数END===============
 
 @app.get("/playingmusic")
 def playingmusic(did: str = "", Verifcation=Depends(verification)):

@@ -1343,7 +1343,7 @@ class XiaoMusic:
         """搜索所有启用的插件"""
         enabled_plugins = self.js_plugin_manager.get_enabled_plugins()
         if not enabled_plugins:
-            return {"success": False, "error": "没有启用的插件"}
+            return {"success": False, "error": "没有可用的接口和插件，请先进行配置！"}
 
         results = []
         sources = {}

@@ -177,6 +177,89 @@ class JSPluginManager:
         if message_id:
             self.response_handlers[message_id] = response
 
+    """------------------------------开放接口相关函数----------------------------------------"""
+
+    def get_openapi_info(self) -> Dict[str, Any]:
+        """获取开放接口配置信息
+        Returns:
+            Dict[str, Any]: 包含 OpenAPI 配置信息的字典，包括启用状态和搜索 URL
+        """
+        try:
+            # 读取配置文件中的 OpenAPI 配置信息
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, 'r', encoding='utf-8') as f:
+                    config_data = json.load(f)
+                # 返回 openapi_info 配置项
+                return config_data.get("openapi_info", {})
+            else:
+                return {"enabled": False}
+        except Exception as e:
+            self.log.error(f"Failed to read OpenAPI info from config: {e}")
+            return {}
+
+    def toggle_openapi(self) -> Dict[str, Any]:
+        """切换开放接口配置状态
+        Returns: 切换后的配置信息
+        """
+        try:
+            # 读取配置文件中的 OpenAPI 配置信息
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, 'r', encoding='utf-8') as f:
+                    config_data = json.load(f)
+
+                # 获取当前的 openapi_info 配置，如果没有则初始化
+                openapi_info = config_data.get("openapi_info", {})
+
+                # 切换启用状态：和当前状态取反
+                current_enabled = openapi_info.get("enabled", False)
+                openapi_info["enabled"] = not current_enabled
+
+                # 更新配置数据
+                config_data["openapi_info"] = openapi_info
+                # 写回配置文件
+                with open(self.plugins_config_path, 'w', encoding='utf-8') as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+                return {"success": True}
+            else:
+                return {"success": False}
+        except Exception as e:
+            self.log.error(f"Failed to toggle OpenAPI config: {e}")
+            # 出错时返回默认配置
+            return {"success": False, "error": str(e)}
+
+    def update_openapi_url(self,openapi_url: str) -> Dict[str, Any]:
+        """更新开放接口地址
+        Returns: 更新后的配置信息
+        :type openapi_url: 新的接口地址
+        """
+        try:
+            # 读取配置文件中的 OpenAPI 配置信息
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, 'r', encoding='utf-8') as f:
+                    config_data = json.load(f)
+
+                # 获取当前的 openapi_info 配置，如果没有则初始化
+                openapi_info = config_data.get("openapi_info", {})
+
+                # 切换启用状态：和当前状态取反
+                # current_url = openapi_info.get("search_url", "")
+                openapi_info["search_url"] = openapi_url
+
+                # 更新配置数据
+                config_data["openapi_info"] = openapi_info
+                # 写回配置文件
+                with open(self.plugins_config_path, 'w', encoding='utf-8') as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+                return {"success": True}
+            else:
+                return {"success": False}
+        except Exception as e:
+            self.log.error(f"Failed to toggle OpenAPI config: {e}")
+            # 出错时返回默认配置
+            return {"success": False, "error": str(e)}
+
+    """----------------------------------------------------------------------"""
+
     def _load_plugins(self):
         """加载所有插件"""
         global plugin_name
@@ -286,24 +369,6 @@ class JSPluginManager:
         except Exception as e:
             self.log.error(f"Failed to read enabled plugins from config: {e}")
         return result
-
-    def get_openapi_info(self) -> Dict[str, Any]:
-        """获取开放接口配置信息
-        Returns:
-            Dict[str, Any]: 包含 OpenAPI 配置信息的字典，包括启用状态和搜索 URL
-        """
-        try:
-            # 读取配置文件中的 OpenAPI 配置信息
-            if os.path.exists(self.plugins_config_path):
-                with open(self.plugins_config_path, 'r', encoding='utf-8') as f:
-                    config_data = json.load(f)
-                # 返回 openapi_info 配置项
-                return config_data.get("openapi_info", {})
-            else:
-                return {"enabled": False}
-        except Exception as e:
-            self.log.error(f"Failed to read OpenAPI info from config: {e}")
-            return {}
 
     def get_enabled_plugins(self) -> List[str]:
         """获取启用的插件列表"""
