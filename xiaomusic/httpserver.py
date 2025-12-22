@@ -29,6 +29,7 @@ from fastapi import (
     Depends,
     FastAPI,
     File,
+    Form,
     HTTPException,
     Query,
     Request,
@@ -630,6 +631,67 @@ async def upload_yt_dlp_cookie(file: UploadFile = File(...)):
         "filename": file.filename,
         "file_location": config.yt_dlp_cookies_path,
     }
+
+
+@app.post("/uploadmusic")
+async def upload_music(playlist: str = Form(...), file: UploadFile = File(...)):
+    """上传音乐文件到当前播放列表对应的目录。"""
+    try:
+        # 选择目标目录：优先尝试由播放列表中已有歌曲推断目录
+        dest_dir = xiaomusic.music_path
+        # 特殊歌单映射
+        if playlist == "下载":
+            dest_dir = xiaomusic.download_path
+        elif playlist == "其他":
+            dest_dir = xiaomusic.music_path
+        else:
+            # 如果播放列表中存在歌曲，从其中任意一首推断目录
+            musics = xiaomusic.music_list.get(playlist, [])
+            if musics and len(musics) > 0:
+                first = musics[0]
+                filepath = xiaomusic.all_music.get(first, "")
+                if filepath:
+                    dest_dir = os.path.dirname(filepath)
+
+        # 确保目录存在
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir, exist_ok=True)
+
+        # 保存文件，避免路径穿越
+        filename = os.path.basename(file.filename)
+        if filename == "":
+            raise HTTPException(status_code=400, detail="Invalid filename")
+
+        dest_path = os.path.join(dest_dir, filename)
+        # 避免覆盖已有文件，简单地添加序号后缀
+        base, ext = os.path.splitext(filename)
+        counter = 1
+        while os.path.exists(dest_path):
+            filename = f"{base}_{counter}{ext}"
+            dest_path = os.path.join(dest_dir, filename)
+            counter += 1
+
+        with open(dest_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # 修复权限并刷新列表索引
+        try:
+            chmoddir(dest_dir)
+        except Exception:
+            pass
+
+        # 重新生成音乐列表索引
+        try:
+            xiaomusic._gen_all_music_list()
+        except Exception:
+            pass
+
+        return {"ret": "OK", "filename": filename}
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.exception(f"upload music failed: {e}")
+        raise HTTPException(status_code=500, detail="Upload failed") from e
 
 
 class PlayListObj(BaseModel):
