@@ -1,0 +1,20 @@
+FROM python:3.12-alpine3.22
+
+RUN apk add --no-cache  bash\
+    wget \
+    xz \
+    tiff \
+    openjpeg \
+    libxcb \
+    supervisor \
+    vim \
+    libc6-compat \
+    ffmpeg \
+    nodejs \
+    npm \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+RUN mkdir -p /app/ffmpeg/bin \
+    && ln -s /usr/bin/ffmpeg /app/ffmpeg/bin/ffmpeg \
+    && ln -s /usr/bin/ffprobe /app/ffmpeg/bin/ffprobe

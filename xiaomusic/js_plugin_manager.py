@@ -10,6 +10,7 @@ import os
 import subprocess
 import threading
 import time
+import shutil
 from typing import Dict, Any, List
 
 
@@ -17,11 +18,12 @@ class JSPluginManager:
     """JS 插件管理器"""
 
     def __init__(self, xiaomusic):
-        base_path = os.path.dirname(os.path.dirname(__file__))
         self.xiaomusic = xiaomusic
+        base_path = self.xiaomusic.config.conf_path
         self.log = logging.getLogger(__name__)
+        # JS插件文件夹：
         self.plugins_dir = os.path.join(base_path, "js_plugins")
-        # 修改第二行代码为：
+        # 插件配置Json：
         self.plugins_config_path = os.path.join(base_path, "plugins-config.json")
         self.plugins = {}  # 插件状态信息
         self.node_process = None
@@ -262,10 +264,28 @@ class JSPluginManager:
 
     def _load_plugins(self):
         """加载所有插件"""
-        global plugin_name
         if not os.path.exists(self.plugins_dir):
             os.makedirs(self.plugins_dir)
-            return
+
+        # 读取、加载插件配置Json
+        if not os.path.exists(self.plugins_config_path):
+            # 复制 plugins-config-example.json 模板，创建插件配置Json文件
+            example_config_path = os.path.join(os.path.dirname(__file__), "plugins-config-example.json")
+            if os.path.exists(example_config_path):
+                shutil.copy2(example_config_path, self.plugins_config_path)
+            else:
+                base_config = {
+                    "account": "",
+                    "password": "",
+                    "enabled_plugins": [],
+                    "plugins_info": [],
+                    "openapi_info": {
+                        "enabled": False,
+                        "search_url": ""
+                    }
+                }
+                with open(self.plugins_config_path, 'w', encoding='utf-8') as f:
+                    json.dump(base_config, f, ensure_ascii=False, indent=2)
 
         # 只加载指定的插件，避免加载所有插件导致超时
         # enabled_plugins = ['kw', 'qq-yuanli']  # 可以根据需要添加更多

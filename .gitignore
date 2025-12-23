@@ -171,9 +171,5 @@ cache
 tmp/
 xiaomusic.log.txt*
 node_modules
-<<<<<<< HEAD
-reference/
-.aone_copilot/
-=======
 js_plugins/
->>>>>>> 18578c4 (增加musicfree插件集成功能)
+reference/
