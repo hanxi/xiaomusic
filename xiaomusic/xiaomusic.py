@@ -2207,7 +2207,7 @@ class XiaoMusicDevice:
             name = self.get_next_music()
         self.log.info(f"_play_next. name:{name}, cur_music:{self.get_cur_music()}")
         if name == "":
-            await self.do_tts("本地没有歌曲")
+            # await self.do_tts("本地没有歌曲")
             return
         await self._play(name, exact=True)
 

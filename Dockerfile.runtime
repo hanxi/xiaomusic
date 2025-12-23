@@ -10,6 +10,8 @@ RUN apk add --no-cache  bash\
     vim \
     libc6-compat \
     ffmpeg \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

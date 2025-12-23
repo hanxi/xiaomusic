@@ -1,6 +1,6 @@
 {
-  "account": "111",
-  "password": "3333",
+  "account": "",
+  "password": "",
   "openapi_info": {
     "search_url": "https://music-dl.sayqz.com/api/",
     "enabled": true
