@@ -15,7 +15,7 @@
 
 - **原项目**: 本项目基于 [hanxi/xiaomusic](https://github.com/hanxi/xiaomusic) 进行开发，感谢原作者的支持
 - **MusicFree项目**: 集成了 [MusicFree](https://github.com/maotoumao/MusicFree) 的JS插件功能，感谢其开源贡献
-- **开放接口**: 集成了 [TuneFree API](https://api.tunefree.fun/) 开放接口，提供了更丰富的音乐资源
+- **开放接口**: 集成了 [TuneFree API](https://api.tunefree.fun/) 开放接口，感谢其提供了更丰富的音乐接口
 
 ## 🚀 扩展功能与实现逻辑
 
