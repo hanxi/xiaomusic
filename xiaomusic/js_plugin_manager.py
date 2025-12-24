@@ -286,7 +286,9 @@ class JSPluginManager:
                 }
                 with open(self.plugins_config_path, 'w', encoding='utf-8') as f:
                     json.dump(base_config, f, ensure_ascii=False, indent=2)
-
+        # 输出文件夹、配置文件地址
+        self.log.info(f"Plugins directory: {self.plugins_dir}")
+        self.log.info(f"Plugins config file: {self.plugins_config_path}")
         # 只加载指定的插件，避免加载所有插件导致超时
         # enabled_plugins = ['kw', 'qq-yuanli']  # 可以根据需要添加更多
         # 读取配置文件配置
