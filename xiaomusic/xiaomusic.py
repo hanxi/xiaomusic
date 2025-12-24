@@ -1327,19 +1327,25 @@ class XiaoMusic:
         # 检查JS插件管理器是否可用
         if not self.js_plugin_manager:
             return {"success": False, "error": "JS插件管理器不可用"}
-
+        # 如果关键词包含 '-'，则提取歌手名、歌名
+        if '-' in keyword:
+            parts = keyword.split('-')
+            keyword = parts[0]
+            artist = parts[1]
+        else:
+            artist = ""
         try:
             if plugin == "all":
                 # 搜索所有启用的插件
-                return await self._search_all_plugins(keyword, page, limit)
+                return await self._search_all_plugins(keyword, artist, page, limit)
             else:
                 # 搜索指定插件
-                return await self._search_specific_plugin(plugin, keyword, page, limit)
+                return await self._search_specific_plugin(plugin, keyword, artist, page, limit)
         except Exception as e:
             self.log.error(f"搜索音乐时发生错误: {e}")
             return {"success": False, "error": str(e)}
 
-    async def _search_all_plugins(self, keyword, page, limit):
+    async def _search_all_plugins(self, keyword, artist, page, limit):
         """搜索所有启用的插件"""
         enabled_plugins = self.js_plugin_manager.get_enabled_plugins()
         if not enabled_plugins:
@@ -1392,7 +1398,8 @@ class XiaoMusic:
             optimized_result = self.js_plugin_manager.optimize_search_results(
                 unified_result,
                 search_keyword=keyword,
-                limit=limit
+                limit=limit,
+                search_artist=artist
             )
             results = optimized_result.get('data', [])
 
@@ -1405,7 +1412,7 @@ class XiaoMusic:
             "limit": limit
         }
 
-    async def _search_specific_plugin(self, plugin, keyword, page, limit):
+    async def _search_specific_plugin(self, plugin, keyword, artist, page, limit):
         """搜索指定插件"""
         try:
             results = self.js_plugin_manager.search(plugin, keyword, page, limit)
@@ -1417,7 +1424,8 @@ class XiaoMusic:
                 results = self.js_plugin_manager.optimize_search_results(
                     results,
                     search_keyword=keyword,
-                    limit=limit
+                    limit=limit,
+                    search_artist=artist
                 )
 
             return {

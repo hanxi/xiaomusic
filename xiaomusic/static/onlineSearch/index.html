@@ -413,7 +413,7 @@
                 返回首页
             </a>
             <a href="./setting.html" target="_blank" class="header-btn">
-                搜索配置
+                后台配置
             </a>
             <a href="https://api.tunefree.fun/" target="_blank" class="header-btn">
                 OpenAPI
@@ -688,7 +688,7 @@
     async function webPlayMusic(mediaItem) {
         try {
             let playUrl;
-            if (mediaItem && mediaItem.platform === 'OpenAPI') {//在线接口
+            if (mediaItem && mediaItem.isOpenAPI) {//在线接口
                 //playUrl = mediaItem.url
                 // 嗅探真实的音乐URL
                 playUrl = await sniffRealMusicUrl(mediaItem.url);
@@ -788,7 +788,7 @@
     async function fetchAndDisplayLyrics(mediaItem) {
         try {
             let lrcText
-            if (mediaItem && mediaItem.platform === 'OpenAPI') {//在线接口
+            if (mediaItem && mediaItem.isOpenAPI) {//在线接口
                 // 调用OpenApi接口 GET获取歌词
                 const response = await fetch(mediaItem.lrc, {
                     method: 'GET',
