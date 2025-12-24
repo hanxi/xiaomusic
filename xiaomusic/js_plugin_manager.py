@@ -446,12 +446,12 @@ class JSPluginManager:
                     f"JS Plugin Manager search data sample: {data_list[:2] if len(data_list) > 0 else 'No results'}")
         return result_data
 
-    async def openapi_search(self, url: str, keyword: str, limit: int = 5):
+    async def openapi_search(self, url: str, keyword: str, limit: int = 10):
         """直接调用在线接口进行音乐搜索
 
         Args:
             url (str): 在线搜索接口地址
-            keyword (str): 搜索关键词
+            keyword (str): 搜索关键词，支持： 歌曲名-歌手名 搜索
             limit (int): 每页数量，默认为5
         Returns:
             Dict[str, Any]: 搜索结果，数据结构与search函数一致
@@ -460,13 +460,19 @@ class JSPluginManager:
         import asyncio
 
         try:
+            # 如果关键词包含 '-'，则提取歌手名、歌名
+            if '-' in keyword:
+                parts = keyword.split('-')
+                keyword = parts[0]
+                artist = parts[1]
+            else:
+                artist = ""
             # 构造请求参数
             params = {
                 'type': "aggregateSearch",
                 'keyword': keyword,
                 'limit': limit
             }
-
             # 使用aiohttp发起异步HTTP GET请求
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
@@ -488,23 +494,33 @@ class JSPluginManager:
             converted_data = []
             for item in results:
                 converted_item = {
+                    'id': item.get('id', ''),
                     'title': item.get('name', ''),
                     'artist': item.get('artist', ''),
                     'album': item.get('album', ''),
-                    'id': item.get('id', ''),
-                    'platform': 'OpenAPI',
+                    'platform': 'OpenAPI-' + item.get('platform'),
+                    'isOpenAPI': True,
                     'url': item.get('url', ''),
                     'artwork': item.get('pic', ''),
                     'lrc': item.get('lrc', '')
                 }
                 converted_data.append(converted_item)
-
+            # 排序筛选
+            unified_result = {"data": converted_data}
+            # 调用优化函数
+            optimized_result = self.optimize_search_results(
+                unified_result,
+                search_keyword=keyword,
+                limit=limit,
+                search_artist=artist
+            )
+            results = optimized_result.get('data', [])
             # 返回统一格式的数据
             return {
                 "success": True,
-                "data": converted_data,
-                "total": len(converted_data),
-                "sources": {"OpenAPI": len(converted_data)},
+                "data": results,
+                "total": len(results),
+                "sources": {"OpenAPI": len(results)},
                 "page": 1,
                 "limit": limit
             }
@@ -532,90 +548,86 @@ class JSPluginManager:
                 "limit": limit
             }
 
-    def optimize_search_results(self,
-                                result_data: Dict[str, Any],
-                                search_keyword: str = "",
-                                limit: int = 1
-                                ) -> Dict[str, Any]:
+    def optimize_search_results(
+            self,
+            result_data: Dict[str, Any],  # 搜索结果数据，字典类型，包含任意类型的值
+            search_keyword: str = "",    # 搜索关键词，默认为空字符串
+            search_artist: str = "",     # 搜索歌手名，默认为空字符串
+            limit: int = 1              # 返回结果数量限制，默认为1
+    ) -> Dict[str, Any]:  # 返回优化后的搜索结果，字典类型，包含任意类型的值
         """
-        优化搜索结果排序函数
-        根据歌曲名(title)和专辑名(album)的匹配度进行智能排序
+        优化搜索结果，根据关键词、歌手名和平台权重对结果进行排序
+        参数:
+            result_data: 原始搜索结果数据
+            search_keyword: 搜索的关键词
+            search_artist: 搜索的歌手名
+            limit: 返回结果的最大数量
+        返回:
+            优化后的搜索结果数据，已根据匹配度和平台权重排序
         """
         if not result_data or 'data' not in result_data or not result_data['data']:
             return result_data
 
-        if not search_keyword.strip():
-            # 关键词为空或仅空白，无需排序
-            return result_data
+        # 清理搜索关键词和歌手名，去除首尾空格
+        search_keyword = search_keyword.strip()
+        search_artist = search_artist.strip()
 
-        data_list: List[Dict[str, Any]] = result_data['data']
+        # 如果关键词和歌手名都为空，则不进行排序
+        if not search_keyword and not search_artist:
+            return result_data  # 两者都空才不排序
+
+        # 获取待处理的数据列表
+        data_list = result_data['data']
+        self.log.info(f"列表信息：：{data_list}")
+        # 预计算平台权重，启用插件列表中的前9个插件有权重，排名越靠前权重越高
+        enabled_plugins = self.get_enabled_plugins()
+        plugin_weights = {p: 9 - i for i, p in enumerate(enabled_plugins[:9])}
 
         def calculate_match_score(item):
-            """计算匹配分数"""
+            """
+            计算单个搜索结果的匹配分数
+            参数:
+                item: 单个搜索结果项
+            返回:
+                匹配分数，包含标题匹配分、艺术家匹配分和平台加分
+            """
+            # 获取并标准化标题、艺术家和平台信息
             title = item.get('title', '').lower()
             artist = item.get('artist', '').lower()
             platform = item.get('platform', '')
-            keyword = search_keyword.lower()
 
-            if not keyword:
-                return 0
-            score = 0
+            # 标准化搜索关键词和艺术家名
+            kw = search_keyword.lower()
+            ar = search_artist.lower()
 
-            # 平台匹配权重(百位数级别: 100-900)
-            import_plugins = self.get_enabled_plugins()
-            # 读取配置文件 取前9个值。越靠前分数越高
-            check_plugins = import_plugins[:9]
-            if platform in check_plugins:
-                # 根据平台在列表中的位置给予不同分数，越靠前分数越高
-                platform_index = check_plugins.index(platform)
-                # 给予平台匹配分数，例如: 第一个平台给900分，第二个给800分，以此类推
-                score += 900 - (platform_index * 100)
+            # 歌名匹配分
+            title_score = 0
+            if kw:
+                if kw == title:
+                    title_score = 400
+                elif title.startswith(kw):
+                    title_score = 300
+                elif kw in title:
+                    title_score = 200
 
-            # 歌曲名匹配权重(十位数级别: 10-90分)
-            if keyword in title:
-                # 完全匹配得最高分
-                if title == keyword:
-                    score += 90
-                # 开头匹配
-                elif title.startswith(keyword):
-                    score += 70
-                # 结尾匹配
-                elif title.endswith(keyword):
-                    score += 50
-                # 包含匹配
-                else:
-                    score += 30
-            # 部分字符匹配
-            elif any(char in title for char in keyword.split()):
-                score += 10
+            # 歌手匹配分
+            artist_score = 0
+            if ar:
+                if ar == artist:
+                    artist_score = 1000
+                elif artist.startswith(ar):
+                    artist_score = 800
+                elif ar in artist:
+                    artist_score = 600
 
-            # 艺术家名匹配权重(个位数级别: 1-9分)
-            if keyword in artist:
-                # 完全匹配
-                if artist == keyword:
-                    score += 9
-                # 开头匹配
-                elif artist.startswith(keyword):
-                    score += 7
-                # 结尾匹配
-                elif artist.endswith(keyword):
-                    score += 5
-                # 包含匹配
-                else:
-                    score += 3
-            # 部分字符匹配
-            elif any(char in artist for char in keyword.split()):
-                score += 1
+            platform_bonus = plugin_weights.get(platform, 0)
+            return title_score + artist_score + platform_bonus
 
-            return score
-
-        # 排序：高分在前
         sorted_data = sorted(data_list, key=calculate_match_score, reverse=True)
-        # 取前 limit 数量的数据
+        self.log.info(f"排序后列表信息：：{sorted_data}")
         if 0 < limit < len(sorted_data):
             sorted_data = sorted_data[:limit]
         result_data['data'] = sorted_data
-
         return result_data
 
     def get_media_source(self, plugin_name: str, music_item: Dict[str, Any], quality):
