@@ -16,9 +16,6 @@ COPY xiaomusic.py .
 FROM hanxi/xiaomusic:runtime
 
 WORKDIR /app
-RUN mkdir -p /app/ffmpeg/bin \
-    && ln -s /usr/bin/ffmpeg /app/ffmpeg/bin/ffmpeg \
-    && ln -s /usr/bin/ffprobe /app/ffmpeg/bin/ffprobe
 
 COPY --from=builder /app/.venv ./.venv
 COPY --from=builder /app/node_modules ./node_modules/
