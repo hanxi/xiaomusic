@@ -322,6 +322,7 @@ docker build -t xiaomusic .
 - [一个第三方的主题](https://github.com/DarrenWen/xiaomusicui)
 - [Umami 统计](https://github.com/umami-software/umami)
 - [Sentry 报错监控](https://github.com/getsentry/sentry)
+- [JS在线播放插件](https://github.com/boluofan/xiaomusic-online)
 - 所有帮忙调试和测试的朋友
 - 所有反馈问题和建议的朋友
 
