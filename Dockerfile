@@ -11,7 +11,6 @@ RUN npm install
 COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/
 COPY holiday/ ./holiday/
-COPY js_plugins/ ./js_plugins/
 COPY xiaomusic.py .
 
 FROM hanxi/xiaomusic:runtime
@@ -26,7 +25,6 @@ COPY --from=builder /app/node_modules ./node_modules/
 COPY --from=builder /app/xiaomusic/ ./xiaomusic/
 COPY --from=builder /app/plugins/ ./plugins/
 COPY --from=builder /app/holiday/ ./holiday/
-COPY --from=builder /app/js_plugins/ ./js_plugins/
 COPY --from=builder /app/xiaomusic.py .
 COPY --from=builder /app/xiaomusic/__init__.py /base_version.py
 COPY --from=builder /app/package.json .

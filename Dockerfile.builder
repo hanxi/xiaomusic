@@ -15,4 +15,3 @@ COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/
 COPY holiday/ ./holiday/
 COPY xiaomusic.py .
-COPY js_plugins/ ./js_plugins/
