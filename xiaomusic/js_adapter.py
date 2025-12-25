@@ -14,7 +14,9 @@ class JSAdapter:
         self.xiaomusic = xiaomusic
         self.log = logging.getLogger(__name__)
 
-    def format_search_results(self, plugin_results: list[dict], plugin_name: str) -> list[str]:
+    def format_search_results(
+        self, plugin_results: list[dict], plugin_name: str
+    ) -> list[str]:
         """格式化搜索结果为 xiaomusic 格式，返回 ID 列表"""
         formatted_ids = []
         for item in plugin_results:
@@ -23,20 +25,24 @@ class JSAdapter:
                 continue
 
             # 构造符合 xiaomusic 格式的音乐项
-            music_id = self._generate_music_id(plugin_name, item.get('id', ''), item.get('songmid', ''))
+            music_id = self._generate_music_id(
+                plugin_name, item.get("id", ""), item.get("songmid", "")
+            )
             music_item = {
-                'id': music_id,
-                'title': item.get('title', item.get('name', '')),
-                'artist': self._extract_artists(item),
-                'album': item.get('album', item.get('albumName', '')),
-                'source': 'online',
-                'plugin_name': plugin_name,
-                'original_data': item,
-                'duration': item.get('duration', 0),
-                'cover': item.get('artwork', item.get('cover', item.get('albumPic', ''))),
-                'url': item.get('url', ''),
-                'lyric': item.get('lyric', item.get('lrc', '')),
-                'quality': item.get('quality', ''),
+                "id": music_id,
+                "title": item.get("title", item.get("name", "")),
+                "artist": self._extract_artists(item),
+                "album": item.get("album", item.get("albumName", "")),
+                "source": "online",
+                "plugin_name": plugin_name,
+                "original_data": item,
+                "duration": item.get("duration", 0),
+                "cover": item.get(
+                    "artwork", item.get("cover", item.get("albumPic", ""))
+                ),
+                "url": item.get("url", ""),
+                "lyric": item.get("lyric", item.get("lrc", "")),
+                "quality": item.get("quality", ""),
             }
 
             # 添加到 all_music 字典中
@@ -45,15 +51,19 @@ class JSAdapter:
 
         return formatted_ids
 
-    def format_media_source_result(self, media_source_result: dict, music_item: dict) -> dict:
+    def format_media_source_result(
+        self, media_source_result: dict, music_item: dict
+    ) -> dict:
         """格式化媒体源结果"""
         if not media_source_result:
             return {}
 
         formatted = {
-            'url': media_source_result.get('url', ''),
-            'headers': media_source_result.get('headers', {}),
-            'userAgent': media_source_result.get('userAgent', media_source_result.get('user_agent', ''))
+            "url": media_source_result.get("url", ""),
+            "headers": media_source_result.get("headers", {}),
+            "userAgent": media_source_result.get(
+                "userAgent", media_source_result.get("user_agent", "")
+            ),
         }
 
         return formatted
@@ -61,18 +71,18 @@ class JSAdapter:
     def format_lyric_result(self, lyric_result: dict) -> str:
         """格式化歌词结果为 lrc 格式字符串"""
         if not lyric_result:
-            return ''
+            return ""
 
         # 获取原始歌词和翻译
-        raw_lrc = lyric_result.get('rawLrc', lyric_result.get('raw_lrc', ''))
-        translation = lyric_result.get('translation', '')
+        raw_lrc = lyric_result.get("rawLrc", lyric_result.get("raw_lrc", ""))
+        translation = lyric_result.get("translation", "")
 
         # 如果有翻译，合并歌词和翻译
         if translation and raw_lrc:
             # 这里可以实现歌词和翻译的合并逻辑
             return f"{raw_lrc}\n{translation}"
 
-        return raw_lrc or translation or ''
+        return raw_lrc or translation or ""
 
     def format_album_info_result(self, album_info_result: dict) -> dict:
         """格式化专辑信息结果"""
@@ -80,14 +90,18 @@ class JSAdapter:
             return {}
 
         formatted = {
-            'isEnd': album_info_result.get('isEnd', True),
-            'musicList': self.format_search_results(album_info_result.get('musicList', []), 'album'),
-            'albumItem': {
-                'title': album_info_result.get('albumItem', {}).get('title', ''),
-                'artist': album_info_result.get('albumItem', {}).get('artist', ''),
-                'cover': album_info_result.get('albumItem', {}).get('cover', ''),
-                'description': album_info_result.get('albumItem', {}).get('description', ''),
-            }
+            "isEnd": album_info_result.get("isEnd", True),
+            "musicList": self.format_search_results(
+                album_info_result.get("musicList", []), "album"
+            ),
+            "albumItem": {
+                "title": album_info_result.get("albumItem", {}).get("title", ""),
+                "artist": album_info_result.get("albumItem", {}).get("artist", ""),
+                "cover": album_info_result.get("albumItem", {}).get("cover", ""),
+                "description": album_info_result.get("albumItem", {}).get(
+                    "description", ""
+                ),
+            },
         }
 
         return formatted
@@ -98,13 +112,17 @@ class JSAdapter:
             return {}
 
         formatted = {
-            'isEnd': music_sheet_result.get('isEnd', True),
-            'musicList': self.format_search_results(music_sheet_result.get('musicList', []), 'playlist'),
-            'sheetItem': {
-                'title': music_sheet_result.get('sheetItem', {}).get('title', ''),
-                'cover': music_sheet_result.get('sheetItem', {}).get('cover', ''),
-                'description': music_sheet_result.get('sheetItem', {}).get('description', ''),
-            }
+            "isEnd": music_sheet_result.get("isEnd", True),
+            "musicList": self.format_search_results(
+                music_sheet_result.get("musicList", []), "playlist"
+            ),
+            "sheetItem": {
+                "title": music_sheet_result.get("sheetItem", {}).get("title", ""),
+                "cover": music_sheet_result.get("sheetItem", {}).get("cover", ""),
+                "description": music_sheet_result.get("sheetItem", {}).get(
+                    "description", ""
+                ),
+            },
         }
 
         return formatted
@@ -115,8 +133,10 @@ class JSAdapter:
             return {}
 
         formatted = {
-            'isEnd': artist_works_result.get('isEnd', True),
-            'data': self.format_search_results(artist_works_result.get('data', []), 'artist'),
+            "isEnd": artist_works_result.get("isEnd", True),
+            "data": self.format_search_results(
+                artist_works_result.get("data", []), "artist"
+            ),
         }
 
         return formatted
@@ -128,19 +148,16 @@ class JSAdapter:
 
         formatted = []
         for group in top_lists_result:
-            formatted_group = {
-                'title': group.get('title', ''),
-                'data': []
-            }
+            formatted_group = {"title": group.get("title", ""), "data": []}
 
-            for item in group.get('data', []):
+            for item in group.get("data", []):
                 formatted_item = {
-                    'id': item.get('id', ''),
-                    'title': item.get('title', ''),
-                    'description': item.get('description', ''),
-                    'coverImg': item.get('coverImg', item.get('cover', '')),
+                    "id": item.get("id", ""),
+                    "title": item.get("title", ""),
+                    "description": item.get("description", ""),
+                    "coverImg": item.get("coverImg", item.get("cover", "")),
                 }
-                formatted_group['data'].append(formatted_item)
+                formatted_group["data"].append(formatted_item)
 
             formatted.append(formatted_group)
 
@@ -152,14 +169,18 @@ class JSAdapter:
             return {}
 
         formatted = {
-            'isEnd': top_list_detail_result.get('isEnd', True),
-            'musicList': self.format_search_results(top_list_detail_result.get('musicList', []), 'toplist'),
-            'topListItem': top_list_detail_result.get('topListItem', {}),
+            "isEnd": top_list_detail_result.get("isEnd", True),
+            "musicList": self.format_search_results(
+                top_list_detail_result.get("musicList", []), "toplist"
+            ),
+            "topListItem": top_list_detail_result.get("topListItem", {}),
         }
 
         return formatted
 
-    def _generate_music_id(self, plugin_name: str, item_id: str, fallback_id: str = '') -> str:
+    def _generate_music_id(
+        self, plugin_name: str, item_id: str, fallback_id: str = ""
+    ) -> str:
         """生成唯一音乐ID"""
         if item_id:
             return f"online_{plugin_name}_{item_id}"
@@ -170,7 +191,7 @@ class JSAdapter:
     def _extract_artists(self, item: dict) -> str:
         """提取艺术家信息"""
         # 尝试多种可能的艺术家字段
-        artist_fields = ['artist', 'artists', 'singer', 'author', 'creator', 'singers']
+        artist_fields = ["artist", "artists", "singer", "author", "creator", "singers"]
 
         for field in artist_fields:
             if field in item:
@@ -180,36 +201,36 @@ class JSAdapter:
                     artists = []
                     for artist in value:
                         if isinstance(artist, dict):
-                            artists.append(artist.get('name', str(artist)))
+                            artists.append(artist.get("name", str(artist)))
                         else:
                             artists.append(str(artist))
-                    return ', '.join(artists)
+                    return ", ".join(artists)
                 elif isinstance(value, dict):
                     # 如果是艺术家对象
-                    return value.get('name', str(value))
+                    return value.get("name", str(value))
                 elif value:
                     return str(value)
 
         # 如果没有找到艺术家信息，返回默认值
-        return '未知艺术家'
+        return "未知艺术家"
 
     def convert_music_item_for_plugin(self, music_item: dict) -> dict:
         """将 xiaomusic 音乐项转换为插件兼容格式"""
         # 如果原始数据存在，优先使用原始数据
-        if isinstance(music_item, dict) and 'original_data' in music_item:
-            return music_item['original_data']
+        if isinstance(music_item, dict) and "original_data" in music_item:
+            return music_item["original_data"]
 
         # 否则构造一个基本的音乐项
         converted = {
-            'id': music_item.get('id', ''),
-            'title': music_item.get('title', ''),
-            'artist': music_item.get('artist', ''),
-            'album': music_item.get('album', ''),
-            'url': music_item.get('url', ''),
-            'duration': music_item.get('duration', 0),
-            'artwork': music_item.get('cover', ''),
-            'lyric': music_item.get('lyric', ''),
-            'quality': music_item.get('quality', ''),
+            "id": music_item.get("id", ""),
+            "title": music_item.get("title", ""),
+            "artist": music_item.get("artist", ""),
+            "album": music_item.get("album", ""),
+            "url": music_item.get("url", ""),
+            "duration": music_item.get("duration", 0),
+            "artwork": music_item.get("cover", ""),
+            "lyric": music_item.get("lyric", ""),
+            "quality": music_item.get("quality", ""),
         }
 
         return converted
