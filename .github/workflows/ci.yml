@@ -145,7 +145,6 @@ jobs:
           fi
 
       - name: Upload assets to Release tag
-        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
