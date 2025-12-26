@@ -49,15 +49,15 @@
         }
         .search-btn {
             padding: 10px 20px;
-            background: #31c27c;
-            color: white;
-            border: none;
+            background: #fff;
+            color: #31c27c;
+            border: 1px solid #31c27c;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
         }
         .search-btn:hover {
-            background: #28a869;
+            background: #f0f0f0;
         }
         .results-section {
             padding: 20px;
@@ -104,7 +104,7 @@
             gap: 10px;
             align-items: center;
         }
-        .play-btn {
+        .push-btn {
             padding: 8px 15px;
             background: #1976d2;/*31c27c*/
             color: white;
@@ -113,7 +113,7 @@
             cursor: pointer;
             font-size: 12px;
         }
-        .play-btn:hover {
+        .push-btn:hover {
             background: #1565c0;/*28a869*/
         }
         .web-play-btn {
@@ -394,6 +394,21 @@
             height: 20px;
             fill: white;
         }
+        /*播放全部*/
+        .play-all-btn {
+            padding: 10px 20px;
+            background: #31c27c; /* 与播放按钮颜色一致 31c27c*/
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .play-all-btn:hover {
+            background: #28a869; /* 悬停效果 28a869*/
+        }
+
     </style>
 </head>
 <!-- 返回顶部按钮 -->
@@ -416,9 +431,12 @@
                 后台配置
             </a>
             <a href="https://api.tunefree.fun/" target="_blank" class="header-btn">
-                OpenAPI
+                TuneHub API
             </a>
             <a href="https://github.com/maotoumao/MusicFreePlugins" target="_blank" class="header-btn">
+                MusicFreePlugins
+            </a>
+            <a href="https://github.com/boluofan/xiaomusic-online" target="_blank" class="header-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                 </svg>
@@ -433,6 +451,10 @@
                 <option value="all">所有插件</option>
             </select>
             <button class="search-btn" onclick="searchMusic()">搜索</button>
+            <!-- 新增：全部推送按钮 -->
+            <button class="push-btn" onclick="pushAllMusic()">推送全部</button>
+            <!-- 添加播放全部按钮 -->
+            <button class="play-all-btn" onclick="webPlayAllMusic()">播放全部</button>
         </div>
     </div>
 
@@ -484,6 +506,7 @@
     // 全局变量
     let currentLyrics = []; // 存储解析后的歌词
     let lyricLines = []; // 存储歌词DOM元素
+    let songList = []; // 存储搜索到的歌曲列表
 
     // 页面加载时获取插件列表
     window.onload = function() {
@@ -578,7 +601,7 @@
 
         // 显示加载状态
         resultsDiv.innerHTML = '<div class="loading">搜索中...</div>';
-
+        songList = [];
         try {
             const response = await fetch(`/api/search/online?keyword=${encodeURIComponent(keyword)}&plugin=${plugin}`);
             const data = await response.json();
@@ -601,7 +624,7 @@
             resultsDiv.innerHTML = '<div class="empty">没有找到相关音乐</div>';
             return;
         }
-
+        songList = results;
         const html = results.map(item => `
                 <div class="music-item">
                     <div class="music-cover">
@@ -631,9 +654,8 @@
                     </div>
                     <div class="music-actions">
                         <span class="source-tag">${item.platform || 'online'}</span>
-                        <button class="play-btn" onclick="playMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">播放</button>
-                        <button class="web-play-btn" onclick="webPlayMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">网页播放</button>
-
+                        <button class="push-btn" onclick="playMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">推送</button>
+                        <button class="web-play-btn" onclick="webPlayMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">播放</button>
                     </div>
                 </div>
             `).join('');
@@ -684,15 +706,13 @@
         }
     }
 
-    // 网页播放音乐
+    // 网页播放音乐 - 优化版本
     async function webPlayMusic(mediaItem) {
         try {
             let playUrl;
-            if (mediaItem && mediaItem.isOpenAPI) {//在线接口
-                //playUrl = mediaItem.url
-                // 嗅探真实的音乐URL
+            if (mediaItem && mediaItem.isOpenAPI) {
                 playUrl = await sniffRealMusicUrl(mediaItem.url);
-            } else {//插件方式
+            } else {
                 const response = await fetch('/api/play/getMediaSource', {
                     method: 'POST',
                     headers: {
@@ -701,14 +721,14 @@
                     body: JSON.stringify(mediaItem)
                 });
                 const data = await response.json();
-                playUrl = data.url
+                playUrl = data.url;
             }
 
             if (playUrl) {
                 // 显示播放器
                 const player = document.getElementById('musicPlayer');
                 player.style.display = 'block';
-                // 指定底部高度，解决播放器显示问题
+
                 const container = document.querySelector('.container');
                 container.style.paddingBottom = '80px';
 
@@ -722,29 +742,38 @@
                 if (mediaItem.artwork) {
                     coverPlaceholder.textContent = '';
                     coverImage.src = mediaItem.artwork;
-                    coverImage.style.display = 'block'; // 显示图片
+                    coverImage.style.display = 'block';
                 } else {
                     coverPlaceholder.textContent = '暂无封面';
-                    coverImage.style.display = 'none'; // 隐藏图片，显示默认文本
+                    coverImage.style.display = 'none';
                 }
 
                 // 设置音频源
                 const audio = document.getElementById('audioPlayer');
                 audio.src = playUrl;
+
                 // 重置播放按钮图标
                 document.getElementById('playIcon').style.display = 'none';
                 document.getElementById('pauseIcon').style.display = 'block';
+
                 // 获取并显示歌词
                 await fetchAndDisplayLyrics(mediaItem);
+
+                // 监听元数据加载完成，获取时长信息
+                audio.onloadedmetadata = function() {
+                    console.log('音频时长:', audio.duration + '秒');
+                    // 可以在这里更新UI显示时长信息
+                };
                 // 开始播放
-                audio.play();
+                await audio.play();
             } else {
-                alert('插件获取播放链接失败: ');
+                alert('插件获取播放链接失败');
             }
         } catch (error) {
             alert('获取播放链接出错: ' + error.message);
         }
     }
+
 
 
     // 关闭播放器
@@ -759,6 +788,7 @@
         document.getElementById('lyricContent').innerHTML = '';
         currentLyrics = [];
         lyricLines = [];
+        songList = [];
 
         // 移除音频时间更新监听器
         audio.removeEventListener('timeupdate', updateLyricHighlight);
@@ -933,6 +963,80 @@
             });
         }
     }
+
+    // 添加播放队列和状态管理
+    let playQueue = []; // 播放队列
+    let currentPlayIndex = 0; // 当前播放索引
+
+    // Web 端播放全部功能
+    async function webPlayAllMusic() {
+        if (songList.length === 0) {
+            alert('请先搜索歌曲！');
+            return;
+        }
+        // 设置播放队列
+        playQueue = [...songList];
+        currentPlayIndex = 0;
+        // 开始播放第一首
+        await playNextInWeb();
+    }
+
+    // 播放下一首
+    async function playNextInWeb() {
+        if (currentPlayIndex >= playQueue.length) {
+            //从头开始
+            currentPlayIndex = 0;
+        }
+
+        const currentSong = playQueue[currentPlayIndex];
+        console.log(`正在播放第 ${currentPlayIndex + 1} 首: ${currentSong.title}`);
+
+        try {
+            // 播放当前歌曲
+            await webPlayMusic(currentSong);
+
+            // 设置播放完成监听
+            const audio = document.getElementById('audioPlayer');
+            audio.onended = handleTrackEnd; // 当前歌曲播放完毕时触发
+        } catch (error) {
+            console.error('播放失败:', error);
+            // 跳到下一首
+            currentPlayIndex++;
+            await playNextInWeb();
+        }
+    }
+
+    // 处理单曲播放结束
+    function handleTrackEnd() {
+        currentPlayIndex++;
+        if (currentPlayIndex < playQueue.length) {
+            playNextInWeb();
+        } else {
+            console.log('所有歌曲播放完毕');
+            // 可选：重置播放器或显示播放完成提示
+            currentPlayIndex = 0;
+        }
+    }
+
+    // 全部推送音乐到设备
+    async function pushAllMusic() {
+        const deviceId = getCurrentDeviceId();
+        if (!deviceId || deviceId === '') {
+            alert('请先设置设备!');
+            return;
+        }
+        if (songList.length === 0) {
+            alert('请先搜索歌曲！');
+            return;
+        }
+        // 批量推送音乐到设备
+        for (let i = 0; i < songList.length; i++) {
+            await playMusic(songList[i]); // playMusic函数已实现设备推送功能
+            // 添加短暂延迟以避免请求过于频繁
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+    }
+
 
 </script>
 </body>
