@@ -2,19 +2,19 @@
 import asyncio
 import base64
 import copy
+import ipaddress
 import json
 import logging
 import math
 import os
 import random
 import re
+import socket
 import time
 import urllib.parse
 from collections import OrderedDict
 from dataclasses import asdict
 from logging.handlers import RotatingFileHandler
-import ipaddress
-import socket
 
 from aiohttp import ClientSession, ClientTimeout
 from miservice import MiAccount, MiIOService, MiNAService, miio_command
@@ -1318,7 +1318,9 @@ class XiaoMusic:
             except Exception:
                 return False
             for family, _, _, _, sockaddr in addrinfo_list:
-                ip_str = sockaddr[0] if family in (socket.AF_INET, socket.AF_INET6) else None
+                ip_str = (
+                    sockaddr[0] if family in (socket.AF_INET, socket.AF_INET6) else None
+                )
                 if not ip_str:
                     continue
                 try:
