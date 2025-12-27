@@ -23,4 +23,4 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: hanxi/xiaomusic
+          repository: boluofandocker/xiaomusic-online

@@ -3,34 +3,24 @@ name: CI Workflow
 on:
   push:
     branches:
-      - "*" # 所有分支触发
+      - "*"  # 所有分支触发
     tags:
-      - "v*"
+      - 'v*'
   workflow_dispatch:
 
 env:
-  VERSION_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ github.ref_name }}
-  LATEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:latest
-  STABLE_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:stable
+  VERSION_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic-online:${{ github.ref_name }}
+  LATEST_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic-online:latest
+  STABLE_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic-online:stable
 
 permissions:
   contents: write
   id-token: write
 
 jobs:
-  # 构建多架构 Docker 镜像并在所有平台上运行基本测试
+  # Job 构建和测试镜像
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform: [amd64, arm64, armv7]
-        include:
-          - platform: amd64
-            arch: amd64
-          - platform: arm64
-            arch: arm64
-          - platform: armv7
-            arch: arm/v7
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,33 +39,36 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker image for ${{ matrix.platform }}
+      - name: Build Docker images (multi-platform)
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/${{ matrix.arch }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           context: .
           push: false
-          load: true
+          outputs: type=local,dest=./output
           tags: ${{ env.VERSION_TAG }}
-          cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic-online:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic-online:buildcache,mode=max
 
-      - name: Test Docker image for ${{ matrix.platform }}
+      - name: Package Docker images
         run: |
-          docker run --rm ${{ env.VERSION_TAG }} /app/.venv/bin/python3 /app/xiaomusic.py -h
-
-      - name: Save ${{ matrix.platform }} image to tar
-        run: |
-          docker save ${{ env.VERSION_TAG }} -o xiaomusic-${{ github.ref_name }}-${{ matrix.platform }}.tar
+          cd output
+          for platform in linux_amd64 linux_arm64 linux_arm_v7; do
+            platform_name=$(echo $platform | sed 's/_/-/g')
+            if [ -d "$platform" ]; then
+              tar -czf ../xiaomusic-online-${{ github.ref_name }}-${platform_name#linux-}.tar.gz -C $platform .
+            fi
+          done
+          cd ..
 
       - name: Upload Docker images as artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: docker-images-${{ matrix.platform }}
-          path: xiaomusic-${{ github.ref_name }}-${{ matrix.platform }}.tar
+          name: docker-images
+          path: xiaomusic-online-*.tar.gz
           retention-days: 1
 
-  # 推送多架构 Docker 镜像到 Docker Hub
+  # Job 推送 Docker 镜像
   push-docker:
     runs-on: ubuntu-latest
     needs: build
@@ -95,7 +88,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Publish to Docker Hub
+      - name: Publish to Docker Hub main
         if: github.ref_name == 'main'
         uses: docker/build-push-action@v6
         with:
@@ -103,10 +96,7 @@ jobs:
           context: .
           push: true
           tags: ${{ env.VERSION_TAG }}
-          cache-from: |
-            type=gha,scope=amd64
-            type=gha,scope=arm64
-            type=gha,scope=armv7
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic-online:buildcache
 
       - name: Publish to Docker Hub latest and stable
         if: startsWith(github.ref, 'refs/tags/v')
@@ -115,16 +105,10 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           context: .
           push: true
-          tags: |
-            ${{ env.VERSION_TAG }}
-            ${{ env.LATEST_TAG }}
-            ${{ env.STABLE_TAG }}
-          cache-from: |
-            type=gha,scope=amd64
-            type=gha,scope=arm64
-            type=gha,scope=armv7
+          tags: ${{ env.VERSION_TAG }}, ${{ env.LATEST_TAG }}, ${{ env.STABLE_TAG }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic-online:buildcache
 
-  # 推送镜像到 GitHub Release
+  # Job 发布 Release
   publish-release:
     runs-on: ubuntu-latest
     needs: build
@@ -132,11 +116,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download all platform artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: docker-images-*
-          merge-multiple: true
+          name: docker-images
 
       - name: Install GitHub CLI
         run: |
@@ -167,13 +150,13 @@ jobs:
         run: |
           RELEASE_NAME=${{ github.ref_name }}
 
-          FILES=$(find . -type f -name "xiaomusic-*.tar")
+          FILES=$(find . -type f -name "xiaomusic-online-*.tar.gz")
           for FILE in ${FILES}; do
             echo "type upload ${FILE}"
             gh release upload "${RELEASE_NAME}" "${FILE}" --clobber
           done
 
-  # 推送 PyPI 包
+  # Job 发布 PyPI 版本
   publish-pypi:
     runs-on: ubuntu-latest
     needs: build

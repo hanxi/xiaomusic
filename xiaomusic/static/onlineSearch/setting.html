@@ -217,22 +217,23 @@
             .header-btn {
                 padding: 8px 12px;
                 font-size: 12px;
-                flex: 1; /* 保持按钮平均分配空间 */
+                flex: 0 0 calc(50% - 4px); /* 与首页的flex: 0 0 auto不同，这里强制每行2个 */
                 min-width: 90px;
                 max-width: 120px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                justify-content: center; /* 文字居中对齐 */
+                justify-content: center;
+                text-align: center;
             }
 
             /* 在特别窄的屏幕上调整按钮尺寸 */
             @media (max-width: 375px) {
                 .header-btn {
-                    flex: 1 1 calc(50% - 6px);
                     min-width: 80px;
-                    padding: 7px 8px;
-                    font-size: 10px;
+                    max-width: 100px;
+                    padding: 7px 10px;
+                    font-size: 11px;
                 }
             }
         }
@@ -245,11 +246,11 @@
             }
 
             .header-btn {
-                flex: 1 1 calc(50% - 6px); /* 关键修改：确保每行两个按钮且宽度一致 */
-                min-width: 100px;
+                flex: 0 0 calc(50% - 3px); /* 每行2个按钮 */
+                min-width: 90px;
+                max-width: 120px;
                 padding: 8px 10px;
                 font-size: 11px;
-                max-width: 100%; /* 防止超出容器宽度 */
             }
         }
 
