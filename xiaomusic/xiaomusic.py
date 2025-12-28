@@ -80,6 +80,7 @@ class XiaoMusic:
         self.session = None
         self.last_timestamp = {}  # key为 did. timestamp last call mi speaker
         self.last_record = None
+        self.last_cmd = ""  # <--- 【新增这行】初始化变量
         self.cookie_jar = None
         self.mina_service = None
         self.miio_service = None
@@ -1060,6 +1061,7 @@ class XiaoMusic:
     # 匹配命令
     async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
         self.log.info(f"收到消息:{query} 控制面板:{ctrl_panel} did:{did}")
+        self.last_cmd = query  # <--- 【新增这行】无论来自Web还是语音，先存下来
         try:
             opvalue, oparg = self.match_cmd(did, query, ctrl_panel)
             if not opvalue:
