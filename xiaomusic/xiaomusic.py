@@ -2240,6 +2240,7 @@ class XiaoMusicDevice:
             names = self.xiaomusic.find_real_music_name(
                 name, n=self.config.search_music_count
             )
+        self.log.info(f"play. names:{names} {len(names)}")
         if len(names) > 0:
             if not exact:
                 if len(names) > 1:  # 大于一首歌才更新
@@ -2258,7 +2259,10 @@ class XiaoMusicDevice:
             self.log.debug(
                 f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}"
             )
+            # 本地存在歌曲，直接播放
+            await self._playmusic(name)
         elif not self.xiaomusic.is_music_exist(name):
+            self.log.inf(f"本地不存在歌曲{name}")
             if self.config.disable_download:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
@@ -2268,9 +2272,6 @@ class XiaoMusicDevice:
                 # 把文件插入到播放列表里
                 await self.add_download_music(name)
                 await self._playmusic(name)
-        else:
-            # 本地存在歌曲，直接播放
-            await self._playmusic(name)
 
     # 下一首
     async def play_next(self):
@@ -2353,11 +2354,13 @@ class XiaoMusicDevice:
                 f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}"
             )
         elif not self.xiaomusic.is_music_exist(name):
+            self.log.info(f"本地不存在歌曲{name}")
             await self.do_tts(f"本地不存在歌曲{name}")
             return
         await self._playmusic(name)
 
     async def _playmusic(self, name, true_url=None):
+        self.log.info(f"_playmusic. name:{name} true_url:{true_url}")
         # 取消组内所有的下一首歌曲的定时器
         self.cancel_group_next_timer()
 
@@ -2371,7 +2374,7 @@ class XiaoMusicDevice:
         self.log.info(f"播放 {url}")
         # 有3方设备打开 /static/3thplay.html 通过socketio连接返回true 忽律小爱音箱的播放
         online = await thdplay("play", url, self.xiaomusic.thdtarget)
-        self.log.error(f"IS online {online}")
+        self.log.info(f"IS online {online}")
 
         if not online:
             results = await self.group_player_play(url, name)
