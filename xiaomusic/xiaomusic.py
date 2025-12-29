@@ -1258,7 +1258,7 @@ class XiaoMusic:
         # TODO: 这里可以优化性能
         self._gen_all_music_list()
 
-    # ===========================MusicFree插件函数================================
+    # ===========================OnlineSearch函数================================
 
     # 在线获取歌曲列表
     async def get_music_list_online(
@@ -1277,20 +1277,58 @@ class XiaoMusic:
         Returns:
             dict: 搜索结果
         """
+        if not self.js_plugin_manager:
+            return {"success": False, "error": "JS Plugin Manager not available"}
+
+        # 初始化 artist 变量
+        artist = ""
+        # 判断是否启用 AI 转换
+        ai_info = self.js_plugin_manager.get_aiapi_info()
+        if (
+                ai_info.get("enabled", False)
+                and ai_info.get("api_key", "") != ""
+        ):
+            # 调用 openai_utils 提取歌名/歌手名
+            from xiaomusic.openai_utils import analyze_music_command as utils_analyze_music_command
+            params = {'command': keyword, 'api_key': ai_info.get('api_key')}
+            # 可选参数,默认通义千问 qwen-flash
+            if 'base_url' in ai_info:
+                params['base_url'] = ai_info['base_url']
+            if 'model' in ai_info:
+                params['model'] = ai_info['model']
+            result = await utils_analyze_music_command(**params)
+
+            if result and (result.get("name") or result.get("artist")):
+                song_name = result.get("name", "")
+                artist = result.get("artist", "")
+                # 构建新的关键词
+                if song_name and artist:
+                    keyword = f"{song_name}-{artist}"
+                elif song_name:
+                    keyword = song_name
+                elif artist:
+                    keyword = artist
+                self.log.info(f"AI提取到的信息: {result}")
+        else:
+            # 不启用AI转换
+            if "-" in keyword:
+                parts = keyword.split("-")
+                keyword = parts[0]
+                artist = parts[1]
         openapi_info = self.js_plugin_manager.get_openapi_info()
         if (
-            openapi_info.get("enabled", False)
-            and openapi_info.get("search_url", "") != ""
+                openapi_info.get("enabled", False)
+                and openapi_info.get("search_url", "") != ""
         ):
             # 开放接口获取
-            return await self.js_plugin_manager.openapi_search(
-                openapi_info.get("search_url"), keyword
-            )
+            result_data = await self.js_plugin_manager.openapi_search(url=openapi_info.get("search_url"), keyword=keyword, artist=artist)
+            result_data["isOpenAPI"] = True
         else:
-            if not self.js_plugin_manager:
-                return {"success": False, "error": "JS Plugin Manager not available"}
             # 插件在线搜索
-            return await self.get_music_list_mf(plugin, keyword, page, limit)
+            result_data = await self.get_music_list_mf(plugin, keyword=keyword, artist=artist, page=page, limit=limit)
+            result_data["isOpenAPI"] = False
+        return result_data
+
 
     @staticmethod
     async def get_real_url_of_openapi(url: str, timeout: int = 10) -> dict:
@@ -1379,7 +1417,7 @@ class XiaoMusic:
 
     # 调用MusicFree插件获取歌曲列表
     async def get_music_list_mf(
-        self, plugin="all", keyword="", page=1, limit=20, **kwargs
+        self, plugin="all", keyword="", artist="", page=1, limit=20, **kwargs
     ):
         self.log.info("通过MusicFree插件搜索音乐列表!")
         """
@@ -1398,13 +1436,6 @@ class XiaoMusic:
         # 检查JS插件管理器是否可用
         if not self.js_plugin_manager:
             return {"success": False, "error": "JS插件管理器不可用"}
-        # 如果关键词包含 '-'，则提取歌手名、歌名
-        if "-" in keyword:
-            parts = keyword.split("-")
-            keyword = parts[0]
-            artist = parts[1]
-        else:
-            artist = ""
         try:
             if plugin == "all":
                 # 搜索所有启用的插件
@@ -1779,12 +1810,9 @@ class XiaoMusic:
         else:
             proxy_base = "http://192.168.31.241:8090"
         # 改为静音
-        # search_audio = proxy_base + "/static/search.mp3"
-        silence_audio = proxy_base + "/static/silence.mp3"
-        await self.play_url(self.get_cur_did(), silence_audio)
-
-        # TODO 添加一个定时器，4秒后触发
-
+        search_audio = proxy_base + "/static/search.mp3"
+        # silence_audio = proxy_base + "/static/silence.mp3"
+        await self.play_url(self.get_cur_did(), search_audio)
         # 获取搜索关键词
         parts = arg1.split("|")
         search_key = parts[0]
