@@ -55,6 +55,7 @@ from xiaomusic.utils import (
     chmodfile,
     custom_sort_key,
     deepcopy_data_no_sensitive_info,
+    downloadfile,
     extract_audio_metadata,
     find_best_match,
     fuzzyfinder,
@@ -1235,6 +1236,18 @@ class XiaoMusic:
     async def gen_music_list(self, **kwargs):
         self._gen_all_music_list()
         self.log.info("gen_music_list ok")
+
+    # 更新网络歌单
+    async def refresh_web_music_list(self, **kwargs):
+        url = self.config.music_list_url
+        if url:
+            self.log.debug(f"refresh_web_music_list begin url:{url}")
+            content = await downloadfile(url)
+            self.config.music_list_json = content
+            # 配置文件落地
+            self.save_cur_config()
+            self.log.debug(f"refresh_web_music_list url:{url} content:{content}")
+        self.log.info(f"refresh_web_music_list ok {url}")
 
     # 删除歌曲
     async def cmd_del_music(self, did="", arg1="", **kwargs):

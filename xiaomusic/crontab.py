@@ -140,6 +140,14 @@ class Crontab:
 
         self.add_job(expression, job)
 
+    # 更新网络歌单
+    def add_job_refresh_web_music_list(self, expression, xiaomusic, **kwargs):
+        async def job():
+            await xiaomusic.refresh_web_music_list()
+            await xiaomusic.gen_music_list()
+
+        self.add_job(expression, job)
+
     # 重新初始化
     def add_job_reinit(self, expression, xiaomusic, did, arg1, **kwargs):
         async def job():
