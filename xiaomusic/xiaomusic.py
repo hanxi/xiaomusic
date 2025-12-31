@@ -72,6 +72,33 @@ from xiaomusic.utils import (
 )
 
 
+def _build_keyword(song_name, artist):
+    """
+    根据歌名和艺术家构建关键词
+
+    Args:
+        song_name: 歌名
+        artist: 艺术家
+
+    Returns:
+        str: 构建后的关键词
+    """
+    if song_name and artist:
+        return f"{song_name}-{artist}"
+    elif song_name:
+        return song_name
+    elif artist:
+        return artist
+    return ""
+
+
+def _parse_keyword_by_dash(keyword):
+    if "-" in keyword:
+        parts = keyword.split("-", 1)  # 只分割第一个 `-`
+        return parts[0].strip(), parts[1].strip()
+    return keyword, ""
+
+
 class XiaoMusic:
     def __init__(self, config: Config):
         self.config = config
@@ -153,13 +180,13 @@ class XiaoMusic:
 
     # 私有方法：调用插件方法的通用封装
     async def __call_plugin_method(
-        self,
-        plugin_name: str,
-        method_name: str,
-        music_item: dict,
-        result_key: str,
-        required_field: str = None,
-        **kwargs,
+            self,
+            plugin_name: str,
+            method_name: str,
+            music_item: dict,
+            result_key: str,
+            required_field: str = None,
+            **kwargs,
     ):
         """
         通用方法：调用 JS 插件的方法并返回结果
@@ -192,9 +219,9 @@ class XiaoMusic:
                 plugin_name, music_item, **kwargs
             )
             if (
-                not result
-                or not result.get(result_key)
-                or result.get(result_key) == "None"
+                    not result
+                    or not result.get(result_key)
+                    or result.get(result_key) == "None"
             ):
                 return {"success": False, "error": f"Failed to get {result_key}"}
 
@@ -581,7 +608,7 @@ class XiaoMusic:
         picture = tags["picture"]
         if picture:
             if picture.startswith(self.config.picture_cache_path):
-                picture = picture[len(self.config.picture_cache_path) :]
+                picture = picture[len(self.config.picture_cache_path):]
             picture = picture.replace("\\", "/")
             if picture.startswith("/"):
                 picture = picture[1:]
@@ -732,7 +759,7 @@ class XiaoMusic:
 
         # 处理文件路径
         if filename.startswith(self.config.music_path):
-            filename = filename[len(self.config.music_path) :]
+            filename = filename[len(self.config.music_path):]
         filename = filename.replace("\\", "/")
         if filename.startswith("/"):
             filename = filename[1:]
@@ -822,7 +849,7 @@ class XiaoMusic:
                         # TODO: 网络歌曲获取歌曲额外信息
                         pass
                     elif os.path.exists(file_or_url) and not_in_dirs(
-                        file_or_url, ignore_tag_absolute_dirs
+                            file_or_url, ignore_tag_absolute_dirs
                     ):
                         all_music_tags[name] = extract_audio_metadata(
                             file_or_url, self.config.picture_cache_path
@@ -859,7 +886,7 @@ class XiaoMusic:
             if dir_name == os.path.basename(self.music_path):
                 dir_name = "其他"
             if self.music_path != self.download_path and dir_name == os.path.basename(
-                self.download_path
+                    self.download_path
             ):
                 dir_name = "下载"
             if dir_name not in all_music_by_dir:
@@ -1033,7 +1060,7 @@ class XiaoMusic:
             self.start_file_watch()
         analytics_task = asyncio.create_task(self.analytics_task_daily())
         assert (
-            analytics_task is not None
+                analytics_task is not None
         )  # to keep the reference to task, do not remove this
         async with ClientSession() as session:
             self.session = session
@@ -1146,11 +1173,11 @@ class XiaoMusic:
             opvalue = self.config.key_word_dict.get(opkey)
 
             if (
-                (not ctrl_panel)
-                and (not self.isplaying(did))
-                and self.active_cmd
-                and (opvalue not in self.active_cmd)
-                and (opkey not in self.active_cmd)
+                    (not ctrl_panel)
+                    and (not self.isplaying(did))
+                    and self.active_cmd
+                    and (opvalue not in self.active_cmd)
+                    and (opkey not in self.active_cmd)
             ):
                 self.log.info(f"不在激活命令中 {opvalue}")
                 continue
@@ -1259,15 +1286,66 @@ class XiaoMusic:
         self._gen_all_music_list()
 
     # ===========================OnlineSearch函数================================
+    # 处理推送的歌单并播放
+    async def push_music_list_play(
+            self, did="web_device", song_list=None, list_name="在线歌单", **kwargs
+    ):
+        """
+        处理推送的歌单信息 -> 添加歌单 -> 播放歌单
 
-    # 在线获取歌曲列表
+        数据转换：将外部歌单格式转换为后端支持的格式
+        保存配置：将歌单数据保存到配置中
+        更新列表：触发后端重新生成音乐列表
+        开始播放：调用播放方法开始播放歌单
+
+        Args:
+            did: 设备ID
+            song_list: 歌曲列表
+            list_name: 列表名称
+            **kwargs: 其他参数
+        Returns:
+            dict: 操作结果
+        """
+        if song_list is None:
+            song_list = []
+
+        self.log.info(f"推送歌单播放, 歌单名称: {list_name}, 歌曲数量: {len(song_list)}, 设备ID: {did}")
+        # 验证输入参数
+        if not song_list:
+            return {"success": False, "error": "歌曲列表不能为空"}
+        try:
+            # 转换外部歌单格式为内部支持的格式
+            converted_music_list = await self._convert_song_list_to_music_items(song_list)
+            if not converted_music_list:
+                return {"success": False, "error": "没有有效的歌曲可以添加"}
+
+            # 更新配置中的音乐歌单Json
+            self._update_music_list_json(list_name, converted_music_list)
+
+            # 重新生成音乐列表
+            self._gen_all_music_list()
+
+            # 如果指定了特定设备，播放歌单
+            if did != "web_device" and self.did_exist(did):
+                await self.do_play_music_list(did, list_name)
+            self.log.info(f"成功推送歌单: {list_name}, 包含 {len(converted_music_list)} 首歌曲")
+            return {
+                "success": True,
+                "message": f"成功推送歌单 {list_name}，包含 {len(converted_music_list)} 首歌曲",
+                "list_name": list_name,
+                "song_count": len(converted_music_list)
+            }
+        except Exception as e:
+            self.log.error(f"推送歌单播放失败: {e}")
+            return {"success": False, "error": str(e)}
+
     async def get_music_list_online(
-        self, plugin="all", keyword="", page=1, limit=20, **kwargs
+            self, plugin="all", keyword="", page=1, limit=20, **kwargs
     ):
         self.log.info("在线获取歌曲列表!")
         """
         在线获取歌曲列表
-
+    
         Args:
             plugin: 插件名称，"OpenAPI"表示 通过开放接口获取，其他为插件在线搜索
             keyword: 搜索关键词
@@ -1282,53 +1360,159 @@ class XiaoMusic:
 
         # 初始化 artist 变量
         artist = ""
-        # 判断是否启用 AI 转换
-        ai_info = self.js_plugin_manager.get_aiapi_info()
-        if (
-                ai_info.get("enabled", False)
-                and ai_info.get("api_key", "") != ""
-        ):
-            # 调用 openai_utils 提取歌名/歌手名
-            from xiaomusic.openai_utils import analyze_music_command as utils_analyze_music_command
-            params = {'command': keyword, 'api_key': ai_info.get('api_key')}
-            # 可选参数,默认通义千问 qwen-flash
-            if 'base_url' in ai_info:
-                params['base_url'] = ai_info['base_url']
-            if 'model' in ai_info:
-                params['model'] = ai_info['model']
-            result = await utils_analyze_music_command(**params)
-
-            if result and (result.get("name") or result.get("artist")):
-                song_name = result.get("name", "")
-                artist = result.get("artist", "")
-                # 构建新的关键词
-                if song_name and artist:
-                    keyword = f"{song_name}-{artist}"
-                elif song_name:
-                    keyword = song_name
-                elif artist:
-                    keyword = artist
-                self.log.info(f"AI提取到的信息: {result}")
-        else:
-            # 不启用AI转换
-            if "-" in keyword:
-                parts = keyword.split("-")
-                keyword = parts[0]
-                artist = parts[1]
+        # 解析关键词，可能通过AI或直接分割
+        parsed_keyword, parsed_artist = await self._parse_keyword_with_ai(keyword)
+        keyword = parsed_keyword or keyword
+        artist = parsed_artist or artist
+        # 获取API配置信息
         openapi_info = self.js_plugin_manager.get_openapi_info()
         if (
                 openapi_info.get("enabled", False)
                 and openapi_info.get("search_url", "") != ""
         ):
             # 开放接口获取
-            result_data = await self.js_plugin_manager.openapi_search(url=openapi_info.get("search_url"), keyword=keyword, artist=artist)
+            result_data = await self.js_plugin_manager.openapi_search(
+                url=openapi_info.get("search_url"),
+                keyword=keyword,
+                artist=artist
+            )
             result_data["isOpenAPI"] = True
         else:
             # 插件在线搜索
-            result_data = await self.get_music_list_mf(plugin, keyword=keyword, artist=artist, page=page, limit=limit)
+            result_data = await self.get_music_list_mf(
+                plugin,
+                keyword=keyword,
+                artist=artist,
+                page=page,
+                limit=limit
+            )
             result_data["isOpenAPI"] = False
+        # 将歌手名当作附加值，用于歌手搜索
+        result_data["artist"] = artist or "佚名"
         return result_data
 
+    async def _convert_song_list_to_music_items(self, song_list):
+        """
+        将外部歌单格式转换为内部支持的格式
+
+        Args:
+            song_list: 外部歌单数据
+
+        Returns:
+            list: 转换后的音乐项目列表
+        """
+        converted_music_list = []
+        for item in song_list:
+            if isinstance(item, dict):
+                source_url = item.get("url", "")
+                is_open_api = item.get("isOpenAPI", False)
+                music_item = {}
+                # 如果是开放接口，可能需要额外处理
+                if is_open_api and source_url:
+                    # 使用代理url
+                    music_item["url"] = self._get_proxy_url(source_url)
+                else:
+                    # 调用公共函数处理,获取音乐真实播放URL
+                    media_source = await self.get_media_source_url(item)
+                    if not media_source or not media_source.get("url"):
+                        music_item["url"] = media_source.get("url")
+                    else:
+                        continue
+                # 其他信息
+                name = item.get("name") or item.get("title") or item.get("song", "")
+                music_type = item.get("type", "music")
+                music_item["name"] = name
+                music_item["type"] = music_type
+            else:
+                continue
+
+            if music_item["name"]:
+                converted_music_list.append(music_item)
+
+        return converted_music_list
+
+    def _update_music_list_json(self, list_name, update_list):
+        """
+        更新配置的音乐歌单Json，如果存在则替换
+        Args:
+            list_name: 更新的歌单名称
+            update_list: 更新的歌单列表
+
+        Returns:
+            list: 转换后的音乐项目列表
+        """
+        # 更新配置中的音乐列表
+        if self.config.music_list_json:
+            music_list = json.loads(self.config.music_list_json)
+        else:
+            music_list = []
+
+        # 检查是否已存在同名歌单，如果存在则替换
+        existing_index = None
+        for i, item in enumerate(music_list):
+            if item.get("name") == list_name:
+                existing_index = i
+                break
+
+        # 构建新歌单数据
+        new_music_list = {
+            "name": list_name,
+            "musics": [
+                {
+                    "name": item["name"],
+                    "url": item["url"],
+                    "type": item["type"]
+                } for item in update_list
+            ]
+        }
+
+        if existing_index is not None:
+            # 替换已存在的歌单
+            music_list[existing_index] = new_music_list
+        else:
+            # 添加新歌单
+            music_list.append(new_music_list)
+
+        # 保存更新后的配置
+        self.config.music_list_json = json.dumps(music_list, ensure_ascii=False)
+
+    async def _parse_keyword_with_ai(self, keyword):
+        """
+        使用AI解析关键词，如果AI不可用则使用传统分割方式
+        Args:
+            keyword: 原始关键词
+        Returns:
+            tuple: (parsed_keyword, parsed_artist)
+        """
+        # 获取AI配置信息
+        ai_info = self.js_plugin_manager.get_aiapi_info()
+        # 如果AI启用且配置完整
+        if ai_info.get("enabled", False) and ai_info.get("api_key", "") != "":
+            try:
+                from xiaomusic.openai_utils import analyze_music_command as utils_analyze_music_command
+                params = {'command': keyword, 'api_key': ai_info.get('api_key')}
+
+                # 添加可选参数
+                if 'base_url' in ai_info:
+                    params['base_url'] = ai_info['base_url']
+                if 'model' in ai_info:
+                    params['model'] = ai_info['model']
+
+                result = await utils_analyze_music_command(**params)
+
+                if result and (result.get("name") or result.get("artist")):
+                    song_name = result.get("name", "")
+                    artist = result.get("artist", "")
+                    # 构建新的关键词
+                    keyword = _build_keyword(song_name, artist)
+                    self.log.info(f"AI提取到的信息: {result}")
+                    return keyword, artist
+
+            except Exception as e:
+                self.log.error(f"AI提取报错: {e}")
+
+        # 如果AI不可用或处理失败，使用传统分割方式
+        return _parse_keyword_by_dash(keyword)
 
     @staticmethod
     async def get_real_url_of_openapi(url: str, timeout: int = 10) -> dict:
@@ -1367,11 +1551,11 @@ class XiaoMusic:
                     return False
                 # 拒绝内网、回环、链路本地、多播和保留地址
                 if (
-                    ip_obj.is_private
-                    or ip_obj.is_loopback
-                    or ip_obj.is_link_local
-                    or ip_obj.is_multicast
-                    or ip_obj.is_reserved
+                        ip_obj.is_private
+                        or ip_obj.is_loopback
+                        or ip_obj.is_link_local
+                        or ip_obj.is_multicast
+                        or ip_obj.is_reserved
                 ):
                     return False
             return True
@@ -1400,9 +1584,9 @@ class XiaoMusic:
             async with aiohttp.ClientSession() as session:
                 # 发送HEAD请求跟随重定向
                 async with session.head(
-                    url,
-                    allow_redirects=True,
-                    timeout=aiohttp.ClientTimeout(total=timeout),
+                        url,
+                        allow_redirects=True,
+                        timeout=aiohttp.ClientTimeout(total=timeout),
                 ) as response:
                     # 获取最终重定向后的URL
                     final_url = str(response.url)
@@ -1417,7 +1601,7 @@ class XiaoMusic:
 
     # 调用MusicFree插件获取歌曲列表
     async def get_music_list_mf(
-        self, plugin="all", keyword="", artist="", page=1, limit=20, **kwargs
+            self, plugin="all", keyword="", artist="", page=1, limit=20, **kwargs
     ):
         self.log.info("通过MusicFree插件搜索音乐列表!")
         """
@@ -1511,6 +1695,7 @@ class XiaoMusic:
 
         return {
             "success": True,
+            "isOpenAPI": False,
             "data": results,
             "total": len(results),
             "sources": sources,
@@ -1533,6 +1718,7 @@ class XiaoMusic:
 
             return {
                 "success": True,
+                "isOpenAPI": False,
                 "data": results.get("data", []),
                 "total": results.get("total", 0),
                 "page": page,
@@ -1586,8 +1772,8 @@ class XiaoMusic:
             required_field="rawLrc",
         )
 
-    # 调用在线搜索歌曲，并优化返回
-    async def search_music_online(self, search_key, name):
+    # 调用在线搜索歌曲，并返回最合适的一条
+    async def search_music_top_one(self, search_key, name):
         """调用MusicFree插件搜索歌曲
 
         Args:
@@ -1633,6 +1819,32 @@ class XiaoMusic:
                     return music_item
                 else:
                     return {"success": False, "error": media_source.get("error")}
+            else:
+                return {"success": False, "error": "未找到歌曲"}
+
+        except Exception as e:
+            # 记录错误日志
+            self.log.error(f"searchKey {search_key} get media source failed: {e}")
+            return {"success": False, "error": str(e)}
+
+    # 调用在线搜索歌手，添加歌手歌单并播放
+    async def search_singer_play(self, search_key, name):
+
+        try:
+            # 获取歌曲列表
+            result = await self.get_music_list_online(keyword=name, limit=10)
+            self.log.info(f"在线搜索歌手的歌曲列表: {result}")
+
+            if result.get("success") and result.get("total") > 0:
+                # 打印输出 result.data
+                self.log.info(f"歌曲列表: {result.get('data')}")
+                artist = "artist-"+result.get("artist")
+                # 调用公共函数,处理歌曲信息 -> 添加歌单 -> 播放歌单
+                return await self.push_music_list_play(
+                    did=self.get_cur_did(),
+                    song_list=result.get('data'),
+                    list_name=artist
+                )
             else:
                 return {"success": False, "error": "未找到歌曲"}
 
@@ -1801,8 +2013,7 @@ class XiaoMusic:
             did, name, search_key, exact=False, update_cur_list=False
         )
 
-    # 在线播放：在线搜索、播放
-    async def online_play(self, did="", arg1="", **kwargs):
+    async def _before_play(self):
         # 先推送默认【搜索中】音频，搜索到播放url后推送给小爱
         config = self.config
         if config and hasattr(config, "hostname") and hasattr(config, "public_port"):
@@ -1813,6 +2024,10 @@ class XiaoMusic:
         search_audio = proxy_base + "/static/search.mp3"
         # silence_audio = proxy_base + "/static/silence.mp3"
         await self.play_url(self.get_cur_did(), search_audio)
+
+    # 在线播放：在线搜索、播放
+    async def online_play(self, did="", arg1="", **kwargs):
+        await self._before_play()
         # 获取搜索关键词
         parts = arg1.split("|")
         search_key = parts[0]
@@ -1820,7 +2035,7 @@ class XiaoMusic:
         if not name:
             name = search_key
         self.log.info(f"搜索关键字{search_key},搜索歌名{name}")
-        result = await self.search_music_online(search_key, name)
+        result = await self.search_music_top_one(search_key, name)
         # 搜索成功，则直接推送url播放
         if result.get("success", False):
             self.log.info(f"在线搜索到歌曲，result: {result}")
@@ -1829,9 +2044,21 @@ class XiaoMusic:
             # 播放歌曲
             await self.devices[did].play_music(name, true_url=url)
 
+    # 播放歌手：在线搜索歌手并存为列表播放
+    async def singer_play(self, did="", arg1="", **kwargs):
+        await self._before_play()
+        # 获取搜索关键词
+        parts = arg1.split("|")
+        search_key = parts[0]
+        name = parts[1] if len(parts) > 1 else search_key
+        if not name:
+            name = search_key
+        self.log.info(f"搜索关键字{search_key},搜索歌手名{name}")
+        await self.search_singer_play(search_key, name)
+
     # 后台搜索播放
     async def do_play(
-        self, did, name, search_key="", exact=False, update_cur_list=False
+            self, did, name, search_key="", exact=False, update_cur_list=False
     ):
         return await self.devices[did].play(name, search_key, exact, update_cur_list)
 
@@ -2218,7 +2445,12 @@ class XiaoMusicDevice:
         return offset, duration
 
     async def play_music(self, name, true_url=None):
-        return await self._playmusic(name, true_url=true_url)
+        # TODO 根据是否启用【续播】，判断是否需要创建歌单
+        enable_resume_play = True
+        if enable_resume_play:
+            return await self._playmusic(name, true_url=true_url)
+        else:
+            return await self._playmusic(name, true_url=true_url)
 
     # 初始化播放列表
     def update_playlist(self, reorder=True):
@@ -2227,7 +2459,7 @@ class XiaoMusicDevice:
             # 更新总播放列表，为了UI显示
             self.xiaomusic.music_list["临时搜索列表"] = copy.copy(self._play_list)
         elif (
-            self.device.cur_playlist == "临时搜索列表" and len(self._play_list) == 0
+                self.device.cur_playlist == "临时搜索列表" and len(self._play_list) == 0
         ) or (self.device.cur_playlist not in self.xiaomusic.music_list):
             self.device.cur_playlist = "全部"
         else:
@@ -2318,13 +2550,13 @@ class XiaoMusicDevice:
         self.log.info("开始播放下一首")
         name = self.get_cur_music()
         if (
-            self.device.play_type == PLAY_TYPE_ALL
-            or self.device.play_type == PLAY_TYPE_RND
-            or self.device.play_type == PLAY_TYPE_SEQ
-            or name == ""
-            or (
+                self.device.play_type == PLAY_TYPE_ALL
+                or self.device.play_type == PLAY_TYPE_RND
+                or self.device.play_type == PLAY_TYPE_SEQ
+                or name == ""
+                or (
                 (name not in self._play_list) and self.device.play_type != PLAY_TYPE_ONE
-            )
+        )
         ):
             name = self.get_next_music()
         self.log.info(f"_play_next. name:{name}, cur_music:{self.get_cur_music()}")
@@ -2341,10 +2573,10 @@ class XiaoMusicDevice:
         self.log.info("开始播放上一首")
         name = self.get_cur_music()
         if (
-            self.device.play_type == PLAY_TYPE_ALL
-            or self.device.play_type == PLAY_TYPE_RND
-            or name == ""
-            or (name not in self._play_list)
+                self.device.play_type == PLAY_TYPE_ALL
+                or self.device.play_type == PLAY_TYPE_RND
+                or name == ""
+                or (name not in self._play_list)
         ):
             name = self.get_prev_music()
         self.log.info(f"_play_prev. name:{name}, cur_music:{self.get_cur_music()}")
@@ -2417,9 +2649,9 @@ class XiaoMusicDevice:
                 self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
                 await asyncio.sleep(1)
                 if (
-                    self.isplaying()
-                    and self._last_cmd != "stop"
-                    and self._play_failed_cnt < 10
+                        self.isplaying()
+                        and self._last_cmd != "stop"
+                        and self._play_failed_cnt < 10
                 ):
                     self._play_failed_cnt = self._play_failed_cnt + 1
                     await self._play_next()
@@ -2473,8 +2705,8 @@ class XiaoMusicDevice:
         self.log.info(playing_info)
         # WTF xiaomi api
         is_playing = (
-            json.loads(playing_info.get("data", {}).get("info", "{}")).get("status", -1)
-            == 1
+                json.loads(playing_info.get("data", {}).get("info", "{}")).get("status", -1)
+                == 1
         )
         return is_playing
 
@@ -2593,8 +2825,8 @@ class XiaoMusicDevice:
             if direction == "next":
                 new_index = index + 1
                 if (
-                    self.device.play_type == PLAY_TYPE_SEQ
-                    and new_index >= play_list_len
+                        self.device.play_type == PLAY_TYPE_SEQ
+                        and new_index >= play_list_len
                 ):
                     self.log.info("顺序播放结束")
                     return ""
@@ -2681,7 +2913,7 @@ class XiaoMusicDevice:
                     f"play_one_url continue_play device_id:{device_id} ret:{ret} url:{url} audio_id:{audio_id}"
                 )
             elif self.config.use_music_api or (
-                self.hardware in NEED_USE_PLAY_MUSIC_API
+                    self.hardware in NEED_USE_PLAY_MUSIC_API
             ):
                 ret = await self.xiaomusic.mina_service.play_by_music_url(
                     device_id, url, audio_id=audio_id
@@ -2890,7 +3122,7 @@ class XiaoMusicDevice:
             return "最近新增"
         for list_name, play_list in self.xiaomusic.music_list.items():
             if (list_name not in ["全部", "所有歌曲", "所有电台", "临时搜索列表"]) and (
-                name in play_list
+                    name in play_list
             ):
                 return list_name
         if name in self.xiaomusic.music_list.get("所有歌曲", []):

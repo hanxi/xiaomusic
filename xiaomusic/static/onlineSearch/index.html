@@ -756,7 +756,11 @@
 
     <div class="search-section">
         <div class="search-box">
-            <input type="text" class="search-input" id="searchInput" placeholder="请输入关键词进行搜索！">
+            <input type="text"
+                   class="search-input"
+                   id="searchInput"
+                   placeholder="请输入关键词进行搜索！"
+                   enterkeyhint="search">
             <select class="search-select" id="pluginSelect">
                 <option value="all">所有插件</option>
             </select>
@@ -792,6 +796,12 @@
             <div class="lyric-content" id="lyricContent"></div>
         </div>
         <div class="player-controls">
+            <!-- 上一曲按钮 -->
+            <button class="player-play-pause" id="prevBtn" onclick="playPrevInWeb()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                </svg>
+            </button>
             <!-- 增加播放/暂停按钮 -->
             <button class="player-play-pause" id="playPauseBtn" onclick="togglePlayPause()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" id="playIcon">
@@ -799,6 +809,12 @@
                 </svg>
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" id="pauseIcon" style="display: none;">
                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+            </button>
+            <!-- 下一曲按钮 -->
+            <button class="player-play-pause" id="nextBtn" onclick="playNextInWeb()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
                 </svg>
             </button>
             <audio id="audioPlayer" controls></audio>
@@ -817,6 +833,7 @@
     let currentLyrics = []; // 存储解析后的歌词
     let lyricLines = []; // 存储歌词DOM元素
     let songList = []; // 存储搜索到的歌曲列表
+    let isOpenAPI = false; // 是否为开放接口
 
     // 页面加载时获取插件列表
     window.onload = function() {
@@ -919,6 +936,8 @@
     // 搜索音乐
     async function searchMusic() {
         const keyword = document.getElementById('searchInput').value.trim();
+        // 关闭虚拟键盘
+        document.getElementById('searchInput').blur();
         const plugin = document.getElementById('pluginSelect').value;
         const resultsDiv = document.getElementById('results');
 
@@ -933,8 +952,8 @@
         try {
             const response = await fetch(`/api/search/online?keyword=${encodeURIComponent(keyword)}&plugin=${plugin}`);
             const data = await response.json();
-
             if (data.success) {
+                isOpenAPI = data.isOpenAPI;
                 displayResults(data.data);
             } else {
                 resultsDiv.innerHTML = `<div class="error">搜索失败: ${data.error}</div>`;
@@ -947,7 +966,6 @@
     // 显示搜索结果
     function displayResults(results) {
         const resultsDiv = document.getElementById('results');
-
         if (!results || results.length === 0) {
             resultsDiv.innerHTML = '<div class="empty">没有找到相关音乐</div>';
             return;
@@ -982,7 +1000,7 @@
                     <div class="music-actions">
                         <span class="source-tag">${item.platform || 'online'}</span>
                         <button class="web-play-btn" onclick="webPlayMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">播放</button>
-                        <button class="push-btn" onclick="playMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">推送</button>
+                        <button class="push-btn" onclick="pushMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">推送</button>
                     </div>
                 </div>
             `).join('');
@@ -997,8 +1015,8 @@
         return localStorage.getItem('cur_did') || '';
     }
 
-    // 播放音乐（设备播放）
-    async function playMusic(mediaItem) {
+    // 推送音乐（设备播放）
+    async function pushMusic(mediaItem) {
         try {
             const deviceId = getCurrentDeviceId();
             if (!deviceId || deviceId === '') {
@@ -1008,7 +1026,7 @@
             // 构造正确的请求数据
             const requestData = {...mediaItem, did: deviceId};
 
-            const response = await fetch('/api/play/online', {
+            const response = await fetch('/api/device/push', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1034,11 +1052,51 @@
         }
     }
 
+    // 全部推送音乐到设备
+    async function pushAllMusic() {
+        const deviceId = getCurrentDeviceId();
+        if (!deviceId || deviceId === '') {
+            alert('请先设置设备!');
+            return;
+        }
+        if (songList.length === 0) {
+            alert('请先搜索歌曲！');
+            return;
+        }
+        console.log("songList",songList)
+        // 格式化musicList
+        let playlistName = 'webPushList';
+        // 批量推送音乐到设备
+        const response = await fetch('/api/device/pushAll', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(
+                { playlistName: playlistName,did: deviceId, songList: songList}
+            )
+        });
+        const data = await response.json();
+        // 根据新返回结构调整处理逻辑
+        if (data) {
+            if (data.success) {
+                // 显示服务端返回的具体消息而不是通用提示
+                alert('推送成功！');
+            } else {
+                alert('推送成功: '+data.message);
+            }
+        } else {
+            alert('播放失败: ' + ('未知错误'));
+        }
+    }
+
+    /*=====================网页播放音乐==========================*/
+
     // 网页播放音乐 - 优化版本
     async function webPlayMusic(mediaItem) {
         try {
             let playUrl;
-            if (mediaItem && mediaItem.isOpenAPI) {
+            if (mediaItem && isOpenAPI) {
                 playUrl = await sniffRealMusicUrl(mediaItem.url);
             } else {
                 const response = await fetch('/api/play/getMediaSource', {
@@ -1141,12 +1199,19 @@
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
 
-    // 回车键搜索
-    document.getElementById('searchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
+    // 综合处理多种事件
+    const searchInput = document.getElementById('searchInput');
+    const handleSearch = (e) => {
+        if (e.key === 'Enter' || e.type === 'input') {
+            e.preventDefault();
             searchMusic();
+            // 确保键盘关闭
+            searchInput.blur();
         }
-    });
+    };
+
+    searchInput.addEventListener('keydown', handleSearch);
+    searchInput.addEventListener('keypress', handleSearch);
 
     // 检查是否为移动端
     function isMobile() {
@@ -1161,7 +1226,7 @@
         }
         try {
             let lrcText
-            if (mediaItem && mediaItem.isOpenAPI) {//在线接口
+            if (mediaItem && isOpenAPI) {//在线接口
                 // 调用OpenApi接口 GET获取歌词
                 const response = await fetch(mediaItem.lrc, {
                     method: 'GET',
@@ -1324,27 +1389,53 @@
         await playNextInWeb();
     }
 
-    // 播放下一首
-    async function playNextInWeb() {
-        if (currentPlayIndex >= playQueue.length) {
-            //从头开始
-            currentPlayIndex = 0;
+    // 播放上一曲
+    async function playPrevInWeb() {
+        if (playQueue.length === 0) {
+            return;
+        }
+
+        currentPlayIndex--;
+        if (currentPlayIndex < 0) {
+            currentPlayIndex = playQueue.length - 1; // 循环到最后一首
         }
 
         const currentSong = playQueue[currentPlayIndex];
         console.log(`正在播放第 ${currentPlayIndex + 1} 首: ${currentSong.title}`);
 
         try {
-            // 播放当前歌曲
             await webPlayMusic(currentSong);
-
-            // 设置播放完成监听
             const audio = document.getElementById('audioPlayer');
-            audio.onended = handleTrackEnd; // 当前歌曲播放完毕时触发
+            audio.onended = handleTrackEnd;
         } catch (error) {
             console.error('播放失败:', error);
-            // 跳到下一首
             currentPlayIndex++;
+            if (currentPlayIndex >= playQueue.length) currentPlayIndex = 0;
+        }
+    }
+
+    // 播放下一曲函数，添加边界检查
+    async function playNextInWeb() {
+        if (playQueue.length === 0) {
+            return;
+        }
+
+        currentPlayIndex++;
+        if (currentPlayIndex >= playQueue.length) {
+            currentPlayIndex = 0; // 循环播放
+        }
+
+        const currentSong = playQueue[currentPlayIndex];
+        console.log(`正在播放第 ${currentPlayIndex + 1} 首: ${currentSong.title}`);
+
+        try {
+            await webPlayMusic(currentSong);
+            const audio = document.getElementById('audioPlayer');
+            audio.onended = handleTrackEnd;
+        } catch (error) {
+            console.error('播放失败:', error);
+            currentPlayIndex++;
+            if (currentPlayIndex >= playQueue.length) currentPlayIndex = 0;
             await playNextInWeb();
         }
     }
@@ -1358,25 +1449,6 @@
             console.log('所有歌曲播放完毕');
             // 可选：重置播放器或显示播放完成提示
             currentPlayIndex = 0;
-        }
-    }
-
-    // 全部推送音乐到设备
-    async function pushAllMusic() {
-        const deviceId = getCurrentDeviceId();
-        if (!deviceId || deviceId === '') {
-            alert('请先设置设备!');
-            return;
-        }
-        if (songList.length === 0) {
-            alert('请先搜索歌曲！');
-            return;
-        }
-        // 批量推送音乐到设备
-        for (let i = 0; i < songList.length; i++) {
-            await playMusic(songList[i]); // playMusic函数已实现设备推送功能
-            // 添加短暂延迟以避免请求过于频繁
-            await new Promise(resolve => setTimeout(resolve, 500));
         }
     }
 
