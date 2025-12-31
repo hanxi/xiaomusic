@@ -109,14 +109,10 @@ services:
 > 作者写的一个游戏服务器开发实战课程 <https://www.lanqiao.cn/courses/2770> ，购买时记得使用优惠码: `2CZ2UA5u` 。
 
 > [!TIP]
-> 作者的另一个适用于 NAS 上安装的开源工具： <https://github.com/hanxi/tiny-nav>
-
-> [!TIP]
-> PVE 移动端 UI 界面：<https://github.com/hanxi/pve-touch>
-
-> [!TIP]
->
-> 喜欢听书的可以配合这个工具使用 <https://github.com/hanxi/epub2mp3>
+> - 适用于 NAS 上安装的开源工具： <https://github.com/hanxi/tiny-nav>
+> - 适用于 NAS 上安装的网页打印机： <https://github.com/hanxi/cups-web>
+> - PVE 移动端 UI 界面：<https://github.com/hanxi/pve-touch>
+> - 喜欢听书的可以配合这个工具使用 <https://github.com/hanxi/epub2mp3>
 
 > [!TIP]
 >
