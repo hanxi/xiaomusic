@@ -642,6 +642,17 @@ class XiaoMusic:
         self.try_save_tag_cache()
         return "OK"
 
+    def get_proxy_url(self, origin_url):
+        """获取代理URL"""
+        return self._get_proxy_url(origin_url)
+
+    # 获取未代理的原始url
+    @staticmethod
+    def get_origin_url(proxy_url):
+        urlb64 = proxy_url.split("urlb64=")[1]
+        origin_url = base64.b64decode(urlb64).decode("utf-8")
+        return origin_url
+
     async def get_music_sec_url(self, name, true_url):
         """获取歌曲播放时长和播放地址
 
@@ -654,8 +665,11 @@ class XiaoMusic:
 
         # 获取播放时长
         if true_url is not None:
-            url = true_url
-            sec = await self._get_online_music_duration(name, true_url)
+            origin_url = self.get_origin_url(true_url)
+            play_url = await self.get_real_url_of_openapi(origin_url)
+            url = play_url
+            self.log.info(f"初始url： {true_url}，用于获取时长的url: {origin_url}, 最终用于播放的url: {play_url}")
+            sec = await self._get_online_music_duration(name, origin_url)
             self.log.info(f"在线歌曲时长获取：：{name} ；sec：：{sec}")
         else:
             url, origin_url = await self.get_music_url(name)
@@ -1327,7 +1341,11 @@ class XiaoMusic:
 
             # 如果指定了特定设备，播放歌单
             if did != "web_device" and self.did_exist(did):
-                await self.do_play_music_list(did, list_name)
+                device_playlist = self.devices[did].get_playlist()
+                song_name = device_playlist[0]
+                # await self.do_play_music_list(did, list_name, song_name)
+                await self.devices[did].play_music(song_name)
+                self.log.info(f"设备对应的播放列表:: {device_playlist}")
             self.log.info(f"成功推送歌单: {list_name}, 包含 {len(converted_music_list)} 首歌曲")
             return {
                 "success": True,
@@ -1515,7 +1533,7 @@ class XiaoMusic:
         return _parse_keyword_by_dash(keyword)
 
     @staticmethod
-    async def get_real_url_of_openapi(url: str, timeout: int = 10) -> dict:
+    async def get_real_url_of_openapi(url: str, timeout: int = 10) -> str:
         """
         通过服务端代理获取开放接口真实的音乐播放URL，避免CORS问题
         Args:
@@ -1523,7 +1541,7 @@ class XiaoMusic:
             timeout (int): 请求超时时间(秒)
 
         Returns:
-            dict: 包含success、realUrl、statusCode等信息的字典
+            str: 最终的真实播放URL，如果代理不成功则返回原始URL
         """
         from urllib.parse import urlparse
 
@@ -1564,21 +1582,13 @@ class XiaoMusic:
             # 验证URL格式
             parsed_url = urlparse(url)
             if not parsed_url.scheme or not parsed_url.netloc:
-                return {"success": False, "url": url, "error": "Invalid URL format"}
+                return url  # 返回原始URL
             # 仅允许 http/https
             if parsed_url.scheme not in ("http", "https"):
-                return {
-                    "success": False,
-                    "url": url,
-                    "error": "Unsupported URL scheme",
-                }
+                return url  # 返回原始URL
             # 检查主机是否安全，防止SSRF到内网
             if not _is_safe_hostname(parsed_url):
-                return {
-                    "success": False,
-                    "url": url,
-                    "error": "Unsafe target host",
-                }
+                return url  # 返回原始URL
 
             # 创建aiohttp客户端会话
             async with aiohttp.ClientSession() as session:
@@ -1590,14 +1600,10 @@ class XiaoMusic:
                 ) as response:
                     # 获取最终重定向后的URL
                     final_url = str(response.url)
-
-                    return {
-                        "success": True,
-                        "url": final_url,
-                        "statusCode": response.status,
-                    }
+                    return final_url
         except Exception as e:
-            return {"success": False, "url": url, "error": f"Error occurred: {str(e)}"}
+            return url  # 返回原始URL
+
 
     # 调用MusicFree插件获取歌曲列表
     async def get_music_list_mf(
@@ -1802,23 +1808,21 @@ class XiaoMusic:
                     )
                     return {"success": False, "error": "Invalid music item format"}
 
-                # 如果是OpenAPI，则需要转换播放链接
+                # 如果是OpenAPI，不需要转换连接 直接返回
                 openapi_info = self.js_plugin_manager.get_openapi_info()
                 if openapi_info.get("enabled", False):
-                    # return await self.get_real_url_of_openapi(music_item.get('url'))
-                    media_source = await self.get_real_url_of_openapi(
-                        music_item.get("url")
-                    )
-                else:
-                    media_source = await self.get_media_source_url(music_item)
-                if media_source.get("success"):
-                    # 将url重置为真实url
-                    # return {"success": True, "url": media_source.get('url')}
                     music_item["success"] = True
-                    music_item["url"] = media_source.get("url")
                     return music_item
                 else:
-                    return {"success": False, "error": media_source.get("error")}
+                    media_source = await self.get_media_source_url(music_item)
+                    if media_source.get("success"):
+                        # 将url重置为真实url
+                        # return {"success": True, "url": media_source.get('url')}
+                        music_item["success"] = True
+                        music_item["url"] = media_source.get("url")
+                        return music_item
+                    else:
+                        return {"success": False, "error": media_source.get("error")}
             else:
                 return {"success": False, "error": "未找到歌曲"}
 
@@ -2452,6 +2456,13 @@ class XiaoMusicDevice:
         else:
             return await self._playmusic(name, true_url=true_url)
 
+    # 获取指定设备对应的播放列表
+    def get_playlist(self):
+        if self._play_list and len(self._play_list) > 0:
+            return self._play_list
+        else:
+            return []
+
     # 初始化播放列表
     def update_playlist(self, reorder=True):
         # 没有重置 list 且非初始化
@@ -2635,6 +2646,7 @@ class XiaoMusicDevice:
         self.device.cur_music = name
         self.device.playlist2music[self.device.cur_playlist] = name
 
+        self.log.info(f"cur_playlist {self.device.cur_playlist}")
         self.log.info(f"cur_music {self.get_cur_music()}")
         sec, url = await self.xiaomusic.get_music_sec_url(name, true_url)
         await self.group_force_stop_xiaoai()

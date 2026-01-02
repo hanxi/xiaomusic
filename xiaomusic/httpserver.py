@@ -279,12 +279,14 @@ async def get_real_music_url(
     """通过服务端代理获取真实的音乐播放URL，避免CORS问题"""
     try:
         # 获取真实的音乐播放URL
-        return await xiaomusic.get_real_url_of_openapi(url)
+        real_url = await xiaomusic.get_real_url_of_openapi(url)
+        # 直接重定向到真实URL
+        return RedirectResponse(url=real_url)
 
     except Exception as e:
         log.error(f"获取真实音乐URL失败: {e}")
-        # 如果代理获取失败，仍然返回原始URL
-        return {"success": False, "realUrl": url, "error": str(e)}
+        # 如果代理获取失败，重定向到原始URL
+        return RedirectResponse(url=url)
 
 
 @app.post("/api/play/getMediaSource")
@@ -320,13 +322,13 @@ async def device_push_music(request: Request, Verifcation=Depends(verification))
         did = data.get("did")
         openapi_info = xiaomusic.js_plugin_manager.get_openapi_info()
         if openapi_info.get("enabled", False):
-            media_source = await xiaomusic.get_real_url_of_openapi(data.get("url"))
+            url = data.get("url")
         else:
             # 调用公共函数处理,获取音乐真实播放URL
             media_source = await xiaomusic.get_media_source_url(data)
-        if not media_source or not media_source.get("url"):
-            return {"success": False, "error": "Failed to get media source URL"}
-        url = media_source.get("url")
+            if not media_source or not media_source.get("url"):
+                return {"success": False, "error": "Failed to get media source URL"}
+            url = media_source.get("url")
         decoded_url = urllib.parse.unquote(url)
         return await xiaomusic.play_url(did=did, arg1=decoded_url)
     except Exception as e:
@@ -1133,6 +1135,7 @@ async def proxy(urlb64: str):
         # 将Base64编码的URL解码为字符串
         url_bytes = base64.b64decode(urlb64)
         url = url_bytes.decode("utf-8")
+        print(f"解码前的代理请求: {urlb64}")
         print(f"解码后的代理请求: {url}")
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Base64解码失败: {str(e)}") from e

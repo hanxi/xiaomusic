@@ -1097,7 +1097,8 @@
         try {
             let playUrl;
             if (mediaItem && isOpenAPI) {
-                playUrl = await sniffRealMusicUrl(mediaItem.url);
+                // playUrl = await sniffRealMusicUrl(mediaItem.url);
+                playUrl = mediaItem.url;
             } else {
                 const response = await fetch('/api/play/getMediaSource', {
                     method: 'POST',
