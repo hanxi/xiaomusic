@@ -646,12 +646,24 @@ class XiaoMusic:
         """获取代理URL"""
         return self._get_proxy_url(origin_url)
 
+    def get_plugin_source_url(self, origin_data):
+        """获取插件源代理URL"""
+        return self._get_plugin_source_url(origin_data)
+
     # 获取未代理的原始url
     @staticmethod
     def get_origin_url(proxy_url):
         urlb64 = proxy_url.split("urlb64=")[1]
         origin_url = base64.b64decode(urlb64).decode("utf-8")
         return origin_url
+
+    @staticmethod
+    async def get_play_url(proxy_url):
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.get(proxy_url) as response:
+                # 获取最终重定向的 URL
+                return str(response.url)
 
     async def get_music_sec_url(self, name, true_url):
         """获取歌曲播放时长和播放地址
@@ -665,11 +677,10 @@ class XiaoMusic:
 
         # 获取播放时长
         if true_url is not None:
-            origin_url = self.get_origin_url(true_url)
-            play_url = await self.get_real_url_of_openapi(origin_url)
-            url = play_url
-            self.log.info(f"初始url： {true_url}，用于获取时长的url: {origin_url}, 最终用于播放的url: {play_url}")
-            sec = await self._get_online_music_duration(name, origin_url)
+            url = await self.get_play_url(true_url)
+            # true_url 都是可以在直接请求获取真实播放url的代理url 怎么能直接请求这个url
+            self.log.info(f"初始url： {true_url}，最终用于播放的url: {url}")
+            sec = await self._get_online_music_duration(name, url)
             self.log.info(f"在线歌曲时长获取：：{name} ；sec：：{sec}")
         else:
             url, origin_url = await self.get_music_url(name)
@@ -766,6 +777,14 @@ class XiaoMusic:
         proxy_url = f"{self.hostname}:{self.public_port}/proxy?urlb64={urlb64}"
         self.log.info(f"Using proxy url: {proxy_url}")
         return proxy_url
+
+    def _get_plugin_source_url(self, origin_data):
+        """获取插件源代理URL"""
+        origin_data = json.dumps(origin_data)
+        datab64 = base64.b64encode(origin_data.encode("utf-8")).decode("utf-8")
+        plugin_source_url = f"{self.hostname}:{self.public_port}/api/proxy/plugin-url?data={datab64}"
+        self.log.info(f"plugin_source_url : {plugin_source_url}")
+        return plugin_source_url
 
     def _get_local_music_url(self, name):
         """获取本地音乐播放地址"""
@@ -1430,12 +1449,8 @@ class XiaoMusic:
                     # 使用代理url
                     music_item["url"] = self._get_proxy_url(source_url)
                 else:
-                    # 调用公共函数处理,获取音乐真实播放URL
-                    media_source = await self.get_media_source_url(item)
-                    if not media_source or not media_source.get("url"):
-                        music_item["url"] = media_source.get("url")
-                    else:
-                        continue
+                    # 返回插件源的代理接口
+                    music_item["url"] = self._get_plugin_source_url(item)
                 # 其他信息
                 name = item.get("name") or item.get("title") or item.get("song", "")
                 music_type = item.get("type", "music")
@@ -1814,15 +1829,18 @@ class XiaoMusic:
                     music_item["success"] = True
                     return music_item
                 else:
-                    media_source = await self.get_media_source_url(music_item)
-                    if media_source.get("success"):
-                        # 将url重置为真实url
-                        # return {"success": True, "url": media_source.get('url')}
-                        music_item["success"] = True
-                        music_item["url"] = media_source.get("url")
-                        return music_item
-                    else:
-                        return {"success": False, "error": media_source.get("error")}
+                    # media_source = await self.get_media_source_url(music_item)
+                    # if media_source.get("success"):
+                    #    # 将url重置为真实url
+                    #    # return {"success": True, "url": media_source.get('url')}
+                    #    music_item["success"] = True
+                    #    music_item["url"] = media_source.get("url")
+                    #    return music_item
+                    #else:
+                    #    return {"success": False, "error": media_source.get("error")}
+                    music_item["success"] = True
+                    music_item["url"] = self.get_plugin_source_url(music_item)
+                    return music_item
             else:
                 return {"success": False, "error": "未找到歌曲"}
 
@@ -2017,17 +2035,20 @@ class XiaoMusic:
             did, name, search_key, exact=False, update_cur_list=False
         )
 
-    async def _before_play(self):
+    def default_url(self):
         # 先推送默认【搜索中】音频，搜索到播放url后推送给小爱
         config = self.config
         if config and hasattr(config, "hostname") and hasattr(config, "public_port"):
             proxy_base = f"{config.hostname}:{config.public_port}"
         else:
             proxy_base = "http://192.168.31.241:8090"
-        # 改为静音
-        search_audio = proxy_base + "/static/search.mp3"
-        # silence_audio = proxy_base + "/static/silence.mp3"
-        await self.play_url(self.get_cur_did(), search_audio)
+        # return proxy_base + "/static/search.mp3"
+        return proxy_base + "/static/silence.mp3"
+
+    async def _before_play(self):
+        # 先推送默认【搜索中】音频，搜索到播放url后推送给小爱
+        before_url = self.default_url()
+        await self.play_url(self.get_cur_did(), before_url)
 
     # 在线播放：在线搜索、播放
     async def online_play(self, did="", arg1="", **kwargs):
@@ -2548,10 +2569,7 @@ class XiaoMusicDevice:
                 await self.download(search_key, name)
                 # 把文件插入到播放列表里
                 await self.add_download_music(name)
-                await self._playmusic(name)
-        else:
-            # 本地存在歌曲，直接播放
-            await self._playmusic(name)
+        await self._playmusic(name)
 
     # 下一首
     async def play_next(self):
@@ -2572,7 +2590,7 @@ class XiaoMusicDevice:
             name = self.get_next_music()
         self.log.info(f"_play_next. name:{name}, cur_music:{self.get_cur_music()}")
         if name == "":
-            # await self.do_tts("本地没有歌曲")
+            await self.do_tts("本地没有歌曲")
             return
         await self._play(name, exact=True)
 

@@ -289,6 +289,30 @@ async def get_real_music_url(
         return RedirectResponse(url=url)
 
 
+@app.get("/api/proxy/plugin-url")
+async def get_plugin_source_url(data: str = Query(..., description="json对象压缩的base64"), Verifcation=Depends(verification)):
+    try:
+        # 获取请求数据
+        # 将Base64编码的URL解码为Json字符串
+        json_str = base64.b64decode(data).decode("utf-8")
+        # 将json字符串转换为json对象
+        json_data = json.loads(json_str)
+        print(f"解码后的代理请求: {json_str}")
+        # 调用公共函数处理
+        media_source = await xiaomusic.get_media_source_url(json_data)
+        if media_source and media_source.get("url"):
+            source_url = media_source.get("url")
+        else:
+            source_url = xiaomusic.default_url()
+        # 直接重定向到真实URL
+        return RedirectResponse(url=source_url)
+    except Exception as e:
+        log.error(f"获取真实音乐URL失败: {e}")
+        # 如果代理获取失败，重定向到原始URL
+        source_url = xiaomusic.default_url()
+        return RedirectResponse(url=source_url)
+
+
 @app.post("/api/play/getMediaSource")
 async def get_media_source(request: Request, Verifcation=Depends(verification)):
     """获取音乐真实播放URL"""
@@ -325,10 +349,7 @@ async def device_push_music(request: Request, Verifcation=Depends(verification))
             url = data.get("url")
         else:
             # 调用公共函数处理,获取音乐真实播放URL
-            media_source = await xiaomusic.get_media_source_url(data)
-            if not media_source or not media_source.get("url"):
-                return {"success": False, "error": "Failed to get media source URL"}
-            url = media_source.get("url")
+            url = xiaomusic.get_plugin_source_url(data)
         decoded_url = urllib.parse.unquote(url)
         return await xiaomusic.play_url(did=did, arg1=decoded_url)
     except Exception as e:
