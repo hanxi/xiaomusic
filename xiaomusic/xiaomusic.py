@@ -2319,6 +2319,7 @@ class XiaoMusicDevice:
         if (
             self.device.play_type == PLAY_TYPE_ALL
             or self.device.play_type == PLAY_TYPE_RND
+            or self.device.play_type == PLAY_TYPE_SEQ
             or name == ""
             or (name not in self._play_list)
         ):
