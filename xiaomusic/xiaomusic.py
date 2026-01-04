@@ -343,8 +343,6 @@ class XiaoMusic:
     async def need_login(self):
         if self.mina_service is None:
             return True
-        if self.mina_service is None:
-            return True
         if self.login_acount != self.config.account:
             return True
         if self.login_password != self.config.password:
