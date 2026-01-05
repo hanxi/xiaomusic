@@ -67,7 +67,6 @@ from xiaomusic.utils import (
     parse_str_to_dict,
     save_picture_by_base64,
     set_music_tag_to_file,
-    thdplay,
     traverse_music_directory,
     try_add_access_control_param,
 )
@@ -797,12 +796,14 @@ class XiaoMusic:
 
     def try_gen_all_music_tag(self, only_items: dict = None):
         if self.ensure_single_thread_for_tag():
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                asyncio.ensure_future(self._gen_all_music_tag(only_items))
-                self.log.info("启动后台构建 tag cache")
-            else:
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                # 没有运行中的事件循环，跳过
                 self.log.info("协程时间循环未启动")
+                return
+            asyncio.ensure_future(self._gen_all_music_tag(only_items))
+            self.log.info("启动后台构建 tag cache")
 
     async def _gen_all_music_tag(self, only_items: dict = None):
         self._tag_generation_task = True
@@ -931,7 +932,7 @@ class XiaoMusic:
             if not (v.startswith("http") or v.startswith("https")):
                 self._extra_index_search[v] = k
 
-        # all_music 更新，重建 tag
+        # all_music 更新，重建 tag（仅在事件循环启动后才会执行）
         self.try_gen_all_music_tag()
 
     def refresh_custom_play_list(self):
@@ -998,7 +999,8 @@ class XiaoMusic:
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
-            loop = asyncio.get_event_loop()
+            self.log.warning("无法获取运行中的事件循环，目录监控功能可能无法正常工作")
+            return
         # 延时配置项 file_watch_debounce
         self._file_watch_handler = XiaoMusicPathWatch(
             callback=self._on_file_change,
@@ -1972,33 +1974,12 @@ class XiaoMusic:
     async def get_volume(self, did="", **kwargs):
         return await self.devices[did].get_volume()
 
-    # 3thdplay.html 的音量设置消息发送 需要配置文件加入自定义指令
-    #  "user_key_word_dict": {
-    # "音量": "set_myvolume",
-    # "继续": "stop",
-    # "大点音": "exec#setmyvolume(\"up\")",
-    # "小点音": "exec#setmyvolume(\"down\")",
-
-    async def set_myvolume(self, did="", arg1=0, **kwargs):
-        if did not in self.devices:
-            self.log.info(f"设备 did:{did} 不存在, 不能设置音量")
-            return
-        if arg1 == "up":
-            await thdplay("up", "", self.thdtarget)
-
-        elif arg1 == "down":
-            await thdplay("down", "", self.thdtarget)
-        else:
-            volume = chinese_to_number(arg1)
-            await thdplay("volume", str(volume), self.thdtarget)
-
     # 设置音量
     async def set_volume(self, did="", arg1=0, **kwargs):
         if did not in self.devices:
             self.log.info(f"设备 did:{did} 不存在, 不能设置音量")
             return
         volume = int(arg1)
-        await thdplay("volume", str(volume), self.thdtarget)
         return await self.devices[did].set_volume(volume)
 
     # 搜索音乐
@@ -2319,6 +2300,7 @@ class XiaoMusicDevice:
         if (
             self.device.play_type == PLAY_TYPE_ALL
             or self.device.play_type == PLAY_TYPE_RND
+            or self.device.play_type == PLAY_TYPE_SEQ
             or name == ""
             or (name not in self._play_list)
         ):
@@ -2385,23 +2367,19 @@ class XiaoMusicDevice:
         sec, url = await self.xiaomusic.get_music_sec_url(name, true_url)
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
-        # 有3方设备打开 /static/3thplay.html 通过socketio连接返回true 忽律小爱音箱的播放
-        online = await thdplay("play", url, self.xiaomusic.thdtarget)
-        self.log.info(f"IS online {online}")
 
-        if not online:
-            results = await self.group_player_play(url, name)
-            if all(ele is None for ele in results):
-                self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
-                await asyncio.sleep(1)
-                if (
-                    self.isplaying()
-                    and self._last_cmd != "stop"
-                    and self._play_failed_cnt < 10
-                ):
-                    self._play_failed_cnt = self._play_failed_cnt + 1
-                    await self._play_next()
-                return
+        results = await self.group_player_play(url, name)
+        if all(ele is None for ele in results):
+            self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
+            await asyncio.sleep(1)
+            if (
+                self.isplaying()
+                and self._last_cmd != "stop"
+                and self._play_failed_cnt < 10
+            ):
+                self._play_failed_cnt = self._play_failed_cnt + 1
+                await self._play_next()
+            return
         # 重置播放失败次数
         self._play_failed_cnt = 0
 
@@ -2787,7 +2765,6 @@ class XiaoMusicDevice:
             await self.do_tts(self.config.stop_tts_msg)
         await asyncio.sleep(3)  # 等它说完
         # 取消组内所有的下一首歌曲的定时器
-        await thdplay("stop", "", self.xiaomusic.thdtarget)
         self.cancel_group_next_timer()
         await self.group_force_stop_xiaoai()
         self.log.info("stop now")

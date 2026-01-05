@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, Annotated
 from urllib.parse import urlparse
 
 import jwt
-import socketio
 from fastapi import WebSocket, WebSocketDisconnect
 
 if TYPE_CHECKING:
@@ -127,47 +126,6 @@ app = FastAPI(
     redoc_url=None,
     openapi_url=None,
 )
-
-# 创建Socket.IO实例
-sio = socketio.AsyncServer(
-    async_mode="asgi",
-    cors_allowed_origins="*",  # 允许所有跨域请求，生产环境应限制
-)
-# 将Socket.IO挂载到FastAPI应用
-socketio_app = socketio.ASGIApp(
-    socketio_server=sio, other_asgi_app=app, socketio_path="/socket.io"
-)
-
-
-# Socket.IO事件处理
-@sio.event
-async def connect(sid, environ, auth):
-    global onlines
-    print(f"客户端连接: {sid}")
-    onlines.update([sid])
-    await sio.emit("message", {"data": "欢迎连接"}, room=sid)
-
-
-@sio.event
-async def disconnect(sid):
-    print(f"客户端断开: {sid}")
-    onlines.discard(sid)
-
-
-@sio.on("message")
-async def custom_event(sid, data):
-    log.info(f"收到来自 {sid} 的数据: {data}")
-    await sio.emit("response", {"action": "切歌", "status": data})
-
-
-@app.post("/thdaction")
-async def thdaction(item: Item):
-    await sio.emit(
-        "response",
-        {"action": item.action, "args": item.args, "status": item.args},
-    )
-    return onlines
-
 
 app.add_middleware(
     CORSMiddleware,
