@@ -2263,7 +2263,7 @@ class XiaoMusicDevice:
             # 本地存在歌曲，直接播放
             await self._playmusic(name)
         elif not self.xiaomusic.is_music_exist(name):
-            self.log.inf(f"本地不存在歌曲{name}")
+            self.log.info(f"本地不存在歌曲{name}")
             if self.config.disable_download:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
