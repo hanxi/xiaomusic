@@ -18,10 +18,6 @@ from fastapi import WebSocket, WebSocketDisconnect
 
 if TYPE_CHECKING:
     from xiaomusic.xiaomusic import XiaoMusic
-
-if TYPE_CHECKING:
-    from xiaomusic.xiaomusic import XiaoMusic
-
 import aiofiles
 import aiohttp
 from fastapi import (
@@ -68,16 +64,6 @@ from xiaomusic.utils import (
 xiaomusic: "XiaoMusic" = None
 config = None
 log = None
-
-
-# 3thplay指令
-class Item(BaseModel):
-    action: str
-    args: str
-
-
-# 在线用户
-onlines = set()
 
 
 @asynccontextmanager
