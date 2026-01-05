@@ -61,6 +61,7 @@ from xiaomusic.utils import (
     fuzzyfinder,
     get_local_music_duration,
     get_web_music_duration,
+    is_docker,
     list2str,
     not_in_dirs,
     parse_cookie_string,
@@ -256,11 +257,12 @@ class XiaoMusic:
         log_format = f"%(asctime)s [{__version__}] [%(levelname)s] %(filename)s:%(lineno)d: %(message)s"
         date_format = "[%Y-%m-%d %H:%M:%S]"
         formatter = logging.Formatter(fmt=log_format, datefmt=date_format)
-        logging.basicConfig(
-            format=log_format,
-            datefmt=date_format,
-        )
 
+        self.log = logging.getLogger("xiaomusic")
+        self.log.handlers.clear()  # 清除已有的 handlers
+        self.log.setLevel(logging.DEBUG if self.config.verbose else logging.INFO)
+
+        # 文件日志处理器
         log_file = self.config.log_file
         log_path = os.path.dirname(log_file)
         if log_path and not os.path.exists(log_path):
@@ -269,18 +271,23 @@ class XiaoMusic:
             try:
                 os.remove(log_file)
             except Exception as e:
-                self.log.warning(f"无法删除旧日志文件: {log_file} {e}")
-        handler = RotatingFileHandler(
+                print(f"无法删除旧日志文件: {log_file} {e}")
+
+        file_handler = RotatingFileHandler(
             self.config.log_file,
             maxBytes=10 * 1024 * 1024,
             backupCount=1,
             encoding="utf-8",
         )
-        handler.stream.flush()
-        handler.setFormatter(formatter)
-        self.log = logging.getLogger("xiaomusic")
-        self.log.addHandler(handler)
-        self.log.setLevel(logging.DEBUG if self.config.verbose else logging.INFO)
+        file_handler.stream.flush()
+        file_handler.setFormatter(formatter)
+        self.log.addHandler(file_handler)
+
+        # 控制台日志处理器 - 仅在非 supervisord 环境下添加
+        if not is_docker():
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            self.log.addHandler(console_handler)
 
     async def poll_latest_ask(self):
         async with ClientSession() as session:
