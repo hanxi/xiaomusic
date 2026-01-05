@@ -642,13 +642,13 @@ class XiaoMusic:
         self.try_save_tag_cache()
         return "OK"
 
-    def get_proxy_url(self, origin_url):
-        """获取代理URL"""
-        return self._get_proxy_url(origin_url)
+    def get_openapi_proxy_url(self, origin_url):
+        """获取openapi源代理URL"""
+        return self._get_openapi_proxy_url(origin_url)
 
-    def get_plugin_source_url(self, origin_data):
+    def get_plugin_proxy_url(self, origin_data):
         """获取插件源代理URL"""
-        return self._get_plugin_source_url(origin_data)
+        return self._get_plugin_proxy_url(origin_data)
 
     # 获取未代理的原始url
     @staticmethod
@@ -778,7 +778,14 @@ class XiaoMusic:
         self.log.info(f"Using proxy url: {proxy_url}")
         return proxy_url
 
-    def _get_plugin_source_url(self, origin_data):
+    def _get_openapi_proxy_url(self, origin_url):
+        """获取OpenApi源代理URL"""
+        urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
+        proxy_url = f"{self.hostname}:{self.public_port}/api/proxy/openapi-url?urlb64={urlb64}"
+        self.log.info(f"Using proxy url: {proxy_url}")
+        return proxy_url
+
+    def _get_plugin_proxy_url(self, origin_data):
         """获取插件源代理URL"""
         origin_data = json.dumps(origin_data)
         datab64 = base64.b64encode(origin_data.encode("utf-8")).decode("utf-8")
@@ -1362,8 +1369,8 @@ class XiaoMusic:
             if did != "web_device" and self.did_exist(did):
                 device_playlist = self.devices[did].get_playlist()
                 song_name = device_playlist[0]
-                # await self.do_play_music_list(did, list_name, song_name)
-                await self.devices[did].play_music(song_name)
+                await self.do_play_music_list(did, list_name, song_name)
+                # await self.devices[did].play_music(song_name)
                 self.log.info(f"设备对应的播放列表:: {device_playlist}")
             self.log.info(f"成功推送歌单: {list_name}, 包含 {len(converted_music_list)} 首歌曲")
             return {
@@ -1447,10 +1454,10 @@ class XiaoMusic:
                 # 如果是开放接口，可能需要额外处理
                 if is_open_api and source_url:
                     # 使用代理url
-                    music_item["url"] = self._get_proxy_url(source_url)
+                    music_item["url"] = self._get_openapi_proxy_url(source_url)
                 else:
                     # 返回插件源的代理接口
-                    music_item["url"] = self._get_plugin_source_url(item)
+                    music_item["url"] = self._get_plugin_proxy_url(item)
                 # 其他信息
                 name = item.get("name") or item.get("title") or item.get("song", "")
                 music_type = item.get("type", "music")
@@ -1839,7 +1846,7 @@ class XiaoMusic:
                     #else:
                     #    return {"success": False, "error": media_source.get("error")}
                     music_item["success"] = True
-                    music_item["url"] = self.get_plugin_source_url(music_item)
+                    music_item["url"] = self.get_plugin_proxy_url(music_item)
                     return music_item
             else:
                 return {"success": False, "error": "未找到歌曲"}
