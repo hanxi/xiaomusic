@@ -796,12 +796,14 @@ class XiaoMusic:
 
     def try_gen_all_music_tag(self, only_items: dict = None):
         if self.ensure_single_thread_for_tag():
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                asyncio.ensure_future(self._gen_all_music_tag(only_items))
-                self.log.info("启动后台构建 tag cache")
-            else:
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                # 没有运行中的事件循环，跳过
                 self.log.info("协程时间循环未启动")
+                return
+            asyncio.ensure_future(self._gen_all_music_tag(only_items))
+            self.log.info("启动后台构建 tag cache")
 
     async def _gen_all_music_tag(self, only_items: dict = None):
         self._tag_generation_task = True
@@ -930,7 +932,7 @@ class XiaoMusic:
             if not (v.startswith("http") or v.startswith("https")):
                 self._extra_index_search[v] = k
 
-        # all_music 更新，重建 tag
+        # all_music 更新，重建 tag（仅在事件循环启动后才会执行）
         self.try_gen_all_music_tag()
 
     def refresh_custom_play_list(self):
@@ -997,7 +999,8 @@ class XiaoMusic:
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
-            loop = asyncio.get_event_loop()
+            self.log.warning("无法获取运行中的事件循环，目录监控功能可能无法正常工作")
+            return
         # 延时配置项 file_watch_debounce
         self._file_watch_handler = XiaoMusicPathWatch(
             callback=self._on_file_change,
