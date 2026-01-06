@@ -472,13 +472,6 @@ class XiaoMusic:
     def _on_file_change(self):
         self.log.info("检测到目录音乐文件变化，正在刷新歌曲列表。")
         self._music_library.gen_all_music_list()
-        # 同步音乐库数据到主类
-        self.all_music = self._music_library.all_music
-        self.music_list = self._music_library.music_list
-        self._all_radio = self._music_library.get_all_radio()
-        self._web_music_api = self._music_library.get_web_music_api()
-        self._extra_index_search = self._music_library._extra_index_search
-        self.default_music_list_names = self._music_library.default_music_list_names
         # 更新每个设备的歌单
         self.update_all_playlist()
 
@@ -587,13 +580,6 @@ class XiaoMusic:
     # 设置为刷新列表
     async def gen_music_list(self, **kwargs):
         self._music_library.gen_all_music_list()
-        # 同步音乐库数据到主类
-        self.all_music = self._music_library.all_music
-        self.music_list = self._music_library.music_list
-        self._all_radio = self._music_library.get_all_radio()
-        self._web_music_api = self._music_library.get_web_music_api()
-        self._extra_index_search = self._music_library._extra_index_search
-        self.default_music_list_names = self._music_library.default_music_list_names
         self.update_all_playlist()
         self.log.info("gen_music_list ok")
 
@@ -632,13 +618,6 @@ class XiaoMusic:
             self.log.error(f"del ${filename} failed")
         # 重新生成音乐列表
         self._music_library.gen_all_music_list()
-        # 同步音乐库数据到主类
-        self.all_music = self._music_library.all_music
-        self.music_list = self._music_library.music_list
-        self._all_radio = self._music_library.get_all_radio()
-        self._web_music_api = self._music_library.get_web_music_api()
-        self._extra_index_search = self._music_library._extra_index_search
-        self.default_music_list_names = self._music_library.default_music_list_names
         self.update_all_playlist()
 
     # ===========================MusicFree插件函数================================
@@ -703,7 +682,7 @@ class XiaoMusic:
         # 查找并获取真实的音乐列表名称
         list_name = self._find_real_music_list_name(list_name)
         # 检查音乐列表是否存在，如果不存在则进行语音提示并返回
-        if list_name not in self.music_list:
+        if list_name not in self._music_library.music_list:
             await self.do_tts(did, f"播放列表{list_name}不存在")
             return
 
@@ -721,12 +700,12 @@ class XiaoMusic:
         chinese_index = matcharg.groups()[0]
         list_name = matcharg.groups()[1]
         list_name = self._find_real_music_list_name(list_name)
-        if list_name not in self.music_list:
+        if list_name not in self._music_library.music_list:
             await self.do_tts(did, f"播放列表{list_name}不存在")
             return
 
         index = chinese_to_number(chinese_index)
-        play_list = self.music_list[list_name]
+        play_list = self._music_library.music_list[list_name]
         if 0 <= index - 1 < len(play_list):
             music_name = play_list[index - 1]
             self.log.info(f"即将播放 ${arg1} 里的第 ${index} 个: ${music_name}")
@@ -992,13 +971,6 @@ class XiaoMusic:
         async with ClientSession() as session:
             await self.init_all_data(session)
         self._music_library.gen_all_music_list()
-        # 同步音乐库数据到主类
-        self.all_music = self._music_library.all_music
-        self.music_list = self._music_library.music_list
-        self._all_radio = self._music_library.get_all_radio()
-        self._web_music_api = self._music_library.get_web_music_api()
-        self._extra_index_search = self._music_library._extra_index_search
-        self.default_music_list_names = self._music_library.default_music_list_names
         self.update_devices()
         self.update_all_playlist()
 
