@@ -1,5 +1,32 @@
 # 版本日志
 
+## v0.4.0 (2026-01-06)
+
+### Feat
+
+- 移除第三方设备播放功能
+- 新增定时任务刷新网络歌单 #616
+- add last_cmd to store latest query (#635)
+- 增加musicfree插件集成功能
+
+### Fix
+
+- 修复 python3.14 中无法运行的问题
+- 修复顺序播放上一首失效的问题
+- 修复本地歌曲无法播放的问题
+
+### Refactor
+
+- 重构 xiaomusic.py 模块
+- 重构 xiaomusic.py 模块
+- 重构 xiaomusic.py 模块
+- 优化日志
+- 优化日志
+- 重构拆分 httpserver 文件
+- 重构拆分 utils 文件
+- 优化日志输出
+- 清理 httpserver.py 中的无效代码
+
 ## v0.3.102 (2025-12-21)
 
 ### Feat
