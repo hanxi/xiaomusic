@@ -1378,7 +1378,7 @@
         }
         // 设置播放队列
         playQueue = [...songList];
-        currentPlayIndex = 0;
+        currentPlayIndex = -1;
         // 开始播放第一首
         await playNextInWeb();
     }
@@ -1395,7 +1395,6 @@
         }
 
         const currentSong = playQueue[currentPlayIndex];
-        console.log(`正在播放第 ${currentPlayIndex + 1} 首: ${currentSong.title}`);
 
         try {
             await webPlayMusic(currentSong);
@@ -1420,7 +1419,6 @@
         }
 
         const currentSong = playQueue[currentPlayIndex];
-        console.log(`正在播放第 ${currentPlayIndex + 1} 首: ${currentSong.title}`);
 
         try {
             await webPlayMusic(currentSong);
@@ -1429,7 +1427,7 @@
         } catch (error) {
             console.error('播放失败:', error);
             currentPlayIndex++;
-            if (currentPlayIndex >= playQueue.length) currentPlayIndex = 0;
+            if (currentPlayIndex >= playQueue.length) currentPlayIndex = -1;
             await playNextInWeb();
         }
     }

@@ -42,6 +42,11 @@ class JSPluginManager:
         # 加载插件
         self._load_plugins()
 
+        # ... 配置文件相关 ...
+        self._config_cache = None
+        self._config_cache_time = 0
+        self._config_cache_ttl = 3 * 60  # 缓存有效期5秒，可根据需要调整
+
     def _start_node_process(self):
         """启动 Node.js 子进程"""
         runner_path = os.path.join(os.path.dirname(__file__), "js_plugin_runner.js")
@@ -205,10 +210,8 @@ class JSPluginManager:
         """
         try:
             # 读取配置文件中的 OpenAPI 配置信息
-            if os.path.exists(self.plugins_config_path):
-                with open(self.plugins_config_path, encoding="utf-8") as f:
-                    config_data = json.load(f)
-                # 返回 openapi_info 配置项
+            config_data = self._get_config_data()
+            if config_data:
                 return config_data.get("aiapi_info", {})
             else:
                 return {"enabled": False}
@@ -223,9 +226,8 @@ class JSPluginManager:
         """
         try:
             # 读取配置文件中的 OpenAPI 配置信息
-            if os.path.exists(self.plugins_config_path):
-                with open(self.plugins_config_path, encoding="utf-8") as f:
-                    config_data = json.load(f)
+            config_data = self._get_config_data()
+            if config_data:
                 # 返回 openapi_info 配置项
                 return config_data.get("openapi_info", {})
             else:
@@ -235,67 +237,76 @@ class JSPluginManager:
             return {}
 
     def toggle_openapi(self) -> dict[str, Any]:
-        """切换开放接口配置状态
-        Returns: 切换后的配置信息
-        """
+        """切换开放接口配置状态"""
         try:
-            # 读取配置文件中的 OpenAPI 配置信息
             if os.path.exists(self.plugins_config_path):
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
-                # 获取当前的 openapi_info 配置，如果没有则初始化
                 openapi_info = config_data.get("openapi_info", {})
-
-                # 切换启用状态：和当前状态取反
                 current_enabled = openapi_info.get("enabled", False)
                 openapi_info["enabled"] = not current_enabled
-
-                # 更新配置数据
                 config_data["openapi_info"] = openapi_info
-                # 写回配置文件
+
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
+                # 使缓存失效
+                self._invalidate_config_cache()
                 return {"success": True}
             else:
                 return {"success": False}
         except Exception as e:
             self.log.error(f"Failed to toggle OpenAPI config: {e}")
-            # 出错时返回默认配置
             return {"success": False, "error": str(e)}
 
     def update_openapi_url(self, openapi_url: str) -> dict[str, Any]:
-        """更新开放接口地址
-        Returns: 更新后的配置信息
-        :type openapi_url: 新的接口地址
-        """
+        """更新开放接口地址"""
         try:
-            # 读取配置文件中的 OpenAPI 配置信息
             if os.path.exists(self.plugins_config_path):
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
-                # 获取当前的 openapi_info 配置，如果没有则初始化
                 openapi_info = config_data.get("openapi_info", {})
-
-                # 切换启用状态：和当前状态取反
-                # current_url = openapi_info.get("search_url", "")
                 openapi_info["search_url"] = openapi_url
-
-                # 更新配置数据
                 config_data["openapi_info"] = openapi_info
-                # 写回配置文件
+
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+                # 使缓存失效
+                self._invalidate_config_cache()
                 return {"success": True}
             else:
                 return {"success": False}
         except Exception as e:
-            self.log.error(f"Failed to toggle OpenAPI config: {e}")
-            # 出错时返回默认配置
+            self.log.error(f"Failed to update OpenAPI config: {e}")
             return {"success": False, "error": str(e)}
 
     """----------------------------------------------------------------------"""
+    def _get_config_data(self):
+        """获取配置数据，使用缓存机制"""
+        current_time = time.time()
+        # 检查缓存是否有效
+        if (self._config_cache is not None and
+                current_time - self._config_cache_time < self._config_cache_ttl):
+            return self._config_cache
+
+        # 重新读取配置文件
+        if os.path.exists(self.plugins_config_path):
+            with open(self.plugins_config_path, encoding="utf-8") as f:
+                config_data = json.load(f)
+        else:
+            config_data = {}
+
+        # 更新缓存
+        self._config_cache = config_data
+        self._config_cache_time = current_time
+        return config_data
+
+    def _invalidate_config_cache(self):
+        """使配置缓存失效"""
+        self._config_cache = None
+        self._config_cache_time = 0
 
     def _load_plugins(self):
         """加载所有插件"""
@@ -406,9 +417,8 @@ class JSPluginManager:
         result = []
         try:
             # 读取配置文件中的启用插件列表
-            if os.path.exists(self.plugins_config_path):
-                with open(self.plugins_config_path, encoding="utf-8") as f:
-                    config_data = json.load(f)
+            config_data = self._get_config_data()
+            if config_data:
                 plugin_infos = config_data.get("plugins_info", [])
                 enabled_plugins = config_data.get("enabled_plugins", [])
 
@@ -438,15 +448,27 @@ class JSPluginManager:
         """获取启用的插件列表"""
         try:
             # 读取配置文件中的启用插件列表
-            if os.path.exists(self.plugins_config_path):
-                with open(self.plugins_config_path, encoding="utf-8") as f:
-                    config_data = json.load(f)
+            config_data = self._get_config_data()
+            if config_data:
                 return config_data.get("enabled_plugins", [])
             else:
                 return []
         except Exception as e:
             self.log.error(f"Failed to read enabled plugins from config: {e}")
             return []
+
+    def get_auto_add_song(self) -> bool:
+        """获取是否启用自动添加歌曲"""
+        try:
+            # 读取配置文件
+            config_data = self._get_config_data()
+            if config_data:
+                return config_data.get("auto_add_song", False)
+            else:
+                return False
+        except Exception as e:
+            self.log.error(f"Failed to read enabled plugins from config: {e}")
+            return False
 
     def search(self, plugin_name: str, keyword: str, page: int = 1, limit: int = 20):
         """搜索音乐"""
@@ -961,6 +983,8 @@ class JSPluginManager:
                     with open(config_file_path, "w", encoding="utf-8") as f:
                         json.dump(config_data, f, ensure_ascii=False, indent=2)
 
+                    # 清空缓存：
+                    self._invalidate_config_cache()
                     self.log.info(
                         f"Plugin config updated for enabled plugin {plugin_name}"
                     )
@@ -1005,7 +1029,8 @@ class JSPluginManager:
                     # 写回配置文件
                     with open(config_file_path, "w", encoding="utf-8") as f:
                         json.dump(config_data, f, ensure_ascii=False, indent=2)
-
+                    # 清空缓存：
+                    self._invalidate_config_cache()
                     self.log.info(
                         f"Plugin config updated for enabled plugin {plugin_name}"
                     )
@@ -1052,7 +1077,8 @@ class JSPluginManager:
                     # 回写配置文件
                     with open(config_file_path, "w", encoding="utf-8") as f:
                         json.dump(config_data, f, ensure_ascii=False, indent=2)
-
+                    # 清空缓存：
+                    self._invalidate_config_cache()
                     self.log.info(
                         f"Plugin config updated for uninstalled plugin {plugin_name}"
                     )
