@@ -38,9 +38,9 @@ def main():
     import uvicorn
 
     from xiaomusic import __version__
+    from xiaomusic.api import HttpInit
+    from xiaomusic.api import app as HttpApp
     from xiaomusic.config import Config
-    from xiaomusic.httpserver import HttpInit
-    from xiaomusic.httpserver import app as HttpApp
     from xiaomusic.xiaomusic import XiaoMusic
 
     parser = argparse.ArgumentParser()
