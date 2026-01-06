@@ -11,7 +11,7 @@ import asyncio
 import json
 import time
 
-from aiohttp import ClientSession, ClientTimeout
+from aiohttp import ClientTimeout
 
 
 class ConversationPoller:
@@ -26,12 +26,8 @@ class ConversationPoller:
         self,
         config,
         log,
-        mina_service,
+        auth_manager,
         device_id_did,
-        last_timestamp,
-        cookie_jar,
-        polling_event,
-        new_record_event,
         get_did_func,
         get_hardward_func,
         init_all_data_func,
@@ -43,12 +39,8 @@ class ConversationPoller:
         Args:
             config: 配置对象
             log: 日志对象
-            mina_service: Mina服务实例
+            auth_manager: 认证管理器实例
             device_id_did: 设备ID到DID的映射字典
-            last_timestamp: 最后时间戳字典（key为did）
-            cookie_jar: Cookie容器
-            polling_event: 轮询事件
-            new_record_event: 新记录事件
             get_did_func: 获取DID的函数
             get_hardward_func: 获取硬件类型的函数
             init_all_data_func: 初始化所有数据的函数
@@ -57,12 +49,9 @@ class ConversationPoller:
         """
         self.config = config
         self.log = log
-        self.mina_service = mina_service
+        self.auth_manager = auth_manager
         self.device_id_did = device_id_did
-        self.last_timestamp = last_timestamp
-        self.cookie_jar = cookie_jar
-        self.polling_event = polling_event
-        self.new_record_event = new_record_event
+        self.last_timestamp = {}  # key为 did. timestamp last call mi speaker
         self.get_did = get_did_func
         self.get_hardward = get_hardward_func
         self.init_all_data = init_all_data_func
@@ -72,57 +61,96 @@ class ConversationPoller:
         # 存储最新的对话记录
         self.last_record = None
 
-    async def poll_latest_ask(self):
+        # 内部事件管理
+        self.polling_event = asyncio.Event()
+        self.new_record_event = asyncio.Event()
+
+    async def run_conversation_loop(
+        self, session, do_check_cmd_callback, reset_timer_callback
+    ):
+        """运行对话循环
+
+        持续运行的主循环，负责：
+        1. 启动对话轮询任务
+        2. 等待新对话记录
+        3. 调用回调处理对话命令
+
+        Args:
+            session: aiohttp客户端会话
+            do_check_cmd_callback: 处理命令的回调函数 async def(did, query, ctrl_panel)
+            reset_timer_callback: 重置计时器的回调函数 async def(answer_length, did)
+        """
+        # 启动轮询任务
+        task = asyncio.create_task(self.poll_latest_ask(session))
+        assert task is not None  # to keep the reference to task, do not remove this
+
+        while True:
+            self.polling_event.set()
+            await self.new_record_event.wait()
+            self.new_record_event.clear()
+            new_record = self.last_record
+            self.polling_event.clear()  # stop polling when processing the question
+
+            query = new_record.get("query", "").strip()
+            did = new_record.get("did", "").strip()
+            await do_check_cmd_callback(did, query, False)
+
+            answer = new_record.get("answer")
+            answers = new_record.get("answers", [{}])
+            if answers:
+                answer = answers[0].get("tts", {}).get("text", "").strip()
+                await reset_timer_callback(len(answer), did)
+                self.log.debug(f"query:{query} did:{did} answer:{answer}")
+
+    async def poll_latest_ask(self, session):
         """轮询最新对话记录
 
         持续运行的协程，定期从所有设备拉取最新对话记录。
         根据配置的拉取间隔和硬件类型选择合适的获取方式。
+
+        Args:
+            session: aiohttp客户端会话
         """
-        async with ClientSession() as session:
-            while True:
-                if not self.config.enable_pull_ask:
-                    self.log.debug("Listening new message disabled")
-                    await asyncio.sleep(5)
-                    continue
+        while True:
+            if not self.config.enable_pull_ask:
+                self.log.debug("Listening new message disabled")
+                await asyncio.sleep(5)
+                continue
 
-                self.log.debug(
-                    f"Listening new message, timestamp: {self.last_timestamp}"
-                )
-                # 只有当 cookie_jar 不为 None 时才设置
-                if self.cookie_jar is not None:
-                    session._cookie_jar = self.cookie_jar
+            self.log.debug(f"Listening new message, timestamp: {self.last_timestamp}")
+            # 动态获取最新的 cookie_jar
+            if self.auth_manager.cookie_jar is not None:
+                session._cookie_jar = self.auth_manager.cookie_jar
 
-                # 拉取所有音箱的对话记录
-                tasks = []
-                for device_id in self.device_id_did:
-                    # 首次用当前时间初始化
-                    did = self.get_did(device_id)
-                    if did not in self.last_timestamp:
-                        self.last_timestamp[did] = int(time.time() * 1000)
+            # 拉取所有音箱的对话记录
+            tasks = []
+            for device_id in self.device_id_did:
+                # 首次用当前时间初始化
+                did = self.get_did(device_id)
+                if did not in self.last_timestamp:
+                    self.last_timestamp[did] = int(time.time() * 1000)
 
-                    hardware = self.get_hardward(device_id)
-                    if (
-                        hardware in self.get_ask_by_mina_list
-                    ) or self.config.get_ask_by_mina:
-                        tasks.append(self.get_latest_ask_by_mina(device_id))
-                    else:
-                        tasks.append(
-                            self.get_latest_ask_from_xiaoai(session, device_id)
-                        )
-                await asyncio.gather(*tasks)
-
-                start = time.perf_counter()
-                await self.polling_event.wait()
-                if self.config.pull_ask_sec <= 1:
-                    if (d := time.perf_counter() - start) < 1:
-                        await asyncio.sleep(1 - d)
+                hardware = self.get_hardward(device_id)
+                if (
+                    hardware in self.get_ask_by_mina_list
+                ) or self.config.get_ask_by_mina:
+                    tasks.append(self.get_latest_ask_by_mina(device_id))
                 else:
-                    sleep_sec = 0
-                    while True:
-                        await asyncio.sleep(1)
-                        sleep_sec = sleep_sec + 1
-                        if sleep_sec >= self.config.pull_ask_sec:
-                            break
+                    tasks.append(self.get_latest_ask_from_xiaoai(session, device_id))
+            await asyncio.gather(*tasks)
+
+            start = time.perf_counter()
+            await self.polling_event.wait()
+            if self.config.pull_ask_sec <= 1:
+                if (d := time.perf_counter() - start) < 1:
+                    await asyncio.sleep(1 - d)
+            else:
+                sleep_sec = 0
+                while True:
+                    await asyncio.sleep(1)
+                    sleep_sec = sleep_sec + 1
+                    if sleep_sec >= self.config.pull_ask_sec:
+                        break
 
     async def get_latest_ask_from_xiaoai(self, session, device_id):
         """从小爱API获取最新对话
@@ -191,7 +219,13 @@ class ConversationPoller:
         """
         try:
             did = self.get_did(device_id)
-            messages = await self.mina_service.get_latest_ask(device_id)
+            # 动态获取最新的 mina_service
+            if self.auth_manager.mina_service is None:
+                self.log.warning(
+                    f"mina_service is None, skip get_latest_ask_by_mina for device {device_id}"
+                )
+                return
+            messages = await self.auth_manager.mina_service.get_latest_ask(device_id)
             self.log.debug(
                 f"get_latest_ask_by_mina device_id:{device_id} did:{did} messages:{messages}"
             )

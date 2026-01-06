@@ -51,6 +51,7 @@ class XiaoMusicDevice:
         self.device_id = device.device_id
         self.log = xiaomusic.log
         self.xiaomusic = xiaomusic
+        self.auth_manager = xiaomusic._auth_manager
         self.download_path = xiaomusic.download_path
         self.ffmpeg_location = self.config.ffmpeg_location
 
@@ -346,7 +347,7 @@ class XiaoMusicDevice:
     async def force_stop_xiaoai(self, device_id):
         """强制停止小爱播放"""
         try:
-            ret = await self.xiaomusic.mina_service.player_pause(device_id)
+            ret = await self.auth_manager.mina_service.player_pause(device_id)
             self.log.info(
                 f"force_stop_xiaoai player_pause device_id:{device_id} ret:{ret}"
             )
@@ -356,7 +357,7 @@ class XiaoMusicDevice:
 
     async def get_if_xiaoai_is_playing(self):
         """检查小爱是否正在播放"""
-        playing_info = await self.xiaomusic.mina_service.player_get_status(
+        playing_info = await self.auth_manager.mina_service.player_get_status(
             self.device_id
         )
         self.log.info(playing_info)
@@ -372,7 +373,7 @@ class XiaoMusicDevice:
         is_playing = await self.get_if_xiaoai_is_playing()
         if is_playing or self.config.enable_force_stop:
             # stop it
-            ret = await self.xiaomusic.mina_service.player_stop(device_id)
+            ret = await self.auth_manager.mina_service.player_stop(device_id)
             self.log.info(
                 f"stop_if_xiaoai_is_playing player_stop device_id:{device_id} enable_force_stop:{self.config.enable_force_stop} ret:{ret}"
             )
@@ -541,13 +542,15 @@ class XiaoMusicDevice:
                 self.log.info("Call MiIOService tts.")
                 value = value.replace(" ", ",")  # 不能有空格
                 await miio_command(
-                    self.xiaomusic.miio_service,
+                    self.auth_manager.miio_service,
                     self.did,
                     f"{tts_cmd} {value}",
                 )
             else:
                 self.log.debug("Call MiNAService tts.")
-                await self.xiaomusic.mina_service.text_to_speech(self.device_id, value)
+                await self.auth_manager.mina_service.text_to_speech(
+                    self.device_id, value
+                )
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
@@ -567,7 +570,7 @@ class XiaoMusicDevice:
         try:
             audio_id = await self._get_audio_id(name)
             if self.config.continue_play:
-                ret = await self.xiaomusic.mina_service.play_by_music_url(
+                ret = await self.auth_manager.mina_service.play_by_music_url(
                     device_id, url, _type=1, audio_id=audio_id
                 )
                 self.log.info(
@@ -576,14 +579,14 @@ class XiaoMusicDevice:
             elif self.config.use_music_api or (
                 self.hardware in NEED_USE_PLAY_MUSIC_API
             ):
-                ret = await self.xiaomusic.mina_service.play_by_music_url(
+                ret = await self.auth_manager.mina_service.play_by_music_url(
                     device_id, url, audio_id=audio_id
                 )
                 self.log.info(
                     f"play_one_url play_by_music_url device_id:{device_id} ret:{ret} url:{url} audio_id:{audio_id}"
                 )
             else:
-                ret = await self.xiaomusic.mina_service.play_by_url(device_id, url)
+                ret = await self.auth_manager.mina_service.play_by_url(device_id, url)
                 self.log.info(
                     f"play_one_url play_by_url device_id:{device_id} ret:{ret} url:{url}"
                 )
@@ -604,7 +607,7 @@ class XiaoMusicDevice:
                 "count": 6,
                 "timestamp": int(time.time_ns() / 1000),
             }
-            response = await self.xiaomusic.mina_service.mina_request(
+            response = await self.auth_manager.mina_service.mina_request(
                 "/music/search", params
             )
             for song in response["data"]["songList"]:
@@ -660,7 +663,9 @@ class XiaoMusicDevice:
         """设置音量"""
         self.log.info("set_volume. volume:%d", volume)
         try:
-            await self.xiaomusic.mina_service.player_set_volume(self.device_id, volume)
+            await self.auth_manager.mina_service.player_set_volume(
+                self.device_id, volume
+            )
         except Exception as e:
             self.log.exception(f"Execption {e}")
 
@@ -668,7 +673,7 @@ class XiaoMusicDevice:
         """获取音量"""
         volume = 0
         try:
-            playing_info = await self.xiaomusic.mina_service.player_get_status(
+            playing_info = await self.auth_manager.mina_service.player_get_status(
                 self.device_id
             )
             self.log.info(f"get_volume. playing_info:{playing_info}")

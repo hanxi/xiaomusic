@@ -46,21 +46,13 @@ class XiaoMusic:
     def __init__(self, config: Config):
         self.config = config
 
-        self.mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
-        self.session = None
-        self.last_timestamp = {}  # key为 did. timestamp last call mi speaker
         self.last_cmd = ""  # <--- 【新增这行】初始化变量
-        self.cookie_jar = None
-        self.mina_service = None
-        self.miio_service = None
 
         # 初始化认证管理器（延迟初始化部分属性）
         self._auth_manager = None
 
         # 初始化设备管理器（延迟初始化）
         self._device_manager = None
-        self.polling_event = asyncio.Event()
-        self.new_record_event = asyncio.Event()
         self.url_cache = MusicUrlCache()
 
         self.devices = {}  # key 为 did
@@ -170,10 +162,11 @@ class XiaoMusic:
         )
 
         # 初始化认证管理器（在配置和设备管理器准备好之后）
+        mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
         self._auth_manager = AuthManager(
             config=self.config,
             log=self.log,
-            mi_token_home=self.mi_token_home,
+            mi_token_home=mi_token_home,
             get_one_device_id_func=self._device_manager.get_one_device_id,
         )
 
@@ -187,20 +180,14 @@ class XiaoMusic:
         self._conversation_poller = ConversationPoller(
             config=self.config,
             log=self.log,
-            mina_service=self.mina_service,
+            auth_manager=self._auth_manager,
             device_id_did=self.device_id_did,
-            last_timestamp=self.last_timestamp,
-            cookie_jar=self.cookie_jar,
-            polling_event=self.polling_event,
-            new_record_event=self.new_record_event,
             get_did_func=self.get_did,
             get_hardward_func=self.get_hardward,
             init_all_data_func=self.init_all_data,
             latest_ask_api=LATEST_ASK_API,
             get_ask_by_mina_list=GET_ASK_BY_MINA,
         )
-        # 初始化 last_record（在 _conversation_poller 创建之后）
-        self.last_record = None
 
         # 初始化命令处理器（在所有依赖准备好之后）
         self._command_handler = CommandHandler(
@@ -322,10 +309,7 @@ class XiaoMusic:
     async def init_all_data(self, session):
         """初始化所有数据（委托给 auth_manager）"""
         await self._auth_manager.init_all_data(session, self.try_update_device_id)
-        # 同步认证状态到主类
-        self.mina_service = self._auth_manager.mina_service
-        self.miio_service = self._auth_manager.miio_service
-        self.cookie_jar = self._auth_manager.cookie_jar
+        # 同步当前设备DID
         self._cur_did = self._auth_manager._cur_did
 
     async def need_login(self):
@@ -335,9 +319,6 @@ class XiaoMusic:
     async def login_miboy(self, session):
         """登录小米账号（委托给 auth_manager）"""
         await self._auth_manager.login_miboy(session)
-        # 同步认证状态到主类
-        self.mina_service = self._auth_manager.mina_service
-        self.miio_service = self._auth_manager.miio_service
 
     async def try_update_device_id(self):
         """更新设备ID（委托给 auth_manager）"""
@@ -519,26 +500,12 @@ class XiaoMusic:
             analytics_task is not None
         )  # to keep the reference to task, do not remove this
         async with ClientSession() as session:
-            self.session = session
-            self.log.info(f"run_forever session:{self.session}")
+            self.log.info("run_forever session created")
             await self.init_all_data(session)
-            task = asyncio.create_task(self.poll_latest_ask())
-            assert task is not None  # to keep the reference to task, do not remove this
-            while True:
-                self.polling_event.set()
-                await self.new_record_event.wait()
-                self.new_record_event.clear()
-                new_record = self.last_record
-                self.polling_event.clear()  # stop polling when processing the question
-                query = new_record.get("query", "").strip()
-                did = new_record.get("did", "").strip()
-                await self.do_check_cmd(did, query, False)
-                answer = new_record.get("answer")
-                answers = new_record.get("answers", [{}])
-                if answers:
-                    answer = answers[0].get("tts", {}).get("text", "").strip()
-                    await self.reset_timer_when_answer(len(answer), did)
-                    self.log.debug(f"query:{query} did:{did} answer:{answer}")
+            # 启动对话循环，传递回调函数
+            await self._conversation_poller.run_conversation_loop(
+                session, self.do_check_cmd, self.reset_timer_when_answer
+            )
 
     async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
         """检查并执行命令（委托给 command_handler）"""
@@ -1022,8 +989,9 @@ class XiaoMusic:
         for handler in self.log.handlers:
             handler.close()
         self.setup_logger()
-        if self.session:
-            await self.init_all_data(self.session)
+        # 创建临时 session 用于初始化数据
+        async with ClientSession() as session:
+            await self.init_all_data(session)
         self._music_library.gen_all_music_list()
         # 同步音乐库数据到主类
         self.all_music = self._music_library.all_music
@@ -1042,7 +1010,7 @@ class XiaoMusic:
     async def getalldevices(self, **kwargs):
         device_list = []
         try:
-            device_list = await self.mina_service.device_list()
+            device_list = await self._auth_manager.mina_service.device_list()
         except Exception as e:
             self.log.warning(f"Execption {e}")
             # 重新初始化
@@ -1055,7 +1023,7 @@ class XiaoMusic:
         data = arg1
         device_id = self.get_one_device_id()
         self.log.info(f"debug_play_by_music_url: {data} {device_id}")
-        return await self.mina_service.ubus_request(
+        return await self._auth_manager.mina_service.ubus_request(
             device_id,
             "player_play_music",
             "mediaplayer",
