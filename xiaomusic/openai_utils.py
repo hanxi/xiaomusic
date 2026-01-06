@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Any
 
 from openai import OpenAI
 
@@ -42,14 +42,14 @@ def create_openai_client(base_url: str, api_key: str) -> OpenAI:
 
 # 默认使用通义千问API【阿里云百炼】: qwen-flash
 async def call_openai_chat(
-        client: OpenAI,
-        messages: List[Dict[str, str]],
-        model: str = "qwen-flash",
-        temperature: float = 0.1,  # 更低的温度值以获得更一致的结果
-        max_tokens: Optional[int] = 100,  # 限制输出长度以提高速度
-        timeout: int = 10,  # 减少超时时间
-        extra_body: Optional[Dict[str, Any]] = None
-) -> Optional[str]:
+    client: OpenAI,
+    messages: list[dict[str, str]],
+    model: str = "qwen-flash",
+    temperature: float = 0.1,  # 更低的温度值以获得更一致的结果
+    max_tokens: int | None = 100,  # 限制输出长度以提高速度
+    timeout: int = 10,  # 减少超时时间
+    extra_body: dict[str, Any] | None = None,
+) -> str | None:
     """
     异步调用OpenAI聊天接口
 
@@ -75,15 +75,17 @@ async def call_openai_chat(
                     model=model,
                     messages=messages,
                     temperature=temperature,
-                    max_tokens=max_tokens
-                )
+                    max_tokens=max_tokens,
+                ),
             ),
-            timeout=timeout
+            timeout=timeout,
         )
 
         # 获取返回内容
         content = completion.choices[0].message.content
-        log.debug(f"OpenAI API call successful, response length: {len(content) if content else 0}")
+        log.debug(
+            f"OpenAI API call successful, response length: {len(content) if content else 0}"
+        )
         return content
 
     except asyncio.TimeoutError:
@@ -95,13 +97,13 @@ async def call_openai_chat(
 
 
 async def analyze_music_command(
-        command: str,
-        # 默认使用通义千问API【阿里云百炼】: qwen-flash
-        base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        api_key: str = "",
-        model: str = "qwen-flash",
-        temperature: float = 0.1  # 更低的温度值以获得更一致、更快的结果
-) -> Dict[str, str]:
+    command: str,
+    # 默认使用通义千问API【阿里云百炼】: qwen-flash
+    base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    api_key: str = "",
+    model: str = "qwen-flash",
+    temperature: float = 0.1,  # 更低的温度值以获得更一致、更快的结果
+) -> dict[str, str]:
     """
     快速分析音乐播放口令，提取歌曲名和歌手名
 
@@ -126,35 +128,33 @@ async def analyze_music_command(
                     model=model,
                     messages=[
                         {"role": "system", "content": MUSIC_ANALYSIS_PROMPT},
-                        {"role": "user", "content": f"用户指令：{command}"}
+                        {"role": "user", "content": f"用户指令：{command}"},
                     ],
                     temperature=temperature,
-                    max_tokens=100  # 限制输出长度以提高速度
-                )
+                    max_tokens=100,  # 限制输出长度以提高速度
+                ),
             ),
-            timeout=10  # 减少超时时间
+            timeout=10,  # 减少超时时间
         )
 
         content = completion.choices[0].message.content
 
         # 快速提取JSON部分
-        start = content.find('{')
-        end = content.rfind('}') + 1
+        start = content.find("{")
+        end = content.rfind("}") + 1
         if start != -1 and end != 0:
             import json
+
             json_str = content[start:end]
             result = json.loads(json_str)
-            return {
-                "name": result.get("name", ""),
-                "artist": result.get("artist", "")
-            }
+            return {"name": result.get("name", ""), "artist": result.get("artist", "")}
     except (asyncio.TimeoutError, json.JSONDecodeError, Exception) as e:
         log.debug(f"Music command analysis failed: {e}")
 
     return {}
 
 
-def format_openai_messages(conversation_history: List[str]) -> List[Dict[str, str]]:
+def format_openai_messages(conversation_history: list[str]) -> list[dict[str, str]]:
     """
     将对话历史格式化为OpenAI所需的格式
 
@@ -167,19 +167,16 @@ def format_openai_messages(conversation_history: List[str]) -> List[Dict[str, st
     messages = []
     for i, msg in enumerate(conversation_history):
         role = "user" if i % 2 == 0 else "assistant"
-        messages.append({
-            "role": role,
-            "content": msg
-        })
+        messages.append({"role": role, "content": msg})
     return messages
 
 
 async def stream_openai_chat(
-        client: OpenAI,
-        messages: List[Dict[str, str]],
-        model: str = "TBStars2-200B-A13B",
-        temperature: float = 0.7
-) -> Optional[str]:
+    client: OpenAI,
+    messages: list[dict[str, str]],
+    model: str = "TBStars2-200B-A13B",
+    temperature: float = 0.7,
+) -> str | None:
     """
     流式调用OpenAI聊天接口
 
@@ -194,10 +191,7 @@ async def stream_openai_chat(
     """
     try:
         response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            stream=True
+            model=model, messages=messages, temperature=temperature, stream=True
         )
 
         full_content = ""

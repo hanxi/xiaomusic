@@ -94,7 +94,7 @@ security = HTTPBasic()
 
 
 def verification(
-        credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
 ):
     current_username_bytes = credentials.username.encode("utf8")
     correct_username_bytes = config.httpauth_username.encode("utf8")
@@ -254,11 +254,11 @@ def searchmusic(name: str = "", Verifcation=Depends(verification)):
 
 @app.get("/api/search/online")
 async def search_online_music(
-        keyword: str = Query(..., description="搜索关键词"),
-        plugin: str = Query("all", description="指定插件名称，all表示搜索所有插件"),
-        page: int = Query(1, description="页码"),
-        limit: int = Query(20, description="每页数量"),
-        Verifcation=Depends(verification),
+    keyword: str = Query(..., description="搜索关键词"),
+    plugin: str = Query("all", description="指定插件名称，all表示搜索所有插件"),
+    page: int = Query(1, description="页码"),
+    limit: int = Query(20, description="每页数量"),
+    Verifcation=Depends(verification),
 ):
     """在线音乐搜索API"""
     try:
@@ -274,7 +274,7 @@ async def search_online_music(
 
 @app.get("/api/proxy/real-url")
 async def get_real_music_url(
-        url: str = Query(..., description="原始url"), Verifcation=Depends(verification)
+    url: str = Query(..., description="原始url"), Verifcation=Depends(verification)
 ):
     """通过服务端代理获取真实的URL，不止是音频url,可能还有图片url"""
     try:
@@ -290,7 +290,10 @@ async def get_real_music_url(
 
 
 @app.get("/api/proxy/plugin-url")
-async def get_plugin_source_url(data: str = Query(..., description="json对象压缩的base64"), Verifcation=Depends(verification)):
+async def get_plugin_source_url(
+    data: str = Query(..., description="json对象压缩的base64"),
+    Verifcation=Depends(verification),
+):
     try:
         # 获取请求数据
         # 将Base64编码的URL解码为Json字符串
@@ -313,7 +316,10 @@ async def get_plugin_source_url(data: str = Query(..., description="json对象�
 
 
 @app.get("/api/proxy/openapi-url")
-async def get_openapi_source_url(urlb64: str = Query(..., description="原始url压缩的base64"), Verifcation=Depends(verification)):
+async def get_openapi_source_url(
+    urlb64: str = Query(..., description="原始url压缩的base64"),
+    Verifcation=Depends(verification),
+):
     try:
         # 将Base64编码的URL解码为字符串
         url_bytes = base64.b64decode(urlb64)
@@ -384,7 +390,9 @@ async def device_push_list(request: Request, Verifcation=Depends(verification)):
         song_list = data.get("songList")
         list_name = data.get("playlistName")
         # 调用公共函数处理,处理歌曲信息 -> 添加歌单 -> 播放歌单
-        return await xiaomusic.push_music_list_play(did=did, song_list=song_list, list_name=list_name)
+        return await xiaomusic.push_music_list_play(
+            did=did, song_list=song_list, list_name=list_name
+        )
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -394,14 +402,14 @@ async def device_push_list(request: Request, Verifcation=Depends(verification)):
 
 @app.get("/api/js-plugins")
 def get_js_plugins(
-        enabled_only: bool = Query(False, description="是否只返回启用的插件"),
-        Verifcation=Depends(verification),
+    enabled_only: bool = Query(False, description="是否只返回启用的插件"),
+    Verifcation=Depends(verification),
 ):
     """获取插件列表"""
     try:
         if (
-                not hasattr(xiaomusic, "js_plugin_manager")
-                or not xiaomusic.js_plugin_manager
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
         ):
             return {"success": False, "error": "JS Plugin Manager not available"}
         # 重新加载插件
@@ -422,8 +430,8 @@ def enable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
     """启用插件"""
     try:
         if (
-                not hasattr(xiaomusic, "js_plugin_manager")
-                or not xiaomusic.js_plugin_manager
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
         ):
             return {"success": False, "error": "JS Plugin Manager not available"}
 
@@ -439,8 +447,8 @@ def disable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
     """禁用插件"""
     try:
         if (
-                not hasattr(xiaomusic, "js_plugin_manager")
-                or not xiaomusic.js_plugin_manager
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
         ):
             return {"success": False, "error": "JS Plugin Manager not available"}
 
@@ -456,8 +464,8 @@ def uninstall_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
     """卸载插件"""
     try:
         if (
-                not hasattr(xiaomusic, "js_plugin_manager")
-                or not xiaomusic.js_plugin_manager
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
         ):
             return {"success": False, "error": "JS Plugin Manager not available"}
 
@@ -470,7 +478,7 @@ def uninstall_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
 
 @app.post("/api/js-plugins/upload")
 async def upload_js_plugin(
-        file: UploadFile = File(...), verification=Depends(verification)
+    file: UploadFile = File(...), verification=Depends(verification)
 ):
     """上传 JS 插件"""
     try:
@@ -480,8 +488,8 @@ async def upload_js_plugin(
 
         # 使用 JSPluginManager 中定义的插件目录
         if (
-                not hasattr(xiaomusic, "js_plugin_manager")
-                or not xiaomusic.js_plugin_manager
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
         ):
             raise HTTPException(
                 status_code=500, detail="JS Plugin Manager not available"
@@ -644,7 +652,7 @@ async def musiclist(Verifcation=Depends(verification)):
 
 @app.get("/musicinfo")
 async def musicinfo(
-        name: str, musictag: bool = False, Verifcation=Depends(verification)
+    name: str, musictag: bool = False, Verifcation=Depends(verification)
 ):
     url, _ = await xiaomusic.get_music_url(name)
     info = {
@@ -659,9 +667,9 @@ async def musicinfo(
 
 @app.get("/musicinfos")
 async def musicinfos(
-        name: list[str] = Query(None),
-        musictag: bool = False,
-        Verifcation=Depends(verification),
+    name: list[str] = Query(None),
+    musictag: bool = False,
+    Verifcation=Depends(verification),
 ):
     ret = []
     for music_name in name:
@@ -963,7 +971,7 @@ class PlayListUpdateObj(BaseModel):
 # 修改歌单名字
 @app.post("/playlistupdatename")
 async def playlistupdatename(
-        data: PlayListUpdateObj, Verifcation=Depends(verification)
+    data: PlayListUpdateObj, Verifcation=Depends(verification)
 ):
     ret = xiaomusic.play_list_update_name(data.oldname, data.newname)
     if ret:
@@ -1008,7 +1016,7 @@ async def playlistdelmusic(data: PlayListMusicObj, Verifcation=Depends(verificat
 # 歌单更新歌曲
 @app.post("/playlistupdatemusic")
 async def playlistupdatemusic(
-        data: PlayListMusicObj, Verifcation=Depends(verification)
+    data: PlayListMusicObj, Verifcation=Depends(verification)
 ):
     ret = xiaomusic.play_list_update_music(data.name, data.music_list)
     if ret:
@@ -1029,7 +1037,7 @@ async def getplaylist(name: str, Verifcation=Depends(verification)):
 # 更新版本
 @app.post("/updateversion")
 async def updateversion(
-        version: str = "", lite: bool = True, Verifcation=Depends(verification)
+    version: str = "", lite: bool = True, Verifcation=Depends(verification)
 ):
     ret = await update_version(version, lite)
     if ret != "OK":
@@ -1060,7 +1068,7 @@ def access_key_verification(file_path, key, code):
     if key is not None:
         current_key_bytes = key.encode("utf8")
         correct_key_bytes = (
-                config.httpauth_username + config.httpauth_password
+            config.httpauth_username + config.httpauth_password
         ).encode("utf8")
         is_correct_key = secrets.compare_digest(correct_key_bytes, current_key_bytes)
         if is_correct_key:
@@ -1071,7 +1079,7 @@ def access_key_verification(file_path, key, code):
         correct_code_bytes = (
             hashlib.sha256(
                 (
-                        file_path + config.httpauth_username + config.httpauth_password
+                    file_path + config.httpauth_username + config.httpauth_password
                 ).encode("utf-8")
             )
             .hexdigest()
@@ -1257,8 +1265,8 @@ JWT_EXPIRE_SECONDS = 60 * 5  # 5 分钟有效期（足够前端连接和重连�
 
 @app.get("/generate_ws_token")
 def generate_ws_token(
-        did: str,
-        _: bool = Depends(verification),  # 复用 HTTP Basic 验证
+    did: str,
+    _: bool = Depends(verification),  # 复用 HTTP Basic 验证
 ):
     if not xiaomusic.did_exist(did):
         raise HTTPException(status_code=400, detail="Invalid did")

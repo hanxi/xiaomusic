@@ -283,12 +283,15 @@ class JSPluginManager:
             return {"success": False, "error": str(e)}
 
     """----------------------------------------------------------------------"""
+
     def _get_config_data(self):
         """获取配置数据，使用缓存机制"""
         current_time = time.time()
         # 检查缓存是否有效
-        if (self._config_cache is not None and
-                current_time - self._config_cache_time < self._config_cache_ttl):
+        if (
+            self._config_cache is not None
+            and current_time - self._config_cache_time < self._config_cache_ttl
+        ):
             return self._config_cache
 
         # 重新读取配置文件
@@ -519,7 +522,9 @@ class JSPluginManager:
                 )
         return result_data
 
-    async def openapi_search(self, url: str, keyword: str, artist: str, limit: int = 20):
+    async def openapi_search(
+        self, url: str, keyword: str, artist: str, limit: int = 20
+    ):
         """直接调用在线接口进行音乐搜索
 
         Args:
