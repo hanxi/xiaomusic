@@ -1873,7 +1873,7 @@ class XiaoMusic:
             # 解析歌手名，可能通过AI或直接分割
             parsed_keyword, parsed_artist = await self._parse_keyword_with_ai(name)
             list_name = "_online_" + parsed_artist
-            artist_song_list = self.music_list[list_name]
+            artist_song_list = self.music_list.get(list_name, [])
             if len(artist_song_list) > 0:
                 # 如果歌单存在，则直接播放
                 song_name = artist_song_list[0]
@@ -2798,9 +2798,10 @@ class XiaoMusicDevice:
         if sec <= 1:
             self.log.info(f"【{name}】不会设置下一首歌的定时器")
             return
-        # 当前歌曲时长需超过30秒
+        # 计算自动添加歌曲的延迟时间，为当前歌曲时长的一半，但不超过60秒
         if sec > 30:
-            await self.auto_add_song(cur_playlist, sec / 2)
+            sleep_sec = min(sec / 2, 60)
+            await self.auto_add_song(cur_playlist,sleep_sec)
         sec = sec + self.config.delay_sec
         self._start_time = time.time()
         self._duration = sec
