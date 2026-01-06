@@ -88,7 +88,9 @@ class ConversationPoller:
                 self.log.debug(
                     f"Listening new message, timestamp: {self.last_timestamp}"
                 )
-                session._cookie_jar = self.cookie_jar
+                # 只有当 cookie_jar 不为 None 时才设置
+                if self.cookie_jar is not None:
+                    session._cookie_jar = self.cookie_jar
 
                 # 拉取所有音箱的对话记录
                 tasks = []
