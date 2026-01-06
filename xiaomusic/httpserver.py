@@ -355,9 +355,9 @@ async def get_media_lyric(request: Request, Verifcation=Depends(verification)):
         return {"success": False, "error": str(e)}
 
 
-@app.post("/api/device/push")
-async def device_push_music(request: Request, Verifcation=Depends(verification)):
-    """设备端在线播放插件音乐"""
+@app.post("/api/device/pushUrl")
+async def device_push_url(request: Request, Verifcation=Depends(verification)):
+    """推送url给设备端播放"""
     try:
         # 获取请求数据
         data = await request.json()
@@ -374,9 +374,9 @@ async def device_push_music(request: Request, Verifcation=Depends(verification))
         return {"success": False, "error": str(e)}
 
 
-@app.post("/api/device/pushAll")
-async def device_push_all(request: Request, Verifcation=Depends(verification)):
-    """WEB前端全部推送给设备端播放"""
+@app.post("/api/device/pushList")
+async def device_push_list(request: Request, Verifcation=Depends(verification)):
+    """WEB前端推送歌单给设备端播放"""
     try:
         # 获取请求数据
         data = await request.json()

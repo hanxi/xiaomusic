@@ -1023,30 +1023,14 @@
                 alert('请先设置设备!');
                 return;
             }
-            // 构造正确的请求数据
-            const requestData = {...mediaItem, did: deviceId};
-
-            const response = await fetch('/api/device/push', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestData)
-            });
-
-            const data = await response.json();
-            // 根据新返回结构调整处理逻辑
-            if (data && data[0]) {
-                let itemResult = data[0];
-                if (itemResult.code === 0) {
-                    // 显示服务端返回的具体消息而不是通用提示
-                    alert('推送成功！');
-                } else {
-                    alert('播放失败: '+itemResult.msg);
-                }
-            } else {
-                alert('播放失败: ' + (data.error || '未知错误'));
+            if (!mediaItem) {
+                alert('歌曲不存在！');
+                return;
             }
+            const mediaItemList = [mediaItem];
+            let playlistName = '_online_webPush';
+            // 批量推送音乐到设备
+            await pushList(playlistName, deviceId, mediaItemList);
         } catch (error) {
             alert('播放出错: ' + error.message);
         }
@@ -1054,20 +1038,29 @@
 
     // 全部推送音乐到设备
     async function pushAllMusic() {
-        const deviceId = getCurrentDeviceId();
-        if (!deviceId || deviceId === '') {
-            alert('请先设置设备!');
-            return;
+        try {
+            const deviceId = getCurrentDeviceId();
+            if (!deviceId || deviceId === '') {
+                alert('请先设置设备!');
+                return;
+            }
+            if (songList.length === 0) {
+                alert('请先搜索歌曲！');
+                return;
+            }
+            console.log("songList",songList)
+            // 格式化musicList
+            let playlistName = '_online_webPush';
+            // 批量推送音乐到设备
+            await pushList(playlistName, deviceId, songList);
+        } catch (error) {
+            alert('播放出错: ' + error.message);
         }
-        if (songList.length === 0) {
-            alert('请先搜索歌曲！');
-            return;
-        }
-        console.log("songList",songList)
-        // 格式化musicList
-        let playlistName = 'webPushList';
-        // 批量推送音乐到设备
-        const response = await fetch('/api/device/pushAll', {
+    }
+
+    // 推送音乐列表到设备
+    async function pushList(playlistName, deviceId, songList){
+        const response = await fetch('/api/device/pushList', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1083,7 +1076,7 @@
                 // 显示服务端返回的具体消息而不是通用提示
                 alert('推送成功！');
             } else {
-                alert('推送成功: '+data.message);
+                alert('推送失败: '+data.error);
             }
         } else {
             alert('播放失败: ' + ('未知错误'));

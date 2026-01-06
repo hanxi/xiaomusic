@@ -592,6 +592,12 @@ class XiaoMusic:
     def is_web_radio_music(self, name):
         return name in self._all_radio
 
+    # 是否是在线音乐
+    @staticmethod
+    def is_online_music(cur_playlist):
+        # cur_playlist 开头是 '_online_' 则表示online
+        return cur_playlist.startswith("_online_")
+
     # 是否是网络歌曲
     def is_web_music(self, name):
         if name not in self.all_music:
@@ -665,37 +671,30 @@ class XiaoMusic:
                 # 获取最终重定向的 URL
                 return str(response.url)
 
-    async def get_music_sec_url(self, name, true_url):
+    async def get_music_sec_url(self, name, cur_playlist):
         """获取歌曲播放时长和播放地址
 
         Args:
             name: 歌曲名称
-            true_url: 真实播放URL
+            cur_playlist: 当前歌单名称
         Returns:
             tuple: (播放时长(秒), 播放地址)
         """
-
-        # 获取播放时长
-        if true_url is not None:
-            url = await self.get_play_url(true_url)
-            # true_url 都是可以在直接请求获取真实播放url的代理url 怎么能直接请求这个url
-            self.log.info(f"初始url： {true_url}，最终用于播放的url: {url}")
-            sec = await self._get_online_music_duration(name, url)
-            self.log.info(f"在线歌曲时长获取：：{name} ；sec：：{sec}")
+        url, origin_url = await self.get_music_url(name)
+        self.log.info(
+            f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
+        )
+        # 电台直接返回
+        if self.is_web_radio_music(name):
+            self.log.info("电台不会有播放时长")
+            return 0, url
+        # 在线歌曲：时长、播放链接获取
+        if self.is_online_music(cur_playlist):
+            return await self.get_online_music_sec_url(name, url)
+        if self.is_web_music(name):
+            sec = await self._get_web_music_duration(name, url, origin_url)
         else:
-            url, origin_url = await self.get_music_url(name)
-            self.log.info(
-                f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
-            )
-
-            # 电台直接返回
-            if self.is_web_radio_music(name):
-                self.log.info("电台不会有播放时长")
-                return 0, url
-            if self.is_web_music(name):
-                sec = await self._get_web_music_duration(name, url, origin_url)
-            else:
-                sec = await self._get_local_music_duration(name, url)
+            sec = await self._get_local_music_duration(name, url)
 
         if sec <= 0:
             self.log.warning(f"获取歌曲时长失败 {name} {url}")
@@ -727,7 +726,6 @@ class XiaoMusic:
 
     async def _get_online_music_duration(self, name, url):
         """获取在线音乐时长"""
-        self.log.info(f"get_music_sec_url. name:{name}")
         duration = await get_local_music_duration(url, self.config)
         sec = math.ceil(duration)
         self.log.info(f"在线歌曲 {name} : {url} 的时长 {sec} 秒")
@@ -744,6 +742,19 @@ class XiaoMusic:
         if self.is_web_music(name):
             return await self._get_web_music_url(name)
         return self._get_local_music_url(name), None
+
+    async def get_online_music_sec_url(self, name, proxy_url):
+        """获取在线音乐的时长和播放地址
+
+        Args:
+            name: 歌曲名称
+            proxy_url: 代理的播放url
+        Returns:
+            tuple: (播放时长, 原始地址)
+        """
+        source_url = await self.get_play_url(proxy_url)
+        sec = await self._get_online_music_duration(name, source_url)
+        return sec, source_url
 
     async def _get_web_music_url(self, name):
         """获取网络音乐播放地址"""
@@ -1351,9 +1362,11 @@ class XiaoMusic:
 
         self.log.info(f"推送歌单播放, 歌单名称: {list_name}, 歌曲数量: {len(song_list)}, 设备ID: {did}")
         # 验证输入参数
-        if not song_list:
+        if not song_list and len(song_list) > 0:
             return {"success": False, "error": "歌曲列表不能为空"}
         try:
+            #  对歌单 歌名+歌手名进行去重
+            song_list = self._deduplicate_song_list(song_list)
             # 转换外部歌单格式为内部支持的格式
             converted_music_list = await self._convert_song_list_to_music_items(song_list)
             if not converted_music_list:
@@ -1361,12 +1374,13 @@ class XiaoMusic:
 
             # 更新配置中的音乐歌单Json
             self._update_music_list_json(list_name, converted_music_list)
-
             # 重新生成音乐列表
             self._gen_all_music_list()
 
             # 如果指定了特定设备，播放歌单
             if did != "web_device" and self.did_exist(did):
+                # 歌单推送应该是全部播放，不随机打乱
+                await self.set_play_type_all(did)
                 device_playlist = self.devices[did].get_playlist()
                 song_name = device_playlist[0]
                 await self.do_play_music_list(did, list_name, song_name)
@@ -1435,6 +1449,33 @@ class XiaoMusic:
         result_data["artist"] = artist or "佚名"
         return result_data
 
+    def _deduplicate_song_list(self, song_list):
+        """
+        根据歌名+歌手名对歌单中歌曲进行去重
+        Args:
+            song_list: 原始歌曲列表
+        Returns:
+            unique_songs: 去重后的歌曲列表
+        """
+        seen = set()
+        unique_songs = []
+
+        for song in song_list:
+            # 构建唯一标识：歌名+歌手名
+            song_title = song.get("title", "")
+            song_artist = song.get("artist", "")
+
+            # 创建唯一标识符
+            unique_key = f"{song_title.lower()}_{song_artist.lower()}"
+
+            # 如果未见过此唯一标识，则添加到结果中
+            if unique_key not in seen:
+                seen.add(unique_key)
+                unique_songs.append(song)
+
+        self.log.info(f"歌单去重完成，原始数量: {len(song_list)}, 去重后数量: {len(unique_songs)}")
+        return unique_songs
+
     async def _convert_song_list_to_music_items(self, song_list):
         """
         将外部歌单格式转换为内部支持的格式
@@ -1459,10 +1500,8 @@ class XiaoMusic:
                     # 返回插件源的代理接口
                     music_item["url"] = self._get_plugin_proxy_url(item)
                 # 其他信息
-                name = item.get("name") or item.get("title") or item.get("song", "")
-                music_type = item.get("type", "music")
-                music_item["name"] = name
-                music_item["type"] = music_type
+                music_item["name"] = item.get("title") + '-' + item.get("artist")
+                music_item["type"] = item.get("type", "music")
             else:
                 continue
 
@@ -1625,7 +1664,6 @@ class XiaoMusic:
                     return final_url
         except Exception as e:
             return url  # 返回原始URL
-
 
     # 调用MusicFree插件获取歌曲列表
     async def get_music_list_mf(
@@ -1800,62 +1838,6 @@ class XiaoMusic:
             required_field="rawLrc",
         )
 
-    # 调用在线搜索歌曲，并返回最合适的一条
-    async def search_music_top_one(self, search_key, name):
-        """调用MusicFree插件搜索歌曲
-
-        Args:
-            search_key (str): 搜索关键词
-            name (str): 歌曲名
-        Returns:
-            dict: 包含成功状态和URL信息的字典
-        """
-
-        try:
-            # 获取歌曲列表
-            result = await self.get_music_list_online(keyword=name, limit=10)
-            self.log.info(f"在线搜索歌曲列表: {result}")
-
-            if result.get("success") and result.get("total") > 0:
-                # 打印输出 result.data
-                self.log.info(f"歌曲列表: {result.get('data')}")
-                # 根据搜素关键字，智能搜索出最符合的一条music_item
-                music_item = await self._search_top_one(
-                    result.get("data"), search_key, name
-                )
-                # 验证 music_item 是否为字典类型
-                if not isinstance(music_item, dict):
-                    self.log.error(
-                        f"music_item should be a dict, but got {type(music_item)}: {music_item}"
-                    )
-                    return {"success": False, "error": "Invalid music item format"}
-
-                # 如果是OpenAPI，不需要转换连接 直接返回
-                openapi_info = self.js_plugin_manager.get_openapi_info()
-                if openapi_info.get("enabled", False):
-                    music_item["success"] = True
-                    return music_item
-                else:
-                    # media_source = await self.get_media_source_url(music_item)
-                    # if media_source.get("success"):
-                    #    # 将url重置为真实url
-                    #    # return {"success": True, "url": media_source.get('url')}
-                    #    music_item["success"] = True
-                    #    music_item["url"] = media_source.get("url")
-                    #    return music_item
-                    #else:
-                    #    return {"success": False, "error": media_source.get("error")}
-                    music_item["success"] = True
-                    music_item["url"] = self.get_plugin_proxy_url(music_item)
-                    return music_item
-            else:
-                return {"success": False, "error": "未找到歌曲"}
-
-        except Exception as e:
-            # 记录错误日志
-            self.log.error(f"searchKey {search_key} get media source failed: {e}")
-            return {"success": False, "error": str(e)}
-
     # 调用在线搜索歌手，添加歌手歌单并播放
     async def search_singer_play(self, search_key, name):
 
@@ -1867,16 +1849,44 @@ class XiaoMusic:
             if result.get("success") and result.get("total") > 0:
                 # 打印输出 result.data
                 self.log.info(f"歌曲列表: {result.get('data')}")
-                artist = "artist-"+result.get("artist")
+                list_name = "_online_" + result.get("artist")
                 # 调用公共函数,处理歌曲信息 -> 添加歌单 -> 播放歌单
                 return await self.push_music_list_play(
                     did=self.get_cur_did(),
                     song_list=result.get('data'),
-                    list_name=artist
+                    list_name=list_name
                 )
             else:
                 return {"success": False, "error": "未找到歌曲"}
 
+        except Exception as e:
+            # 记录错误日志
+            self.log.error(f"searchKey {search_key} get media source failed: {e}")
+            return {"success": False, "error": str(e)}
+
+    # 在线搜索搜索最符合的一首歌并播放
+    async def search_top_one_play(self, search_key, name):
+
+        try:
+            # 获取歌曲列表
+            result = await self.get_music_list_online(keyword=name, limit=10)
+
+            if result.get("success") and result.get("total") > 0:
+                # 打印输出 result.data
+                self.log.info(f"在线搜索的歌曲列表: {result.get('data')}")
+                # 根据搜素关键字，智能搜索出最符合的一条music_item
+                top_one_list = await self._search_top_one(
+                    result.get("data"), search_key, name
+                )
+                list_name = "_online_play"
+                # 调用公共函数,处理歌曲信息 -> 添加歌单 -> 播放歌单
+                return await self.push_music_list_play(
+                    did=self.get_cur_did(),
+                    song_list=top_one_list,
+                    list_name=list_name
+                )
+            else:
+                return {"success": False, "error": "未找到歌曲"}
         except Exception as e:
             # 记录错误日志
             self.log.error(f"searchKey {search_key} get media source failed: {e}")
@@ -1887,12 +1897,12 @@ class XiaoMusic:
         try:
             # 如果没有音乐项目，返回None
             if not music_items:
-                return None
+                return []
 
             self.log.info(f"搜索关键字: {search_key}；歌名：{name}")
             # 如果只有一个项目，直接返回
             if len(music_items) == 1:
-                return music_items[0]
+                return music_items
 
             # 计算每个项目的匹配分数
             def calculate_match_score(item):
@@ -1943,12 +1953,12 @@ class XiaoMusic:
 
             # 按匹配分数排序，返回分数最高的项目
             sorted_items = sorted(music_items, key=calculate_match_score, reverse=True)
-            return sorted_items[0]
+            return [sorted_items[0]]
 
         except Exception as e:
             self.log.error(f"_search_top_one error: {e}")
             # 出现异常时返回第一个项目
-            return music_items[0] if music_items else None
+            return [music_items[0]] if music_items else []
 
     # ===========================================================
 
@@ -2066,15 +2076,8 @@ class XiaoMusic:
         name = parts[1] if len(parts) > 1 else search_key
         if not name:
             name = search_key
-        self.log.info(f"搜索关键字{search_key},搜索歌名{name}")
-        result = await self.search_music_top_one(search_key, name)
-        # 搜索成功，则直接推送url播放
-        if result.get("success", False):
-            self.log.info(f"在线搜索到歌曲，result: {result}")
-            url = result.get("url", "")
-            name = result.get("title", "") + "-" + result.get("artist", "")
-            # 播放歌曲
-            await self.devices[did].play_music(name, true_url=url)
+        self.log.info(f"搜索关键字{search_key},提取的歌名{name}")
+        await self.search_top_one_play(search_key, name)
 
     # 播放歌手：在线搜索歌手并存为列表播放
     async def singer_play(self, did="", arg1="", **kwargs):
@@ -2476,13 +2479,13 @@ class XiaoMusicDevice:
         offset = time.time() - self._start_time - self._paused_time
         return offset, duration
 
-    async def play_music(self, name, true_url=None):
+    async def play_music(self, name):
         # TODO 根据是否启用【续播】，判断是否需要创建歌单
         enable_resume_play = True
         if enable_resume_play:
-            return await self._playmusic(name, true_url=true_url)
+            return await self._playmusic(name)
         else:
-            return await self._playmusic(name, true_url=true_url)
+            return await self._playmusic(name)
 
     # 获取指定设备对应的播放列表
     def get_playlist(self):
@@ -2663,17 +2666,17 @@ class XiaoMusicDevice:
             return
         await self._playmusic(name)
 
-    async def _playmusic(self, name, true_url=None):
+    async def _playmusic(self, name):
         # 取消组内所有的下一首歌曲的定时器
         self.cancel_group_next_timer()
 
         self._playing = True
         self.device.cur_music = name
         self.device.playlist2music[self.device.cur_playlist] = name
-
-        self.log.info(f"cur_playlist {self.device.cur_playlist}")
+        cur_playlist = self.device.cur_playlist
+        self.log.info(f"cur_playlist {cur_playlist}")
         self.log.info(f"cur_music {self.get_cur_music()}")
-        sec, url = await self.xiaomusic.get_music_sec_url(name, true_url)
+        sec, url = await self.xiaomusic.get_music_sec_url(name, cur_playlist)
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
         # 有3方设备打开 /static/3thplay.html 通过socketio连接返回true 忽律小爱音箱的播放
@@ -2703,6 +2706,7 @@ class XiaoMusicDevice:
         if sec <= 1:
             self.log.info(f"【{name}】不会设置下一首歌的定时器")
             return
+        # TODO 根据设置判断是否需要续播
         sec = sec + self.config.delay_sec
         self._start_time = time.time()
         self._duration = sec
