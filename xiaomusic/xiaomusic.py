@@ -61,7 +61,6 @@ from xiaomusic.utils import (
     fuzzyfinder,
     get_local_music_duration,
     get_web_music_duration,
-    is_docker,
     list2str,
     not_in_dirs,
     parse_cookie_string,
@@ -283,11 +282,10 @@ class XiaoMusic:
         file_handler.setFormatter(formatter)
         self.log.addHandler(file_handler)
 
-        # 控制台日志处理器 - 仅在非 supervisord 环境下添加
-        if not is_docker():
-            console_handler = logging.StreamHandler()
-            console_handler.setFormatter(formatter)
-            self.log.addHandler(console_handler)
+        # 控制台日志处理器
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        self.log.addHandler(console_handler)
 
     async def poll_latest_ask(self):
         async with ClientSession() as session:
