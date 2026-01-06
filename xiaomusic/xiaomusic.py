@@ -1365,8 +1365,8 @@ class XiaoMusic:
             if did != "web_device" and self.did_exist(did):
                 # 歌单推送应该是全部播放，不随机打乱
                 await self.set_play_type_all(did)
-                device_playlist = self.devices[did].get_playlist()
-                song_name = device_playlist[0]
+                push_playlist = self.music_list[list_name]
+                song_name = push_playlist[0]
                 await self.do_play_music_list(did, list_name, song_name)
                 return {
                     "success": True,
@@ -1868,25 +1868,33 @@ class XiaoMusic:
         )
 
     # 调用在线搜索歌手，添加歌手歌单并播放
-    async def search_singer_play(self, search_key, name):
-
+    async def search_singer_play(self, did, search_key, name):
         try:
-            # 获取歌曲列表
-            result = await self.get_music_list_online(keyword=name, limit=10)
-            self.log.info(f"在线搜索歌手的歌曲列表: {result}")
-
-            if result.get("success") and result.get("total") > 0:
-                # 打印输出 result.data
-                self.log.info(f"歌曲列表: {result.get('data')}")
-                list_name = "_online_" + result.get("artist")
-                # 调用公共函数,处理歌曲信息 -> 添加歌单 -> 播放歌单
-                return await self.push_music_list_play(
-                    did=self.get_cur_did(),
-                    song_list=result.get('data'),
-                    list_name=list_name
-                )
+            # 解析歌手名，可能通过AI或直接分割
+            parsed_keyword, parsed_artist = await self._parse_keyword_with_ai(name)
+            list_name = "_online_" + parsed_artist
+            artist_song_list = self.music_list[list_name]
+            if len(artist_song_list) > 0:
+                # 如果歌单存在，则直接播放
+                song_name = artist_song_list[0]
+                await self.do_play_music_list(did, list_name, song_name)
             else:
-                return {"success": False, "error": "未找到歌曲"}
+                # 获取歌曲列表
+                result = await self.get_music_list_online(keyword=name, limit=10)
+                self.log.info(f"在线搜索歌手的歌曲列表: {result}")
+
+                if result.get("success") and result.get("total") > 0:
+                    # 打印输出 result.data
+                    self.log.info(f"歌曲列表: {result.get('data')}")
+                    list_name = "_online_" + result.get("artist")
+                    # 调用公共函数,处理歌曲信息 -> 添加歌单 -> 播放歌单
+                    return await self.push_music_list_play(
+                        did=did,
+                        song_list=result.get('data'),
+                        list_name=list_name
+                    )
+                else:
+                    return {"success": False, "error": "未找到歌曲"}
 
         except Exception as e:
             # 记录错误日志
@@ -1907,7 +1915,7 @@ class XiaoMusic:
             return {"success": False, "error": str(e)}
 
     # 在线搜索搜索最符合的一首歌并播放
-    async def search_top_one_play(self, search_key, name):
+    async def search_top_one_play(self, did, search_key, name):
 
         try:
             # 获取歌曲列表
@@ -1923,7 +1931,7 @@ class XiaoMusic:
                 list_name = "_online_play"
                 # 调用公共函数,处理歌曲信息 -> 添加歌单 -> 播放歌单
                 return await self.push_music_list_play(
-                    did=self.get_cur_did(),
+                    did=did,
                     song_list=top_one_list,
                     list_name=list_name
                 )
@@ -2119,7 +2127,7 @@ class XiaoMusic:
         if not name:
             name = search_key
         self.log.info(f"搜索关键字{search_key},提取的歌名{name}")
-        await self.search_top_one_play(search_key, name)
+        await self.search_top_one_play(did, search_key, name)
 
     # 播放歌手：在线搜索歌手并存为列表播放
     async def singer_play(self, did="", arg1="", **kwargs):
@@ -2131,7 +2139,7 @@ class XiaoMusic:
         if not name:
             name = search_key
         self.log.info(f"搜索关键字{search_key},搜索歌手名{name}")
-        await self.search_singer_play(search_key, name)
+        await self.search_singer_play(did, search_key, name)
 
     # 后台搜索播放
     async def do_play(
@@ -2546,7 +2554,7 @@ class XiaoMusicDevice:
     # 启用延时器，搜索当前歌曲歌手的其他不在歌单内的歌曲
     async def _add_singer_song(self, list_name, cur_music, sleep_sec):
         # 取消之前的定时器（如果存在）
-        self.cancel_add_song_timer()
+        # self.cancel_add_song_timer()
         # 以 '-' 分割，获取歌手名称
         singer_name = cur_music.split('-')[1]
         # 创建新的定时器，20秒后执行
@@ -2572,7 +2580,6 @@ class XiaoMusicDevice:
             self._add_song_timer = None
             return True
         return False
-
 
     # 获取指定设备对应的播放列表
     def get_playlist(self):
