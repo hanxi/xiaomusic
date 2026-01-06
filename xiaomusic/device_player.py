@@ -720,7 +720,7 @@ class XiaoMusicDevice:
     async def group_force_stop_xiaoai(self):
         """强制停止组内所有设备"""
         device_id_list = self.xiaomusic.get_group_device_id_list(self.group_name)
-        self.log.info(f"group_force_stop_xiaoai {device_id_list}")
+        self.log.info(f"group_force_stop_xiaoai {self.group_name} {device_id_list}")
         tasks = [self.force_stop_xiaoai(device_id) for device_id in device_id_list]
         results = await asyncio.gather(*tasks)
         self.log.info(f"group_force_stop_xiaoai {device_id_list} {results}")

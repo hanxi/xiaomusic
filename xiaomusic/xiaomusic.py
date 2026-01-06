@@ -254,7 +254,6 @@ class XiaoMusic:
 
         # 同步设备映射和分组到主类
         self.device_id_did = self._device_manager.device_id_did
-        self.groups = self._device_manager.groups
 
         # 创建设备实例
         did2group = parse_str_to_dict(self.config.group_list, d1=",", d2=":")

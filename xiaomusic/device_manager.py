@@ -6,6 +6,10 @@
 - 设备信息查询
 """
 
+from xiaomusic.utils import (
+    parse_str_to_dict,
+)
+
 
 class DeviceManager:
     """设备管理器
@@ -38,9 +42,16 @@ class DeviceManager:
         self.groups = {}
 
         # 遍历配置中的设备，构建基本映射
+        did2group = parse_str_to_dict(self.config.group_list, d1=",", d2=":")
         for did, device in self.config.devices.items():
             # 构建 device_id 到 did 的映射
             self.device_id_did[device.device_id] = did
+            group_name = did2group.get(did)
+            if not group_name:
+                group_name = device.name
+            if group_name not in self.groups:
+                self.groups[group_name] = []
+            self.groups[group_name].append(device.device_id)
 
         self.log.info(f"设备列表已更新: device_id_did={self.device_id_did}")
         self.log.info(f"设备分组已更新: groups={self.groups}")
