@@ -2801,7 +2801,7 @@ class XiaoMusicDevice:
         # 计算自动添加歌曲的延迟时间，为当前歌曲时长的一半，但不超过60秒
         if sec > 30:
             sleep_sec = min(sec / 2, 60)
-            await self.auto_add_song(cur_playlist,sleep_sec)
+            await self.auto_add_song(cur_playlist, sleep_sec)
         sec = sec + self.config.delay_sec
         self._start_time = time.time()
         self._duration = sec
