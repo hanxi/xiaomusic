@@ -31,6 +31,18 @@ async def app_lifespan(app):
         yield
     except Exception as e:
         deps.log.exception(f"Execption {e}")
+    finally:
+        # 应用关闭时的清理工作
+        if (
+            deps.xiaomusic is not None
+            and hasattr(deps.xiaomusic, "js_plugin_manager")
+            and deps.xiaomusic.js_plugin_manager
+        ):
+            try:
+                deps.log.info("Shutting down application, cleaning up resources...")
+                deps.xiaomusic.js_plugin_manager.shutdown()
+            except Exception as e:
+                deps.log.error(f"Error during shutdown: {e}")
 
 
 # 创建 FastAPI 应用实例
