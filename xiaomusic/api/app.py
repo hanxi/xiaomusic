@@ -26,7 +26,7 @@ import xiaomusic.api.dependencies as deps
 async def app_lifespan(app):
     """应用生命周期管理"""
     if deps.xiaomusic is not None:
-        asyncio.create_task(deps.xiaomusic.run_forever())
+        await asyncio.create_task(deps.xiaomusic.run_forever())
     try:
         yield
     except Exception as e:
