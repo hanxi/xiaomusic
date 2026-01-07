@@ -88,7 +88,7 @@ class JSAdapter:
         """格式化专辑信息结果"""
         if not album_info_result:
             return {}
-        
+
         album_item = album_info_result.get("albumItem", {})
         formatted = {
             "isEnd": album_info_result.get("isEnd", True),
