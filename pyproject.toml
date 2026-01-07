@@ -26,7 +26,6 @@ dependencies = [
     "miservice-fork",
     "edge-tts>=7.2.3",
     "psutil>=5.9.0",
-    "openai>=2.14.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
