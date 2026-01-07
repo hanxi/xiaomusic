@@ -483,7 +483,7 @@ class XiaoMusic:
         self.log.info("run_forever start")
         self.try_gen_all_music_tag()  # 事件循环开始后调用一次
         self.crontab.start()
-        asyncio.create_task(self.analytics.send_startup_event())
+        await asyncio.create_task(self.analytics.send_startup_event())
         # 取配置 enable_file_watch 循环开始时调用一次，控制目录监控开关
         if self.config.enable_file_watch:
             self.start_file_watch()
@@ -748,7 +748,6 @@ class XiaoMusic:
         else:
             proxy_base = "http://192.168.31.241:8090"
         search_audio = proxy_base + "/static/search.mp3"
-        proxy_base + "/static/silence.mp3"
         await self.play_url(self.get_cur_did(), search_audio)
 
         # TODO 添加一个定时器，4秒后触发
@@ -985,7 +984,7 @@ class XiaoMusic:
         except Exception as e:
             self.log.warning(f"Execption {e}")
             # 重新初始化
-            await self.xiaomusic.reinit()
+            await self.reinit()
         return device_list
 
     async def debug_play_by_music_url(self, arg1=None):
