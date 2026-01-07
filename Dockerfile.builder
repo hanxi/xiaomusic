@@ -8,11 +8,13 @@ ENV PDM_CHECK_UPDATE=false
 WORKDIR /app
 COPY pyproject.toml README.md package.json ./
 
-RUN pdm install --prod --no-editable -v
-RUN npm install
+RUN pdm install --prod --frozen-lockfile
+RUN node -v && npm -v
+RUN uname -m
+RUN npm config list
+RUN npm install --verbose
 
 COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/
 COPY holiday/ ./holiday/
 COPY xiaomusic.py .
-COPY js_plugins/ ./js_plugins/

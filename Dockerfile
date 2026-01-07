@@ -5,7 +5,7 @@ ENV PDM_CHECK_UPDATE=false
 WORKDIR /app
 COPY pyproject.toml README.md package.json .
 
-RUN pdm install --prod --no-editable -v
+RUN pdm install --prod --frozen-lockfile
 RUN node -v && npm -v
 RUN uname -m
 RUN npm config list
