@@ -4,16 +4,39 @@ import json
 import os
 import shutil
 import tempfile
-from dataclasses import asdict
+from dataclasses import (
+    asdict,
+)
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
-from fastapi.openapi.utils import get_openapi
-from fastapi.responses import FileResponse
-from starlette.background import BackgroundTask
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+)
+from fastapi.openapi.docs import (
+    get_redoc_html,
+    get_swagger_ui_html,
+)
+from fastapi.openapi.utils import (
+    get_openapi,
+)
+from fastapi.responses import (
+    FileResponse,
+)
+from starlette.background import (
+    BackgroundTask,
+)
 
-from xiaomusic import __version__
-from xiaomusic.api.dependencies import log, verification, xiaomusic
+from xiaomusic import (
+    __version__,
+)
+from xiaomusic.api.dependencies import (
+    config,
+    log,
+    verification,
+    xiaomusic,
+)
 from xiaomusic.utils import (
     deepcopy_data_no_sensitive_info,
     get_latest_version,
@@ -83,7 +106,7 @@ async def savesetting(request: Request, Verifcation=Depends(verification)):
 @router.get("/downloadlog")
 def downloadlog(Verifcation=Depends(verification)):
     """下载日志"""
-    file_path = xiaomusic.config.log_file
+    file_path = config.log_file
     if os.path.exists(file_path):
         # 创建一个临时文件来保存日志的快照
         temp_file = tempfile.NamedTemporaryFile(delete=False)

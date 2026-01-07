@@ -3,9 +3,20 @@
 import os
 
 import aiofiles
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+)
 
-from xiaomusic.api.dependencies import verification, xiaomusic
+from xiaomusic.api.dependencies import (
+    verification,
+    xiaomusic,
+)
 
 router = APIRouter()
 

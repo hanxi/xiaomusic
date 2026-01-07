@@ -1,8 +1,15 @@
 """播放列表路由"""
 
-from fastapi import APIRouter, Depends
+from fastapi import (
+    APIRouter,
+    Depends,
+)
 
-from xiaomusic.api.dependencies import log, verification, xiaomusic
+from xiaomusic.api.dependencies import (
+    log,
+    verification,
+    xiaomusic,
+)
 from xiaomusic.api.models import (
     DidPlayMusicList,
     PlayListMusicObj,

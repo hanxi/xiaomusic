@@ -4,7 +4,10 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.base import BaseTrigger
 from apscheduler.triggers.cron import CronTrigger
 
-from xiaomusic.holiday import is_off_day, is_working_day
+from xiaomusic.holiday import (
+    is_off_day,
+    is_working_day,
+)
 
 
 class CustomCronTrigger(BaseTrigger):

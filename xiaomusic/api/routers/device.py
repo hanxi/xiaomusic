@@ -3,10 +3,20 @@
 import asyncio
 import urllib.parse
 
-from fastapi import APIRouter, Depends
+from fastapi import (
+    APIRouter,
+    Depends,
+)
 
-from xiaomusic.api.dependencies import log, verification, xiaomusic
-from xiaomusic.api.models import DidCmd, DidVolume
+from xiaomusic.api.dependencies import (
+    log,
+    verification,
+    xiaomusic,
+)
+from xiaomusic.api.models import (
+    DidCmd,
+    DidVolume,
+)
 
 router = APIRouter()
 

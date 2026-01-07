@@ -7,7 +7,15 @@ import shutil
 from urllib.parse import urlparse
 
 import aiohttp
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+)
 from fastapi.responses import (
     FileResponse,
     RedirectResponse,
@@ -23,7 +31,11 @@ from xiaomusic.api.dependencies import (
     verification,
     xiaomusic,
 )
-from xiaomusic.api.models import DownloadOneMusic, DownloadPlayList, UrlInfo
+from xiaomusic.api.models import (
+    DownloadOneMusic,
+    DownloadPlayList,
+    UrlInfo,
+)
 from xiaomusic.utils import (
     check_bili_fav_list,
     chmoddir,

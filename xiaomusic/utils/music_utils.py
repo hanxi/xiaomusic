@@ -13,7 +13,10 @@ import re
 import shutil
 import subprocess
 import tempfile
-from dataclasses import asdict, dataclass
+from dataclasses import (
+    asdict,
+    dataclass,
+)
 from urllib.parse import urlparse
 
 import aiohttp

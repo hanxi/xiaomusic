@@ -9,7 +9,10 @@ import time
 from collections import OrderedDict
 from pathlib import Path
 from time import sleep
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import (
+    parse_qs,
+    urlparse,
+)
 
 import aiohttp
 import edge_tts

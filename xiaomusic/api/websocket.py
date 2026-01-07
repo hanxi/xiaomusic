@@ -6,9 +6,17 @@ import secrets
 import time
 
 import jwt
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import (
+    APIRouter,
+    Depends,
+    WebSocket,
+    WebSocketDisconnect,
+)
 
-from xiaomusic.api.dependencies import verification, xiaomusic
+from xiaomusic.api.dependencies import (
+    verification,
+    xiaomusic,
+)
 
 router = APIRouter()
 

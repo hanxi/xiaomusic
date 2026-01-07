@@ -3,9 +3,19 @@
 import json
 import urllib.parse
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+)
 
-from xiaomusic.api.dependencies import log, verification, xiaomusic
+from xiaomusic.api.dependencies import (
+    log,
+    verification,
+    xiaomusic,
+)
 from xiaomusic.api.models import (
     DidPlayMusic,
     MusicInfoObj,

@@ -18,16 +18,16 @@ from xiaomusic.api.dependencies import (
 if TYPE_CHECKING:
     from xiaomusic.xiaomusic import XiaoMusic
 
-# 导入全局变量引用（将在 HttpInit 中初始化）
-import xiaomusic.api.dependencies as deps
+# 导入内部状态管理器
+from xiaomusic.api.dependencies import _state
 
 
 @asynccontextmanager
 async def app_lifespan(app):
     """应用生命周期管理"""
     task = None
-    if deps.xiaomusic is not None:
-        task = asyncio.create_task(deps.xiaomusic.run_forever())
+    if _state.is_initialized():
+        task = asyncio.create_task(_state._xiaomusic.run_forever())
     try:
         yield
     except asyncio.CancelledError:
@@ -40,11 +40,11 @@ async def app_lifespan(app):
             try:
                 await task
             except asyncio.CancelledError:
-                if deps.log:
-                    deps.log.info("Background task cleanup: CancelledError")
+                if _state.is_initialized():
+                    _state._log.info("Background task cleanup: CancelledError")
             except Exception as e:
-                if deps.log:
-                    deps.log.error(f"Background task cleanup error: {e}")
+                if _state.is_initialized():
+                    _state._log.error(f"Background task cleanup error: {e}")
 
 
 # 创建 FastAPI 应用实例
@@ -75,10 +75,8 @@ def HttpInit(_xiaomusic: "XiaoMusic"):
     Args:
         _xiaomusic: XiaoMusic 实例
     """
-    # 设置全局变量
-    deps.xiaomusic = _xiaomusic
-    deps.config = _xiaomusic.config
-    deps.log = _xiaomusic.log
+    # 初始化应用状态
+    _state.initialize(_xiaomusic)
 
     # 挂载静态文件
     folder = os.path.dirname(os.path.dirname(__file__))  # xiaomusic 目录

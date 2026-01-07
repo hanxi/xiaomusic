@@ -3,7 +3,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from dataclasses import asdict, dataclass, field
+from dataclasses import (
+    asdict,
+    dataclass,
+    field,
+)
 from typing import get_type_hints
 
 from xiaomusic.const import (

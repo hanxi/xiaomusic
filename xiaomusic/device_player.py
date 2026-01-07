@@ -22,7 +22,11 @@ from xiaomusic.const import (
     PLAY_TYPE_SIN,
     TTS_COMMAND,
 )
-from xiaomusic.utils import chmodfile, custom_sort_key, list2str
+from xiaomusic.utils import (
+    chmodfile,
+    custom_sort_key,
+    list2str,
+)
 
 
 class XiaoMusicDevice:

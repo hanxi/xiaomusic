@@ -6,7 +6,10 @@ import signal
 
 import sentry_sdk
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
-from sentry_sdk.integrations.logging import LoggingIntegration, ignore_logger
+from sentry_sdk.integrations.logging import (
+    LoggingIntegration,
+    ignore_logger,
+)
 
 LOGO = r"""
  __  __  _                   __  __                 _
@@ -19,7 +22,6 @@ LOGO = r"""
 
 
 sentry_sdk.init(
-    # dsn="https://659690a901a37237df8097a9eb95e60f@github.hanxi.cc/sentry/4508470200434688",
     dsn="https://ffe4962642d04b29afe62ebd1a065231@glitchtip.hanxi.cc/1",
     integrations=[
         AsyncioIntegration(),
@@ -35,8 +37,12 @@ ignore_logger("miservice")
 
 def main():
     from xiaomusic import __version__
-    from xiaomusic.api import HttpInit
-    from xiaomusic.api import app as HttpApp
+    from xiaomusic.api import (
+        HttpInit,
+    )
+    from xiaomusic.api import (
+        app as HttpApp,
+    )
     from xiaomusic.config import Config
     from xiaomusic.xiaomusic import XiaoMusic
 
@@ -177,8 +183,12 @@ def main():
 
     import asyncio
 
-    from uvicorn import Config as UvicornConfig
-    from uvicorn import Server
+    from uvicorn import (
+        Config as UvicornConfig,
+    )
+    from uvicorn import (
+        Server,
+    )
 
     xiaomusic = XiaoMusic(config)
     HttpInit(xiaomusic)
