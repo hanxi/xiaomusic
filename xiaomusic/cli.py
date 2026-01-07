@@ -2,8 +2,6 @@
 import argparse
 import json
 import logging
-import os
-import signal
 
 import sentry_sdk
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
@@ -162,13 +160,27 @@ def main():
     except Exception as e:
         print(f"Execption {e}")
 
-    # 全局变量用于信号处理
-    xiaomusic_instance = None
-
     def run_server(port):
-        nonlocal xiaomusic_instance
         xiaomusic_instance = XiaoMusic(config)
         HttpInit(xiaomusic_instance)
+
+        # 注册退出处理函数
+        import atexit
+
+        def cleanup():
+            print("程序退出，清理资源...")
+            if (
+                xiaomusic_instance
+                and hasattr(xiaomusic_instance, "js_plugin_manager")
+                and xiaomusic_instance.js_plugin_manager
+            ):
+                try:
+                    xiaomusic_instance.js_plugin_manager.shutdown()
+                except Exception as e:
+                    print(f"关闭 JS 插件管理器时出错: {e}")
+
+        atexit.register(cleanup)
+
         uvicorn.run(
             HttpApp,
             host=["0.0.0.0", "::"],
@@ -176,23 +188,6 @@ def main():
             log_config=LOGGING_CONFIG,
         )
 
-    def signal_handler(sig, frame):
-        print("主进程收到退出信号，准备退出...")
-        # 关闭 JS 插件管理器
-        if (
-            xiaomusic_instance
-            and hasattr(xiaomusic_instance, "js_plugin_manager")
-            and xiaomusic_instance.js_plugin_manager
-        ):
-            try:
-                xiaomusic_instance.js_plugin_manager.shutdown()
-            except Exception as e:
-                print(f"关闭 JS 插件管理器时出错: {e}")
-        os._exit(0)  # 退出主进程
-
-    # 捕获主进程的退出信号
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
     port = int(config.port)
     run_server(port)
 
