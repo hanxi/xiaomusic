@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 from typing import Any
+
 import aiohttp
 
 log = logging.getLogger(__package__)
@@ -42,13 +43,13 @@ def create_openai_client(base_url: str, api_key: str) -> dict:
 
 # 默认使用通义千问API【阿里云百炼】: qwen-flash
 async def call_openai_chat(
-        client: dict,
-        messages: list[dict[str, str]],
-        model: str = "qwen-flash",
-        temperature: float = 0.1,  # 更低的温度值以获得更一致的结果
-        max_tokens: int | None = 100,  # 限制输出长度以提高速度
-        timeout: int = 10,  # 减少超时时间
-        extra_body: dict[str, Any] | None = None,
+    client: dict,
+    messages: list[dict[str, str]],
+    model: str = "qwen-flash",
+    temperature: float = 0.1,  # 更低的温度值以获得更一致的结果
+    max_tokens: int | None = 100,  # 限制输出长度以提高速度
+    timeout: int = 10,  # 减少超时时间
+    extra_body: dict[str, Any] | None = None,
 ) -> str | None:
     """
     异步调用API聊天接口
@@ -70,7 +71,7 @@ async def call_openai_chat(
         api_key = client["api_key"]
         headers = {
             "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         # 准备请求数据
@@ -90,10 +91,10 @@ async def call_openai_chat(
         # 使用aiohttp进行异步请求
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                    f"{base_url}/chat/completions",
-                    headers=headers,
-                    json=data,
-                    timeout=aiohttp.ClientTimeout(total=timeout)
+                f"{base_url}/chat/completions",
+                headers=headers,
+                json=data,
+                timeout=aiohttp.ClientTimeout(total=timeout),
             ) as response:
                 if response.status == 200:
                     result = await response.json()
@@ -103,7 +104,9 @@ async def call_openai_chat(
                     )
                     return content
                 else:
-                    log.warning(f"API call failed with status {response.status}: {await response.text()}")
+                    log.warning(
+                        f"API call failed with status {response.status}: {await response.text()}"
+                    )
                     return None
 
     except asyncio.TimeoutError:
@@ -115,12 +118,12 @@ async def call_openai_chat(
 
 
 async def analyze_music_command(
-        command: str,
-        # 默认使用通义千问API【阿里云百炼】: qwen-flash
-        base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        api_key: str = "",
-        model: str = "qwen-flash",
-        temperature: float = 0.1,  # 更低的温度值以获得更一致、更快的结果
+    command: str,
+    # 默认使用通义千问API【阿里云百炼】: qwen-flash
+    base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    api_key: str = "",
+    model: str = "qwen-flash",
+    temperature: float = 0.1,  # 更低的温度值以获得更一致、更快的结果
 ) -> dict[str, str]:
     """
     快速分析音乐播放口令，提取歌曲名和歌手名
@@ -138,7 +141,7 @@ async def analyze_music_command(
     try:
         headers = {
             "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         # 准备请求数据
@@ -155,10 +158,10 @@ async def analyze_music_command(
         # 使用aiohttp进行异步请求
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                    f"{base_url}/chat/completions",
-                    headers=headers,
-                    json=data,
-                    timeout=aiohttp.ClientTimeout(total=10)  # 减少超时时间
+                f"{base_url}/chat/completions",
+                headers=headers,
+                json=data,
+                timeout=aiohttp.ClientTimeout(total=10),  # 减少超时时间
             ) as response:
                 if response.status == 200:
                     result = await response.json()
@@ -170,9 +173,14 @@ async def analyze_music_command(
                     if start != -1 and end != 0:
                         json_str = content[start:end]
                         result = json.loads(json_str)
-                        return {"name": result.get("name", ""), "artist": result.get("artist", "")}
+                        return {
+                            "name": result.get("name", ""),
+                            "artist": result.get("artist", ""),
+                        }
                 else:
-                    log.debug(f"API call failed with status {response.status}: {await response.text()}")
+                    log.debug(
+                        f"API call failed with status {response.status}: {await response.text()}"
+                    )
     except (asyncio.TimeoutError, json.JSONDecodeError, Exception) as e:
         log.debug(f"Music command analysis failed: {e}")
 
@@ -197,10 +205,10 @@ def format_openai_messages(conversation_history: list[str]) -> list[dict[str, st
 
 
 async def stream_openai_chat(
-        client: dict,
-        messages: list[dict[str, str]],
-        model: str = "TBStars2-200B-A13B",
-        temperature: float = 0.7,
+    client: dict,
+    messages: list[dict[str, str]],
+    model: str = "TBStars2-200B-A13B",
+    temperature: float = 0.7,
 ) -> str | None:
     """
     流式调用API聊天接口
@@ -219,7 +227,7 @@ async def stream_openai_chat(
         api_key = client["api_key"]
         headers = {
             "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         # 准备请求数据
@@ -227,28 +235,30 @@ async def stream_openai_chat(
             "model": model,
             "messages": messages,
             "temperature": temperature,
-            "stream": True  # 启用流式响应
+            "stream": True,  # 启用流式响应
         }
 
         # 使用aiohttp进行异步请求
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                    f"{base_url}/chat/completions",
-                    headers=headers,
-                    json=data
+                f"{base_url}/chat/completions", headers=headers, json=data
             ) as response:
                 if response.status == 200:
                     full_content = ""
                     # 逐行读取流式响应
                     async for line in response.content:
-                        line_str = line.decode('utf-8').strip()
+                        line_str = line.decode("utf-8").strip()
 
-                        if line_str.startswith('data: ') and line_str != 'data: [DONE]':
+                        if line_str.startswith("data: ") and line_str != "data: [DONE]":
                             data_str = line_str[6:]  # 移除 'data: ' 前缀
                             try:
                                 chunk_data = json.loads(data_str)
-                                if chunk_data["choices"] and chunk_data["choices"][0]["delta"].get("content"):
-                                    content_piece = chunk_data["choices"][0]["delta"]["content"]
+                                if chunk_data["choices"] and chunk_data["choices"][0][
+                                    "delta"
+                                ].get("content"):
+                                    content_piece = chunk_data["choices"][0]["delta"][
+                                        "content"
+                                    ]
                                     full_content += content_piece
                                     # 可以在这里实时处理流式返回的内容
                                     print(content_piece, end="", flush=True)
@@ -258,7 +268,9 @@ async def stream_openai_chat(
                     print()  # 换行
                     return full_content
                 else:
-                    log.error(f"Stream API call failed with status {response.status}: {await response.text()}")
+                    log.error(
+                        f"Stream API call failed with status {response.status}: {await response.text()}"
+                    )
                     return None
 
     except Exception as e:
