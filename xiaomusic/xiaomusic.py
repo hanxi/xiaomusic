@@ -483,7 +483,7 @@ class XiaoMusic:
         self.log.info("run_forever start")
         self.try_gen_all_music_tag()  # 事件循环开始后调用一次
         self.crontab.start()
-        asyncio.create_task(self.analytics.send_startup_event())
+        await asyncio.create_task(self.analytics.send_startup_event())
         # 取配置 enable_file_watch 循环开始时调用一次，控制目录监控开关
         if self.config.enable_file_watch:
             self.start_file_watch()
