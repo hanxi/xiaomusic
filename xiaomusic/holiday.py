@@ -18,7 +18,7 @@ def load_year_data(year):
 
     file_path = f"holiday/{year}.json"
     if not os.path.exists(file_path):
-        log.warn(f"未找到 {file_path} 文件。")
+        log.warning(f"未找到 {file_path} 文件。")
         return False
 
     try:
@@ -55,7 +55,7 @@ def is_off_day(year, month, day):
     """判断是否为休息日（包括法定节假日和周末）"""
     # 检查日期有效性
     if not is_valid_date(year, month, day):
-        log.warn(f"无效日期: {year}-{month:02d}-{day:02d}")
+        log.warning(f"无效日期: {year}-{month:02d}-{day:02d}")
         return None
 
     # 加载年份数据

@@ -9,6 +9,7 @@ import json
 import logging
 import mimetypes
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -327,6 +328,8 @@ def convert_file_to_mp3(input_file: str, config) -> str:
     music_path = config.music_path
     temp_dir = config.temp_dir
 
+    absolute_music_path = os.path.abspath(music_path)
+
     out_file_name = os.path.splitext(os.path.basename(input_file))[0]
     out_file_path = os.path.join(temp_dir, f"{out_file_name}.mp3")
     relative_path = os.path.relpath(out_file_path, music_path)
@@ -338,9 +341,18 @@ def convert_file_to_mp3(input_file: str, config) -> str:
         log.info(f"File {input_file} = {out_file_path} . Skipping convert_file_to_mp3.")
         return None
 
-    absolute_music_path = os.path.abspath(music_path)
-    if not input_absolute_path.startswith(absolute_music_path):
+    # 确保输入文件位于音乐目录下
+    if not input_absolute_path.startswith(absolute_music_path + os.sep):
         log.error(f"Invalid input file path: {input_file}")
+        return None
+
+    # 确保输出文件位于预期的临时目录或音乐目录下
+    temp_dir_abs = os.path.abspath(temp_dir)
+    if not (
+        output_absolute_path.startswith(temp_dir_abs + os.sep)
+        or output_absolute_path.startswith(absolute_music_path + os.sep)
+    ):
+        log.error(f"Invalid output file path: {out_file_path}")
         return None
 
     # 检查目标文件是否存在
@@ -348,10 +360,15 @@ def convert_file_to_mp3(input_file: str, config) -> str:
         log.info(f"File {out_file_path} already exists. Skipping convert_file_to_mp3.")
         return relative_path
 
-    # 检查是否存在 loudnorm 参数
+    # 检查是否存在 loudnorm 参数，并进行基本校验
     loudnorm_args = []
-    if config.loudnorm:
-        loudnorm_args = ["-af", config.loudnorm]
+    if getattr(config, "loudnorm", None):
+        loudnorm_value = str(config.loudnorm)
+        # 允许常见的 ffmpeg 滤镜字符，禁止换行等控制字符
+        if re.fullmatch(r"[A-Za-z0-9_\-=:,\. \+\*/]+", loudnorm_value):
+            loudnorm_args = ["-af", loudnorm_value]
+        else:
+            log.error(f"Invalid loudnorm parameter, ignoring: {loudnorm_value!r}")
 
     command = [
         os.path.join(config.ffmpeg_location, "ffmpeg"),

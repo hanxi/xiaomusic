@@ -6,7 +6,7 @@ import secrets
 import time
 
 import jwt
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
 from xiaomusic.api.dependencies import verification, xiaomusic
 
@@ -21,12 +21,8 @@ JWT_EXPIRE_SECONDS = 60 * 5  # 5 分钟有效期（足够前端连接和重连�
 @router.get("/generate_ws_token")
 def generate_ws_token(
     did: str,
-    _: bool = verification,  # 复用 HTTP Basic 验证
+    _: bool = Depends(verification),  # 复用 HTTP Basic 验证
 ):
-    """生成 WebSocket token"""
-    if not xiaomusic.did_exist(did):
-        raise HTTPException(status_code=400, detail="Invalid did")
-
     payload = {
         "did": did,
         "exp": time.time() + JWT_EXPIRE_SECONDS,
