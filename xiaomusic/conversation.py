@@ -84,23 +84,32 @@ class ConversationPoller:
         task = asyncio.create_task(self.poll_latest_ask(session))
         assert task is not None  # to keep the reference to task, do not remove this
 
-        while True:
-            self.polling_event.set()
-            await self.new_record_event.wait()
-            self.new_record_event.clear()
-            new_record = self.last_record
-            self.polling_event.clear()  # stop polling when processing the question
+        try:
+            while True:
+                self.polling_event.set()
+                await self.new_record_event.wait()
+                self.new_record_event.clear()
+                new_record = self.last_record
+                self.polling_event.clear()  # stop polling when processing the question
 
-            query = new_record.get("query", "").strip()
-            did = new_record.get("did", "").strip()
-            await do_check_cmd_callback(did, query, False)
+                query = new_record.get("query", "").strip()
+                did = new_record.get("did", "").strip()
+                await do_check_cmd_callback(did, query, False)
 
-            answer = new_record.get("answer")
-            answers = new_record.get("answers", [{}])
-            if answers:
-                answer = answers[0].get("tts", {}).get("text", "").strip()
-                await reset_timer_callback(len(answer), did)
-                self.log.debug(f"query:{query} did:{did} answer:{answer}")
+                answer = new_record.get("answer")
+                answers = new_record.get("answers", [{}])
+                if answers:
+                    answer = answers[0].get("tts", {}).get("text", "").strip()
+                    await reset_timer_callback(len(answer), did)
+                    self.log.debug(f"query:{query} did:{did} answer:{answer}")
+        except asyncio.CancelledError:
+            self.log.info("Conversation loop cancelled, cleaning up...")
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+            raise
 
     async def poll_latest_ask(self, session):
         """轮询最新对话记录
@@ -111,46 +120,50 @@ class ConversationPoller:
         Args:
             session: aiohttp客户端会话
         """
-        while True:
-            if not self.config.enable_pull_ask:
-                self.log.debug("Listening new message disabled")
-                await asyncio.sleep(5)
-                continue
+        try:
+            while True:
+                if not self.config.enable_pull_ask:
+                    self.log.debug("Listening new message disabled")
+                    await asyncio.sleep(5)
+                    continue
 
-            self.log.debug(f"Listening new message, timestamp: {self.last_timestamp}")
-            # 动态获取最新的 cookie_jar
-            if self.auth_manager.cookie_jar is not None:
-                session._cookie_jar = self.auth_manager.cookie_jar
+                self.log.debug(f"Listening new message, timestamp: {self.last_timestamp}")
+                # 动态获取最新的 cookie_jar
+                if self.auth_manager.cookie_jar is not None:
+                    session._cookie_jar = self.auth_manager.cookie_jar
 
-            # 拉取所有音箱的对话记录
-            tasks = []
-            for device_id in self.device_id_did:
-                # 首次用当前时间初始化
-                did = self.get_did(device_id)
-                if did not in self.last_timestamp:
-                    self.last_timestamp[did] = int(time.time() * 1000)
+                # 拉取所有音箱的对话记录
+                tasks = []
+                for device_id in self.device_id_did:
+                    # 首次用当前时间初始化
+                    did = self.get_did(device_id)
+                    if did not in self.last_timestamp:
+                        self.last_timestamp[did] = int(time.time() * 1000)
 
-                hardware = self.get_hardward(device_id)
-                if (
-                    hardware in self.get_ask_by_mina_list
-                ) or self.config.get_ask_by_mina:
-                    tasks.append(self.get_latest_ask_by_mina(device_id))
+                    hardware = self.get_hardward(device_id)
+                    if (
+                        hardware in self.get_ask_by_mina_list
+                    ) or self.config.get_ask_by_mina:
+                        tasks.append(self.get_latest_ask_by_mina(device_id))
+                    else:
+                        tasks.append(self.get_latest_ask_from_xiaoai(session, device_id))
+                await asyncio.gather(*tasks)
+
+                start = time.perf_counter()
+                await self.polling_event.wait()
+                if self.config.pull_ask_sec <= 1:
+                    if (d := time.perf_counter() - start) < 1:
+                        await asyncio.sleep(1 - d)
                 else:
-                    tasks.append(self.get_latest_ask_from_xiaoai(session, device_id))
-            await asyncio.gather(*tasks)
-
-            start = time.perf_counter()
-            await self.polling_event.wait()
-            if self.config.pull_ask_sec <= 1:
-                if (d := time.perf_counter() - start) < 1:
-                    await asyncio.sleep(1 - d)
-            else:
-                sleep_sec = 0
-                while True:
-                    await asyncio.sleep(1)
-                    sleep_sec = sleep_sec + 1
-                    if sleep_sec >= self.config.pull_ask_sec:
-                        break
+                    sleep_sec = 0
+                    while True:
+                        await asyncio.sleep(1)
+                        sleep_sec = sleep_sec + 1
+                        if sleep_sec >= self.config.pull_ask_sec:
+                            break
+        except asyncio.CancelledError:
+            self.log.info("Polling task cancelled")
+            raise
 
     async def get_latest_ask_from_xiaoai(self, session, device_id):
         """从小爱API获取最新对话

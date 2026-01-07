@@ -99,6 +99,15 @@ def main():
     options = parser.parse_args()
     config = Config.from_options(options)
 
+    # 自定义过滤器，过滤掉关闭时的 CancelledError
+    class CancelledErrorFilter(logging.Filter):
+        def filter(self, record):
+            if record.exc_info:
+                exc_type = record.exc_info[0]
+                if exc_type and exc_type.__name__ == 'CancelledError':
+                    return False
+            return True
+
     LOGGING_CONFIG = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -113,11 +122,17 @@ def main():
                 "datefmt": "[%X]",
             },
         },
+        "filters": {
+            "cancelled_error": {
+                "()": CancelledErrorFilter,
+            },
+        },
         "handlers": {
             "default": {
                 "formatter": "default",
                 "class": "logging.StreamHandler",
                 "stream": "ext://sys.stderr",
+                "filters": ["cancelled_error"],
             },
             "access": {
                 "formatter": "access",
@@ -131,6 +146,7 @@ def main():
                 "filename": config.log_file,
                 "maxBytes": 10 * 1024 * 1024,
                 "backupCount": 1,
+                "filters": ["cancelled_error"],
             },
         },
         "loggers": {
@@ -163,78 +179,36 @@ def main():
     except Exception as e:
         print(f"Execption {e}")
 
-    xiaomusic_instance = None
-    original_sigint_handler = None
-    
-    def signal_handler(sig, frame):
-        """信号处理函数 - 立即关闭并退出"""
-        print("\n收到中断信号，正在关闭...")
-        # 设置退出标志，避免重复处理
-        signal_handler.has_been_called = getattr(signal_handler, 'has_been_called', False)
-        if signal_handler.has_been_called:
-            print("程序正在关闭中，请稍候...")
-            return
-        signal_handler.has_been_called = True
-        
-        if xiaomusic_instance and hasattr(xiaomusic_instance, "js_plugin_manager") and xiaomusic_instance.js_plugin_manager:
-            try:
-                xiaomusic_instance.js_plugin_manager.shutdown()
-                print("JS 插件管理器已关闭")
-            except Exception as e:
-                print(f"关闭 JS 插件管理器时出错: {e}")
-        
-        # 强制退出程序
-        print("程序已退出")
-        os._exit(0)
-    
-    # 提前注册信号处理函数，确保在 uvicorn 启动前生效
-    original_sigint_handler = signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    print("[DEBUG] 信号处理函数已注册")
-    
-    def run_server(port):
-        nonlocal xiaomusic_instance, original_sigint_handler
-        xiaomusic_instance = XiaoMusic(config)
-        HttpInit(xiaomusic_instance)
+    import asyncio
+    from uvicorn import Config as UvicornConfig, Server
 
-        try:
-            # 使用 Uvicorn 的 Config 类来配置服务器，避免信号处理冲突
-            from uvicorn import Config, Server
-            
-            uvicorn_config = Config(
-                app=HttpApp,
-                host="0.0.0.0",
-                port=port,
-                log_config=LOGGING_CONFIG,
-            )
-            server = Server(config=uvicorn_config)
-            
-            # 运行服务器
-            import asyncio
-            asyncio.run(server.serve())
-        except ImportError:
-            # 如果无法导入 Config 和 Server，则回退到原来的 uvicorn.run 方式
-            uvicorn.run(
-                HttpApp,
-                host="0.0.0.0",
-                port=port,
-                log_config=LOGGING_CONFIG,
-            )
-        finally:
-            # uvicorn 关闭后清理资源
-            if (
-                xiaomusic_instance
-                and hasattr(xiaomusic_instance, "js_plugin_manager")
-                and xiaomusic_instance.js_plugin_manager
-            ):
-                try:
-                    xiaomusic_instance.js_plugin_manager.shutdown()
-                    print("JS 插件管理器已关闭")
-                except Exception as e:
-                    print(f"关闭 JS 插件管理器时出错: {e}")
-
+    xiaomusic = XiaoMusic(config)
+    HttpInit(xiaomusic)
     port = int(config.port)
-    run_server(port)
+    
+    # 创建 uvicorn 配置，禁用其信号处理
+    uvicorn_config = UvicornConfig(
+        HttpApp,
+        host="0.0.0.0",
+        port=port,
+        log_config=LOGGING_CONFIG,
+    )
+    server = Server(uvicorn_config)
+    
+    # 自定义信号处理
+    shutdown_initiated = False
+    def handle_exit(signum, frame):
+        nonlocal shutdown_initiated
+        if not shutdown_initiated:
+            shutdown_initiated = True
+            print("\n正在关闭服务器...")
+            server.should_exit = True
+    
+    signal.signal(signal.SIGINT, handle_exit)
+    signal.signal(signal.SIGTERM, handle_exit)
+    
+    # 运行服务器
+    asyncio.run(server.serve())
 
 
 if __name__ == "__main__":

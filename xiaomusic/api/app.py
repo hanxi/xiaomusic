@@ -25,24 +25,26 @@ import xiaomusic.api.dependencies as deps
 @asynccontextmanager
 async def app_lifespan(app):
     """应用生命周期管理"""
+    task = None
     if deps.xiaomusic is not None:
-        await asyncio.create_task(deps.xiaomusic.run_forever())
+        task = asyncio.create_task(deps.xiaomusic.run_forever())
     try:
         yield
-    except Exception as e:
-        deps.log.exception(f"Execption {e}")
+    except asyncio.CancelledError:
+        # 正常关闭时的取消，不需要记录
+        pass
     finally:
-        # 应用关闭时的清理工作
-        if (
-            deps.xiaomusic is not None
-            and hasattr(deps.xiaomusic, "js_plugin_manager")
-            and deps.xiaomusic.js_plugin_manager
-        ):
+        # 关闭时取消后台任务
+        if task is not None and not task.done():
+            task.cancel()
             try:
-                deps.log.info("Shutting down application, cleaning up resources...")
-                deps.xiaomusic.js_plugin_manager.shutdown()
+                await task
+            except asyncio.CancelledError:
+                if deps.log:
+                    deps.log.info("Background task cleanup: CancelledError")
             except Exception as e:
-                deps.log.error(f"Error during shutdown: {e}")
+                if deps.log:
+                    deps.log.error(f"Background task cleanup error: {e}")
 
 
 # 创建 FastAPI 应用实例
