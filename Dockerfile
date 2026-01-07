@@ -1,7 +1,4 @@
-FROM python:3.12-alpine3.22 AS builder
-
-RUN apk add --no-cache --virtual .build-deps build-base python3-dev libffi-dev openssl-dev zlib-dev jpeg-dev libc6-compat gcc musl-dev \
-    && apk add --no-cache nodejs npm
+FROM boluofandocker/xiaomusic-online:builder AS builder
 
 RUN pip install -U pdm
 ENV PDM_CHECK_UPDATE=false
@@ -9,41 +6,25 @@ WORKDIR /app
 COPY pyproject.toml README.md package.json .
 
 RUN pdm install --prod --no-editable -v
-RUN npm install
+RUN node -v && npm -v
+RUN uname -m
+RUN npm config list
+RUN npm install --verbose
 
 COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/
 COPY holiday/ ./holiday/
-COPY js_plugins/ ./js_plugins/
 COPY xiaomusic.py .
 
-FROM python:3.12-alpine3.22
-
-RUN apk add --no-cache  bash\
-    wget \
-    xz \
-    tiff \
-    openjpeg \
-    libxcb \
-    supervisor \
-    vim \
-    libc6-compat \
-    ffmpeg \
-    nodejs \
-    npm \
-    && rm -rf /var/lib/apt/lists/*
+FROM hanxi/xiaomusic:runtime
 
 WORKDIR /app
-RUN mkdir -p /app/ffmpeg/bin \
-    && ln -s /usr/bin/ffmpeg /app/ffmpeg/bin/ffmpeg \
-    && ln -s /usr/bin/ffprobe /app/ffmpeg/bin/ffprobe
 
 COPY --from=builder /app/.venv ./.venv
 COPY --from=builder /app/node_modules ./node_modules/
 COPY --from=builder /app/xiaomusic/ ./xiaomusic/
 COPY --from=builder /app/plugins/ ./plugins/
 COPY --from=builder /app/holiday/ ./holiday/
-COPY --from=builder /app/js_plugins/ ./js_plugins/
 COPY --from=builder /app/xiaomusic.py .
 COPY --from=builder /app/xiaomusic/__init__.py /base_version.py
 COPY --from=builder /app/package.json .
