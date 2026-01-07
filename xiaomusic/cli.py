@@ -2,6 +2,9 @@
 import argparse
 import json
 import logging
+import os
+import signal
+import sys
 
 import sentry_sdk
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
@@ -160,15 +163,65 @@ def main():
     except Exception as e:
         print(f"Execption {e}")
 
+    xiaomusic_instance = None
+    original_sigint_handler = None
+    
+    def signal_handler(sig, frame):
+        """信号处理函数 - 立即关闭并退出"""
+        print("\n收到中断信号，正在关闭...")
+        # 设置退出标志，避免重复处理
+        signal_handler.has_been_called = getattr(signal_handler, 'has_been_called', False)
+        if signal_handler.has_been_called:
+            print("程序正在关闭中，请稍候...")
+            return
+        signal_handler.has_been_called = True
+        
+        if xiaomusic_instance and hasattr(xiaomusic_instance, "js_plugin_manager") and xiaomusic_instance.js_plugin_manager:
+            try:
+                xiaomusic_instance.js_plugin_manager.shutdown()
+                print("JS 插件管理器已关闭")
+            except Exception as e:
+                print(f"关闭 JS 插件管理器时出错: {e}")
+        
+        # 强制退出程序
+        print("程序已退出")
+        os._exit(0)
+    
+    # 提前注册信号处理函数，确保在 uvicorn 启动前生效
+    original_sigint_handler = signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    print("[DEBUG] 信号处理函数已注册")
+    
     def run_server(port):
+        nonlocal xiaomusic_instance, original_sigint_handler
         xiaomusic_instance = XiaoMusic(config)
         HttpInit(xiaomusic_instance)
 
-        # 注册退出处理函数
-        import atexit
-
-        def cleanup():
-            print("程序退出，清理资源...")
+        try:
+            # 使用 Uvicorn 的 Config 类来配置服务器，避免信号处理冲突
+            from uvicorn import Config, Server
+            
+            uvicorn_config = Config(
+                app=HttpApp,
+                host="0.0.0.0",
+                port=port,
+                log_config=LOGGING_CONFIG,
+            )
+            server = Server(config=uvicorn_config)
+            
+            # 运行服务器
+            import asyncio
+            asyncio.run(server.serve())
+        except ImportError:
+            # 如果无法导入 Config 和 Server，则回退到原来的 uvicorn.run 方式
+            uvicorn.run(
+                HttpApp,
+                host="0.0.0.0",
+                port=port,
+                log_config=LOGGING_CONFIG,
+            )
+        finally:
+            # uvicorn 关闭后清理资源
             if (
                 xiaomusic_instance
                 and hasattr(xiaomusic_instance, "js_plugin_manager")
@@ -176,17 +229,9 @@ def main():
             ):
                 try:
                     xiaomusic_instance.js_plugin_manager.shutdown()
+                    print("JS 插件管理器已关闭")
                 except Exception as e:
                     print(f"关闭 JS 插件管理器时出错: {e}")
-
-        atexit.register(cleanup)
-
-        uvicorn.run(
-            HttpApp,
-            host=["0.0.0.0", "::"],
-            port=port,
-            log_config=LOGGING_CONFIG,
-        )
 
     port = int(config.port)
     run_server(port)
