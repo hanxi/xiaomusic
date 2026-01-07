@@ -127,7 +127,9 @@ class ConversationPoller:
                     await asyncio.sleep(5)
                     continue
 
-                self.log.debug(f"Listening new message, timestamp: {self.last_timestamp}")
+                self.log.debug(
+                    f"Listening new message, timestamp: {self.last_timestamp}"
+                )
                 # 动态获取最新的 cookie_jar
                 if self.auth_manager.cookie_jar is not None:
                     session._cookie_jar = self.auth_manager.cookie_jar
@@ -146,7 +148,9 @@ class ConversationPoller:
                     ) or self.config.get_ask_by_mina:
                         tasks.append(self.get_latest_ask_by_mina(device_id))
                     else:
-                        tasks.append(self.get_latest_ask_from_xiaoai(session, device_id))
+                        tasks.append(
+                            self.get_latest_ask_from_xiaoai(session, device_id)
+                        )
                 await asyncio.gather(*tasks)
 
                 start = time.perf_counter()

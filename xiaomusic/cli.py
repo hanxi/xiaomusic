@@ -2,9 +2,7 @@
 import argparse
 import json
 import logging
-import os
 import signal
-import sys
 
 import sentry_sdk
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
@@ -36,8 +34,6 @@ ignore_logger("miservice")
 
 
 def main():
-    import uvicorn
-
     from xiaomusic import __version__
     from xiaomusic.api import HttpInit
     from xiaomusic.api import app as HttpApp
@@ -104,7 +100,7 @@ def main():
         def filter(self, record):
             if record.exc_info:
                 exc_type = record.exc_info[0]
-                if exc_type and exc_type.__name__ == 'CancelledError':
+                if exc_type and exc_type.__name__ == "CancelledError":
                     return False
             return True
 
@@ -180,12 +176,14 @@ def main():
         print(f"Execption {e}")
 
     import asyncio
-    from uvicorn import Config as UvicornConfig, Server
+
+    from uvicorn import Config as UvicornConfig
+    from uvicorn import Server
 
     xiaomusic = XiaoMusic(config)
     HttpInit(xiaomusic)
     port = int(config.port)
-    
+
     # 创建 uvicorn 配置，禁用其信号处理
     uvicorn_config = UvicornConfig(
         HttpApp,
@@ -194,19 +192,20 @@ def main():
         log_config=LOGGING_CONFIG,
     )
     server = Server(uvicorn_config)
-    
+
     # 自定义信号处理
     shutdown_initiated = False
+
     def handle_exit(signum, frame):
         nonlocal shutdown_initiated
         if not shutdown_initiated:
             shutdown_initiated = True
             print("\n正在关闭服务器...")
             server.should_exit = True
-    
+
     signal.signal(signal.SIGINT, handle_exit)
     signal.signal(signal.SIGTERM, handle_exit)
-    
+
     # 运行服务器
     asyncio.run(server.serve())
 
