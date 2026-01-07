@@ -647,11 +647,11 @@ const runner = new PluginRunner();
 
 // 处理进程退出
 process.on('SIGINT', () => {
-    console.log('Received SIGINT, shutting down gracefully');
+    // 不输出任何内容，避免干扰 JSON 通信
     process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-    console.log('Received SIGTERM, shutting down gracefully');
+    // 不输出任何内容，避免干扰 JSON 通信
     process.exit(0);
 });

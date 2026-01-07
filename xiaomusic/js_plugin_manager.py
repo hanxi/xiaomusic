@@ -32,6 +32,7 @@ class JSPluginManager:
         self._lock = threading.Lock()
         self.request_id = 0
         self.pending_requests = {}
+        self._is_shutting_down = False  # 添加关闭标志
 
         # 启动 Node.js 子进程
         self._start_node_process()
@@ -70,9 +71,12 @@ class JSPluginManager:
     def _monitor_node_process(self):
         """监控 Node.js 进程状态"""
         while True:
+            if self._is_shutting_down:
+                break
             if self.node_process and self.node_process.poll() is not None:
-                self.log.warning("Node.js process died, restarting...")
-                self._start_node_process()
+                if not self._is_shutting_down:
+                    self.log.warning("Node.js process died, restarting...")
+                    self._start_node_process()
             time.sleep(5)
 
     def _start_message_handler(self):
@@ -1113,6 +1117,24 @@ class JSPluginManager:
 
     def shutdown(self):
         """关闭插件管理器"""
+        self.log.info("Shutting down JS Plugin Manager...")
+        self._is_shutting_down = True
+
         if self.node_process:
-            self.node_process.terminate()
-            self.node_process.wait()
+            try:
+                # 先尝试优雅关闭
+                self.node_process.terminate()
+                # 等待最多 3 秒
+                try:
+                    self.node_process.wait(timeout=3)
+                    self.log.info("Node.js process terminated gracefully")
+                except subprocess.TimeoutExpired:
+                    # 如果超时，强制杀死
+                    self.log.warning("Node.js process did not terminate, killing...")
+                    self.node_process.kill()
+                    self.node_process.wait()
+                    self.log.info("Node.js process killed")
+            except Exception as e:
+                self.log.error(f"Error during shutdown: {e}")
+
+        self.log.info("JS Plugin Manager shutdown complete")
