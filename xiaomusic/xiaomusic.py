@@ -307,10 +307,6 @@ class XiaoMusic:
         console_handler.setFormatter(formatter)
         self.log.addHandler(console_handler)
 
-    async def poll_latest_ask(self):
-        """轮询最新对话记录（委托给 conversation_poller）"""
-        return await self._conversation_poller.poll_latest_ask()
-
     async def init_all_data(self, session):
         """初始化所有数据（委托给 auth_manager）"""
         await self._auth_manager.init_all_data(session, self.try_update_device_id)
