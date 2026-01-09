@@ -378,6 +378,62 @@ class MusicLibrary:
         self.save_custom_play_list(save_config_callback)
         return True
 
+    def update_music_list_json(self, list_name, update_list, append=False):
+        """
+        更新配置的音乐歌单Json，如果歌单存在则根据 append：False:覆盖； True:追加
+        Args:
+            list_name: 更新的歌单名称
+            update_list: 更新的歌单列表
+            append: 追加歌曲，默认 False
+
+        Returns:
+            list: 转换后的音乐项目列表
+        """
+        # 更新配置中的音乐列表
+        if self.config.music_list_json:
+            music_list = json.loads(self.config.music_list_json)
+        else:
+            music_list = []
+
+        # 检查是否已存在同名歌单
+        existing_index = None
+        for i, item in enumerate(music_list):
+            if item.get("name") == list_name:
+                existing_index = i
+                break
+
+        # 构建新歌单数据
+        new_music_items = [
+            {"name": item["name"], "url": item["url"], "type": item["type"]}
+            for item in update_list
+        ]
+
+        if existing_index is not None:
+            if append:
+                # 追加模式：将新项目添加到现有歌单中，避免重复
+                existing_musics = music_list[existing_index]["musics"]
+                existing_names = {music["name"] for music in existing_musics}
+
+                # 只添加不存在的项目
+                for new_item in new_music_items:
+                    if new_item["name"] not in existing_names:
+                        existing_musics.append(new_item)
+
+                music_list[existing_index]["musics"] = existing_musics
+            else:
+                # 覆盖模式：替换整个歌单
+                music_list[existing_index] = {
+                    "name": list_name,
+                    "musics": new_music_items,
+                }
+        else:
+            # 添加新歌单
+            new_music_list = {"name": list_name, "musics": new_music_items}
+            music_list.append(new_music_list)
+
+        # 保存更新后的配置
+        self.config.music_list_json = json.dumps(music_list, ensure_ascii=False)
+
     def play_list_add_music(self, name, music_list, save_config_callback):
         """歌单新增歌曲
 
@@ -565,6 +621,12 @@ class MusicLibrary:
             bool: 是否是网络电台
         """
         return name in self._all_radio
+
+    # 是否是在线音乐
+    @staticmethod
+    def is_online_music(cur_playlist):
+        # cur_playlist 开头是 '_online_' 则表示online
+        return cur_playlist.startswith("_online_")
 
     def is_web_music(self, name):
         """是否是网络歌曲

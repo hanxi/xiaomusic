@@ -145,6 +145,7 @@ class XiaoMusic:
             url_cache=self.url_cache,
             get_filename_func=self._music_library.get_filename,
             is_web_music_func=self._music_library.is_web_music,
+            is_online_music_func=self._music_library.is_online_music,
             is_web_radio_music_func=self._music_library.is_web_radio_music,
             is_need_use_play_music_api_func=self._music_library.is_need_use_play_music_api,
         )
@@ -153,6 +154,7 @@ class XiaoMusic:
         self._online_music_service = OnlineMusicService(
             log=self.log,
             js_plugin_manager=self.js_plugin_manager,
+            xiaomusic_instance=self,  # 传递xiaomusic实例
         )
 
         # 初始化设备管理器（在配置准备好之后）
@@ -219,6 +221,10 @@ class XiaoMusic:
         return await self._online_music_service._call_plugin_method(
             plugin_name, method_name, music_item, result_key, required_field, **kwargs
         )
+
+    def music_library(self):
+        """获取音乐库管理器实例"""
+        return self._music_library
 
     def init_config(self):
         self.music_path = self.config.music_path
@@ -392,10 +398,12 @@ class XiaoMusic:
         """获取音乐文件路径（委托给 music_library）"""
         return self._music_library.get_filename(name)
 
+    # 判断本地音乐是否存在，网络歌曲不判断
     def is_music_exist(self, name):
         """判断本地音乐是否存在（委托给 music_library）"""
         return self._music_library.is_music_exist(name)
 
+    # 是否是网络电台
     def is_web_radio_music(self, name):
         """是否是网络电台（委托给 music_library）"""
         return self._music_library.is_web_radio_music(name)
@@ -404,6 +412,7 @@ class XiaoMusic:
         """是否是网络歌曲（委托给 music_library）"""
         return self._music_library.is_web_music(name)
 
+    # 是否是需要通过api获取播放链接的网络歌曲
     def is_need_use_play_music_api(self, name):
         """是否需要通过API获取播放链接（委托给 music_library）"""
         return self._music_library.is_need_use_play_music_api(name)
@@ -412,13 +421,14 @@ class XiaoMusic:
         """获取音乐标签信息（委托给 music_library）"""
         return self._music_library.get_music_tags(name)
 
+    # 修改标签信息
     def set_music_tag(self, name, info):
         """修改标签信息（委托给 music_library）"""
         return self._music_library.set_music_tag(name, info)
 
-    async def get_music_sec_url(self, name, true_url=None):
+    async def get_music_sec_url(self, name, cur_playlist):
         """获取歌曲播放时长和播放地址（委托给 music_url_handler）"""
-        return await self._music_url_handler.get_music_sec_url(name, true_url)
+        return await self._music_url_handler.get_music_sec_url(name, cur_playlist)
 
     async def get_music_url(self, name):
         """获取音乐播放地址（委托给 music_url_handler）"""
@@ -499,6 +509,7 @@ class XiaoMusic:
                 session, self.do_check_cmd, self.reset_timer_when_answer
             )
 
+    # 匹配命令
     async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
         """检查并执行命令（委托给 command_handler）"""
         return await self._command_handler.do_check_cmd(
@@ -533,10 +544,12 @@ class XiaoMusic:
     async def check_replay(self, did):
         return await self.devices[did].check_replay()
 
+    # 检查是否匹配到完全一样的指令
     def check_full_match_cmd(self, did, query, ctrl_panel):
         """检查是否完全匹配命令（委托给 command_handler）"""
         return self._command_handler.check_full_match_cmd(did, query, ctrl_panel)
 
+    # 匹配命令
     def match_cmd(self, did, query, ctrl_panel):
         """匹配命令（委托给 command_handler）"""
         return self._command_handler.match_cmd(did, query, ctrl_panel)
@@ -550,7 +563,7 @@ class XiaoMusic:
 
     # 播放一个 url
     async def play_url(self, did="", arg1="", **kwargs):
-        self.log.info(f"手动播放链接：{arg1}")
+        self.log.info(f"手动推送链接：{arg1}")
         url = arg1
         return await self.devices[did].group_player_play(url)
 
@@ -620,7 +633,13 @@ class XiaoMusic:
         self._music_library.gen_all_music_list()
         self.update_all_playlist()
 
-    # ===========================MusicFree插件函数================================
+
+    # ===========================在线搜索函数================================
+
+
+    def default_url(self):
+        """委托给 online_music_service"""
+        return self._online_music_service.default_url()
 
     # 在线获取歌曲列表（委托给 online_music_service）
     async def get_music_list_online(
@@ -638,11 +657,11 @@ class XiaoMusic:
 
     # 调用MusicFree插件获取歌曲列表（委托给 online_music_service）
     async def get_music_list_mf(
-        self, plugin="all", keyword="", page=1, limit=20, **kwargs
+        self, plugin="all", keyword="", artist="", page=1, limit=20, **kwargs
     ):
         """委托给 online_music_service"""
         return await self._online_music_service.get_music_list_mf(
-            plugin, keyword, page, limit, **kwargs
+            plugin, keyword, artist, page, limit, **kwargs
         )
 
     # 调用MusicFree插件获取真实播放url（委托给 online_music_service）
@@ -657,10 +676,47 @@ class XiaoMusic:
         """委托给 online_music_service"""
         return await self._online_music_service.get_media_lyric(music_item)
 
-    # 调用在线搜索歌曲（委托给 online_music_service）
-    async def search_music_online(self, search_key, name):
+    # 在线搜索歌手，添加歌手歌单并播放
+    async def search_singer_play(self, did, search_key, name):
         """委托给 online_music_service"""
-        return await self._online_music_service.search_music_online(search_key, name)
+        return await self._online_music_service.search_singer_play(
+            did, search_key, name
+        )
+
+    # 追加歌手歌曲
+    async def add_singer_song(self, list_name, name):
+        """委托给 online_music_service"""
+        return await self._online_music_service.add_singer_song(
+            list_name, name
+        )
+
+    # 在线搜索搜索最符合的一首歌并播放
+    async def search_top_one_play(self, did, search_key, name):
+        """委托给 online_music_service"""
+        return await self._online_music_service.search_top_one_play(
+            did, search_key, name
+        )
+
+    # 在线播放：在线搜索、播放
+    async def online_play(self, did="", arg1="", **kwargs):
+        """委托给 online_music_service"""
+        return await self._online_music_service.online_play(
+            did, arg1, **kwargs
+        )
+
+    # 播放歌手：在线搜索歌手并存为列表播放
+    async def singer_play(self, did="", arg1="", **kwargs):
+        """委托给 online_music_service"""
+        return await self._online_music_service.singer_play(
+            did, arg1, **kwargs
+        )
+
+    # 处理推送的歌单并播放
+    async def push_music_list_play(self, did, song_list, list_name):
+        """委托给 online_music_service"""
+        return await self._online_music_service.push_music_list_play(
+            did, song_list, list_name
+        )
 
     # ===========================================================
 
@@ -739,32 +795,6 @@ class XiaoMusic:
             did, name, search_key, exact=False, update_cur_list=False
         )
 
-    # 在线播放：在线搜索、播放
-    async def online_play(self, did="", arg1="", **kwargs):
-        # 先推送默认【搜索中】音频，搜索到播放url后推送给小爱
-        config = self.config
-        if config and hasattr(config, "hostname") and hasattr(config, "public_port"):
-            proxy_base = f"{config.hostname}:{config.public_port}"
-        else:
-            proxy_base = "http://192.168.31.241:8090"
-        search_audio = proxy_base + "/static/search.mp3"
-        await self.play_url(self.get_cur_did(), search_audio)
-
-        # TODO 添加一个定时器，4秒后触发
-
-        # 获取搜索关键词
-        parts = arg1.split("|")
-        search_key = parts[0]
-        name = parts[1] if len(parts) > 1 else search_key
-        if not name:
-            name = search_key
-        self.log.info(f"搜索关键字{search_key},搜索歌名{name}")
-        result = await self.search_music_online(search_key, name)
-        # 搜索成功，则直接推送url播放
-        if result.get("success", False):
-            url = result.get("url", "")
-            # 播放歌曲
-            await self.devices[did].play_music(name, true_url=url)
 
     # 后台搜索播放
     async def do_play(
@@ -836,24 +866,29 @@ class XiaoMusic:
         """保存自定义播放列表（委托给 music_library）"""
         self._music_library.save_custom_play_list(self.save_cur_config)
 
+    # 新增歌单
     def play_list_add(self, name):
         """新增歌单（委托给 music_library）"""
         return self._music_library.play_list_add(name, self.save_cur_config)
 
+    # 移除歌单
     def play_list_del(self, name):
         """移除歌单（委托给 music_library）"""
         return self._music_library.play_list_del(name, self.save_cur_config)
 
+    # 修改歌单名字
     def play_list_update_name(self, oldname, newname):
         """修改歌单名字（委托给 music_library）"""
         return self._music_library.play_list_update_name(
             oldname, newname, self.save_cur_config
         )
 
+    # 获取所有自定义歌单
     def get_play_list_names(self):
         """获取所有自定义歌单（委托给 music_library）"""
         return self._music_library.get_play_list_names()
 
+    # 获取歌单中所有歌曲
     def play_list_musics(self, name):
         """获取歌单中所有歌曲（委托给 music_library）"""
         return self._music_library.play_list_musics(name)
@@ -864,12 +899,14 @@ class XiaoMusic:
             name, music_list, self.save_cur_config
         )
 
+    # 歌单新增歌曲
     def play_list_add_music(self, name, music_list):
         """歌单新增歌曲（委托给 music_library）"""
         return self._music_library.play_list_add_music(
             name, music_list, self.save_cur_config
         )
 
+    # 歌单移除歌曲
     def play_list_del_music(self, name, music_list):
         """歌单移除歌曲（委托给 music_library）"""
         return self._music_library.play_list_del_music(
@@ -888,10 +925,12 @@ class XiaoMusic:
         volume = int(arg1)
         return await self.devices[did].set_volume(volume)
 
+    # 搜索音乐
     def searchmusic(self, name):
         """搜索音乐（委托给 music_library）"""
         return self._music_library.searchmusic(name)
 
+    # 获取播放列表
     def get_music_list(self):
         """获取播放列表（委托给 music_library）"""
         return self._music_library.get_music_list()

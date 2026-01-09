@@ -3,11 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from dataclasses import (
-    asdict,
-    dataclass,
-    field,
-)
+from dataclasses import asdict, dataclass, field
 from typing import get_type_hints
 
 from xiaomusic.const import (
@@ -157,6 +153,7 @@ class Config:
     keywords_play: str = os.getenv("XIAOMUSIC_KEYWORDS_PLAY", "播放歌曲,放歌曲")
     keywords_search_play: str = os.getenv("XIAOMUSIC_KEYWORDS_SEARCH_PLAY", "搜索播放")
     keywords_online_play: str = os.getenv("XIAOMUSIC_KEYWORDS_ONLINE_PLAY", "在线播放")
+    keywords_singer_play: str = os.getenv("XIAOMUSIC_KEYWORDS_SINGER_PLAY", "播放歌手")
     keywords_stop: str = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止,停止播放")
     keywords_playlist: str = os.getenv(
         "XIAOMUSIC_KEYWORDS_PLAYLIST", "播放列表,播放歌单"
@@ -253,6 +250,7 @@ class Config:
         self.append_keyword(self.keywords_play, "play")
         self.append_keyword(self.keywords_search_play, "search_play")
         self.append_keyword(self.keywords_online_play, "online_play")
+        self.append_keyword(self.keywords_singer_play, "singer_play")
         self.append_keyword(self.keywords_stop, "stop")
         self.append_keyword(self.keywords_playlist, "play_music_list")
         self.append_user_keyword()
