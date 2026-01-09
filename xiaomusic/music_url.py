@@ -4,6 +4,7 @@
 """
 
 import base64
+import json
 import math
 import urllib.parse
 
@@ -31,6 +32,7 @@ class MusicUrlHandler:
         url_cache,
         get_filename_func,
         is_web_music_func,
+        is_online_music_func,
         is_web_radio_music_func,
         is_need_use_play_music_api_func,
     ):
@@ -46,6 +48,7 @@ class MusicUrlHandler:
             url_cache: URL缓存对象
             get_filename_func: 获取文件名的函数
             is_web_music_func: 判断是否为网络音乐的函数
+            is_online_music_func: 判断是否为在线音乐的函数
             is_web_radio_music_func: 判断是否为网络电台的函数
             is_need_use_play_music_api_func: 判断是否需要使用API的函数
         """
@@ -60,39 +63,34 @@ class MusicUrlHandler:
         # 回调函数
         self.get_filename = get_filename_func
         self.is_web_music = is_web_music_func
+        self.is_online_music = is_online_music_func
         self.is_web_radio_music = is_web_radio_music_func
         self.is_need_use_play_music_api = is_need_use_play_music_api_func
 
-    async def get_music_sec_url(self, name, true_url=None):
+    async def get_music_sec_url(self, name, cur_playlist):
         """获取歌曲播放时长和播放地址
 
         Args:
             name: 歌曲名称
-            true_url: 真实播放URL（可选）
-
+            cur_playlist: 当前歌单名称
         Returns:
             tuple: (播放时长(秒), 播放地址)
         """
-        # 获取播放时长
-        if true_url is not None:
-            url = true_url
-            sec = await self._get_online_music_duration(name, true_url)
-            self.log.info(f"在线歌曲时长获取：：{name} ；sec：：{sec}")
+        url, origin_url = await self.get_music_url(name)
+        self.log.info(
+            f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
+        )
+        # 电台直接返回
+        if self.is_web_radio_music(name):
+            self.log.info("电台不会有播放时长")
+            return 0, url
+        # 在线歌曲：时长、播放链接获取
+        if self.is_online_music(cur_playlist):
+            return await self._get_online_music_sec_url(name, url)
+        if self.is_web_music(name):
+            sec = await self._get_web_music_duration(name, url, origin_url)
         else:
-            url, origin_url = await self.get_music_url(name)
-            self.log.info(
-                f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
-            )
-
-            # 电台直接返回
-            if self.is_web_radio_music(name):
-                self.log.info("电台不会有播放时长")
-                return 0, url
-
-            if self.is_web_music(name):
-                sec = await self._get_web_music_duration(name, url, origin_url)
-            else:
-                sec = await self._get_local_music_duration(name, url)
+            sec = await self._get_local_music_duration(name, url)
 
         if sec <= 0:
             self.log.warning(f"获取歌曲时长失败 {name} {url}")
@@ -192,6 +190,28 @@ class MusicUrlHandler:
         encoded_name = urllib.parse.quote(filename)
         url = f"{self.hostname}:{self.public_port}/music/{encoded_name}"
         return try_add_access_control_param(self.config, url)
+
+    @staticmethod
+    async def get_play_url(proxy_url):
+        import aiohttp
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(proxy_url) as response:
+                # 获取最终重定向的 URL
+                return str(response.url)
+
+    async def _get_online_music_sec_url(self, name, proxy_url):
+        """获取在线音乐的时长和播放地址
+
+        Args:
+            name: 歌曲名称
+            proxy_url: 代理的播放url
+        Returns:
+            tuple: (播放时长, 原始地址)
+        """
+        source_url = await self.get_play_url(proxy_url)
+        sec = await self._get_online_music_duration(name, source_url)
+        return sec, source_url
 
     async def _get_web_music_duration(self, name, url, origin_url):
         """获取网络音乐时长

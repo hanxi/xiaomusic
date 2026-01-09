@@ -75,6 +75,9 @@ class XiaoMusicDevice:
         self._last_cmd = None
         self.update_playlist()
 
+        # 添加歌曲定时器
+        self._add_song_timer = None
+
     @property
     def did(self):
         """获取设备DID"""
@@ -97,9 +100,60 @@ class XiaoMusicDevice:
         offset = time.time() - self._start_time - self._paused_time
         return offset, duration
 
-    async def play_music(self, name, true_url=None):
+    # 自动搜歌并加入当前歌单
+    async def auto_add_song(self, cur_list_name, sleep_sec=20):
+        # 是否启用自动添加
+        auto_add_song = self.xiaomusic.js_plugin_manager.get_auto_add_song()
+        is_online = self.xiaomusic.is_online_music(cur_list_name)
+        # 歌单循环方式：播放全部
+        play_all = self.device.play_type == PLAY_TYPE_ALL
+        # 当前播放的歌曲是歌单中的最后一曲
+        is_last_song = False
+        cur_playlist = self._play_list
+        cur_music = self.get_cur_music()
+        play_list_len = len(cur_playlist)
+        if play_list_len != 0:
+            index = self._play_list.index(cur_music)
+            is_last_song = index == play_list_len - 1
+        # 四个条件都满足，才自动添加下一首
+        if auto_add_song and is_online and play_all and is_last_song:
+            await self._add_singer_song(cur_list_name, cur_music, sleep_sec)
+
+    # 启用延时器，搜索当前歌曲歌手的其他不在歌单内的歌曲
+    async def _add_singer_song(self, list_name, cur_music, sleep_sec):
+        # 取消之前的定时器（如果存在）
+        # self.cancel_add_song_timer()
+        # 以 '-' 分割，获取歌手名称
+        singer_name = cur_music.split("-")[1]
+        # 创建新的定时器，20秒后执行
+        self._add_song_timer = asyncio.create_task(
+            self._delayed_add_singer_song(list_name, singer_name, sleep_sec)
+        )
+
+    async def _delayed_add_singer_song(self, list_name, singer_name, sleep_sec):
+        """延迟执行添加歌手歌曲的操作"""
+        try:
+            await asyncio.sleep(sleep_sec)
+            await self.xiaomusic.add_singer_song(list_name, singer_name)
+        except asyncio.CancelledError:
+            return
+        finally:
+            # 执行完毕后清除定时器引用
+            if self._add_song_timer:  # 确保是当前任务
+                self._add_song_timer = None
+
+    def cancel_add_song_timer(self):
+        """取消添加歌曲的定时器"""
+        self.log.info("添加歌手歌曲的定时器已被取消")
+        if self._add_song_timer:
+            self._add_song_timer.cancel()
+            self._add_song_timer = None
+            return True
+        return False
+
+    async def play_music(self, name):
         """播放音乐（外部接口）"""
-        return await self._playmusic(name, true_url=true_url)
+        return await self._playmusic(name)
 
     def update_playlist(self, reorder=True):
         """初始化/更新播放列表
@@ -288,18 +342,17 @@ class XiaoMusicDevice:
             return
         await self._playmusic(name)
 
-    async def _playmusic(self, name, true_url=None):
+    async def _playmusic(self, name):
         """播放音乐的核心实现"""
-        self.log.info(f"_playmusic. name:{name} true_url:{true_url}")
         # 取消组内所有的下一首歌曲的定时器
         self.cancel_group_next_timer()
 
         self._playing = True
         self.device.cur_music = name
         self.device.playlist2music[self.device.cur_playlist] = name
-
+        cur_playlist = self.device.cur_playlist
         self.log.info(f"cur_music {self.get_cur_music()}")
-        sec, url = await self.xiaomusic.get_music_sec_url(name, true_url)
+        sec, url = await self.xiaomusic.get_music_sec_url(name, cur_playlist)
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
 
@@ -325,6 +378,10 @@ class XiaoMusicDevice:
         if sec <= 1:
             self.log.info(f"【{name}】不会设置下一首歌的定时器")
             return
+        # 计算自动添加歌曲的延迟时间，为当前歌曲时长的一半，但不超过60秒
+        if sec > 30:
+            sleep_sec = min(sec / 2, 60)
+            await self.auto_add_song(cur_playlist, sleep_sec)
         sec = sec + self.config.delay_sec
         self._start_time = time.time()
         self._duration = sec

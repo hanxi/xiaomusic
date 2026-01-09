@@ -195,7 +195,7 @@ async def upload_music(playlist: str = Form(...), file: UploadFile = File(...)):
 
         # 重新生成音乐列表索引
         try:
-            xiaomusic._gen_all_music_list()
+            xiaomusic.music_library().gen_all_music_list()
         except Exception:
             pass
 
