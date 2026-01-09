@@ -245,7 +245,7 @@ class MusicUrlHandler:
             int: 播放时长（秒）
         """
         self.log.info(f"get_music_sec_url. name:{name}")
-        duration = await get_local_music_duration(url, self.config)
+        duration, _ = await get_web_music_duration(url, self.config)
         sec = math.ceil(duration)
         self.log.info(f"在线歌曲 {name} : {url} 的时长 {sec} 秒")
         return sec

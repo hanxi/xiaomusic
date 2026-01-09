@@ -104,7 +104,7 @@ class XiaoMusicDevice:
     async def auto_add_song(self, cur_list_name, sleep_sec=20):
         # 是否启用自动添加
         auto_add_song = self.xiaomusic.js_plugin_manager.get_auto_add_song()
-        is_online = self.xiaomusic._music_url_handler.is_online_music(cur_list_name)
+        is_online = self.xiaomusic._music_library.is_online_music(cur_list_name)
         # 歌单循环方式：播放全部
         play_all = self.device.play_type == PLAY_TYPE_ALL
         # 当前播放的歌曲是歌单中的最后一曲
