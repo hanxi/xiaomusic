@@ -21,12 +21,27 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             overflow: hidden;
         }
+        .version-info {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            color: white;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            z-index: 10;
+        }
+
+        /* 调整 header 内容的 padding，避免与版本信息重叠 */
         .header {
             background: #31c27c;
             color: white;
-            padding: 20px;
+            padding: 20px 20px 20px 60px; /* 左边增加留白 */
             text-align: center;
+            position: relative;
         }
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -267,6 +282,9 @@
 <div class="container">
     <div class="header">
         <h1>插件&接口设置</h1>
+        <div class="version-info">
+            <span>v1.0.3.3</span>
+        </div>
         <p>管理您的插件和在线接口</p>
         <!-- 顶部居中按钮 -->
         <div class="header-buttons">

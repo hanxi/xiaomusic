@@ -343,8 +343,8 @@ class JSPluginManager:
         enabled_plugins = self.get_enabled_plugins()
         for filename in os.listdir(self.plugins_dir):
             if filename.endswith(".js"):
+                plugin_name = os.path.splitext(filename)[0]
                 try:
-                    plugin_name = os.path.splitext(filename)[0]
                     # 如果是重要插件或没有指定重要插件列表，则加载
                     if not enabled_plugins or plugin_name in enabled_plugins:
                         try:
@@ -414,6 +414,13 @@ class JSPluginManager:
         except Exception as e:
             self.log.error(f"Failed to load JS plugin {plugin_name}: {e}")
             return False
+
+    def refresh_plugin_list(self) -> list[dict[str, Any]]:
+        """刷新插件列表，强制重新加载配置数据"""
+        # 强制使缓存失效，重新加载配置
+        self._invalidate_config_cache()
+        # 返回最新的插件列表
+        return self.get_plugin_list()
 
     def get_plugin_list(self) -> list[dict[str, Any]]:
         """获取启用的插件列表"""
