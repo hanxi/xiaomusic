@@ -323,13 +323,24 @@ async def proxy(urlb64: str):
     )
 
     # 复用经过验证的请求头配置
-    def get_wget_headers(parsed_url):
-        return {
-            "User-Agent": "Wget/1.21.3",
-            "Accept": "*/*",
-            "Accept-Encoding": "identity",
-            "Connection": "Keep-Alive",
+    def gen_headers(parsed_url):
+        headers = {
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "cache-control": "no-cache",
+            "pragma": "no-cache",
+            "priority": "u=0, i",
+            "sec-ch-ua": '"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"macOS"',
+            "sec-fetch-dest": "document",
+            "sec-fetch-mode": "navigate",
+            "sec-fetch-site": "none",
+            "sec-fetch-user": "?1",
+            "upgrade-insecure-requests": "1",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
         }
+        return headers
 
     async def close_session():
         if not session.closed:
@@ -337,7 +348,7 @@ async def proxy(urlb64: str):
 
     try:
         # 复用download_file中的请求逻辑
-        headers = get_wget_headers(parsed_url)
+        headers = gen_headers(parsed_url)
         resp = await session.get(url, headers=headers, allow_redirects=True)
 
         log.info(f"proxy status: {resp.status}")
