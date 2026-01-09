@@ -419,6 +419,13 @@ class JSPluginManager:
             self.log.error(f"Failed to load JS plugin {plugin_name}: {e}")
             return False
 
+    def refresh_plugin_list(self) -> list[dict[str, Any]]:
+        """刷新插件列表，强制重新加载配置数据"""
+        # 强制使缓存失效，重新加载配置
+        self._invalidate_config_cache()
+        # 返回最新的插件列表
+        return self.get_plugin_list()
+
     def get_plugin_list(self) -> list[dict[str, Any]]:
         """获取启用的插件列表"""
         result = []

@@ -37,7 +37,7 @@ def get_js_plugins(
         if enabled_only:
             plugins = xiaomusic.js_plugin_manager.get_enabled_plugins()
         else:
-            plugins = xiaomusic.js_plugin_manager.get_plugin_list()
+            plugins = xiaomusic.js_plugin_manager.refresh_plugin_list()
         return {"success": True, "data": plugins}
 
     except Exception as e:

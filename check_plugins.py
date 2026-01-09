@@ -37,7 +37,7 @@ def check_all_plugins():
     time.sleep(3)  # 等待插件加载
 
     print("\n2. 获取所有插件状态...")
-    plugins = manager.get_plugin_list()
+    plugins = manager.refresh_plugin_list()
     print(f"   总共找到 {len(plugins)} 个插件")
 
     # 分类插件状态
