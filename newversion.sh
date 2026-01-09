@@ -8,4 +8,5 @@ git pull --rebase
 
 cz bump --check-consistency
 
+git push
 git push --tags
