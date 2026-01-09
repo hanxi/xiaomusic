@@ -183,25 +183,20 @@ def main():
 
     import asyncio
 
-    from uvicorn import (
-        Config as UvicornConfig,
-    )
-    from uvicorn import (
-        Server,
-    )
+    import uvicorn
 
     xiaomusic = XiaoMusic(config)
     HttpInit(xiaomusic)
     port = int(config.port)
 
     # 创建 uvicorn 配置，禁用其信号处理
-    uvicorn_config = UvicornConfig(
+    uvicorn_config = uvicorn.Config(
         HttpApp,
-        host="0.0.0.0",
+        host=["0.0.0.0", "::"],
         port=port,
         log_config=LOGGING_CONFIG,
     )
-    server = Server(uvicorn_config)
+    server = uvicorn.Server(uvicorn_config)
 
     # 自定义信号处理
     shutdown_initiated = False
