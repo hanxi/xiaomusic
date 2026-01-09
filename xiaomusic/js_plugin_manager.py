@@ -577,6 +577,8 @@ class JSPluginManager:
             # 转换数据格式以匹配插件系统的期望格式
             converted_data = []
             for item in results:
+                url = item.get("url", "")
+                self.log.info(f"openapi_search url: {url}")
                 converted_item = {
                     "id": item.get("id", ""),
                     "title": item.get("name", ""),
@@ -584,7 +586,9 @@ class JSPluginManager:
                     "album": item.get("album", ""),
                     "platform": "OpenAPI-" + item.get("platform"),
                     "isOpenAPI": True,
-                    "url": self.xiaomusic.get_openapi_proxy_url(item.get("url", "")),
+                    "url": self.xiaomusic._online_music_service._get_openapi_proxy_url(
+                        url
+                    ),
                     "artwork": item.get("pic", ""),
                     "lrc": item.get("lrc", ""),
                 }

@@ -162,7 +162,7 @@ async def upload_music(playlist: str = Form(...), file: UploadFile = File(...)):
             musics = xiaomusic.music_list.get(playlist, [])
             if musics and len(musics) > 0:
                 first = musics[0]
-                filepath = xiaomusic.all_music.get(first, "")
+                filepath = xiaomusic._music_library.all_music.get(first, "")
                 if filepath:
                     dest_dir = os.path.dirname(filepath)
 

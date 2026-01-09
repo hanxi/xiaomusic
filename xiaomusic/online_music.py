@@ -733,15 +733,15 @@ class OnlineMusicService:
             return {"success": False, "error": str(e)}
 
     @staticmethod
-    async def get_real_url_of_openapi(url: str, timeout: int = 10) -> dict:
-        """通过服务端代理获取开放接口真实的音乐播放URL，避免CORS问题
-
+    async def get_real_url_of_openapi(url: str, timeout: int = 10) -> str:
+        """
+        通过服务端代理获取开放接口真实的音乐播放URL，避免CORS问题
         Args:
-            url: 原始音乐URL
-            timeout: 请求超时时间(秒)
+            url (str): 原始音乐URL
+            timeout (int): 请求超时时间(秒)
 
         Returns:
-            dict: 包含success、url、statusCode等信息的字典
+            str: 最终的真实播放URL，如果代理不成功则返回原始URL
         """
 
         # 内部辅助函数：检查主机解析到的IP是否安全，防止访问内网/本地地址
@@ -779,21 +779,13 @@ class OnlineMusicService:
             # 验证URL格式
             parsed_url = urlparse(url)
             if not parsed_url.scheme or not parsed_url.netloc:
-                return {"success": False, "url": url, "error": "Invalid URL format"}
+                return url  # 返回原始URL
             # 仅允许 http/https
             if parsed_url.scheme not in ("http", "https"):
-                return {
-                    "success": False,
-                    "url": url,
-                    "error": "Unsupported URL scheme",
-                }
+                return url  # 返回原始URL
             # 检查主机是否安全，防止SSRF到内网
             if not _is_safe_hostname(parsed_url):
-                return {
-                    "success": False,
-                    "url": url,
-                    "error": "Unsafe target host",
-                }
+                return url  # 返回原始URL
 
             # 创建aiohttp客户端会话
             async with aiohttp.ClientSession() as session:
@@ -805,11 +797,6 @@ class OnlineMusicService:
                 ) as response:
                     # 获取最终重定向后的URL
                     final_url = str(response.url)
-
-                    return {
-                        "success": True,
-                        "url": final_url,
-                        "statusCode": response.status,
-                    }
-        except Exception as e:
-            return {"success": False, "url": url, "error": f"Error occurred: {str(e)}"}
+                    return final_url
+        except Exception:
+            return url  # 返回原始URL

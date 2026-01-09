@@ -34,7 +34,6 @@ from xiaomusic.music_url import MusicUrlHandler
 from xiaomusic.online_music import OnlineMusicService
 from xiaomusic.plugin import PluginManager
 from xiaomusic.utils import (
-    MusicUrlCache,
     chinese_to_number,
     deepcopy_data_no_sensitive_info,
     downloadfile,
@@ -53,7 +52,6 @@ class XiaoMusic:
 
         # 初始化设备管理器（延迟初始化）
         self._device_manager = None
-        self.url_cache = MusicUrlCache()
 
         self.devices = {}  # key 为 did
         self._cur_did = None  # 当前设备did
@@ -140,14 +138,7 @@ class XiaoMusic:
             log=self.log,
             hostname=self.hostname,
             public_port=self.public_port,
-            all_music=self._music_library.all_music,
-            web_music_api=self._music_library.get_web_music_api(),
-            url_cache=self.url_cache,
-            get_filename_func=self._music_library.get_filename,
-            is_web_music_func=self._music_library.is_web_music,
-            is_online_music_func=self._music_library.is_online_music,
-            is_web_radio_music_func=self._music_library.is_web_radio_music,
-            is_need_use_play_music_api_func=self._music_library.is_need_use_play_music_api,
+            music_library=self._music_library,
         )
 
         # 初始化在线音乐服务（在 js_plugin_manager 准备好之后）
@@ -645,7 +636,7 @@ class XiaoMusic:
         )
 
     @staticmethod
-    async def get_real_url_of_openapi(url: str, timeout: int = 10) -> dict:
+    async def get_real_url_of_openapi(url: str, timeout: int = 10) -> str:
         """委托给 OnlineMusicService 的静态方法"""
         return await OnlineMusicService.get_real_url_of_openapi(url, timeout)
 
