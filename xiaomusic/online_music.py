@@ -4,9 +4,9 @@
 """
 
 import asyncio
-import json
 import base64
 import ipaddress
+import json
 import socket
 from urllib.parse import urlparse
 
@@ -104,7 +104,7 @@ class OnlineMusicService:
         return result_data
 
     async def get_music_list_mf(
-            self, plugin="all", keyword="", artist="", page=1, limit=20, **kwargs
+        self, plugin="all", keyword="", artist="", page=1, limit=20, **kwargs
     ):
         self.log.info("通过MusicFree插件搜索音乐列表!")
         """
@@ -226,7 +226,7 @@ class OnlineMusicService:
 
     # 处理推送的歌单
     def _handle_music_list(
-            self, song_list=None, list_name="_online_play", append=False
+        self, song_list=None, list_name="_online_play", append=False
     ):
         """
         数据转换：将外部歌单格式转换为后端支持的格式
@@ -249,7 +249,9 @@ class OnlineMusicService:
                 return {"success": False, "error": "没有有效的歌曲可以添加"}
             music_library = self.xiaomusic.music_library()
             # 更新配置中的音乐歌单Json
-            music_library.update_music_list_json(list_name, converted_music_list, append)
+            music_library.update_music_list_json(
+                list_name, converted_music_list, append
+            )
             # 重新生成音乐列表
             music_library.gen_all_music_list()
         except Exception as e:
@@ -282,7 +284,7 @@ class OnlineMusicService:
 
     # 处理推送的歌单并播放
     async def push_music_list_play(
-            self, did="web_device", song_list=None, list_name="_online_play", **kwargs
+        self, did="web_device", song_list=None, list_name="_online_play", **kwargs
     ):
         """
         处理推送的歌单信息 -> 添加歌单 -> 播放歌单
@@ -401,9 +403,7 @@ class OnlineMusicService:
     def _get_openapi_proxy_url(self, origin_url):
         """获取OpenApi源代理URL"""
         urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
-        proxy_url = (
-            f"{self.xiaomusic.hostname}:{self.xiaomusic.public_port}/api/proxy/openapi-url?urlb64={urlb64}"
-        )
+        proxy_url = f"{self.xiaomusic.hostname}:{self.xiaomusic.public_port}/api/proxy/openapi-url?urlb64={urlb64}"
         self.log.info(f"Using proxy url: {proxy_url}")
         return proxy_url
 
@@ -411,9 +411,7 @@ class OnlineMusicService:
         """获取插件源代理URL"""
         origin_data = json.dumps(origin_data)
         datab64 = base64.b64encode(origin_data.encode("utf-8")).decode("utf-8")
-        plugin_source_url = (
-            f"{self.xiaomusic.hostname}:{self.xiaomusic.public_port}/api/proxy/plugin-url?data={datab64}"
-        )
+        plugin_source_url = f"{self.xiaomusic.hostname}:{self.xiaomusic.public_port}/api/proxy/plugin-url?data={datab64}"
         self.log.info(f"plugin_source_url : {plugin_source_url}")
         return plugin_source_url
 

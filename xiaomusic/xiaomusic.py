@@ -633,9 +633,7 @@ class XiaoMusic:
         self._music_library.gen_all_music_list()
         self.update_all_playlist()
 
-
     # ===========================在线搜索函数================================
-
 
     def default_url(self):
         """委托给 online_music_service"""
@@ -686,9 +684,7 @@ class XiaoMusic:
     # 追加歌手歌曲
     async def add_singer_song(self, list_name, name):
         """委托给 online_music_service"""
-        return await self._online_music_service.add_singer_song(
-            list_name, name
-        )
+        return await self._online_music_service.add_singer_song(list_name, name)
 
     # 在线搜索搜索最符合的一首歌并播放
     async def search_top_one_play(self, did, search_key, name):
@@ -700,16 +696,12 @@ class XiaoMusic:
     # 在线播放：在线搜索、播放
     async def online_play(self, did="", arg1="", **kwargs):
         """委托给 online_music_service"""
-        return await self._online_music_service.online_play(
-            did, arg1, **kwargs
-        )
+        return await self._online_music_service.online_play(did, arg1, **kwargs)
 
     # 播放歌手：在线搜索歌手并存为列表播放
     async def singer_play(self, did="", arg1="", **kwargs):
         """委托给 online_music_service"""
-        return await self._online_music_service.singer_play(
-            did, arg1, **kwargs
-        )
+        return await self._online_music_service.singer_play(did, arg1, **kwargs)
 
     # 处理推送的歌单并播放
     async def push_music_list_play(self, did, song_list, list_name):
@@ -794,7 +786,6 @@ class XiaoMusic:
         return await self.do_play(
             did, name, search_key, exact=False, update_cur_list=False
         )
-
 
     # 后台搜索播放
     async def do_play(

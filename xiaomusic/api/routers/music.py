@@ -1,7 +1,7 @@
 """音乐管理路由"""
 
-import json
 import base64
+import json
 import urllib.parse
 
 from fastapi import (
@@ -11,7 +11,6 @@ from fastapi import (
     Query,
     Request,
 )
-
 from fastapi.responses import RedirectResponse
 
 from xiaomusic.api.dependencies import (
@@ -35,6 +34,8 @@ def searchmusic(name: str = "", Verifcation=Depends(verification)):
 
 
 """======================在线搜索相关接口============================="""
+
+
 @router.get("/api/search/online")
 async def search_online_music(
     keyword: str = Query(..., description="搜索关键词"),
@@ -57,7 +58,7 @@ async def search_online_music(
 
 @router.get("/api/proxy/real-url")
 async def get_real_music_url(
-        url: str = Query(..., description="原始url"), Verifcation=Depends(verification)
+    url: str = Query(..., description="原始url"), Verifcation=Depends(verification)
 ):
     """通过服务端代理获取真实的URL，不止是音频url,可能还有图片url"""
     try:
@@ -74,8 +75,8 @@ async def get_real_music_url(
 
 @router.get("/api/proxy/plugin-url")
 async def get_plugin_source_url(
-        data: str = Query(..., description="json对象压缩的base64"),
-        Verifcation=Depends(verification),
+    data: str = Query(..., description="json对象压缩的base64"),
+    Verifcation=Depends(verification),
 ):
     try:
         # 获取请求数据
@@ -100,8 +101,8 @@ async def get_plugin_source_url(
 
 @router.get("/api/proxy/openapi-url")
 async def get_openapi_source_url(
-        urlb64: str = Query(..., description="原始url压缩的base64"),
-        Verifcation=Depends(verification),
+    urlb64: str = Query(..., description="原始url压缩的base64"),
+    Verifcation=Depends(verification),
 ):
     try:
         # 将Base64编码的URL解码为字符串
@@ -178,6 +179,7 @@ async def device_push_list(request: Request, Verifcation=Depends(verification)):
         )
     except Exception as e:
         return {"success": False, "error": str(e)}
+
 
 """======================在线搜索相关接口END============================="""
 

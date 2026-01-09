@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """用于AI大模型调用的工具类"""
+
 import asyncio
 import json
 import logging
