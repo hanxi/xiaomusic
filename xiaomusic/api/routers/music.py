@@ -109,7 +109,9 @@ async def get_openapi_source_url(
         url_bytes = base64.b64decode(urlb64)
         origin_url = url_bytes.decode("utf-8")
         # 获取真正地址
+        log.info(f"origin_url: {origin_url}")
         source_url = await xiaomusic.get_real_url_of_openapi(origin_url)
+        log.info(f"source_url: {source_url}")
         if not source_url:
             source_url = xiaomusic.default_url()
         # 直接重定向到真实URL

@@ -382,10 +382,12 @@ class OnlineMusicService:
                 source_url = item.get("url", "")
                 is_open_api = item.get("isOpenAPI", False)
                 music_item = {}
-                # 如果是开放接口，可能需要额外处理
-                if is_open_api and source_url:
+                # 如果不是开放接口，可能需要额外处理
+                if (not is_open_api) and source_url:
                     # 使用代理url
                     music_item["url"] = self._get_openapi_proxy_url(source_url)
+                elif source_url:
+                    music_item["url"] = source_url
                 else:
                     # 返回插件源的代理接口
                     music_item["url"] = self._get_plugin_proxy_url(item)
