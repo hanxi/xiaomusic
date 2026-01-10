@@ -12,6 +12,10 @@ from urllib.parse import urlparse
 
 import aiohttp
 
+from xiaomusic.const import (
+    PLAY_TYPE_ALL,
+)
+
 
 def _build_keyword(song_name, artist):
     """
@@ -311,7 +315,7 @@ class OnlineMusicService:
             # 如果指定了特定设备，播放歌单
             if did != "web_device" and self.xiaomusic.did_exist(did):
                 # 歌单推送应该是全部播放，不随机打乱
-                await self.xiaomusic.set_play_type_all(did)
+                await self.xiaomusic.set_play_type(did, PLAY_TYPE_ALL, False)
                 push_playlist = self.xiaomusic.get_music_list()[list_name]
                 song_name = push_playlist[0]
                 await self.xiaomusic.do_play_music_list(did, list_name, song_name)
