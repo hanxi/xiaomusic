@@ -102,6 +102,8 @@ class XiaoMusicDevice:
 
     # 自动搜歌并加入当前歌单
     async def auto_add_song(self, cur_list_name, sleep_sec=20):
+        if self.xiaomusic.js_plugin_manager is None:
+            return
         # 是否启用自动添加
         auto_add_song = self.xiaomusic.js_plugin_manager.get_auto_add_song()
         is_online = self.xiaomusic._music_library.is_online_music(cur_list_name)
