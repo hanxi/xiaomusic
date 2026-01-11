@@ -64,7 +64,7 @@ class MusicUrlHandler:
             return 0, url
         # 在线歌曲：时长、播放链接获取
         if self.music_library.is_online_music(cur_playlist):
-            return await self._get_online_music_sec_url(name, url)
+            return await self._get_online_music_sec_url(name, url, origin_url)
         if self.music_library.is_web_music(name):
             sec = await self._get_web_music_duration(name, url, origin_url)
         else:
@@ -180,16 +180,19 @@ class MusicUrlHandler:
                 # 获取最终重定向的 URL
                 return str(response.url)
 
-    async def _get_online_music_sec_url(self, name, proxy_url):
+    async def _get_online_music_sec_url(self, name, proxy_url, origin_url):
         """获取在线音乐的时长和播放地址
 
         Args:
             name: 歌曲名称
-            proxy_url: 代理的播放url
+            proxy_url: 【在线歌曲】专用代理的播放url
+            origin_url: 未经过【网络歌曲代理】的连接
         Returns:
             tuple: (播放时长, 原始地址)
         """
-        source_url = await self.get_play_url(proxy_url)
+        # 默认使用 未经过【网络歌曲代理】的连接，如不存在说明 未启用【网络歌曲代理】，使用proxy_url
+        request_url = origin_url if origin_url else proxy_url
+        source_url = await self.get_play_url(request_url)
         sec = await self._get_online_music_duration(name, source_url)
         return sec, source_url
 
