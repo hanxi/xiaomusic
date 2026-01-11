@@ -104,6 +104,20 @@ class Crontab:
 
         self.add_job(expression, job)
 
+    # 添加播放自定义列表任务
+    def add_job_play_music_tmp_list(self, expression, xiaomusic, did, arg1, **kwargs):
+        async def job():
+            name = arg1 or "crontab_tmp_list"
+            cron = kwargs["cron"]
+            music_list = cron["music_list"]
+            music_name = cron.get("first", "")
+            ret = xiaomusic.play_list_update_music(name, music_list)
+            if not ret:
+                self.log.warning(f"crontb play_list_update_music failed name:{name}")
+            await xiaomusic.do_play_music_list(did, name, music_name)
+
+        self.add_job(expression, job)
+
     # 添加语音播放任务
     def add_job_tts(self, expression, xiaomusic, did, arg1, **kwargs):
         async def job():
@@ -166,7 +180,7 @@ class Crontab:
         jobname = f"add_job_{name}"
         func = getattr(self, jobname, None)
         if callable(func):
-            func(expression, xiaomusic, did=did, arg1=arg1)
+            func(expression, xiaomusic, did=did, arg1=arg1, cron=cron)
             self.log.info(
                 f"crontab add_job_cron ok. did:{did}, name:{name}, arg1:{arg1} expression:{expression}"
             )

@@ -764,7 +764,7 @@ class XiaoMusicDevice:
         self.device.cur_playlist = list_name
         self.update_playlist()
         if not music_name:
-            music_name = self.device.playlist2music.get(list_name)
+            music_name = self.device.playlist2music.get(list_name, "")
         self.log.info(f"开始播放列表{list_name} {music_name}")
         await self._play(music_name, exact=True)
 
