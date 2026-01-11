@@ -1012,48 +1012,48 @@ class JSPluginManager:
 
     # 禁用插件
     def disable_plugin(self, plugin_name: str) -> bool:
+        # 读取、修改 插件配置json文件：① 将plugins_info属性中对于的插件状态改为禁用、2：将 enabled_plugins中对应插件移除
         if plugin_name in self.plugins:
             self.plugins[plugin_name]["enabled"] = False
-            # 读取、修改 插件配置json文件：① 将plugins_info属性中对于的插件状态改为禁用、2：将 enabled_plugins中对应插件移除
-            # 同步更新配置文件
-            try:
-                # 使用自定义的配置文件路径
-                config_file_path = self.plugins_config_path
+        # 同步更新配置文件
+        try:
+            # 使用自定义的配置文件路径
+            config_file_path = self.plugins_config_path
 
-                # 读取现有配置
-                if os.path.exists(config_file_path):
-                    with open(config_file_path, encoding="utf-8") as f:
-                        config_data = json.load(f)
+            # 读取现有配置
+            if os.path.exists(config_file_path):
+                with open(config_file_path, encoding="utf-8") as f:
+                    config_data = json.load(f)
 
-                    # 更新plugins_info中对应插件的状态
-                    for plugin_info in config_data.get("plugins_info", []):
-                        if plugin_info.get("name") == plugin_name:
-                            plugin_info["enabled"] = False
+                # 更新plugins_info中对应插件的状态
+                for plugin_info in config_data.get("plugins_info", []):
+                    if plugin_info.get("name") == plugin_name:
+                        plugin_info["enabled"] = False
 
-                    # 添加到enabled_plugins中（如果不存在）
-                    if "enabled_plugins" not in config_data:
-                        config_data["enabled_plugins"] = []
+                # 添加到enabled_plugins中（如果不存在）
+                if "enabled_plugins" not in config_data:
+                    config_data["enabled_plugins"] = []
 
-                    if plugin_name in config_data["enabled_plugins"]:
-                        # 移除对应的插件名
-                        config_data["enabled_plugins"].remove(plugin_name)
+                if plugin_name in config_data["enabled_plugins"]:
+                    # 移除对应的插件名
+                    config_data["enabled_plugins"].remove(plugin_name)
 
-                    # 写回配置文件
-                    with open(config_file_path, "w", encoding="utf-8") as f:
-                        json.dump(config_data, f, ensure_ascii=False, indent=2)
-                    # 清空缓存：
-                    self._invalidate_config_cache()
-                    self.log.info(
-                        f"Plugin config updated for enabled plugin {plugin_name}"
-                    )
-                    # 更新插件引擎
-                    self.reload_plugins()
-            except Exception as e:
-                self.log.error(
-                    f"Failed to update plugin config when enabling {plugin_name}: {e}"
+                # 写回配置文件
+                with open(config_file_path, "w", encoding="utf-8") as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+                # 清空缓存：
+                self._invalidate_config_cache()
+                self.log.info(
+                    f"Plugin config updated for enabled plugin {plugin_name}"
                 )
-            return True
-        return False
+                # 更新插件引擎
+                self.reload_plugins()
+        except Exception as e:
+            self.log.error(
+                f"Failed to update plugin config when enabling {plugin_name}: {e}"
+            )
+            return False
+        return True
 
     # 卸载插件
     def uninstall_plugin(self, plugin_name: str) -> bool:
