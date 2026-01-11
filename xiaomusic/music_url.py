@@ -4,10 +4,15 @@
 """
 
 import base64
+import math
 import urllib.parse
 
-from xiaomusic.utils.network_utils import MusicUrlCache
-from xiaomusic.utils.system_utils import try_add_access_control_param
+from xiaomusic.utils import (
+    MusicUrlCache,
+    get_local_music_duration,
+    get_web_music_duration,
+    try_add_access_control_param,
+)
 
 
 class MusicUrlHandler:
@@ -53,7 +58,20 @@ class MusicUrlHandler:
         self.log.info(
             f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
         )
-        sec = await self.music_library.get_music_duration(name)
+        # 电台直接返回
+        if self.music_library.is_web_radio_music(name):
+            self.log.info("电台不会有播放时长")
+            return 0, url
+        # 在线歌曲：时长、播放链接获取
+        if self.music_library.is_online_music(cur_playlist):
+            return await self._get_online_music_sec_url(name, url, origin_url)
+        if self.music_library.is_web_music(name):
+            sec = await self._get_web_music_duration(name, url, origin_url)
+        else:
+            sec = await self._get_local_music_duration(name, url)
+
+        if sec <= 0:
+            self.log.warning(f"获取歌曲时长失败 {name} {url}")
         return sec, url
 
     async def get_music_url(self, name):
@@ -136,21 +154,6 @@ class MusicUrlHandler:
             str: 本地音乐播放URL
         """
         filename = self.music_library.get_filename(name)
-        self.log.info(
-            f"_get_local_music_url local music. name:{name}, filename:{filename}"
-        )
-        return self._get_file_url(filename)
-
-    def _get_file_url(self, filepath):
-        """根据文件路径生成可访问的URL
-
-        Args:
-            filepath: 文件的完整路径
-
-        Returns:
-            str: 文件访问URL
-        """
-        filename = filepath
 
         # 处理文件路径
         if filename.startswith(self.config.music_path):
@@ -159,7 +162,9 @@ class MusicUrlHandler:
         if filename.startswith("/"):
             filename = filename[1:]
 
-        self.log.info(f"_get_file_url filepath:{filepath}, filename:{filename}")
+        self.log.info(
+            f"_get_local_music_url local music. name:{name}, filename:{filename}"
+        )
 
         # 构造URL
         encoded_name = urllib.parse.quote(filename)
@@ -174,3 +179,76 @@ class MusicUrlHandler:
             async with session.get(proxy_url) as response:
                 # 获取最终重定向的 URL
                 return str(response.url)
+
+    async def _get_online_music_sec_url(self, name, proxy_url, origin_url):
+        """获取在线音乐的时长和播放地址
+
+        Args:
+            name: 歌曲名称
+            proxy_url: 【在线歌曲】专用代理的播放url
+            origin_url: 未经过【网络歌曲代理】的连接
+        Returns:
+            tuple: (播放时长, 原始地址)
+        """
+        # 默认使用 未经过【网络歌曲代理】的连接，如不存在说明 未启用【网络歌曲代理】，使用proxy_url
+        request_url = origin_url if origin_url else proxy_url
+        source_url = await self.get_play_url(request_url)
+        sec = await self._get_online_music_duration(name, source_url)
+        return sec, source_url
+
+    async def _get_web_music_duration(self, name, url, origin_url):
+        """获取网络音乐时长
+
+        Args:
+            name: 歌曲名称
+            url: 播放URL
+            origin_url: 原始URL
+
+        Returns:
+            int: 播放时长（秒）
+        """
+        if not origin_url:
+            origin_url = url if url else self.music_library.all_music[name]
+
+        if self.config.web_music_proxy:
+            # 代理模式使用原始地址获取时长
+            duration, _ = await get_web_music_duration(origin_url, self.config)
+        else:
+            duration, url = await get_web_music_duration(origin_url, self.config)
+
+        sec = math.ceil(duration)
+        self.log.info(f"网络歌曲 {name} : {origin_url} {url} 的时长 {sec} 秒")
+        return sec
+
+    async def _get_local_music_duration(self, name, url):
+        """获取本地音乐时长
+
+        Args:
+            name: 歌曲名称
+            url: 播放URL
+
+        Returns:
+            int: 播放时长（秒）
+        """
+        filename = self.music_library.get_filename(name)
+        self.log.info(f"get_music_sec_url. name:{name} filename:{filename}")
+        duration = await get_local_music_duration(filename, self.config)
+        sec = math.ceil(duration)
+        self.log.info(f"本地歌曲 {name} : {filename} {url} 的时长 {sec} 秒")
+        return sec
+
+    async def _get_online_music_duration(self, name, url):
+        """获取在线音乐时长
+
+        Args:
+            name: 歌曲名称
+            url: 播放URL
+
+        Returns:
+            int: 播放时长（秒）
+        """
+        self.log.info(f"get_music_sec_url. name:{name}")
+        duration, _ = await get_web_music_duration(url, self.config)
+        sec = math.ceil(duration)
+        self.log.info(f"在线歌曲 {name} : {url} 的时长 {sec} 秒")
+        return sec
