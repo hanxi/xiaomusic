@@ -193,8 +193,12 @@ class MusicUrlHandler:
         # 默认使用 未经过【网络歌曲代理】的连接，如不存在说明 未启用【网络歌曲代理】，使用proxy_url
         request_url = origin_url if origin_url else proxy_url
         source_url = await self.get_play_url(request_url)
+        out_url = source_url
+        # 开放接口中，部分音源的链接不是直接可播放的MP3链接（/**.mp3?guid=**&vkey=**&uin=**），还需要进一步提取
+        if "?" in source_url and "&" in source_url:
+            out_url = self._get_proxy_url(source_url)
         sec = await self._get_online_music_duration(name, source_url)
-        return sec, source_url
+        return sec, out_url
 
     async def _get_web_music_duration(self, name, url, origin_url):
         """获取网络音乐时长
