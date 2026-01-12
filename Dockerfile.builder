@@ -1,7 +1,12 @@
-FROM python:3.12-alpine3.22
+FROM python:3.12-slim-bookworm
 
-RUN apk add --no-cache --virtual .build-deps build-base python3-dev libffi-dev openssl-dev zlib-dev jpeg-dev libc6-compat gcc musl-dev \
-    && apk add --no-cache nodejs npm
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install -U pdm
 ENV PDM_CHECK_UPDATE=false
@@ -9,10 +14,7 @@ WORKDIR /app
 COPY pyproject.toml README.md package.json ./
 
 RUN pdm install --prod --no-editable -v
-RUN node -v && npm -v
-RUN uname -m
-RUN npm config list
-RUN npm install --verbose
+RUN npm install --loglevel=verbose
 
 COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/

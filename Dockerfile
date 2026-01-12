@@ -1,15 +1,11 @@
 FROM hanxi/xiaomusic:builder AS builder
 
-RUN pip install -U pdm
-ENV PDM_CHECK_UPDATE=false
 WORKDIR /app
-COPY pyproject.toml README.md package.json .
+COPY pyproject.toml README.md package.json ./
 
-RUN pdm install --prod --no-editable -v
-RUN node -v && npm -v
-RUN uname -m
-RUN npm config list
-RUN npm install --verbose
+RUN pip install -U pdm && \
+    pdm install --prod --no-editable -v && \
+    npm install --loglevel=verbose
 
 COPY xiaomusic/ ./xiaomusic/
 COPY plugins/ ./plugins/
