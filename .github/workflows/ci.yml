@@ -39,33 +39,54 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker images (multi-platform)
+      - name: Build and save Docker image for amd64
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64
           context: .
           push: false
-          outputs: type=local,dest=./output
-          tags: ${{ env.VERSION_TAG }}
+          load: true
+          tags: ${{ env.VERSION_TAG }}-amd64
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache,mode=max
 
-      - name: Package Docker images
+      - name: Save amd64 image to tar
         run: |
-          cd output
-          for platform in linux_amd64 linux_arm64 linux_arm_v7; do
-            platform_name=$(echo $platform | sed 's/_/-/g')
-            if [ -d "$platform" ]; then
-              tar -czf ../xiaomusic-${{ github.ref_name }}-${platform_name#linux-}.tar.gz -C $platform .
-            fi
-          done
-          cd ..
+          docker save ${{ env.VERSION_TAG }}-amd64 -o xiaomusic-${{ github.ref_name }}-amd64.tar
+
+      - name: Build and save Docker image for arm64
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/arm64
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.VERSION_TAG }}-arm64
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache
+
+      - name: Save arm64 image to tar
+        run: |
+          docker save ${{ env.VERSION_TAG }}-arm64 -o xiaomusic-${{ github.ref_name }}-arm64.tar
+
+      - name: Build and save Docker image for armv7
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/arm/v7
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.VERSION_TAG }}-armv7
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache
+
+      - name: Save armv7 image to tar
+        run: |
+          docker save ${{ env.VERSION_TAG }}-armv7 -o xiaomusic-${{ github.ref_name }}-armv7.tar
 
       - name: Upload Docker images as artifacts
         uses: actions/upload-artifact@v4
         with:
           name: docker-images
-          path: xiaomusic-*.tar.gz
+          path: xiaomusic-*.tar
           retention-days: 1
 
   # Job 推送 Docker 镜像
@@ -150,7 +171,7 @@ jobs:
         run: |
           RELEASE_NAME=${{ github.ref_name }}
 
-          FILES=$(find . -type f -name "xiaomusic-*.tar.gz")
+          FILES=$(find . -type f -name "xiaomusic-*.tar")
           for FILE in ${FILES}; do
             echo "type upload ${FILE}"
             gh release upload "${RELEASE_NAME}" "${FILE}" --clobber
