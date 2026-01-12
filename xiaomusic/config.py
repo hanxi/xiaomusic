@@ -94,7 +94,7 @@ class Config:
     temp_path: str = os.getenv("XIAOMUSIC_TEMP_PATH", "music/tmp")
     download_path: str = os.getenv("XIAOMUSIC_DOWNLOAD_PATH", "music/download")
     conf_path: str = os.getenv("XIAOMUSIC_CONF_PATH", "conf")
-    cache_dir: str = os.getenv("XIAOMUSIC_CACHE_DIR", "cache")
+    cache_dir: str = os.getenv("XIAOMUSIC_CACHE_DIR", "music/cache")
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))  # 监听端口
     public_port: int = int(os.getenv("XIAOMUSIC_PUBLIC_PORT", 0))  # 歌曲访问端口

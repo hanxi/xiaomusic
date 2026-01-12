@@ -897,24 +897,7 @@ class MusicLibrary:
             # 获取并缓存歌曲时长（如果还没有）
             if name in all_music_tags and "duration" not in all_music_tags[name]:
                 try:
-                    # 跳过电台
-                    if not self.is_web_radio_music(name):
-                        duration = 0
-                        if self.is_web_music(name):
-                            # 网络音乐
-                            duration, _ = await get_web_music_duration(
-                                file_or_url, self.config
-                            )
-                            self.log.info(f"网络音乐 {name} 时长: {duration} 秒")
-                        elif os.path.exists(file_or_url):
-                            # 本地音乐
-                            duration = await get_local_music_duration(
-                                file_or_url, self.config
-                            )
-                            self.log.info(f"本地音乐 {name} 时长: {duration} 秒")
-
-                        if duration > 0:
-                            all_music_tags[name]["duration"] = duration
+                    duration = await self.get_music_duration(name)
                 except Exception as e:
                     self.log.warning(f"获取歌曲 {name} 时长失败: {e}")
 

@@ -55,7 +55,7 @@ class MusicUrlHandler:
         self.log.info(
             f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
         )
-        sec = self.music_library.get_music_duration(name)
+        sec = await self.music_library.get_music_duration(name)
         return sec, url
 
     async def get_music_url(self, name):
