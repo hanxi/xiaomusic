@@ -715,6 +715,7 @@ class XiaoMusicDevice:
                         await self._play_next()
                 else:
                     self.log.info("定时器时间到了但是不见了")
+                    await self.stop(arg1="notts")
 
             except Exception as e:
                 self.log.error(f"Execption {e}")
