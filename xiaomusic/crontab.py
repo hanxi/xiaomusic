@@ -67,7 +67,7 @@ class Crontab:
     def start(self):
         self.scheduler.start()
 
-    def add_job(self, expression, job):
+    def add_job(self, expression, job, coalesce=True):
         try:
             # 检查表达式中是否包含注释标记
             if "#" in expression and (
@@ -77,7 +77,13 @@ class Crontab:
             else:
                 trigger = CronTrigger.from_crontab(expression)
 
-            self.scheduler.add_job(job, trigger)
+            # 添加任务配置：
+            # coalesce: 如果任务错过了多次执行，是否只执行一次（默认True，适合播放类任务）
+            # max_instances=30: 允许同时运行最多30个实例，支持多设备并发
+            # misfire_grace_time=60: 任务延迟60秒内仍然执行
+            self.scheduler.add_job(
+                job, trigger, coalesce=coalesce, max_instances=30, misfire_grace_time=60
+            )
         except ValueError as e:
             self.log.error(f"Invalid crontab expression {e}")
         except Exception as e:
