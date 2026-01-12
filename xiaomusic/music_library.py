@@ -898,6 +898,8 @@ class MusicLibrary:
             if name in all_music_tags and "duration" not in all_music_tags[name]:
                 try:
                     duration = await self.get_music_duration(name)
+                    if duration > 0:
+                        all_music_tags[name]["duration"] = duration
                 except Exception as e:
                     self.log.warning(f"获取歌曲 {name} 时长失败: {e}")
 
