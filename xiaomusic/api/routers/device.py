@@ -14,6 +14,7 @@ from xiaomusic.api.dependencies import (
     xiaomusic,
 )
 from xiaomusic.api.models import (
+    Did,
     DidCmd,
     DidVolume,
 )
@@ -91,4 +92,19 @@ async def playtts(did: str, text: str, Verifcation=Depends(verification)):
 
     log.info(f"tts {did} {text}")
     await xiaomusic.do_tts(did=did, value=text)
+    return {"ret": "OK"}
+
+
+@router.post("/device/stop")
+async def do_cmd(data: Did, Verifcation=Depends(verification)):
+    """关机"""
+    did = data.did
+    log.info(f"stop did:{did}")
+    if not xiaomusic.did_exist(did):
+        return {"ret": "Did not exist"}
+
+    try:
+        await xiaomusic.stop(did, "notts")
+    except Exception as e:
+        log.warning(f"Execption {e}")
     return {"ret": "OK"}

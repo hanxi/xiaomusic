@@ -70,7 +70,20 @@ function playOnDevice() {
   });
 }
 function stopPlay() {
-  sendcmd("关机");
+  $.ajax({
+    type: "POST",
+    url: "/device/stop",
+    contentType: "application/json; charset=utf-8",
+    data: JSON.stringify({
+      did: did,
+    }),
+    success: () => {
+      console.log("stop play succ");
+    },
+    error: () => {
+      console.log("stop play failed");
+    },
+  });
 }
 
 function prevTrack() {

@@ -775,7 +775,7 @@ class XiaoMusicDevice:
         self._playing = False
         if arg1 != "notts":
             await self.do_tts(self.config.stop_tts_msg)
-        await asyncio.sleep(3)  # 等它说完
+            await asyncio.sleep(3)  # 等它说完
         # 取消组内所有的下一首歌曲的定时器
         self.cancel_group_next_timer()
         await self.group_force_stop_xiaoai()

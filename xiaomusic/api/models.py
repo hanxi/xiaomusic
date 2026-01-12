@@ -3,6 +3,10 @@
 from pydantic import BaseModel
 
 
+class Did(BaseModel):
+    did: str
+
+
 class DidVolume(BaseModel):
     did: str
     volume: int = 0
