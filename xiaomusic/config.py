@@ -185,7 +185,7 @@ class Config:
     )  # 监控刷新延迟时间(秒)
     pull_ask_sec: int = int(os.getenv("XIAOMUSIC_PULL_ASK_SEC", "1"))
     enable_pull_ask: bool = (
-        os.getenv("XIAOMUSIC_ENABLE_PULL_ASK", "true").lower() == "true"
+        os.getenv("XIAOMUSIC_ENABLE_PULL_ASK", "false").lower() == "true"
     )
     crontab_json: str = os.getenv("XIAOMUSIC_CRONTAB_JSON", "")  # 定时任务
     enable_yt_dlp_cookies: bool = (
