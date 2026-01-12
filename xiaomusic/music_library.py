@@ -90,6 +90,7 @@ class MusicLibrary:
         # 标签管理
         self.all_music_tags = {}  # 音乐标签缓存
         self._tag_generation_task = False  # 标签生成任务标志
+        self._web_music_duration_cache = {}  # 网络音乐时长缓存（仅内存）
 
     def gen_all_music_list(self):
         """生成所有音乐列表
@@ -737,46 +738,64 @@ class MusicLibrary:
             self.log.warning(f"歌曲 {name} 不存在")
             return 0
 
+        # 电台直接返回 0
+        if self.is_web_radio_music(name):
+            self.log.info(f"电台 {name} 不会有播放时长")
+            return 0
+
+        # 网络音乐：使用内存缓存
+        if self.is_web_music(name):
+            # 先检查内存缓存
+            if name in self._web_music_duration_cache:
+                duration = self._web_music_duration_cache[name]
+                self.log.debug(f"从内存缓存读取网络音乐 {name} 时长: {duration} 秒")
+                return duration
+
+            # 缓存中没有，获取时长
+            try:
+                url = self.all_music[name]
+                duration, _ = await get_web_music_duration(url, self.config)
+                self.log.info(f"网络音乐 {name} 时长: {duration} 秒")
+
+                # 存入内存缓存（不持久化）
+                if duration > 0:
+                    self._web_music_duration_cache[name] = duration
+                    self.log.info(f"已缓存网络音乐 {name} 时长到内存: {duration} 秒")
+
+                return duration
+            except Exception as e:
+                self.log.exception(f"获取网络音乐 {name} 时长失败: {e}")
+                return 0
+
+        # 本地音乐：使用持久化缓存
         # 先检查缓存中是否有时长信息
         if name in self.all_music_tags:
             duration = self.all_music_tags[name].get("duration", 0)
             if duration > 0:
-                self.log.debug(f"从缓存读取歌曲 {name} 时长: {duration} 秒")
+                self.log.debug(f"从缓存读取本地音乐 {name} 时长: {duration} 秒")
                 return duration
 
         # 缓存中没有，需要获取时长
         duration = 0
         try:
-            # 电台直接返回 0
-            if self.is_web_radio_music(name):
-                self.log.info(f"电台 {name} 不会有播放时长")
-                return 0
-
-            # 网络音乐
-            if self.is_web_music(name):
-                url = self.all_music[name]
-                duration, _ = await get_web_music_duration(url, self.config)
-                self.log.info(f"网络音乐 {name} 时长: {duration} 秒")
+            filename = self.all_music[name]
+            if os.path.exists(filename):
+                duration = await get_local_music_duration(filename, self.config)
+                self.log.info(f"本地音乐 {name} 时长: {duration} 秒")
             else:
-                # 本地音乐
-                filename = self.all_music[name]
-                if os.path.exists(filename):
-                    duration = await get_local_music_duration(filename, self.config)
-                    self.log.info(f"本地音乐 {name} 时长: {duration} 秒")
-                else:
-                    self.log.warning(f"本地音乐文件 {filename} 不存在")
+                self.log.warning(f"本地音乐文件 {filename} 不存在")
 
-            # 获取到时长后，更新到缓存
+            # 获取到时长后，更新到缓存并持久化
             if duration > 0:
                 if name not in self.all_music_tags:
                     self.all_music_tags[name] = asdict(Metadata())
                 self.all_music_tags[name]["duration"] = duration
                 # 保存缓存
                 self.try_save_tag_cache()
-                self.log.info(f"已缓存歌曲 {name} 时长: {duration} 秒")
+                self.log.info(f"已缓存本地音乐 {name} 时长: {duration} 秒")
 
         except Exception as e:
-            self.log.exception(f"获取歌曲 {name} 时长失败: {e}")
+            self.log.exception(f"获取本地音乐 {name} 时长失败: {e}")
 
         return duration
 
@@ -797,6 +816,7 @@ class MusicLibrary:
         # TODO: 优化性能？
         # TODO 如何安全的清空 picture_cache_path
         self.all_music_tags = {}  # 需要清空内存残留
+        self.clear_web_music_duration_cache()  # 清空网络音乐时长缓存
         self.try_gen_all_music_tag()
         self.log.info("刷新：已启动重建 tag cache")
 
@@ -880,10 +900,7 @@ class MusicLibrary:
             start = time.perf_counter()
             if name not in all_music_tags:
                 try:
-                    if self.is_web_music(name):
-                        # 网络歌曲：初始化空标签，稍后获取时长
-                        all_music_tags[name] = asdict(Metadata())
-                    elif os.path.exists(file_or_url) and not_in_dirs(
+                    if os.path.exists(file_or_url) and not_in_dirs(
                         file_or_url, ignore_tag_absolute_dirs
                     ):
                         all_music_tags[name] = extract_audio_metadata(
@@ -894,14 +911,16 @@ class MusicLibrary:
                 except BaseException as e:
                     self.log.exception(f"{e} {file_or_url} error {type(file_or_url)}!")
 
-            # 获取并缓存歌曲时长（如果还没有）
+            # 获取并缓存歌曲时长（仅本地音乐）
             if name in all_music_tags and "duration" not in all_music_tags[name]:
-                try:
-                    duration = await self.get_music_duration(name)
-                    if duration > 0:
-                        all_music_tags[name]["duration"] = duration
-                except Exception as e:
-                    self.log.warning(f"获取歌曲 {name} 时长失败: {e}")
+                # 跳过网络音乐的时长获取
+                if not self.is_web_music(name):
+                    try:
+                        duration = await self.get_music_duration(name)
+                        if duration > 0:
+                            all_music_tags[name]["duration"] = duration
+                    except Exception as e:
+                        self.log.warning(f"获取歌曲 {name} 时长失败: {e}")
 
             if (time.perf_counter() - start) < 1:
                 await asyncio.sleep(0.001)
@@ -949,3 +968,11 @@ class MusicLibrary:
             dict: 所有电台字典
         """
         return self._all_radio
+
+    def clear_web_music_duration_cache(self):
+        """清空网络音乐时长缓存
+
+        清空内存中的网络音乐时长缓存，不影响本地音乐的缓存
+        """
+        self._web_music_duration_cache = {}
+        self.log.info("已清空网络音乐时长缓存")
