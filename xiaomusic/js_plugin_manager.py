@@ -1051,9 +1051,7 @@ class JSPluginManager:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
                 # 清空缓存：
                 self._invalidate_config_cache()
-                self.log.info(
-                    f"Plugin config updated for enabled plugin {plugin_name}"
-                )
+                self.log.info(f"Plugin config updated for enabled plugin {plugin_name}")
                 # 更新插件引擎
                 self.reload_plugins()
         except Exception as e:
