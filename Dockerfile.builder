@@ -4,6 +4,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     nodejs \
     npm \
+    zlib1g-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    liblcms2-dev \
+    libopenjp2-7-dev \
+    libtiff-dev \
+    libwebp-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
