@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>在线搜索配置</title>
+    <!-- ... 公共配置 ... -->
+    <script src="./config.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -283,7 +285,7 @@
     <div class="header">
         <h1>插件&接口设置</h1>
         <div class="version-info">
-            <span>v1.0.3.4</span>
+            <span id="versionSpan"></span>
         </div>
         <p>管理您的插件和在线接口</p>
         <!-- 顶部居中按钮 -->
@@ -343,9 +345,20 @@
 <script>
     // 页面加载时获取插件列表
     window.onload = function() {
+    };
+    // 页面加载时执行
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取版本号
+        if (window.appConfig && window.appConfig.version) {
+            const versionSpan = document.getElementById('versionSpan');
+            if (versionSpan) {
+                versionSpan.textContent = `v${window.appConfig.version}`;
+            }
+        }
+        //加载插件
         loadPlugins();
         loadOpenApiConfig();
-    };
+    });
     /*============================开放接口函数=================================*/
     // 加载 OpenAPI 配置
     async function loadOpenApiConfig() {
