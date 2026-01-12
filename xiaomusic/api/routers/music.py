@@ -99,30 +99,6 @@ async def get_plugin_source_url(
         return RedirectResponse(url=source_url)
 
 
-@router.get("/api/proxy/openapi-url")
-async def get_openapi_source_url(
-    urlb64: str = Query(..., description="原始url压缩的base64"),
-    Verifcation=Depends(verification),
-):
-    try:
-        # 将Base64编码的URL解码为字符串
-        url_bytes = base64.b64decode(urlb64)
-        origin_url = url_bytes.decode("utf-8")
-        # 获取真正地址
-        log.info(f"origin_url: {origin_url}")
-        source_url = await xiaomusic.get_real_url_of_openapi(origin_url)
-        log.info(f"source_url: {source_url}")
-        if not source_url:
-            source_url = xiaomusic.default_url()
-        # 直接重定向到真实URL
-        return RedirectResponse(url=source_url)
-    except Exception as e:
-        log.error(f"获取真实音乐URL失败: {e}")
-        # 如果代理获取失败，重定向到原始URL
-        source_url = xiaomusic.default_url()
-        return RedirectResponse(url=source_url)
-
-
 @router.post("/api/play/getMediaSource")
 async def get_media_source(request: Request, Verifcation=Depends(verification)):
     """获取音乐真实播放URL"""

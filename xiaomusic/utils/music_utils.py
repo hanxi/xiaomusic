@@ -84,36 +84,29 @@ def is_m4a(url: str) -> bool:
     return url.endswith(".m4a")
 
 
-async def _get_web_music_duration(
-    session, url: str, config, start: int = 0, end: int = 500
-) -> float:
+async def _get_web_music_duration(session, url: str, config) -> float:
     """
-    异步获取网络音乐文件的部分内容并估算其时长
+    异步获取网络音乐文件的完整内容并获取其时长
 
-    通过请求 URL 的前几个字节（默认 0-500）下载部分文件，
-    写入临时文件后调用本地工具（如 ffprobe）获取音频时长
+    下载完整文件，写入临时文件后调用本地工具（如 ffprobe）获取音频时长
 
     Args:
         session: aiohttp.ClientSession 实例
         url: 音乐文件的 URL 地址
         config: 包含配置信息的对象（如 ffmpeg 路径）
-        start: 请求的起始字节位置
-        end: 请求的结束字节位置
 
     Returns:
         返回音频的持续时间（秒），如果失败则返回 0
     """
     duration = 0
-    # 设置请求头 Range，只请求部分内容（用于快速获取元数据）
-    headers = {"Range": f"bytes={start}-{end}"}
 
-    # 使用 aiohttp 异步发起 GET 请求，获取部分音频内容
-    async with session.get(url, headers=headers) as response:
-        array_buffer = await response.read()  # 读取响应的二进制内容
+    # 使用 aiohttp 异步发起 GET 请求，下载完整音频文件
+    async with session.get(url) as response:
+        array_buffer = await response.read()  # 读取响应的完整二进制内容
 
     # 创建一个命名的临时文件，并禁用自动删除（以便后续读取）
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
-        tmp.write(array_buffer)  # 将下载的部分内容写入临时文件
+        tmp.write(array_buffer)  # 将下载的完整内容写入临时文件
         tmp_path = tmp.name  # 获取该临时文件的真实路径
 
     try:
@@ -155,16 +148,10 @@ async def get_web_music_duration(url: str, config) -> tuple[float, str]:
                     },
                 ) as response:
                     url = str(response.url)
-        # 设置总超时时间为3秒
-        timeout = aiohttp.ClientTimeout(total=3)
+        # 设置总超时时间为60秒
+        timeout = aiohttp.ClientTimeout(total=60)
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            duration = await _get_web_music_duration(
-                session, url, config, start=0, end=500
-            )
-            if duration <= 0:
-                duration = await _get_web_music_duration(
-                    session, url, config, start=0, end=3000
-                )
+            duration = await _get_web_music_duration(session, url, config)
     except Exception as e:
         log.error(f"Error get_web_music_duration: {e}")
     return duration, url

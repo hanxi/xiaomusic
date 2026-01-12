@@ -4,7 +4,7 @@ import asyncio
 import base64
 import os
 import shutil
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlparse
 
 import aiohttp
 from fastapi import (
@@ -300,21 +300,6 @@ async def proxy(urlb64: str):
         raise HTTPException(
             status_code=400, detail="无效的URL格式"
         ) from invalid_url_exc
-
-    proxy_pre = f"{xiaomusic.hostname}:{xiaomusic.public_port}/api/proxy/openapi-url"
-    # 解决本地接口认证问题
-    if url.startswith(proxy_pre):
-        query_params = parse_qs(parsed_url.query)
-        urlb64_value = query_params.get("urlb64", [""])[0]
-        url_bytes = base64.b64decode(urlb64_value)
-        origin_url = url_bytes.decode("utf-8")
-        log.info(f"origin_url: {origin_url}")
-        # 获取真正地址
-        source_url = await xiaomusic.get_real_url_of_openapi(origin_url)
-        log.info(f"source_url: {source_url}")
-        parsed_url = urlparse(source_url)
-        url = source_url
-        log.info(f"parsed_url: {parsed_url}")
 
     # 创建会话并确保关闭
     session = aiohttp.ClientSession(

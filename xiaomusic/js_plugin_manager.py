@@ -586,9 +586,7 @@ class JSPluginManager:
                     "album": item.get("album", ""),
                     "platform": "OpenAPI-" + item.get("platform"),
                     "isOpenAPI": True,
-                    "url": self.xiaomusic._online_music_service._get_openapi_proxy_url(
-                        url
-                    ),
+                    "url": url,
                     "artwork": item.get("pic", ""),
                     "lrc": item.get("lrc", ""),
                 }

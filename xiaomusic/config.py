@@ -226,7 +226,7 @@ class Config:
     search_music_count: int = int(os.getenv("XIAOMUSIC_SEARCH_MUSIC_COUNT", "100"))
     # 网络歌曲使用proxy
     web_music_proxy: bool = (
-        os.getenv("XIAOMUSIC_WEB_MUSIC_PROXY", "false").lower() == "true"
+        os.getenv("XIAOMUSIC_WEB_MUSIC_PROXY", "true").lower() == "true"
     )
 
     def append_keyword(self, keys, action):

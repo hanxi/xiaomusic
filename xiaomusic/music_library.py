@@ -25,7 +25,11 @@ from xiaomusic.utils import (
     traverse_music_directory,
     try_add_access_control_param,
 )
-from xiaomusic.utils.music_utils import Metadata
+from xiaomusic.utils.music_utils import (
+    Metadata,
+    get_local_music_duration,
+    get_web_music_duration,
+)
 
 
 class MusicLibrary:
@@ -716,6 +720,66 @@ class MusicLibrary:
         self.try_save_tag_cache()
         return "OK"
 
+    async def get_music_duration(self, name: str) -> float:
+        """获取歌曲时长
+
+        优先从缓存中读取，如果缓存中没有则获取并缓存
+        注意：此方法不处理在线音乐，在线音乐的时长获取在 music_url 中处理
+
+        Args:
+            name: 歌曲名称
+
+        Returns:
+            float: 歌曲时长（秒），失败返回 0
+        """
+        # 检查歌曲是否存在
+        if name not in self.all_music:
+            self.log.warning(f"歌曲 {name} 不存在")
+            return 0
+
+        # 先检查缓存中是否有时长信息
+        if name in self.all_music_tags:
+            duration = self.all_music_tags[name].get("duration", 0)
+            if duration > 0:
+                self.log.debug(f"从缓存读取歌曲 {name} 时长: {duration} 秒")
+                return duration
+
+        # 缓存中没有，需要获取时长
+        duration = 0
+        try:
+            # 电台直接返回 0
+            if self.is_web_radio_music(name):
+                self.log.info(f"电台 {name} 不会有播放时长")
+                return 0
+
+            # 网络音乐
+            if self.is_web_music(name):
+                url = self.all_music[name]
+                duration, _ = await get_web_music_duration(url, self.config)
+                self.log.info(f"网络音乐 {name} 时长: {duration} 秒")
+            else:
+                # 本地音乐
+                filename = self.all_music[name]
+                if os.path.exists(filename):
+                    duration = await get_local_music_duration(filename, self.config)
+                    self.log.info(f"本地音乐 {name} 时长: {duration} 秒")
+                else:
+                    self.log.warning(f"本地音乐文件 {filename} 不存在")
+
+            # 获取到时长后，更新到缓存
+            if duration > 0:
+                if name not in self.all_music_tags:
+                    self.all_music_tags[name] = asdict(Metadata())
+                self.all_music_tags[name]["duration"] = duration
+                # 保存缓存
+                self.try_save_tag_cache()
+                self.log.info(f"已缓存歌曲 {name} 时长: {duration} 秒")
+
+        except Exception as e:
+            self.log.exception(f"获取歌曲 {name} 时长失败: {e}")
+
+        return duration
+
     def refresh_music_tag(self):
         """刷新音乐标签（给前端调用）"""
         if not self.ensure_single_thread_for_tag():
@@ -817,8 +881,8 @@ class MusicLibrary:
             if name not in all_music_tags:
                 try:
                     if self.is_web_music(name):
-                        # TODO: 网络歌曲获取歌曲额外信息
-                        pass
+                        # 网络歌曲：初始化空标签，稍后获取时长
+                        all_music_tags[name] = asdict(Metadata())
                     elif os.path.exists(file_or_url) and not_in_dirs(
                         file_or_url, ignore_tag_absolute_dirs
                     ):
@@ -829,6 +893,30 @@ class MusicLibrary:
                         self.log.info(f"{name}/{file_or_url} 无法更新 tag")
                 except BaseException as e:
                     self.log.exception(f"{e} {file_or_url} error {type(file_or_url)}!")
+
+            # 获取并缓存歌曲时长（如果还没有）
+            if name in all_music_tags and "duration" not in all_music_tags[name]:
+                try:
+                    # 跳过电台
+                    if not self.is_web_radio_music(name):
+                        duration = 0
+                        if self.is_web_music(name):
+                            # 网络音乐
+                            duration, _ = await get_web_music_duration(
+                                file_or_url, self.config
+                            )
+                            self.log.info(f"网络音乐 {name} 时长: {duration} 秒")
+                        elif os.path.exists(file_or_url):
+                            # 本地音乐
+                            duration = await get_local_music_duration(
+                                file_or_url, self.config
+                            )
+                            self.log.info(f"本地音乐 {name} 时长: {duration} 秒")
+
+                        if duration > 0:
+                            all_music_tags[name]["duration"] = duration
+                except Exception as e:
+                    self.log.warning(f"获取歌曲 {name} 时长失败: {e}")
 
             if (time.perf_counter() - start) < 1:
                 await asyncio.sleep(0.001)

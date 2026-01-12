@@ -384,13 +384,8 @@ class OnlineMusicService:
         for item in song_list:
             if isinstance(item, dict):
                 source_url = item.get("url", "")
-                is_open_api = item.get("isOpenAPI", False)
                 music_item = {}
-                # 如果不是开放接口，可能需要额外处理
-                if (not is_open_api) and source_url:
-                    # 使用代理url
-                    music_item["url"] = self._get_openapi_proxy_url(source_url)
-                elif source_url:
+                if source_url:
                     music_item["url"] = source_url
                 else:
                     # 返回插件源的代理接口
@@ -405,13 +400,6 @@ class OnlineMusicService:
                 converted_music_list.append(music_item)
 
         return converted_music_list
-
-    def _get_openapi_proxy_url(self, origin_url):
-        """获取OpenApi源代理URL"""
-        urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
-        proxy_url = f"{self.xiaomusic.hostname}:{self.xiaomusic.public_port}/api/proxy/openapi-url?urlb64={urlb64}"
-        self.log.info(f"Using proxy url: {proxy_url}")
-        return proxy_url
 
     def _get_plugin_proxy_url(self, origin_data):
         """获取插件源代理URL"""
