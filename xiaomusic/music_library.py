@@ -684,6 +684,13 @@ class MusicLibrary:
                 f"{self.hostname}:{self.public_port}/picture/{encoded_name}",
             )
 
+        if self.is_web_music(name):
+            try:
+                duration = await self.get_music_duration(name)
+                if duration > 0:
+                    tags["duration"] = duration
+            except Exception as e:
+                self.log.exception(f"获取网络音乐 {name} 时长失败: {e}")
         return tags
 
     def set_music_tag(self, name, info):

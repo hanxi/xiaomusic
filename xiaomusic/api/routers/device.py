@@ -96,7 +96,7 @@ async def playtts(did: str, text: str, Verifcation=Depends(verification)):
 
 
 @router.post("/device/stop")
-async def do_cmd(data: Did, Verifcation=Depends(verification)):
+async def stop(data: Did, Verifcation=Depends(verification)):
     """关机"""
     did = data.did
     log.info(f"stop did:{did}")
