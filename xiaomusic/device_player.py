@@ -648,7 +648,7 @@ class XiaoMusicDevice:
             self.log.info(f"edge-tts 生成的文件路径: {mp3_path}")
 
             # 生成播放 URL
-            url = self.xiaomusic.music_url_handler._get_file_url(mp3_path)
+            url = self.xiaomusic._music_url_handler._get_file_url(mp3_path)
             self.log.info(f"TTS 播放 URL: {url}")
 
             # 播放 TTS 音频
