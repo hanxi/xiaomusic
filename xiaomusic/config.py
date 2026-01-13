@@ -228,6 +228,12 @@ class Config:
     web_music_proxy: bool = (
         os.getenv("XIAOMUSIC_WEB_MUSIC_PROXY", "true").lower() == "true"
     )
+    # edge-tts 语音角色
+    edge_tts_voice: str = os.getenv("XIAOMUSIC_EDGE_TTS_VOICE", "")
+    # 是否启用定时清理临时文件
+    enable_auto_clean_temp: bool = (
+        os.getenv("XIAOMUSIC_ENABLE_AUTO_CLEAN_TEMP", "true").lower() == "true"
+    )
 
     def append_keyword(self, keys, action):
         for key in keys.split(","):

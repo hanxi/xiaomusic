@@ -77,6 +77,8 @@ class XiaoMusicDevice:
 
         # 添加歌曲定时器
         self._add_song_timer = None
+        # TTS 播放定时器
+        self._tts_timer = None
 
     @property
     def did(self):
@@ -599,23 +601,81 @@ class XiaoMusicDevice:
     async def text_to_speech(self, value):
         """文字转语音"""
         try:
-            # 有 tts command 优先使用 tts command 说话
-            if self.hardware in TTS_COMMAND:
-                tts_cmd = TTS_COMMAND[self.hardware]
-                self.log.info("Call MiIOService tts.")
-                value = value.replace(" ", ",")  # 不能有空格
-                await miio_command(
-                    self.auth_manager.miio_service,
-                    self.did,
-                    f"{tts_cmd} {value}",
-                )
+            # 检查是否配置了 edge-tts 语音角色
+            if self.config.edge_tts_voice:
+                await self._text_to_speech_edge_tts(value)
             else:
-                self.log.debug("Call MiNAService tts.")
-                await self.auth_manager.mina_service.text_to_speech(
-                    self.device_id, value
-                )
+                # 使用原有的 TTS 逻辑
+                # 有 tts command 优先使用 tts command 说话
+                if self.hardware in TTS_COMMAND:
+                    tts_cmd = TTS_COMMAND[self.hardware]
+                    self.log.info("Call MiIOService tts.")
+                    value = value.replace(" ", ",")  # 不能有空格
+                    await miio_command(
+                        self.auth_manager.miio_service,
+                        self.did,
+                        f"{tts_cmd} {value}",
+                    )
+                else:
+                    self.log.debug("Call MiNAService tts.")
+                    await self.auth_manager.mina_service.text_to_speech(
+                        self.device_id, value
+                    )
         except Exception as e:
             self.log.exception(f"Execption {e}")
+
+    async def _text_to_speech_edge_tts(self, value):
+        """使用 edge-tts 进行文字转语音"""
+        from xiaomusic.utils.music_utils import get_local_music_duration
+        from xiaomusic.utils.network_utils import text_to_mp3
+
+        try:
+            # 取消之前的 TTS 定时器
+            if self._tts_timer:
+                self._tts_timer.cancel()
+                self._tts_timer = None
+                self.log.info("已取消之前的 TTS 定时器")
+
+            # 使用 edge-tts 生成 MP3 文件
+            self.log.info(
+                f"使用 edge-tts 生成语音: {value}, voice: {self.config.edge_tts_voice}"
+            )
+            mp3_path = await text_to_mp3(
+                text=value,
+                save_dir=self.config.temp_dir,
+                voice=self.config.edge_tts_voice,
+            )
+            self.log.info(f"edge-tts 生成的文件路径: {mp3_path}")
+
+            # 生成播放 URL
+            url = self.xiaomusic.music_url_handler._get_file_url(mp3_path)
+            self.log.info(f"TTS 播放 URL: {url}")
+
+            # 播放 TTS 音频
+            await self.group_player_play(url)
+
+            # 获取 MP3 时长
+            duration = await get_local_music_duration(mp3_path, self.config)
+            self.log.info(f"TTS 音频时长: {duration} 秒")
+
+            # 创建定时器，时长到后停止
+            if duration > 0:
+
+                async def _tts_timeout():
+                    await asyncio.sleep(duration)
+                    try:
+                        self.log.info("TTS 播放定时器时间到")
+                        if self._tts_timer:
+                            self._tts_timer = None
+                            await self.stop(arg1="notts")
+                    except Exception as e:
+                        self.log.error(f"TTS 定时器异常: {e}")
+
+                self._tts_timer = asyncio.create_task(_tts_timeout())
+                self.log.info(f"已设置 TTS 定时器，{duration} 秒后停止")
+
+        except Exception as e:
+            self.log.exception(f"edge-tts 播放失败: {e}")
 
     async def group_player_play(self, url, name=""):
         """同一组设备播放"""
@@ -840,6 +900,11 @@ class XiaoMusicDevice:
             self._stop_timer.cancel()
             self._stop_timer = None
             self.log.info("cancel_all_timer _stop_timer.cancel")
+
+        if self._tts_timer:
+            self._tts_timer.cancel()
+            self._tts_timer = None
+            self.log.info("cancel_all_timer _tts_timer.cancel")
 
     @classmethod
     def dict_clear(cls, d):

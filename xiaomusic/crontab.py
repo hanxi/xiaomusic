@@ -1,4 +1,5 @@
 import json
+import os
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.base import BaseTrigger
@@ -218,3 +219,34 @@ class Crontab:
             self.log.info("crontab reload_config ok")
         except Exception as e:
             self.log.exception(f"Execption {e}")
+
+        # 添加定时清理临时文件任务
+        if xiaomusic.config.enable_auto_clean_temp:
+
+            async def clean_temp_job():
+                try:
+                    temp_dir = xiaomusic.config.temp_dir
+                    if not os.path.exists(temp_dir):
+                        self.log.info(f"临时目录不存在: {temp_dir}")
+                        return
+
+                    files = os.listdir(temp_dir)
+                    deleted_count = 0
+                    for filename in files:
+                        try:
+                            file_path = os.path.join(temp_dir, filename)
+                            if os.path.isfile(file_path):
+                                os.remove(file_path)
+                                deleted_count += 1
+                                self.log.debug(f"已删除临时文件: {file_path}")
+                        except Exception as e:
+                            self.log.warning(f"删除文件失败 {file_path}: {e}")
+
+                    self.log.info(
+                        f"定时清理临时文件完成，共删除 {deleted_count} 个文件"
+                    )
+                except Exception as e:
+                    self.log.exception(f"清理临时文件异常: {e}")
+
+            self.add_job("0 3 * * *", clean_temp_job)
+            self.log.info("已添加每日凌晨3点定时清理临时文件任务")

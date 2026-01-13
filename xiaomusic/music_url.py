@@ -138,6 +138,21 @@ class MusicUrlHandler:
             str: 本地音乐播放URL
         """
         filename = self.music_library.get_filename(name)
+        self.log.info(
+            f"_get_local_music_url local music. name:{name}, filename:{filename}"
+        )
+        return self._get_file_url(filename)
+
+    def _get_file_url(self, filepath):
+        """根据文件路径生成可访问的URL
+
+        Args:
+            filepath: 文件的完整路径
+
+        Returns:
+            str: 文件访问URL
+        """
+        filename = filepath
 
         # 处理文件路径
         if filename.startswith(self.config.music_path):
@@ -146,9 +161,7 @@ class MusicUrlHandler:
         if filename.startswith("/"):
             filename = filename[1:]
 
-        self.log.info(
-            f"_get_local_music_url local music. name:{name}, filename:{filename}"
-        )
+        self.log.info(f"_get_file_url filepath:{filepath}, filename:{filename}")
 
         # 构造URL
         encoded_name = urllib.parse.quote(filename)
