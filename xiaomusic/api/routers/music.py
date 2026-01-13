@@ -125,8 +125,8 @@ async def get_openapi_source_url(
 
 @router.get("/api/proxy/m4s-to-mp3")
 async def m4s_to_mp3(
-        urlb64: str = Query(..., description="原始url压缩的base64"),
-        Verifcation=Depends(verification),
+    urlb64: str = Query(..., description="原始url压缩的base64"),
+    Verifcation=Depends(verification),
 ):
     try:
         # 将Base64编码的URL解码为字符串

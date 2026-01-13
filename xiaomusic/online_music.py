@@ -9,7 +9,6 @@ import ipaddress
 import json
 import socket
 from urllib.parse import urlparse
-from concurrent.futures import ThreadPoolExecutor
 
 import aiohttp
 
@@ -61,7 +60,7 @@ class OnlineMusicService:
         self.xiaomusic = xiaomusic_instance
 
     async def get_music_list_online(
-            self, plugin="all", keyword="", page=1, limit=20, **kwargs
+        self, plugin="all", keyword="", page=1, limit=20, **kwargs
     ):
         """在线获取歌曲列表
 
@@ -95,7 +94,9 @@ class OnlineMusicService:
             return await self._execute_openapi_search(openapi_info, keyword, artist)
         else:
             # 插件在线搜索
-            return await self._execute_plugin_search(plugin, keyword, artist, page, limit)
+            return await self._execute_plugin_search(
+                plugin, keyword, artist, page, limit
+            )
 
     async def _parse_keyword_and_artist(self, keyword):
         """解析关键词和艺术家"""
@@ -104,20 +105,24 @@ class OnlineMusicService:
         artist = parsed_artist or ""
         return keyword, artist
 
-    async def _execute_concurrent_searches(self, keyword, artist, page, limit, openapi_info):
+    async def _execute_concurrent_searches(
+        self, keyword, artist, page, limit, openapi_info
+    ):
         """执行并发搜索 - 插件和OpenAPI"""
         tasks = []
 
         # 插件在线搜索任务
         plugin_task = asyncio.create_task(
-            self.get_music_list_mf("all", keyword=keyword, artist=artist, page=page, limit=limit)
+            self.get_music_list_mf(
+                "all", keyword=keyword, artist=artist, page=page, limit=limit
+            )
         )
         tasks.append(plugin_task)
 
         # OpenAPI搜索任务（只有在配置正确时才创建）
         if (
-                openapi_info.get("enabled", False)
-                and openapi_info.get("search_url", "") != ""
+            openapi_info.get("enabled", False)
+            and openapi_info.get("search_url", "") != ""
         ):
             openapi_task = asyncio.create_task(
                 self.js_plugin_manager.openapi_search(
@@ -151,8 +156,8 @@ class OnlineMusicService:
     async def _execute_openapi_search(self, openapi_info, keyword, artist):
         """执行OpenAPI搜索"""
         if (
-                openapi_info.get("enabled", False)
-                and openapi_info.get("search_url", "") != ""
+            openapi_info.get("enabled", False)
+            and openapi_info.get("search_url", "") != ""
         ):
             # 开放接口获取
             result_data = await self.js_plugin_manager.openapi_search(
@@ -196,17 +201,23 @@ class OnlineMusicService:
                 sources.update(plugin_result.get("sources", {}))
 
         # 如果都没有成功结果，返回错误
-        if not plugin_result.get("success") and not (openapi_result and openapi_result.get("success")):
+        if not plugin_result.get("success") and not (
+            openapi_result and openapi_result.get("success")
+        ):
             # 优先返回第一个错误
-            error_result = plugin_result if not plugin_result.get("success") else openapi_result
+            error_result = (
+                plugin_result if not plugin_result.get("success") else openapi_result
+            )
             return error_result
 
         # 优化合并后的结果
         optimized_result = self.js_plugin_manager.optimize_search_results(
             {"data": merged_data},
-            search_keyword=plugin_result.get("artist", ""),  # 使用从关键词解析出的artist
+            search_keyword=plugin_result.get(
+                "artist", ""
+            ),  # 使用从关键词解析出的artist
             limit=20,  # 默认限制
-            search_artist=plugin_result.get("artist", "")
+            search_artist=plugin_result.get("artist", ""),
         )
 
         return {
@@ -214,7 +225,7 @@ class OnlineMusicService:
             "data": optimized_result.get("data", []),
             "total": len(optimized_result.get("data", [])),
             "sources": sources,
-            "merged": True  # 标识这是合并结果
+            "merged": True,  # 标识这是合并结果
         }
 
     async def get_music_list_mf(
@@ -837,7 +848,9 @@ class OnlineMusicService:
             return {"success": False, "error": str(e)}
 
     @staticmethod
-    async def _make_request_with_validation(url: str, timeout: int, convert_m4s: bool = False) -> str:
+    async def _make_request_with_validation(
+        url: str, timeout: int, convert_m4s: bool = False
+    ) -> str:
         """
         通用的URL请求和验证方法
 
@@ -904,8 +917,8 @@ class OnlineMusicService:
                     # 获取最终重定向后的URL
                     final_url = str(response.url)
                     # 如果需要转换m4s格式
-                    if convert_m4s and final_url.lower().endswith('.m4s'):
-                        final_url = final_url[:-4] + '.mp3'
+                    if convert_m4s and final_url.lower().endswith(".m4s"):
+                        final_url = final_url[:-4] + ".mp3"
                     return final_url
         except Exception:
             return url  # 返回原始URL
@@ -921,7 +934,9 @@ class OnlineMusicService:
         Returns:
             str: 最终的真实播放URL，如果代理不成功则返回原始URL
         """
-        return await OnlineMusicService._make_request_with_validation(url, timeout, False)
+        return await OnlineMusicService._make_request_with_validation(
+            url, timeout, False
+        )
 
     @staticmethod
     async def m4s_to_mp3(url: str, timeout: int = 10) -> str:
@@ -934,5 +949,6 @@ class OnlineMusicService:
         Returns:
             str: 最终的真实播放URL（已转换为.mp3格式），如果代理不成功则返回原始URL
         """
-        return await OnlineMusicService._make_request_with_validation(url, timeout, True)
-
+        return await OnlineMusicService._make_request_with_validation(
+            url, timeout, True
+        )

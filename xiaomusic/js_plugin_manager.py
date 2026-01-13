@@ -306,9 +306,10 @@ class JSPluginManager:
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
                 plugin_source = config_data.get("plugin_source", {})
-                source_url = plugin_source.get("source_url","")
+                source_url = plugin_source.get("source_url", "")
                 if source_url:
                     import requests
+
                     # 请求源地址
                     response = requests.get(source_url, timeout=30)
                     response.raise_for_status()  # 抛出HTTP错误
@@ -350,7 +351,11 @@ class JSPluginManager:
         all_success = True
 
         for plugin_info in plugins_array:
-            if not isinstance(plugin_info, dict) or "name" not in plugin_info or "url" not in plugin_info:
+            if (
+                not isinstance(plugin_info, dict)
+                or "name" not in plugin_info
+                or "url" not in plugin_info
+            ):
                 self.log.warning(f"Invalid plugin entry: {plugin_info}")
                 all_success = False
                 continue
@@ -422,7 +427,9 @@ class JSPluginManager:
             return True
 
         except requests.exceptions.RequestException as e:
-            self.log.error(f"Failed to download plugin {plugin_name} from {plugin_url}: {e}")
+            self.log.error(
+                f"Failed to download plugin {plugin_name} from {plugin_url}: {e}"
+            )
             return False
         except Exception as e:
             self.log.error(f"Failed to save plugin {plugin_name}: {e}")

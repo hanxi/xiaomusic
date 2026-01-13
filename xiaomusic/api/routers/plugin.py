@@ -23,14 +23,14 @@ router = APIRouter()
 
 @router.get("/api/js-plugins")
 def get_js_plugins(
-        enabled_only: bool = Query(False, description="是否只返回启用的插件"),
-        Verifcation=Depends(verification),
+    enabled_only: bool = Query(False, description="是否只返回启用的插件"),
+    Verifcation=Depends(verification),
 ):
     """获取插件列表"""
     try:
         if (
-                not hasattr(xiaomusic, "js_plugin_manager")
-                or not xiaomusic.js_plugin_manager
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
         ):
             return {"success": False, "error": "JS Plugin Manager not available"}
 
@@ -49,8 +49,8 @@ def enable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
     """启用插件"""
     try:
         if (
-                not hasattr(xiaomusic, "js_plugin_manager")
-                or not xiaomusic.js_plugin_manager
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
         ):
             return {"success": False, "error": "JS Plugin Manager not available"}
 
@@ -66,8 +66,8 @@ def disable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
     """禁用插件"""
     try:
         if (
-                not hasattr(xiaomusic, "js_plugin_manager")
-                or not xiaomusic.js_plugin_manager
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
         ):
             return {"success": False, "error": "JS Plugin Manager not available"}
 
@@ -83,8 +83,8 @@ def uninstall_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
     """卸载插件"""
     try:
         if (
-                not hasattr(xiaomusic, "js_plugin_manager")
-                or not xiaomusic.js_plugin_manager
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
         ):
             return {"success": False, "error": "JS Plugin Manager not available"}
 
@@ -97,7 +97,7 @@ def uninstall_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
 
 @router.post("/api/js-plugins/upload")
 async def upload_js_plugin(
-        file: UploadFile = File(...), verification_dep=Depends(verification)
+    file: UploadFile = File(...), verification_dep=Depends(verification)
 ):
     """上传 JS 插件"""
     try:
@@ -107,8 +107,8 @@ async def upload_js_plugin(
 
         # 使用 JSPluginManager 中定义的插件目录
         if (
-                not hasattr(xiaomusic, "js_plugin_manager")
-                or not xiaomusic.js_plugin_manager
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
         ):
             raise HTTPException(
                 status_code=500, detail="JS Plugin Manager not available"
@@ -120,13 +120,15 @@ async def upload_js_plugin(
         sys_files = ["ALL.js", "all.js", "OpenAPI.js", "OPENAPI.js"]
         if file.filename in sys_files:
             raise HTTPException(
-                status_code=409, detail=f"插件名非法，不能命名为： {sys_files} ，请修改后再上传！"
+                status_code=409,
+                detail=f"插件名非法，不能命名为： {sys_files} ，请修改后再上传！",
             )
         file_path = os.path.join(plugin_dir, file.filename)
         # 校验是否已存在同名js插件 存在则提示，停止上传
         if os.path.exists(file_path):
             raise HTTPException(
-                status_code=409, detail=f"插件 {file.filename} 已存在，请重命名后再上传！"
+                status_code=409,
+                detail=f"插件 {file.filename} 已存在，请重命名后再上传！",
             )
         file_path = os.path.join(plugin_dir, file.filename)
 
@@ -148,7 +150,8 @@ async def upload_js_plugin(
         return {"success": False, "error": str(e)}
 
 
-#----------------------------开放接口相关函数---------------------------------------
+# ----------------------------开放接口相关函数---------------------------------------
+
 
 @router.get("/api/openapi/load")
 def get_openapi_info(Verifcation=Depends(verification)):
@@ -182,7 +185,8 @@ async def update_openapi_url(request: Request, Verifcation=Depends(verification)
         return {"success": False, "error": str(e)}
 
 
-#----------------------------插件源接口---------------------------------------
+# ----------------------------插件源接口---------------------------------------
+
 
 @router.get("/api/plugin-source/load")
 def get_plugin_source_info(Verifcation=Depends(verification)):

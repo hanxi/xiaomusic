@@ -154,7 +154,9 @@ class MusicUrlHandler:
             str: 代理URL
         """
         urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
-        proxy_url = f"{self.hostname}:{self.public_port}/api/proxy/m4s-to-mp3?urlb64={urlb64}"
+        proxy_url = (
+            f"{self.hostname}:{self.public_port}/api/proxy/m4s-to-mp3?urlb64={urlb64}"
+        )
         self.log.info(f"Using proxy url: {proxy_url}")
         return proxy_url
 
