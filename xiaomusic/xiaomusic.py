@@ -404,9 +404,9 @@ class XiaoMusic:
         """是否需要通过API获取播放链接（委托给 music_library）"""
         return self._music_library.is_need_use_play_music_api(name)
 
-    def get_music_tags(self, name):
+    async def get_music_tags(self, name):
         """获取音乐标签信息（委托给 music_library）"""
-        return self._music_library.get_music_tags(name)
+        return await self._music_library.get_music_tags(name)
 
     # 修改标签信息
     def set_music_tag(self, name, info):

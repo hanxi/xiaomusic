@@ -201,7 +201,7 @@ async def musicinfo(
         "url": url,
     }
     if musictag:
-        info["tags"] = xiaomusic.get_music_tags(name)
+        info["tags"] = await xiaomusic.get_music_tags(name)
     return info
 
 
@@ -220,7 +220,7 @@ async def musicinfos(
             "url": url,
         }
         if musictag:
-            info["tags"] = xiaomusic.get_music_tags(music_name)
+            info["tags"] = await xiaomusic.get_music_tags(music_name)
         ret.append(info)
     return ret
 

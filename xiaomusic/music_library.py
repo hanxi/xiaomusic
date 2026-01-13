@@ -660,7 +660,7 @@ class MusicLibrary:
 
     # ==================== 标签管理 ====================
 
-    def get_music_tags(self, name):
+    async def get_music_tags(self, name):
         """获取音乐标签信息
 
         Args:
