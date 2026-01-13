@@ -647,6 +647,9 @@ class XiaoMusicDevice:
             )
             self.log.info(f"edge-tts 生成的文件路径: {mp3_path}")
 
+            # 保存当前 TTS 文件路径，用于定时器清空文件
+            self._current_tts_file = mp3_path
+
             # 生成播放 URL
             url = self.xiaomusic._music_url_handler._get_file_url(mp3_path)
             self.log.info(f"TTS 播放 URL: {url}")
@@ -667,6 +670,20 @@ class XiaoMusicDevice:
                         self.log.info("TTS 播放定时器时间到")
                         if self._tts_timer:
                             self._tts_timer = None
+                            # 保底逻辑：删除临时 mp3 文件
+                            if (
+                                hasattr(self, "_current_tts_file")
+                                and self._current_tts_file
+                            ):
+                                try:
+                                    if os.path.exists(self._current_tts_file):
+                                        await asyncio.sleep(1)  # 延迟1秒后再删除文件
+                                        os.remove(self._current_tts_file)
+                                        self.log.info(
+                                            f"已删除 TTS 临时文件: {self._current_tts_file}"
+                                        )
+                                except Exception as delete_err:
+                                    self.log.warning(f"删除 TTS 文件失败: {delete_err}")
                             await self.stop(arg1="notts")
                     except Exception as e:
                         self.log.error(f"TTS 定时器异常: {e}")
