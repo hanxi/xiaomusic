@@ -14,9 +14,14 @@ permissions:
   contents: read
 
 jobs:
+  # 定义构建镜像的通用模板
   build-image:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false  # 一个构建失败不影响另一个
+      matrix:
+        image-type: [runtime, builder]  # 并行构建两种镜像
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,22 +36,11 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push runtime
+      - name: Build and push ${{ matrix.image-type }}
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./Dockerfile.runtime
+          file: ./Dockerfile.${{ matrix.image-type }}
           platforms: linux/amd64, linux/arm64, linux/arm/v7
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:runtime
-
-      - name: Build and push builder
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./Dockerfile.builder
-          platforms: linux/amd64, linux/arm64, linux/arm/v7
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:builder
-
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ matrix.image-type }}
