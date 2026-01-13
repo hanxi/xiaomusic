@@ -99,6 +99,54 @@ async def get_plugin_source_url(
         return RedirectResponse(url=source_url)
 
 
+@router.get("/api/proxy/openapi-url")
+async def get_openapi_source_url(
+    urlb64: str = Query(..., description="原始url压缩的base64"),
+    Verifcation=Depends(verification),
+):
+    try:
+        # 将Base64编码的URL解码为字符串
+        url_bytes = base64.b64decode(urlb64)
+        origin_url = url_bytes.decode("utf-8")
+        # 获取真正地址
+        log.info(f"origin_url: {origin_url}")
+        source_url = await xiaomusic.get_real_url_of_openapi(origin_url)
+        log.info(f"source_url: {source_url}")
+        if not source_url:
+            source_url = xiaomusic.default_url()
+        # 直接重定向到真实URL
+        return RedirectResponse(url=source_url)
+    except Exception as e:
+        log.error(f"获取真实音乐URL失败: {e}")
+        # 如果代理获取失败，重定向到原始URL
+        source_url = xiaomusic.default_url()
+        return RedirectResponse(url=source_url)
+
+
+@router.get("/api/proxy/m4s-to-mp3")
+async def m4s_to_mp3(
+        urlb64: str = Query(..., description="原始url压缩的base64"),
+        Verifcation=Depends(verification),
+):
+    try:
+        # 将Base64编码的URL解码为字符串
+        url_bytes = base64.b64decode(urlb64)
+        origin_url = url_bytes.decode("utf-8")
+        # 获取真正地址
+        log.info(f"origin_url: {origin_url}")
+        source_url = await xiaomusic.m4s_to_mp3(origin_url)
+        log.info(f"source_url: {source_url}")
+        if not source_url:
+            source_url = xiaomusic.default_url()
+        # 直接重定向到真实URL
+        return RedirectResponse(url=source_url)
+    except Exception as e:
+        log.error(f"获取真实音乐URL失败: {e}")
+        # 如果代理获取失败，重定向到原始URL
+        source_url = xiaomusic.default_url()
+        return RedirectResponse(url=source_url)
+
+
 @router.post("/api/play/getMediaSource")
 async def get_media_source(request: Request, Verifcation=Depends(verification)):
     """获取音乐真实播放URL"""
@@ -194,14 +242,14 @@ async def musicinfo(
     name: str, musictag: bool = False, Verifcation=Depends(verification)
 ):
     """音乐信息"""
-    url, _ = await xiaomusic._music_url_handler.get_music_url(name)
+    url, _ = await xiaomusic.get_music_url(name)
     info = {
         "ret": "OK",
         "name": name,
         "url": url,
     }
     if musictag:
-        info["tags"] = await xiaomusic._music_library.get_music_tags(name)
+        info["tags"] = xiaomusic.get_music_tags(name)
     return info
 
 
@@ -214,13 +262,13 @@ async def musicinfos(
     """批量音乐信息"""
     ret = []
     for music_name in name:
-        url, _ = await xiaomusic._music_url_handler.get_music_url(music_name)
+        url, _ = await xiaomusic.get_music_url(music_name)
         info = {
             "name": music_name,
             "url": url,
         }
         if musictag:
-            info["tags"] = await xiaomusic._music_library.get_music_tags(music_name)
+            info["tags"] = xiaomusic.get_music_tags(music_name)
         ret.append(info)
     return ret
 
@@ -228,7 +276,7 @@ async def musicinfos(
 @router.post("/setmusictag")
 async def setmusictag(info: MusicInfoObj, Verifcation=Depends(verification)):
     """设置音乐标签"""
-    ret = xiaomusic._music_library.set_music_tag(info.musicname, info)
+    ret = xiaomusic.set_music_tag(info.musicname, info)
     return {"ret": ret}
 
 
@@ -257,7 +305,7 @@ async def playmusic(data: DidPlayMusic, Verifcation=Depends(verification)):
 @router.post("/refreshmusictag")
 async def refreshmusictag(Verifcation=Depends(verification)):
     """刷新音乐标签"""
-    xiaomusic._music_library.refresh_music_tag()
+    xiaomusic.refresh_music_tag()
     return {
         "ret": "OK",
     }
@@ -273,12 +321,3 @@ async def debug_play_by_music_url(request: Request, Verifcation=Depends(verifica
         return await xiaomusic.debug_play_by_music_url(arg1=data_dict)
     except json.JSONDecodeError as err:
         raise HTTPException(status_code=400, detail="Invalid JSON") from err
-
-
-@router.post("/api/music/refreshlist")
-async def refreshlist(Verifcation=Depends(verification)):
-    """刷新歌曲列表"""
-    await xiaomusic.gen_music_list()
-    return {
-        "ret": "OK",
-    }

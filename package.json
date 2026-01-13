@@ -5,6 +5,7 @@
   "main": "xiaomusic/js_plugin_runner.js",
   "dependencies": {
     "axios": "^1.6.0",
+    "big-integer": "^1.6.52",
     "cheerio": "^1.0.0-rc.12",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.10",

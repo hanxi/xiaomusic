@@ -144,6 +144,20 @@ class MusicUrlHandler:
         self.log.info(f"Using proxy url: {proxy_url}")
         return proxy_url
 
+    def _get_m4s2mp3_proxy_url(self, origin_url):
+        """获取代理URL
+
+        Args:
+            origin_url: 原始URL
+
+        Returns:
+            str: 代理URL
+        """
+        urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
+        proxy_url = f"{self.hostname}:{self.public_port}/api/proxy/m4s-to-mp3?urlb64={urlb64}"
+        self.log.info(f"Using proxy url: {proxy_url}")
+        return proxy_url
+
     def _get_local_music_url(self, name):
         """获取本地音乐播放地址
 
@@ -194,9 +208,12 @@ class MusicUrlHandler:
         request_url = origin_url if origin_url else proxy_url
         source_url = await self.get_play_url(request_url)
         out_url = source_url
-        # 开放接口中，部分音源的链接不是直接可播放的MP3链接（/**.mp3?guid=**&vkey=**&uin=**），还需要进一步提取
+        # 部分音源的链接不是直接可播放的MP3链接（/**.mp3?guid=**&vkey=**&uin=**），还需要进一步提取
         if "?" in source_url and "&" in source_url:
-            out_url = self._get_proxy_url(source_url)
+            if ".m4s?" in source_url:
+                out_url = self._get_m4s2mp3_proxy_url(source_url)
+            else:
+                out_url = self._get_proxy_url(source_url)
         sec = await self._get_online_music_duration(name, source_url)
         return sec, out_url
 

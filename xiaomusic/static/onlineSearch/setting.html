@@ -69,7 +69,14 @@
             margin-top: 15px;
             margin-bottom: 15px;
             color: #333;
-            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .border-bottom {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            /*加粗*/
             padding-bottom: 10px;
         }
         .plugin-list {
@@ -334,8 +341,23 @@
             </div>
         </div>
 
-        <!-- 插件配置 内容 -->
-        <div class="section-title">插件配置</div>
+        <!-- 插件源配置 -->
+        <div class="section-title">插件源配置</div>
+        <div id="plugin-source">
+            <div class="plugin-item">
+                <div class="plugin-info">
+                    <div class="plugin-details">
+                        <div><strong>插件源地址: </strong> <span id="source-url"></span></div>
+                    </div>
+                </div>
+                <div class="plugin-actions">
+                    <button class="action-btn enable-btn" id="refresh-source-btn" onclick="refreshPluginSource()">更新订阅</button>
+                    <!-- 新增编辑按钮 -->
+                    <button class="action-btn edit-btn" id="edit-source-btn" onclick="editPluginSource()" style="display: inline-block;">编辑</button>
+                </div>
+            </div>
+        </div>
+        <div class="border-bottom"></div>
         <div id="plugins-container">
             <div class="loading">加载中...</div>
         </div>
@@ -355,10 +377,105 @@
                 versionSpan.textContent = `v${window.appConfig.version}`;
             }
         }
-        //加载插件
+        //加载数据
         loadPlugins();
         loadOpenApiConfig();
+        loadPluginSource();
     });
+
+    /*============================插件源相关函数=================================*/
+    // 加载 OpenAPI 配置
+    async function loadPluginSource() {
+        const container = document.getElementById('plugin-source');
+        try {
+            const response = await fetch('/api/plugin-source/load');
+            const data = await response.json();
+            if (data.success) {
+                displayPluginSource(data.data);
+            } else {
+                container.innerHTML = `<div class="error">加载失败: ${data.error}</div>`;
+            }
+        } catch (error) {
+            container.innerHTML = `<div class="error">加载出错: ${error.message}</div>`;
+        }
+    }
+
+    // 显示 OpenAPI 配置
+    function displayPluginSource(config) {
+        document.getElementById('source-url').textContent = config.source_url || '';
+        const editButtonElement = document.getElementById('edit-source-btn');
+        if (config.source_url && config.source_url.length > 0) {
+            editButtonElement.style.display = 'inline-block';
+        }
+    }
+
+
+    // 刷新订阅源
+    async function refreshPluginSource() {
+        try {
+            const urlElement = document.getElementById('source-url');
+            const currentUrl = urlElement.textContent;
+            if (!currentUrl) {
+                alert('请先设置接口地址！');
+                return;
+            }
+            if (!confirm(`确定要刷新订阅源吗？如果存在相同名称插件将被覆盖！`)) {
+                return;
+            }
+            const response = await fetch('/api/plugin-source/refresh', {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                // 操作成功，重新加载插件列表
+                await loadPlugins();
+            } else {
+                alert(`切换失败: ${data.error}`);
+            }
+        } catch (error) {
+            alert(`操作出错: ${error.message}`);
+        }
+    }
+
+    // 编辑OpenAPI地址功能
+    function editPluginSource() {
+        const urlElement = document.getElementById('source-url');
+        const currentUrl = urlElement.textContent;
+        const newUrl = prompt('请输入新的插件源地址:', currentUrl);
+        // 校验newUrl格式
+        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+        if (newUrl && urlPattern.test(newUrl)) {
+            // 更新地址
+            updatePluginSource(newUrl);
+        }else {
+            alert('请输入有效的插件源地址！');
+        }
+    }
+
+    // 更新OpenAPI地址
+    async function updatePluginSource(newUrl) {
+        try {
+            const response = await fetch('/api/plugin-source/updateUrl', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ source_url: newUrl })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                // 更新成功，重新加载插件列表
+                await loadPluginSource();
+            } else {
+                alert(`更新失败: ${data.error}`);
+            }
+        } catch (error) {
+            alert(`更新出错: ${error.message}`);
+        }
+    }
+
     /*============================开放接口函数=================================*/
     // 加载 OpenAPI 配置
     async function loadOpenApiConfig() {

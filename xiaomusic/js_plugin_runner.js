@@ -195,7 +195,8 @@ class PluginRunner {
             'he': require('he'),
             'dayjs': require('dayjs'),
             'cheerio': require('cheerio'),
-            'qs': require('qs')
+            'qs': require('qs'),
+            'big-integer': require('big-integer')
         };
 
         const safeRequire = (moduleName) => {

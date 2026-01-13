@@ -9,6 +9,7 @@ import ipaddress
 import json
 import socket
 from urllib.parse import urlparse
+from concurrent.futures import ThreadPoolExecutor
 
 import aiohttp
 
@@ -60,7 +61,7 @@ class OnlineMusicService:
         self.xiaomusic = xiaomusic_instance
 
     async def get_music_list_online(
-        self, plugin="all", keyword="", page=1, limit=20, **kwargs
+            self, plugin="all", keyword="", page=1, limit=20, **kwargs
     ):
         """在线获取歌曲列表
 
@@ -78,32 +79,143 @@ class OnlineMusicService:
         if not self.js_plugin_manager:
             return {"success": False, "error": "JS Plugin Manager not available"}
 
-        # 初始化 artist 变量
-        artist = ""
-        # 解析关键词，可能通过AI或直接分割
-        parsed_keyword, parsed_artist = await self._parse_keyword_with_ai(keyword)
-        keyword = parsed_keyword or keyword
-        artist = parsed_artist or artist
+        # 解析关键词和艺术家
+        keyword, artist = await self._parse_keyword_and_artist(keyword)
+
         # 获取API配置信息
         openapi_info = self.js_plugin_manager.get_openapi_info()
+
+        if plugin == "all":
+            # 并发执行插件搜索和OpenAPI搜索
+            return await self._execute_concurrent_searches(
+                keyword, artist, page, limit, openapi_info
+            )
+        elif plugin == "OpenAPI":
+            # OpenAPI搜索
+            return await self._execute_openapi_search(openapi_info, keyword, artist)
+        else:
+            # 插件在线搜索
+            return await self._execute_plugin_search(plugin, keyword, artist, page, limit)
+
+    async def _parse_keyword_and_artist(self, keyword):
+        """解析关键词和艺术家"""
+        parsed_keyword, parsed_artist = await self._parse_keyword_with_ai(keyword)
+        keyword = parsed_keyword or keyword
+        artist = parsed_artist or ""
+        return keyword, artist
+
+    async def _execute_concurrent_searches(self, keyword, artist, page, limit, openapi_info):
+        """执行并发搜索 - 插件和OpenAPI"""
+        tasks = []
+
+        # 插件在线搜索任务
+        plugin_task = asyncio.create_task(
+            self.get_music_list_mf("all", keyword=keyword, artist=artist, page=page, limit=limit)
+        )
+        tasks.append(plugin_task)
+
+        # OpenAPI搜索任务（只有在配置正确时才创建）
         if (
-            openapi_info.get("enabled", False)
-            and openapi_info.get("search_url", "") != ""
+                openapi_info.get("enabled", False)
+                and openapi_info.get("search_url", "") != ""
+        ):
+            openapi_task = asyncio.create_task(
+                self.js_plugin_manager.openapi_search(
+                    url=openapi_info.get("search_url"), keyword=keyword, artist=artist
+                )
+            )
+            tasks.append(openapi_task)
+
+        # 并发执行任务
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        plugin_result = results[0]
+        openapi_result = results[1] if len(results) > 1 else None
+
+        # 处理异常情况
+        plugin_result = self._handle_search_exception(plugin_result, "插件")
+        openapi_result = self._handle_search_exception(openapi_result, "OpenAPI")
+
+        # 合并结果
+        combined_result = self._merge_search_results(plugin_result, openapi_result)
+        combined_result["artist"] = artist or "佚名"
+        return combined_result
+
+    def _handle_search_exception(self, result, source_name):
+        """处理搜索异常"""
+        if result and isinstance(result, Exception):
+            self.log.error(f"{source_name}搜索发生异常: {result}")
+            return {"success": False, "error": str(result)}
+        return result
+
+    async def _execute_openapi_search(self, openapi_info, keyword, artist):
+        """执行OpenAPI搜索"""
+        if (
+                openapi_info.get("enabled", False)
+                and openapi_info.get("search_url", "") != ""
         ):
             # 开放接口获取
             result_data = await self.js_plugin_manager.openapi_search(
                 url=openapi_info.get("search_url"), keyword=keyword, artist=artist
             )
-            result_data["isOpenAPI"] = True
         else:
-            # 插件在线搜索
-            result_data = await self.get_music_list_mf(
-                plugin, keyword=keyword, artist=artist, page=page, limit=limit
-            )
-            result_data["isOpenAPI"] = False
-        # 将歌手名当作附加值，用于歌手搜索
+            return {"success": False, "error": "OpenAPI未启用或配置错误"}
+
         result_data["artist"] = artist or "佚名"
         return result_data
+
+    async def _execute_plugin_search(self, plugin, keyword, artist, page, limit):
+        """执行插件搜索"""
+        result_data = await self.get_music_list_mf(
+            plugin, keyword=keyword, artist=artist, page=page, limit=limit
+        )
+        result_data["artist"] = artist or "佚名"
+        return result_data
+
+    def _merge_search_results(self, plugin_result, openapi_result):
+        merged_data = []
+        sources = {}
+
+        # 先处理 OpenAPI 结果
+        if openapi_result and openapi_result.get("success"):
+            openapi_data = openapi_result.get("data", [])
+            if openapi_data:
+                for item in openapi_data:
+                    item["source"] = "openapi"
+                merged_data.extend(openapi_data)
+                if "sources" in openapi_result:
+                    sources.update(openapi_result["sources"])
+
+        # 再处理插件结果
+        if plugin_result and plugin_result.get("success"):
+            plugin_data = plugin_result.get("data", [])
+            if plugin_data:
+                for item in plugin_data:
+                    item["source"] = "plugin"
+                merged_data.extend(plugin_data)
+                sources.update(plugin_result.get("sources", {}))
+
+        # 如果都没有成功结果，返回错误
+        if not plugin_result.get("success") and not (openapi_result and openapi_result.get("success")):
+            # 优先返回第一个错误
+            error_result = plugin_result if not plugin_result.get("success") else openapi_result
+            return error_result
+
+        # 优化合并后的结果
+        optimized_result = self.js_plugin_manager.optimize_search_results(
+            {"data": merged_data},
+            search_keyword=plugin_result.get("artist", ""),  # 使用从关键词解析出的artist
+            limit=20,  # 默认限制
+            search_artist=plugin_result.get("artist", "")
+        )
+
+        return {
+            "success": True,
+            "data": optimized_result.get("data", []),
+            "total": len(optimized_result.get("data", [])),
+            "sources": sources,
+            "merged": True  # 标识这是合并结果
+        }
 
     async def get_music_list_mf(
         self, plugin="all", keyword="", artist="", page=1, limit=20, **kwargs
@@ -725,12 +837,14 @@ class OnlineMusicService:
             return {"success": False, "error": str(e)}
 
     @staticmethod
-    async def get_real_url_of_openapi(url: str, timeout: int = 10) -> str:
+    async def _make_request_with_validation(url: str, timeout: int, convert_m4s: bool = False) -> str:
         """
-        通过服务端代理获取开放接口真实的音乐播放URL，避免CORS问题
+        通用的URL请求和验证方法
+
         Args:
             url (str): 原始音乐URL
             timeout (int): 请求超时时间(秒)
+            convert_m4s (bool): 是否将.m4s格式转为.mp3格式
 
         Returns:
             str: 最终的真实播放URL，如果代理不成功则返回原始URL
@@ -789,6 +903,36 @@ class OnlineMusicService:
                 ) as response:
                     # 获取最终重定向后的URL
                     final_url = str(response.url)
+                    # 如果需要转换m4s格式
+                    if convert_m4s and final_url.lower().endswith('.m4s'):
+                        final_url = final_url[:-4] + '.mp3'
                     return final_url
         except Exception:
             return url  # 返回原始URL
+
+    @staticmethod
+    async def get_real_url_of_openapi(url: str, timeout: int = 10) -> str:
+        """
+        通过服务端代理获取开放接口真实的音乐播放URL，避免CORS问题
+        Args:
+            url (str): 原始音乐URL
+            timeout (int): 请求超时时间(秒)
+
+        Returns:
+            str: 最终的真实播放URL，如果代理不成功则返回原始URL
+        """
+        return await OnlineMusicService._make_request_with_validation(url, timeout, False)
+
+    @staticmethod
+    async def m4s_to_mp3(url: str, timeout: int = 10) -> str:
+        """
+        通过服务端代理获取开放接口真实的音乐播放URL，并将.m4s格式转为.mp3格式
+        Args:
+            url (str): 原始音乐URL
+            timeout (int): 请求超时时间(秒)
+
+        Returns:
+            str: 最终的真实播放URL（已转换为.mp3格式），如果代理不成功则返回原始URL
+        """
+        return await OnlineMusicService._make_request_with_validation(url, timeout, True)
+
