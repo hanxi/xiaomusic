@@ -847,7 +847,6 @@ class JSPluginManager:
 
         # 获取待处理的数据列表
         data_list = result_data["data"]
-        self.log.info(f"列表信息：：{data_list}")
         # 预计算平台权重，启用插件列表中的前9个插件有权重，排名越靠前权重越高
         enabled_plugins = self.get_enabled_plugins()
         plugin_weights = {p: 9 - i for i, p in enumerate(enabled_plugins[:9])}
@@ -888,8 +887,11 @@ class JSPluginManager:
                     artist_score = 800
                 elif ar in artist:
                     artist_score = 600
-
-            platform_bonus = plugin_weights.get(platform, 0)
+            # 开放接口的平台权重最高 10
+            if platform.startswith("OpenAPI-"):
+                platform_bonus = 10
+            else:
+                platform_bonus = plugin_weights.get(platform, 0)
             return title_score + artist_score + platform_bonus
 
         sorted_data = sorted(data_list, key=calculate_match_score, reverse=True)
