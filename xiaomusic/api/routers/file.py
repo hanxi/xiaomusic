@@ -54,7 +54,7 @@ from xiaomusic.utils.file_utils import clean_temp_dir
 router = APIRouter()
 
 
-@router.post("/file/cleantempdir")
+@router.post("/api/file/cleantempdir")
 async def cleantempdir(Verifcation=Depends(verification)):
     await clean_temp_dir(xiaomusic.config)
     log.info("clean_temp_dir ok")

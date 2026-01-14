@@ -195,7 +195,7 @@ $(function () {
   $("#cleantempdir").on("click", () => {
     $.ajax({
       type: "POST",
-      url: "/file/cleantempdir",
+      url: "/api/file/cleantempdir",
       contentType: "application/json",
       data: JSON.stringify({}),
       success: (msg) => {

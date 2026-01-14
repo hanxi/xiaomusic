@@ -275,7 +275,7 @@ async def debug_play_by_music_url(request: Request, Verifcation=Depends(verifica
         raise HTTPException(status_code=400, detail="Invalid JSON") from err
 
 
-@router.post("/music/refreshlist")
+@router.post("/api/music/refreshlist")
 async def refreshlist(Verifcation=Depends(verification)):
     """刷新歌曲列表"""
     await xiaomusic.gen_music_list()

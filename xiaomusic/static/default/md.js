@@ -513,7 +513,7 @@ function check_status_refresh_music_list(retries) {
 function refreshlist() {
   $.ajax({
     type: "POST",
-    url: "/music/refreshlist",
+    url: "/api/music/refreshlist",
     contentType: "application/json; charset=utf-8",
     data: JSON.stringify({}),
     success: () => {
