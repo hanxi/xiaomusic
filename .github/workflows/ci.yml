@@ -18,7 +18,7 @@ permissions:
   id-token: write
 
 jobs:
-  # Job 并行构建不同架构的镜像（按架构独立缓存）
+  # 构建多架构 Docker 镜像并在所有平台上运行基本测试
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -57,8 +57,9 @@ jobs:
           push: false
           load: true
           tags: ${{ env.VERSION_TAG }}-${{ matrix.platform }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache
-          cache-to: ${{ matrix.platform == 'amd64' && 'type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache,mode=max' || '' }}
+          # 为每个平台维护独立的构建缓存以加快后续构建速度
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-${{ matrix.platform }}
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-${{ matrix.platform }},mode=max
 
       - name: Test Docker image for ${{ matrix.platform }}
         run: |
@@ -69,17 +70,16 @@ jobs:
           docker save ${{ env.VERSION_TAG }}-${{ matrix.platform }} -o xiaomusic-${{ github.ref_name }}-${{ matrix.platform }}.tar
 
       - name: Upload Docker images as artifacts
-        if: matrix.platform == 'amd64'
         uses: actions/upload-artifact@v4
         with:
-          name: docker-images
-          path: xiaomusic-*.tar
+          name: docker-images-${{ matrix.platform }}
+          path: xiaomusic-${{ github.ref_name }}-${{ matrix.platform }}.tar
           retention-days: 1
 
-  # Job 推送 Docker 镜像（推送时也使用按架构缓存）
+  # 推送多架构 Docker 镜像到 Docker Hub
   push-docker:
     runs-on: ubuntu-latest
-    needs: collect-artifacts
+    needs: build
     if: github.ref_name == 'main' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
@@ -104,7 +104,7 @@ jobs:
           context: .
           push: true
           tags: ${{ env.VERSION_TAG }}
-          # 推送时也复用各架构的缓存
+          # 复用各个平台的构建缓存以加速推送过程
           cache-from: |
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-amd64
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-arm64
@@ -118,16 +118,16 @@ jobs:
           context: .
           push: true
           tags: ${{ env.VERSION_TAG }}, ${{ env.LATEST_TAG }}, ${{ env.STABLE_TAG }}
-          # 推送时也复用各架构的缓存
+          # 复用各个平台的构建缓存以加速推送过程
           cache-from: |
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-amd64
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-arm64
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-armv7
 
-  # 以下 publish-release、publish-pypi 任务保持不变，省略（和之前的配置一致）
+  # 推送镜像到 GitHub Release
   publish-release:
     runs-on: ubuntu-latest
-    needs: collect-artifacts
+    needs: build
     if: github.ref_name == 'main' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
@@ -171,7 +171,7 @@ jobs:
             echo "type upload ${FILE}"
             gh release upload "${RELEASE_NAME}" "${FILE}" --clobber
           done
-
+  # 推送 PyPI 包
   publish-pypi:
     runs-on: ubuntu-latest
     needs: build
