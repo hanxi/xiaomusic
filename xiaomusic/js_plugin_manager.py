@@ -736,7 +736,8 @@ class JSPluginManager:
             # 构造请求参数
             params = {"type": "aggregateSearch", "keyword": keyword, "limit": limit}
             # 使用aiohttp发起异步HTTP GET请求
-            async with aiohttp.ClientSession() as session:
+            connector = aiohttp.TCPConnector(ssl=False)  # 跳过 SSL 验证
+            async with aiohttp.ClientSession(connector=connector) as session:
                 async with session.get(
                     url, params=params, timeout=aiohttp.ClientTimeout(total=10)
                 ) as response:

@@ -16,7 +16,7 @@ COPY plugins/ ./plugins/
 COPY holiday/ ./holiday/
 COPY xiaomusic.py .
 
-FROM hanxi/xiaomusic:runtime
+FROM boluofandocker/xiaomusic-online:runtime
 
 WORKDIR /app
 

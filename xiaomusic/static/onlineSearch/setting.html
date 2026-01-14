@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="./favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>在线搜索配置</title>
     <!-- ... 公共配置 ... -->
@@ -419,7 +420,7 @@
                 alert('请先设置接口地址！');
                 return;
             }
-            if (!confirm(`确定要刷新订阅源吗？如果存在相同名称插件将被覆盖！`)) {
+            if (!confirm(`确定要刷新订阅源吗？相同名称插件将被覆盖！`)) {
                 return;
             }
             const response = await fetch('/api/plugin-source/refresh', {
