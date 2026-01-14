@@ -22,12 +22,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false  # 一个架构构建失败不影响其他架构
       matrix:
-        arch:
-          - { platform: linux/amd64, suffix: amd64 }
-          - { platform: linux/arm64, suffix: arm64 }
-          - { platform: linux/arm/v7, suffix: armv7 }
+        platform: [amd64, arm64, armv7]
+        include:
+          - platform: amd64
+            arch: amd64
+          - platform: arm64
+            arch: arm64
+          - platform: armv7
+            arch: arm/v7
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,42 +49,27 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and save Docker image for ${{ matrix.arch.suffix }}
+      - name: Build Docker image for ${{ matrix.platform }}
         uses: docker/build-push-action@v6
         with:
-          platforms: ${{ matrix.arch.platform }}
+          platforms: linux/${{ matrix.arch }}
           context: .
           push: false
           load: true
-          tags: ${{ env.VERSION_TAG }}-${{ matrix.arch.suffix }}
-          # 核心修改：每个架构使用专属的缓存标签
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-${{ matrix.arch.suffix }}
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-${{ matrix.arch.suffix }},mode=max
+          tags: ${{ env.VERSION_TAG }}-${{ matrix.platform }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache
+          cache-to: ${{ matrix.platform == 'amd64' && 'type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache,mode=max' || '' }}
 
-      - name: Save ${{ matrix.arch.suffix }} image to tar
+      - name: Test Docker image for ${{ matrix.platform }}
         run: |
-          docker save ${{ env.VERSION_TAG }}-${{ matrix.arch.suffix }} -o xiaomusic-${{ github.ref_name }}-${{ matrix.arch.suffix }}.tar
+          docker run --rm ${{ env.VERSION_TAG }}-${{ matrix.platform }} /app/.venv/bin/python3 /app/xiaomusic.py -h
 
-      - name: Upload ${{ matrix.arch.suffix }} image as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-image-${{ matrix.arch.suffix }}
-          path: xiaomusic-${{ github.ref_name }}-${{ matrix.arch.suffix }}.tar
-          retention-days: 1
+      - name: Save ${{ matrix.platform }} image to tar
+        run: |
+          docker save ${{ env.VERSION_TAG }}-${{ matrix.platform }} -o xiaomusic-${{ github.ref_name }}-${{ matrix.platform }}.tar
 
-  # 汇总所有架构的镜像包
-  collect-artifacts:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Download all architecture artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: docker-image-*
-          merge-multiple: true
-          path: ./
-
-      - name: Upload combined Docker images as artifacts
+      - name: Upload Docker images as artifacts
+        if: matrix.platform == 'amd64'
         uses: actions/upload-artifact@v4
         with:
           name: docker-images
