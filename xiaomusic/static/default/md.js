@@ -510,6 +510,21 @@ function check_status_refresh_music_list(retries) {
   });
 }
 
+function refreshlist() {
+  $.ajax({
+    type: "POST",
+    url: "/music/refreshlist",
+    contentType: "application/json; charset=utf-8",
+    data: JSON.stringify({}),
+    success: () => {
+      check_status_refresh_music_list(3); // 最多重试3次
+    },
+    error: () => {
+      // 请求失败时执行的操作
+    },
+  });
+}
+
 function sendcmd(cmd) {
   $.ajax({
     type: "POST",
