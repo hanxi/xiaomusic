@@ -349,7 +349,7 @@ class XiaoMusicDevice:
     async def _playmusic(self, name):
         """播放音乐的核心实现"""
         # 取消组内所有的下一首歌曲的定时器
-        self.cancel_group_next_timer()
+        await self.cancel_group_next_timer()
 
         self._playing = True
         self.device.cur_music = name
@@ -668,7 +668,15 @@ class XiaoMusicDevice:
                     await asyncio.sleep(duration)
                     try:
                         self.log.info("TTS 播放定时器时间到")
-                        if self._tts_timer:
+                        current_timer = self._tts_timer
+                        if current_timer:
+                            # 取消任务（防止任务被重复触发，即使sleep已结束）
+                            current_timer.cancel()
+                            try:
+                                await current_timer  # 等待任务取消完成，避免警告
+                            except asyncio.CancelledError:
+                                pass
+                            # 再置空引用
                             self._tts_timer = None
                             # 保底逻辑：删除临时 mp3 文件
                             if (
@@ -777,32 +785,40 @@ class XiaoMusicDevice:
 
     async def set_next_music_timeout(self, sec):
         """设置下一首歌曲的播放定时器"""
-        self.cancel_next_timer()
+        await self.cancel_next_timer()
 
         async def _do_next():
             await asyncio.sleep(sec)
             try:
-                self.log.info("定时器时间到了")
-                if self._next_timer:
+                self.log.info(f"定时器时间到了 did: {self.did}")
+                current_timer = self._next_timer
+                if current_timer:
+                    # 取消任务（防止任务被重复触发，即使sleep已结束）
+                    current_timer.cancel()
+                    try:
+                        await current_timer  # 等待任务取消完成，避免警告
+                    except asyncio.CancelledError:
+                        pass
+                    # 再置空引用
                     self._next_timer = None
                     if self.device.play_type == PLAY_TYPE_SIN:
-                        self.log.info("单曲播放不继续播放下一首")
+                        self.log.info(f"单曲播放不继续播放下一首 did: {self.did}")
                         await self.stop(arg1="notts")
                     else:
                         await self._play_next()
                 else:
-                    self.log.info("定时器时间到了但是不见了")
+                    self.log.info(f"定时器时间到了但是不见了 did: {self.did}")
                     await self.stop(arg1="notts")
 
             except Exception as e:
                 self.log.error(f"Execption {e}")
 
         self._next_timer = asyncio.create_task(_do_next())
-        self.log.info(f"{sec} 秒后将会播放下一首歌曲")
+        self.log.info(f"{sec} 秒后将会播放下一首歌曲 did: {self.did}")
 
     async def set_volume(self, volume: int):
         """设置音量"""
-        self.log.info("set_volume. volume:%d", volume)
+        self.log.info(f"set_volume.  did: {self.did} volume: {volume}")
         try:
             await self.auth_manager.mina_service.player_set_volume(
                 self.device_id, volume
@@ -854,7 +870,7 @@ class XiaoMusicDevice:
             await self.do_tts(self.config.stop_tts_msg)
             await asyncio.sleep(3)  # 等它说完
         # 取消组内所有的下一首歌曲的定时器
-        self.cancel_group_next_timer()
+        await self.cancel_group_next_timer()
         await self.group_force_stop_xiaoai()
         self.log.info("stop now")
 
@@ -884,22 +900,26 @@ class XiaoMusicDevice:
         self._stop_timer = asyncio.create_task(_do_stop())
         await self.do_tts(f"收到,{minute}分钟后将关机")
 
-    def cancel_next_timer(self):
+    async def cancel_next_timer(self):
         """取消下一首定时器"""
-        self.log.info("cancel_next_timer")
+        self.log.info(f"cancel_next_timer did: {self.did}")
         if self._next_timer:
             self._next_timer.cancel()
-            self.log.info(f"下一曲定时器已取消 {self.device_id}")
+            try:
+                await self._next_timer
+            except asyncio.CancelledError:
+                pass
+            self.log.info(f"下一曲定时器已取消 did: {self.did}")
             self._next_timer = None
         else:
-            self.log.info("下一曲定时器不见了")
+            self.log.info(f"下一曲定时器不见了 did: {self.did}")
 
-    def cancel_group_next_timer(self):
+    async def cancel_group_next_timer(self):
         """取消组内所有设备的下一首定时器"""
         devices = self.xiaomusic.get_group_devices(self.group_name)
         self.log.info(f"cancel_group_next_timer {devices}")
         for device in devices.values():
-            device.cancel_next_timer()
+            await device.cancel_next_timer()
 
     def get_cur_play_list(self):
         """获取当前播放列表名称"""
