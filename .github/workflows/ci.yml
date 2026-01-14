@@ -101,7 +101,9 @@ jobs:
           context: .
           push: true
           tags: ${{ env.VERSION_TAG }}
-          cache-from: type=gha
+          cache-from: |
+            type=gha,scope=amd64
+            type=gha,scope=arm64
 
       - name: Publish to Docker Hub latest and stable
         if: startsWith(github.ref, 'refs/tags/v')
@@ -114,7 +116,9 @@ jobs:
             ${{ env.VERSION_TAG }}
             ${{ env.LATEST_TAG }}
             ${{ env.STABLE_TAG }}
-          cache-from: type=gha
+          cache-from: |
+            type=gha,scope=amd64
+            type=gha,scope=arm64
 
   # 推送镜像到 GitHub Release
   publish-release:
