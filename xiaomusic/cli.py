@@ -96,7 +96,7 @@ def main():
         action="store_true",
     )
 
-    print(LOGO.format(f"XiaoMusic v{__version__} by: github.com/hanxi"))
+    print(LOGO.format(f"XiaoMusic v{__version__} by: github.com/hanxi"), flush=True)
 
     options = parser.parse_args()
     config = Config.from_options(options)
@@ -116,12 +116,12 @@ def main():
         "formatters": {
             "default": {
                 "format": f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s",
-                "datefmt": "[%X]",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
                 "use_colors": False,
             },
             "access": {
                 "format": f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s",
-                "datefmt": "[%X]",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
             },
         },
         "filters": {
