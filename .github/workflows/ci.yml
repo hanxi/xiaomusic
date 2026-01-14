@@ -23,14 +23,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [amd64, arm64, armv7]
+        platform: [amd64, arm64]
         include:
           - platform: amd64
             arch: amd64
           - platform: arm64
             arch: arm64
-          - platform: armv7
-            arch: arm/v7
     steps:
       - uses: actions/checkout@v4
         with:
