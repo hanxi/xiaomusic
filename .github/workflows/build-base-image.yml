@@ -14,14 +14,13 @@ permissions:
   contents: read
 
 jobs:
-  # 定义构建镜像的通用模板
   build-image:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     strategy:
-      fail-fast: false  # 一个构建失败不影响另一个
+      fail-fast: false
       matrix:
-        image-type: [runtime, builder]  # 并行构建两种镜像
+        image-type: [runtime, builder]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,3 +43,6 @@ jobs:
           platforms: linux/amd64, linux/arm64, linux/arm/v7
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:${{ matrix.image-type }}
+          # 核心缓存配置：每个镜像类型使用独立缓存标签
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-${{ matrix.image-type }}
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-${{ matrix.image-type }},mode=max
