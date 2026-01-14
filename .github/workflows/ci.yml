@@ -55,6 +55,8 @@ jobs:
           push: false
           load: true
           tags: ${{ env.VERSION_TAG }}
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
 
       - name: Test Docker image for ${{ matrix.platform }}
         run: |
@@ -99,15 +101,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Download ${{ matrix.platform }} image
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-images-${{ matrix.platform }}
-
-      - name: Load ${{ matrix.platform }} image
-        run: |
-          docker load -i xiaomusic-${{ github.ref_name }}-${{ matrix.platform }}.tar
-
       - name: Publish to Docker Hub (${{ matrix.platform }})
         if: github.ref_name == 'main'
         uses: docker/build-push-action@v6
@@ -116,6 +109,7 @@ jobs:
           context: .
           push: true
           tags: ${{ env.VERSION_TAG }}
+          cache-from: type=gha,scope=${{ matrix.platform }}
 
       - name: Publish to Docker Hub latest and stable (${{ matrix.platform }})
         if: startsWith(github.ref, 'refs/tags/v')
@@ -128,6 +122,7 @@ jobs:
             ${{ env.VERSION_TAG }}
             ${{ env.LATEST_TAG }}
             ${{ env.STABLE_TAG }}
+          cache-from: type=gha,scope=${{ matrix.platform }}
 
   # 推送镜像到 GitHub Release
   publish-release:
@@ -177,6 +172,7 @@ jobs:
             echo "type upload ${FILE}"
             gh release upload "${RELEASE_NAME}" "${FILE}" --clobber
           done
+
   # 推送 PyPI 包
   publish-pypi:
     runs-on: ubuntu-latest
