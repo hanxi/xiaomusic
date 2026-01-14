@@ -34,6 +34,11 @@ class JSPluginManager:
         self.pending_requests = {}
         self._is_shutting_down = False  # 添加关闭标志
 
+        # ... 配置文件相关 ...
+        self._config_cache = None
+        self._config_cache_time = 0
+        self._config_cache_ttl = 3 * 60  # 缓存有效期5秒，可根据需要调整
+
         # 启动 Node.js 子进程
         self._start_node_process()
 
@@ -42,11 +47,6 @@ class JSPluginManager:
 
         # 加载插件
         self._load_plugins()
-
-        # ... 配置文件相关 ...
-        self._config_cache = None
-        self._config_cache_time = 0
-        self._config_cache_ttl = 3 * 60  # 缓存有效期5秒，可根据需要调整
 
     def _start_node_process(self):
         """启动 Node.js 子进程"""
