@@ -49,8 +49,16 @@ from xiaomusic.utils import (
     safe_join_path,
     try_add_access_control_param,
 )
+from xiaomusic.utils.file_utils import clean_temp_dir
 
 router = APIRouter()
+
+
+@router.post("/file/cleantempdir")
+async def cleantempdir(Verifcation=Depends(verification)):
+    await clean_temp_dir(xiaomusic.config)
+    log.info("clean_temp_dir ok")
+    return {"ret": "OK"}
 
 
 @router.post("/downloadjson")
