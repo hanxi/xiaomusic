@@ -3,9 +3,9 @@ name: CI Workflow
 on:
   push:
     branches:
-      - "*"  # 所有分支触发
+      - "*" # 所有分支触发
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 env:
@@ -54,18 +54,15 @@ jobs:
           context: .
           push: false
           load: true
-          tags: ${{ env.VERSION_TAG }}-${{ matrix.platform }}
-          # 为每个平台维护独立的构建缓存以加快后续构建速度
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-${{ matrix.platform }}
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-${{ matrix.platform }},mode=max
+          tags: ${{ env.VERSION_TAG }}
 
       - name: Test Docker image for ${{ matrix.platform }}
         run: |
-          docker run --rm ${{ env.VERSION_TAG }}-${{ matrix.platform }} /app/.venv/bin/python3 /app/xiaomusic.py -h
+          docker run --rm ${{ env.VERSION_TAG }} /app/.venv/bin/python3 /app/xiaomusic.py -h
 
       - name: Save ${{ matrix.platform }} image to tar
         run: |
-          docker save ${{ env.VERSION_TAG }}-${{ matrix.platform }} -o xiaomusic-${{ github.ref_name }}-${{ matrix.platform }}.tar
+          docker save ${{ env.VERSION_TAG }} -o xiaomusic-${{ github.ref_name }}-${{ matrix.platform }}.tar
 
       - name: Upload Docker images as artifacts
         uses: actions/upload-artifact@v4
@@ -79,6 +76,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: github.ref_name == 'main' || startsWith(github.ref, 'refs/tags/v')
+    strategy:
+      matrix:
+        platform: [amd64, arm64]
+        include:
+          - platform: amd64
+            arch: amd64
+          - platform: arm64
+            arch: arm64
     steps:
       - uses: actions/checkout@v4
 
@@ -94,33 +99,35 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Publish to Docker Hub main
+      - name: Download ${{ matrix.platform }} image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images-${{ matrix.platform }}
+
+      - name: Load ${{ matrix.platform }} image
+        run: |
+          docker load -i xiaomusic-${{ github.ref_name }}-${{ matrix.platform }}.tar
+
+      - name: Publish to Docker Hub (${{ matrix.platform }})
         if: github.ref_name == 'main'
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/${{ matrix.arch }}
           context: .
           push: true
           tags: ${{ env.VERSION_TAG }}
-          # 复用各个平台的构建缓存以加速推送过程
-          cache-from: |
-            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-amd64
-            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-arm64
-            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-armv7
 
-      - name: Publish to Docker Hub latest and stable
+      - name: Publish to Docker Hub latest and stable (${{ matrix.platform }})
         if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/${{ matrix.arch }}
           context: .
           push: true
-          tags: ${{ env.VERSION_TAG }}, ${{ env.LATEST_TAG }}, ${{ env.STABLE_TAG }}
-          # 复用各个平台的构建缓存以加速推送过程
-          cache-from: |
-            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-amd64
-            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-arm64
-            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/xiaomusic:buildcache-armv7
+          tags: |
+            ${{ env.VERSION_TAG }}
+            ${{ env.LATEST_TAG }}
+            ${{ env.STABLE_TAG }}
 
   # 推送镜像到 GitHub Release
   publish-release:
@@ -130,10 +137,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download artifacts
+      - name: Download all platform artifacts
         uses: actions/download-artifact@v4
         with:
-          name: docker-images
+          pattern: docker-images-*
+          merge-multiple: true
 
       - name: Install GitHub CLI
         run: |
