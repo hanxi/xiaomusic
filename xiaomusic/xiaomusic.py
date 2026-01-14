@@ -952,9 +952,8 @@ class XiaoMusic:
 
     def update_config_from_setting(self, data):
         """从设置更新配置"""
-        # 委托给 config_manager 更新配置，并获取更新前的快照
-        snapshot = self._config_manager.update_config(data)
-        pre_efw = snapshot["enable_file_watch"]
+        # 委托给 config_manager 更新配置
+        self._config_manager.update_config(data)
 
         # 重新初始化配置相关的属性
         self.init_config()
@@ -966,14 +965,13 @@ class XiaoMusic:
         self.log.info(f"语音控制已启动, 用【{joined_keywords}】开头来控制")
         self.log.debug(f"key_word_dict: {self.config.key_word_dict}")
 
-        # 检查 enable_file_watch 配置是否发生变化
-        now_efw = self.config.enable_file_watch
-        if pre_efw != now_efw:
-            self.log.info("配置更新：{}目录监控".format("开启" if now_efw else "关闭"))
-            if now_efw:
-                self.start_file_watch()
-            else:
-                self.stop_file_watch()
+        # 根据新配置控制文件监控
+        if self.config.enable_file_watch:
+            self.log.info("配置更新：开启目录监控")
+            self.start_file_watch()
+        else:
+            self.log.info("配置更新：关闭目录监控")
+            self.stop_file_watch()
 
         # 重新加载计划任务
         self.crontab.reload_config(self)

@@ -107,11 +107,17 @@ class FileWatcherManager:
         self._file_watch_handler = None
 
     def start(self, loop):
-        """启动文件监控
+        """启动文件监控（支持重入）
+
+        如果监控器已在运行，会先停止再重新启动。
 
         Args:
             loop: asyncio 事件循环对象
         """
+        # 如果已经在运行，先停止
+        if self._observer:
+            self.stop()
+
         if not self.config.enable_file_watch:
             self.log.info("目录监控功能已关闭")
             return
@@ -136,7 +142,10 @@ class FileWatcherManager:
         self.log.info(f"已启动对 {self.music_path} 的目录监控。")
 
     def stop(self):
-        """停止文件监控"""
+        """停止文件监控（支持重入）
+
+        如果监控器未运行，不做任何操作。
+        """
         if self._observer:
             self._observer.stop()
             self._observer.join()

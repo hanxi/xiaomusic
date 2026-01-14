@@ -88,19 +88,9 @@ class ConfigManager:
 
         Args:
             data: 配置数据字典
-
-        Returns:
-            dict: 更新前的配置快照（用于检测变化）
         """
-        # 保存更新前的配置快照
-        snapshot = {
-            "enable_file_watch": self.config.enable_file_watch,
-        }
-
         # 自动赋值相同字段的配置
         self.config.update_config(data)
-
-        return snapshot
 
     def get_config(self):
         """获取当前配置
