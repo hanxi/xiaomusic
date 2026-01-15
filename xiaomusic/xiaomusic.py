@@ -730,7 +730,7 @@ class XiaoMusic:
         async with ClientSession() as session:
             await self._auth_manager.init_all_data(session, self._device_manager)
         self._music_library.gen_all_music_list()
-        self.update_devices()
+        self._device_manager.update_devices()
         self.update_all_playlist()
 
         debug_config = deepcopy_data_no_sensitive_info(self.config)
