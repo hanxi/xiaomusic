@@ -1,14 +1,24 @@
 # 定义构建参数，用于指定架构和基础镜像
-ARG TARGETPLATFORM
 ARG PYTHON_VERSION=3.14
 
 # 根据不同架构选择对应的基础镜像
-FROM python:${PYTHON_VERSION}-alpine AS builder-amd64
-FROM python:${PYTHON_VERSION}-alpine AS builder-arm64
-FROM python:${PYTHON_VERSION}-bookworm AS builder-armv7
+FROM python:${PYTHON_VERSION}-alpine AS base-linux-amd64
+FROM python:${PYTHON_VERSION}-alpine AS base-linux-arm64
+FROM python:${PYTHON_VERSION}-bookworm AS base-linux-arm-v7
+
+FROM python:${PYTHON_VERSION}-alpine AS run-linux-amd64
+FROM python:${PYTHON_VERSION}-alpine AS run-linux-arm64
+FROM python:${PYTHON_VERSION}-bookworm AS run-linux-arm-v7
+
+FROM --platform=$BUILDPLATFORM alpine AS shelf
+# 这里的逻辑是关键：接收标准的 TARGETPLATFORM (如 linux/amd64)
+# 并将其转换为我们定义的别名格式 (如 linux-amd64)
+ARG TARGETPLATFORM
+RUN echo ${TARGETPLATFORM//\//-} > /platform_id
 
 # 根据TARGETPLATFORM自动选择对应的builder阶段
-FROM builder-${TARGETPLATFORM//\//-} AS builder
+ARG TARGETPLATFORM
+FROM base-${TARGETPLATFORM/linux\//linux-} AS builder
 
 # 安装构建依赖（根据基础镜像类型区分）
 RUN if [ -f /etc/alpine-release ]; then \
@@ -58,13 +68,9 @@ COPY holiday/ ./holiday/
 COPY xiaomusic.py .
 
 # -------------------------- 运行阶段 --------------------------
-# 根据不同架构选择运行时基础镜像
-FROM python:${PYTHON_VERSION}-alpine AS runner-amd64
-FROM python:${PYTHON_VERSION}-alpine AS runner-arm64
-FROM python:${PYTHON_VERSION}-bookworm AS runner-armv7
-
 # 根据TARGETPLATFORM自动选择对应的runner阶段
-FROM runner-${TARGETPLATFORM//\//-} AS runner
+ARG TARGETPLATFORM
+FROM run-${TARGETPLATFORM/linux\//linux-} AS runner
 
 # 安装运行时依赖（区分Alpine和Debian）
 RUN if [ -f /etc/alpine-release ]; then \
