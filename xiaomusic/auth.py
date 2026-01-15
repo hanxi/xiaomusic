@@ -9,13 +9,14 @@
 
 import json
 import os
-
+from http.cookies import SimpleCookie
 from miservice import MiAccount, MiIOService, MiNAService
 
 from xiaomusic.config import Device
 from xiaomusic.const import COOKIE_TEMPLATE
 from xiaomusic.utils.system_utils import (
     parse_cookie_string,
+    get_random,
     parse_cookie_string_to_dict,
 )
 
