@@ -532,7 +532,7 @@ def extract_audio_metadata(file_path: str, save_root: str) -> dict:
         metadata.album = _get_tag_value(tags, "\xa9alb")
         metadata.year = _get_tag_value(tags, "\xa9day")
         metadata.genre = _get_tag_value(tags, "\xa9gen")
-        if "covr" in tags:
+        if "covr" in tags and isinstance(tags["covr"], list) and len(tags["covr"]) > 0:
             metadata.picture = _save_picture(tags["covr"][0], save_root, file_path)
 
     elif isinstance(audio, OggVorbis):
