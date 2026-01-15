@@ -7,9 +7,7 @@
 """
 
 from xiaomusic.device_player import XiaoMusicDevice
-from xiaomusic.utils import (
-    parse_str_to_dict,
-)
+from xiaomusic.utils.text_utils import parse_str_to_dict
 
 
 class DeviceManager:

@@ -36,20 +36,20 @@ from xiaomusic.api.models import (
     DownloadPlayList,
     UrlInfo,
 )
-from xiaomusic.utils import (
-    check_bili_fav_list,
+from xiaomusic.utils.file_utils import (
     chmoddir,
-    convert_file_to_mp3,
+    clean_temp_dir,
+    remove_common_prefix,
+    safe_join_path,
+)
+from xiaomusic.utils.music_utils import convert_file_to_mp3, is_mp3, remove_id3_tags
+from xiaomusic.utils.network_utils import (
+    check_bili_fav_list,
     download_one_music,
     download_playlist,
     downloadfile,
-    is_mp3,
-    remove_common_prefix,
-    remove_id3_tags,
-    safe_join_path,
-    try_add_access_control_param,
 )
-from xiaomusic.utils.file_utils import clean_temp_dir
+from xiaomusic.utils.system_utils import try_add_access_control_param
 
 router = APIRouter()
 

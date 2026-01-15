@@ -13,7 +13,7 @@ from xiaomusic.const import (
     PLAY_TYPE_SEQ,
     PLAY_TYPE_SIN,
 )
-from xiaomusic.utils import validate_proxy
+from xiaomusic.utils.system_utils import validate_proxy
 
 
 # 默认口令

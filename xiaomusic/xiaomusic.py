@@ -11,9 +11,7 @@ from xiaomusic import __version__
 from xiaomusic.analytics import Analytics
 from xiaomusic.auth import AuthManager
 from xiaomusic.command_handler import CommandHandler
-from xiaomusic.config import (
-    Config,
-)
+from xiaomusic.config import Config
 from xiaomusic.config_manager import ConfigManager
 from xiaomusic.const import (
     PLAY_TYPE_ALL,
@@ -31,11 +29,9 @@ from xiaomusic.music_library import MusicLibrary
 from xiaomusic.music_url import MusicUrlHandler
 from xiaomusic.online_music import OnlineMusicService
 from xiaomusic.plugin import PluginManager
-from xiaomusic.utils import (
-    chinese_to_number,
-    deepcopy_data_no_sensitive_info,
-    downloadfile,
-)
+from xiaomusic.utils.network_utils import downloadfile
+from xiaomusic.utils.system_utils import deepcopy_data_no_sensitive_info
+from xiaomusic.utils.text_utils import chinese_to_number
 
 
 class XiaoMusic:

@@ -6,10 +6,8 @@
 import base64
 import urllib.parse
 
-from xiaomusic.utils import (
-    MusicUrlCache,
-    try_add_access_control_param,
-)
+from xiaomusic.utils.network_utils import MusicUrlCache
+from xiaomusic.utils.system_utils import try_add_access_control_param
 
 
 class MusicUrlHandler:

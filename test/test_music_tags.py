@@ -1,12 +1,8 @@
 import traceback
 
-from xiaomusic.const import (
-    SUPPORT_MUSIC_TYPE,
-)
-from xiaomusic.utils import (
-    extract_audio_metadata,
-    traverse_music_directory,
-)
+from xiaomusic.const import SUPPORT_MUSIC_TYPE
+from xiaomusic.utils.file_utils import traverse_music_directory
+from xiaomusic.utils.music_utils import extract_audio_metadata
 
 # title 标题
 # artist 艺术家

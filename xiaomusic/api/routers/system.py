@@ -37,7 +37,7 @@ from xiaomusic.api.dependencies import (
     verification,
     xiaomusic,
 )
-from xiaomusic.utils import (
+from xiaomusic.utils.system_utils import (
     deepcopy_data_no_sensitive_info,
     get_latest_version,
     restart_xiaomusic,

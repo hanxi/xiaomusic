@@ -13,10 +13,7 @@ import time
 
 from aiohttp import ClientTimeout
 
-from xiaomusic.const import (
-    GET_ASK_BY_MINA,
-    LATEST_ASK_API,
-)
+from xiaomusic.const import GET_ASK_BY_MINA, LATEST_ASK_API
 
 
 class ConversationPoller:

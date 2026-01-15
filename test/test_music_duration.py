@@ -1,12 +1,8 @@
 import math
 
-from xiaomusic.const import (
-    SUPPORT_MUSIC_TYPE,
-)
-from xiaomusic.utils import (
-    get_local_music_duration,
-    traverse_music_directory,
-)
+from xiaomusic.const import SUPPORT_MUSIC_TYPE
+from xiaomusic.utils.file_utils import traverse_music_directory
+from xiaomusic.utils.music_utils import get_local_music_duration
 
 
 async def test_one_music(filename):

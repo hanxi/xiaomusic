@@ -1,6 +1,4 @@
-from xiaomusic.utils import (
-    download_and_extract,
-)
+from xiaomusic.utils.system_utils import download_and_extract
 
 if __name__ == "__main__":
     import asyncio

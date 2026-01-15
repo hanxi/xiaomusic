@@ -12,9 +12,7 @@ from urllib.parse import urlparse
 
 import aiohttp
 
-from xiaomusic.const import (
-    PLAY_TYPE_ALL,
-)
+from xiaomusic.const import PLAY_TYPE_ALL
 
 
 def _build_keyword(song_name, artist):

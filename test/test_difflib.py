@@ -1,9 +1,6 @@
 import difflib
 
-from xiaomusic.utils import (
-    find_best_match,
-    keyword_detection,
-)
+from xiaomusic.utils.text_utils import find_best_match, keyword_detection
 
 if __name__ == "__main__":
     user_input = "八年的爱"

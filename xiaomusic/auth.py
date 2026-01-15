@@ -10,11 +10,7 @@
 import json
 import os
 
-from miservice import (
-    MiAccount,
-    MiIOService,
-    MiNAService,
-)
+from miservice import MiAccount, MiIOService, MiNAService
 
 from xiaomusic.config import Device
 from xiaomusic.const import COOKIE_TEMPLATE

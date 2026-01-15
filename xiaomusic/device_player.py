@@ -23,11 +23,8 @@ from xiaomusic.const import (
     TTS_COMMAND,
 )
 from xiaomusic.events import DEVICE_CONFIG_CHANGED
-from xiaomusic.utils import (
-    chmodfile,
-    custom_sort_key,
-    list2str,
-)
+from xiaomusic.utils.file_utils import chmodfile
+from xiaomusic.utils.text_utils import custom_sort_key, list2str
 
 
 class XiaoMusicDevice:
