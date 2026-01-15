@@ -770,7 +770,11 @@ function startWebSocket(did, token) {
     setTimeout(() => startWebSocket(did, token), 3000);
   };
 
-  ws.onerror = (err) => console.error("WebSocket 错误:", err);
+  ws.onerror = (err) => {
+    console.error("WebSocket 错误:", err);
+    // 发生错误时也尝试重连
+    setTimeout(() => startWebSocket(did, token), 3000);
+  };
 }
 
 // 每秒更新播放进度
