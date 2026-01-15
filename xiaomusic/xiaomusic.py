@@ -151,6 +151,7 @@ class XiaoMusic:
         self._device_manager = DeviceManager(
             config=self.config,
             log=self.log,
+            xiaomusic=self,
         )
 
         # 初始化认证管理器（在配置和设备管理器准备好之后）

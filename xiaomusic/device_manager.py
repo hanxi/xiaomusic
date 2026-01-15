@@ -18,15 +18,17 @@ class DeviceManager:
     负责管理小米音箱设备列表、分组和设备信息查询。
     """
 
-    def __init__(self, config, log):
+    def __init__(self, config, log, xiaomusic=None):
         """初始化设备管理器
 
         Args:
             config: 配置对象
             log: 日志对象
+            xiaomusic: XiaoMusic实例（可选，用于延迟设置）
         """
         self.config = config
         self.log = log
+        self.xiaomusic = xiaomusic
 
         # 设备相关数据结构
         self.devices = {}  # key 为 did，value 为 XiaoMusicDevice 实例
@@ -55,7 +57,7 @@ class DeviceManager:
             if group_name not in self.groups:
                 self.groups[group_name] = []
             self.groups[group_name].append(device.device_id)
-            self.devices[did] = XiaoMusicDevice(self, device, group_name)
+            self.devices[did] = XiaoMusicDevice(self.xiaomusic, device, group_name)
 
         self.log.info(f"设备列表已更新: device_id_did={self.device_id_did}")
         self.log.info(f"设备分组已更新: groups={self.groups}")
