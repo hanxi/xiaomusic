@@ -106,6 +106,7 @@ class AuthManager:
                 str(self.mi_token_home),
             )
             # Forced login to refresh to refresh token
+            self.set_token(account)
             await account.login("micoapi")
             self.mina_service = MiNAService(account)
             self.miio_service = MiIOService(account)
@@ -151,7 +152,19 @@ class AuthManager:
         except Exception as e:
             self.log.warning(f"可能登录失败. {e}")
             return {}
-
+            
+    def set_token(self, account):
+        """
+        设置token到account
+        """
+        cookie_string = self.config.cookie
+        cookie = SimpleCookie()
+        cookie.load(cookie_string)
+        cookies_dict = {k: m.value for k, m in cookie.items()}
+        account.token["passToken"] = cookies_dict["passToken"]
+        account.token["userId"] = self.config.account
+        account.token["deviceId"] = get_random(16).upper()
+        
     def save_token(self, cookie_str):
         """保存token到文件
 
