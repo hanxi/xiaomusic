@@ -1,18 +1,44 @@
-# 第一阶段：构建阶段
-FROM python:3.14-alpine AS builder
+# 定义构建参数，用于指定架构和基础镜像
+ARG TARGETPLATFORM
+ARG PYTHON_VERSION=3.14
 
-# 安装构建依赖
-RUN apk add --no-cache \
-    build-base \
-    nodejs \
-    npm \
-    zlib-dev \
-    jpeg-dev \
-    freetype-dev \
-    lcms2-dev \
-    openjpeg-dev \
-    tiff-dev \
-    libwebp-dev
+# 根据不同架构选择对应的基础镜像
+FROM python:${PYTHON_VERSION}-alpine AS builder-amd64
+FROM python:${PYTHON_VERSION}-alpine AS builder-arm64
+FROM python:${PYTHON_VERSION}-bookworm AS builder-armv7
+
+# 根据TARGETPLATFORM自动选择对应的builder阶段
+FROM builder-${TARGETPLATFORM//\//-} AS builder
+
+# 安装构建依赖（根据基础镜像类型区分）
+RUN if [ -f /etc/alpine-release ]; then \
+        # Alpine系统依赖
+        apk add --no-cache \
+        build-base \
+        nodejs \
+        npm \
+        zlib-dev \
+        jpeg-dev \
+        freetype-dev \
+        lcms2-dev \
+        openjpeg-dev \
+        tiff-dev \
+        libwebp-dev; \
+    else \
+        # Debian系统依赖
+        apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        nodejs \
+        npm \
+        zlib1g-dev \
+        libjpeg-dev \
+        libfreetype6-dev \
+        liblcms2-dev \
+        libopenjp2-7-dev \
+        libtiff5-dev \
+        libwebp-dev \
+        && rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # 安装PDM
 RUN pip install -U pdm
@@ -31,14 +57,30 @@ COPY plugins/ ./plugins/
 COPY holiday/ ./holiday/
 COPY xiaomusic.py .
 
-# 第二阶段：运行阶段
-FROM python:3.14-alpine
+# -------------------------- 运行阶段 --------------------------
+# 根据不同架构选择运行时基础镜像
+FROM python:${PYTHON_VERSION}-alpine AS runner-amd64
+FROM python:${PYTHON_VERSION}-alpine AS runner-arm64
+FROM python:${PYTHON_VERSION}-bookworm AS runner-armv7
 
-# 安装运行时依赖
-RUN apk add --no-cache \
-    ffmpeg \
-    nodejs \
-    npm
+# 根据TARGETPLATFORM自动选择对应的runner阶段
+FROM runner-${TARGETPLATFORM//\//-} AS runner
+
+# 安装运行时依赖（区分Alpine和Debian）
+RUN if [ -f /etc/alpine-release ]; then \
+        # Alpine运行时依赖
+        apk add --no-cache \
+        ffmpeg \
+        nodejs \
+        npm; \
+    else \
+        # Debian运行时依赖
+        apt-get update && apt-get install -y --no-install-recommends \
+        ffmpeg \
+        nodejs \
+        npm \
+        && rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # 设置工作目录
 WORKDIR /app
@@ -53,10 +95,10 @@ COPY --from=builder /app/xiaomusic.py .
 COPY --from=builder /app/xiaomusic/__init__.py /base_version.py
 COPY --from=builder /app/package.json .
 
-# 创建FFmpeg软链接目录
+# 创建FFmpeg软链接目录（兼容不同系统的ffmpeg路径）
 RUN mkdir -p /app/ffmpeg/bin \
-    && ln -s /usr/bin/ffmpeg /app/ffmpeg/bin/ffmpeg \
-    && ln -s /usr/bin/ffprobe /app/ffmpeg/bin/ffprobe
+    && ln -s $(which ffmpeg) /app/ffmpeg/bin/ffmpeg \
+    && ln -s $(which ffprobe) /app/ffmpeg/bin/ffprobe
 
 RUN touch /app/.dockerenv
 
