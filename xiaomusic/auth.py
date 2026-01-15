@@ -158,6 +158,8 @@ class AuthManager:
         """
         设置token到account
         """
+        if not self.config.cookie:
+            return
         cookies_dict = parse_cookie_string_to_dict(self.config.cookie)
         account.token["passToken"] = cookies_dict["passToken"]
         account.token["userId"] = self.config.account
