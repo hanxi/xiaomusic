@@ -23,12 +23,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [amd64, arm64]
+        platform: [amd64, arm64, armv7]
         include:
           - platform: amd64
             arch: amd64
           - platform: arm64
             arch: arm64
+          - platform: armv7
+            arch: arm/v7
     steps:
       - uses: actions/checkout@v4
         with:
@@ -97,19 +99,20 @@ jobs:
         if: github.ref_name == 'main'
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           context: .
           push: true
           tags: ${{ env.VERSION_TAG }}
           cache-from: |
             type=gha,scope=amd64
             type=gha,scope=arm64
+            type=gha,scope=armv7
 
       - name: Publish to Docker Hub latest and stable
         if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           context: .
           push: true
           tags: |
@@ -119,6 +122,7 @@ jobs:
           cache-from: |
             type=gha,scope=amd64
             type=gha,scope=arm64
+            type=gha,scope=armv7
 
   # 推送镜像到 GitHub Release
   publish-release:
