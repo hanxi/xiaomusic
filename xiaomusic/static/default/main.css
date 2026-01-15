@@ -35,7 +35,7 @@ h1 {
   color: #333;
   display: flex;
 
-  align-items: center;
+  justify-content: center;
 }
 
 h1 a {
