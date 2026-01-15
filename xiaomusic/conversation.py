@@ -13,6 +13,11 @@ import time
 
 from aiohttp import ClientTimeout
 
+from xiaomusic.const import (
+    GET_ASK_BY_MINA,
+    LATEST_ASK_API,
+)
+
 
 class ConversationPoller:
     """对话记录轮询器
@@ -27,12 +32,7 @@ class ConversationPoller:
         config,
         log,
         auth_manager,
-        device_id_did,
-        get_did_func,
-        get_hardward_func,
-        init_all_data_func,
-        latest_ask_api,
-        get_ask_by_mina_list,
+        device_manager,
     ):
         """初始化对话轮询器
 
@@ -40,23 +40,13 @@ class ConversationPoller:
             config: 配置对象
             log: 日志对象
             auth_manager: 认证管理器实例
-            device_id_did: 设备ID到DID的映射字典
-            get_did_func: 获取DID的函数
-            get_hardward_func: 获取硬件类型的函数
-            init_all_data_func: 初始化所有数据的函数
-            latest_ask_api: 最新对话API模板
-            get_ask_by_mina_list: 需要通过Mina获取对话的硬件列表
+            device_manager: 设备管理器实例
         """
         self.config = config
         self.log = log
         self.auth_manager = auth_manager
-        self.device_id_did = device_id_did
+        self.device_manager = device_manager
         self.last_timestamp = {}  # key为 did. timestamp last call mi speaker
-        self.get_did = get_did_func
-        self.get_hardward = get_hardward_func
-        self.init_all_data = init_all_data_func
-        self.latest_ask_api = latest_ask_api
-        self.get_ask_by_mina_list = get_ask_by_mina_list
 
         # 存储最新的对话记录
         self.last_record = None
@@ -136,16 +126,14 @@ class ConversationPoller:
 
                 # 拉取所有音箱的对话记录
                 tasks = []
-                for device_id in self.device_id_did:
+                for device_id in self.device_manager.device_id_did:
                     # 首次用当前时间初始化
-                    did = self.get_did(device_id)
+                    did = self.device_manager.get_did(device_id)
                     if did not in self.last_timestamp:
                         self.last_timestamp[did] = int(time.time() * 1000)
 
-                    hardware = self.get_hardward(device_id)
-                    if (
-                        hardware in self.get_ask_by_mina_list
-                    ) or self.config.get_ask_by_mina:
+                    hardware = self.device_manager.get_hardward(device_id)
+                    if (hardware in GET_ASK_BY_MINA) or self.config.get_ask_by_mina:
                         tasks.append(self.get_latest_ask_by_mina(device_id))
                     else:
                         tasks.append(
@@ -188,7 +176,7 @@ class ConversationPoller:
             try:
                 timeout = ClientTimeout(total=15)
                 hardware = self.get_hardward(device_id)
-                url = self.latest_ask_api.format(
+                url = LATEST_ASK_API.format(
                     hardware=hardware,
                     timestamp=str(int(time.time() * 1000)),
                 )
@@ -200,7 +188,9 @@ class ConversationPoller:
                     self.log.warning(f"Request failed with status {r.status}")
                     # fix #362
                     if i == 2 and r.status == 401:
-                        await self.init_all_data(session)
+                        await self.auth_manager.init_all_data(
+                            session, self.device_manager
+                        )
                     continue
 
             except asyncio.CancelledError:
@@ -218,7 +208,7 @@ class ConversationPoller:
                 if i == 2:
                     # tricky way to fix #282 #272 # if it is the third time we re init all data
                     self.log.info("Maybe outof date trying to re init it")
-                    await self.init_all_data(session)
+                    await self.auth_manager.init_all_data(session, self.device_manager)
             else:
                 return self._get_last_query(device_id, data)
         self.log.warning("get_latest_ask_from_xiaoai. All retries failed.")
@@ -235,7 +225,7 @@ class ConversationPoller:
             None - 通过 _check_last_query 更新内部状态
         """
         try:
-            did = self.get_did(device_id)
+            did = self.device_manager.get_did(device_id)
             # 动态获取最新的 mina_service
             if self.auth_manager.mina_service is None:
                 self.log.warning(
@@ -272,7 +262,7 @@ class ConversationPoller:
         Returns:
             None - 通过 _check_last_query 更新内部状态
         """
-        did = self.get_did(device_id)
+        did = self.device_manager.get_did(device_id)
         self.log.debug(f"_get_last_query device_id:{device_id} did:{did} data:{data}")
         if d := data.get("data"):
             records = json.loads(d).get("records")

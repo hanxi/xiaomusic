@@ -384,3 +384,12 @@ class Config:
                 ignore_tag_absolute_path = os.path.abspath(ignore_tag_dir)
                 ignore_tag_absolute_dirs.append(ignore_tag_absolute_path)
         return ignore_tag_absolute_dirs
+
+    def get_one_device_id(self):
+        """获取一个设备ID
+
+        Returns:
+            str: 第一个设备的device_id，如果没有设备则返回空字符串
+        """
+        device = next(iter(self.devices.values()), None)
+        return device.device_id if device else ""

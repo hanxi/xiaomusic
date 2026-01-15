@@ -14,6 +14,7 @@ from collections import OrderedDict
 from dataclasses import asdict
 
 from xiaomusic.const import SUPPORT_MUSIC_TYPE
+from xiaomusic.events import CONFIG_CHANGED
 from xiaomusic.utils import (
     custom_sort_key,
     extract_audio_metadata,
@@ -52,6 +53,7 @@ class MusicLibrary:
         public_port,
         music_path_depth,
         exclude_dirs,
+        event_bus=None,
     ):
         """初始化音乐库
 
@@ -64,6 +66,7 @@ class MusicLibrary:
             public_port: 公开端口
             music_path_depth: 音乐目录扫描深度
             exclude_dirs: 排除的目录列表
+            event_bus: 事件总线对象（可选）
         """
         self.config = config
         self.log = log
@@ -73,6 +76,7 @@ class MusicLibrary:
         self.public_port = public_port
         self.music_path_depth = music_path_depth
         self.exclude_dirs = exclude_dirs
+        self.event_bus = event_bus
 
         # 音乐库数据
         self.all_music = {}  # 所有音乐 {name: filepath/url}
@@ -258,27 +262,24 @@ class MusicLibrary:
                 self.custom_play_list = json.loads(self.config.custom_play_list_json)
         return self.custom_play_list
 
-    def save_custom_play_list(self, save_config_callback):
-        """保存自定义播放列表
-
-        Args:
-            save_config_callback: 保存配置的回调函数
-        """
+    def save_custom_play_list(self):
+        """保存自定义播放列表"""
         custom_play_list = self.get_custom_play_list()
         self.refresh_custom_play_list()
         self.config.custom_play_list_json = json.dumps(
             custom_play_list, ensure_ascii=False
         )
-        save_config_callback()
+        # 发布配置变更事件
+        if self.event_bus:
+            self.event_bus.publish(CONFIG_CHANGED)
 
     # ==================== 播放列表管理 ====================
 
-    def play_list_add(self, name, save_config_callback):
+    def play_list_add(self, name):
         """新增歌单
 
         Args:
             name: 歌单名称
-            save_config_callback: 保存配置的回调函数
 
         Returns:
             bool: 是否成功
@@ -287,15 +288,14 @@ class MusicLibrary:
         if name in custom_play_list:
             return False
         custom_play_list[name] = []
-        self.save_custom_play_list(save_config_callback)
+        self.save_custom_play_list()
         return True
 
-    def play_list_del(self, name, save_config_callback):
+    def play_list_del(self, name):
         """移除歌单
 
         Args:
             name: 歌单名称
-            save_config_callback: 保存配置的回调函数
 
         Returns:
             bool: 是否成功
@@ -304,16 +304,15 @@ class MusicLibrary:
         if name not in custom_play_list:
             return False
         custom_play_list.pop(name)
-        self.save_custom_play_list(save_config_callback)
+        self.save_custom_play_list()
         return True
 
-    def play_list_update_name(self, oldname, newname, save_config_callback):
+    def play_list_update_name(self, oldname, newname):
         """修改歌单名字
 
         Args:
             oldname: 旧歌单名称
             newname: 新歌单名称
-            save_config_callback: 保存配置的回调函数
 
         Returns:
             bool: 是否成功
@@ -329,7 +328,7 @@ class MusicLibrary:
         play_list = custom_play_list[oldname]
         custom_play_list.pop(oldname)
         custom_play_list[newname] = play_list
-        self.save_custom_play_list(save_config_callback)
+        self.save_custom_play_list()
         return True
 
     def get_play_list_names(self):
@@ -356,13 +355,12 @@ class MusicLibrary:
         play_list = custom_play_list[name]
         return "OK", play_list
 
-    def play_list_update_music(self, name, music_list, save_config_callback):
+    def play_list_update_music(self, name, music_list):
         """歌单更新歌曲（覆盖）
 
         Args:
             name: 歌单名称
             music_list: 歌曲列表
-            save_config_callback: 保存配置的回调函数
 
         Returns:
             bool: 是否成功
@@ -370,7 +368,7 @@ class MusicLibrary:
         custom_play_list = self.get_custom_play_list()
         if name not in custom_play_list:
             # 歌单不存在则新建
-            if not self.play_list_add(name, save_config_callback):
+            if not self.play_list_add(name):
                 return False
 
         play_list = []
@@ -380,7 +378,7 @@ class MusicLibrary:
 
         # 直接覆盖
         custom_play_list[name] = play_list
-        self.save_custom_play_list(save_config_callback)
+        self.save_custom_play_list()
         return True
 
     def update_music_list_json(self, list_name, update_list, append=False):
@@ -439,13 +437,12 @@ class MusicLibrary:
         # 保存更新后的配置
         self.config.music_list_json = json.dumps(music_list, ensure_ascii=False)
 
-    def play_list_add_music(self, name, music_list, save_config_callback):
+    def play_list_add_music(self, name, music_list):
         """歌单新增歌曲
 
         Args:
             name: 歌单名称
             music_list: 歌曲列表
-            save_config_callback: 保存配置的回调函数
 
         Returns:
             bool: 是否成功
@@ -453,7 +450,7 @@ class MusicLibrary:
         custom_play_list = self.get_custom_play_list()
         if name not in custom_play_list:
             # 歌单不存在则新建
-            if not self.play_list_add(name, save_config_callback):
+            if not self.play_list_add(name):
                 return False
 
         play_list = custom_play_list[name]
@@ -461,16 +458,15 @@ class MusicLibrary:
             if (music_name in self.all_music) and (music_name not in play_list):
                 play_list.append(music_name)
 
-        self.save_custom_play_list(save_config_callback)
+        self.save_custom_play_list()
         return True
 
-    def play_list_del_music(self, name, music_list, save_config_callback):
+    def play_list_del_music(self, name, music_list):
         """歌单移除歌曲
 
         Args:
             name: 歌单名称
             music_list: 歌曲列表
-            save_config_callback: 保存配置的回调函数
 
         Returns:
             bool: 是否成功
@@ -484,7 +480,7 @@ class MusicLibrary:
             if music_name in play_list:
                 play_list.remove(music_name)
 
-        self.save_custom_play_list(save_config_callback)
+        self.save_custom_play_list()
         return True
 
     # ==================== 音乐搜索 ====================

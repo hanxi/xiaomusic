@@ -16,8 +16,6 @@ from xiaomusic.config import (
 )
 from xiaomusic.config_manager import ConfigManager
 from xiaomusic.const import (
-    GET_ASK_BY_MINA,
-    LATEST_ASK_API,
     PLAY_TYPE_ALL,
     PLAY_TYPE_ONE,
     PLAY_TYPE_RND,
@@ -27,7 +25,7 @@ from xiaomusic.const import (
 from xiaomusic.conversation import ConversationPoller
 from xiaomusic.crontab import Crontab
 from xiaomusic.device_manager import DeviceManager
-from xiaomusic.device_player import XiaoMusicDevice
+from xiaomusic.events import CONFIG_CHANGED, DEVICE_CONFIG_CHANGED, EventBus
 from xiaomusic.file_watcher import FileWatcherManager
 from xiaomusic.music_library import MusicLibrary
 from xiaomusic.music_url import MusicUrlHandler
@@ -37,7 +35,6 @@ from xiaomusic.utils import (
     chinese_to_number,
     deepcopy_data_no_sensitive_info,
     downloadfile,
-    parse_str_to_dict,
 )
 
 
@@ -47,14 +44,15 @@ class XiaoMusic:
 
         self.last_cmd = ""  # <--- 【新增这行】初始化变量
 
+        # 初始化事件总线
+        self.event_bus = EventBus()
+
         # 初始化认证管理器（延迟初始化部分属性）
         self._auth_manager = None
 
         # 初始化设备管理器（延迟初始化）
         self._device_manager = None
 
-        self.devices = {}  # key 为 did
-        self._cur_did = None  # 当前设备did
         self.running_task = []
 
         # 音乐库管理器（延迟初始化，在配置准备好之后）
@@ -127,6 +125,7 @@ class XiaoMusic:
             public_port=self.public_port,
             music_path_depth=self.music_path_depth,
             exclude_dirs=self.exclude_dirs,
+            event_bus=self.event_bus,
         )
 
         # 启动时重新生成一次播放列表
@@ -160,26 +159,20 @@ class XiaoMusic:
             config=self.config,
             log=self.log,
             mi_token_home=mi_token_home,
-            get_one_device_id_func=self._device_manager.get_one_device_id,
         )
 
         # 初始化插件
         self.plugin_manager = PluginManager(self)
 
         # 更新设备列表（必须在初始化 conversation_poller 之前，因为需要 device_id_did）
-        self.update_devices()
+        self._device_manager.update_devices()
 
         # 初始化对话轮询器（在 device_id_did 准备好之后）
         self._conversation_poller = ConversationPoller(
             config=self.config,
             log=self.log,
             auth_manager=self._auth_manager,
-            device_id_did=self.device_id_did,
-            get_did_func=self.get_did,
-            get_hardward_func=self.get_hardward,
-            init_all_data_func=self.init_all_data,
-            latest_ask_api=LATEST_ASK_API,
-            get_ask_by_mina_list=GET_ASK_BY_MINA,
+            device_manager=self._device_manager,
         )
 
         # 初始化命令处理器（在所有依赖准备好之后）
@@ -192,30 +185,15 @@ class XiaoMusic:
         # 启动统计
         self.analytics = Analytics(self.log, self.config)
 
+        # 订阅配置变更事件
+        self.event_bus.subscribe(CONFIG_CHANGED, self.save_cur_config)
+        self.event_bus.subscribe(DEVICE_CONFIG_CHANGED, self.save_cur_config)
+
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"Startup OK. {debug_config}")
 
         if self.config.conf_path == self.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
-
-    # 私有方法：调用插件方法的通用封装（委托给 online_music_service）
-    async def __call_plugin_method(
-        self,
-        plugin_name: str,
-        method_name: str,
-        music_item: dict,
-        result_key: str,
-        required_field: str = None,
-        **kwargs,
-    ):
-        """委托给 online_music_service"""
-        return await self._online_music_service._call_plugin_method(
-            plugin_name, method_name, music_item, result_key, required_field, **kwargs
-        )
-
-    def music_library(self):
-        """获取音乐库管理器实例"""
-        return self._music_library
 
     def init_config(self):
         self.music_path = self.config.music_path
@@ -233,35 +211,11 @@ class XiaoMusic:
         self.public_port = self.config.public_port
         if self.public_port == 0:
             self.public_port = self.port
-        # 自动3thplay生成播放 post url
-        self.thdtarget = f"{self.hostname}:{self.public_port}/thdaction"  # "HTTP://192.168.1.10:58090/thdaction"
 
         self.active_cmd = self.config.active_cmd.split(",")
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
         self.music_path_depth = self.config.music_path_depth
         self.continue_play = self.config.continue_play
-
-    def update_devices(self):
-        """更新设备列表（委托给 device_manager）"""
-        # 清理旧的设备定时器
-        XiaoMusicDevice.dict_clear(self.devices)
-
-        # 委托给 device_manager 更新设备映射和分组
-        self._device_manager.update_devices()
-
-        # 同步设备映射和分组到主类
-        self.device_id_did = self._device_manager.device_id_did
-
-        # 创建设备实例
-        did2group = parse_str_to_dict(self.config.group_list, d1=",", d2=":")
-        for did, device in self.config.devices.items():
-            group_name = did2group.get(did)
-            if not group_name:
-                group_name = device.name
-            self.devices[did] = XiaoMusicDevice(self, device, group_name)
-
-        # 将设备实例同步到 device_manager
-        self._device_manager.set_devices(self.devices)
 
     def setup_logger(self):
         log_format = f"%(asctime)s [{__version__}] [%(levelname)s] %(filename)s:%(lineno)d: %(message)s"
@@ -298,154 +252,6 @@ class XiaoMusic:
         console_handler.setFormatter(formatter)
         self.log.addHandler(console_handler)
 
-    async def init_all_data(self, session):
-        """初始化所有数据（委托给 auth_manager）"""
-        await self._auth_manager.init_all_data(session, self.try_update_device_id)
-        # 同步当前设备DID
-        self._cur_did = self._auth_manager._cur_did
-
-    async def need_login(self):
-        """检查是否需要登录（委托给 auth_manager）"""
-        return await self._auth_manager.need_login()
-
-    async def login_miboy(self, session):
-        """登录小米账号（委托给 auth_manager）"""
-        await self._auth_manager.login_miboy(session)
-
-    async def try_update_device_id(self):
-        """更新设备ID（委托给 auth_manager）"""
-        devices = await self._auth_manager.try_update_device_id()
-        # 同步设备信息和当前DID
-        self.config.devices = devices
-        self._cur_did = self._auth_manager._cur_did
-        return devices
-
-    def get_cookie(self):
-        """获取Cookie（委托给 auth_manager）"""
-        return self._auth_manager.get_cookie()
-
-    def get_one_device_id(self):
-        """获取一个设备ID（委托给 device_manager）"""
-        return self._device_manager.get_one_device_id()
-
-    def get_did(self, device_id):
-        """获取设备DID（委托给 device_manager）"""
-        return self._device_manager.get_did(device_id)
-
-    def get_hardward(self, device_id):
-        """获取设备硬件信息（委托给 device_manager）"""
-        return self._device_manager.get_hardward(device_id)
-
-    def get_group_device_id_list(self, group_name):
-        """获取分组设备ID列表（委托给 device_manager）"""
-        return self._device_manager.get_group_device_id_list(group_name)
-
-    def get_group_devices(self, group_name):
-        """获取分组设备（委托给 device_manager）"""
-        return self._device_manager.get_group_devices(group_name)
-
-    def get_device_by_device_id(self, device_id):
-        """根据device_id获取设备（委托给 device_manager）"""
-        return self._device_manager.get_device_by_device_id(device_id)
-
-    async def get_latest_ask_from_xiaoai(self, session, device_id):
-        """从小爱API获取最新对话（委托给 conversation_poller）"""
-        return await self._conversation_poller.get_latest_ask_from_xiaoai(
-            session, device_id
-        )
-
-    async def get_latest_ask_by_mina(self, device_id):
-        """通过Mina服务获取最新对话（委托给 conversation_poller）"""
-        return await self._conversation_poller.get_latest_ask_by_mina(device_id)
-
-    def _get_last_query(self, device_id, data):
-        """从API响应数据中提取最后一条对话（委托给 conversation_poller）"""
-        return self._conversation_poller._get_last_query(device_id, data)
-
-    def _check_last_query(self, last_record):
-        """检查并更新最后一条对话记录（委托给 conversation_poller）"""
-        return self._conversation_poller._check_last_query(last_record)
-
-    @property
-    def last_record(self):
-        """获取最后一条对话记录"""
-        return (
-            self._conversation_poller.last_record if self._conversation_poller else None
-        )
-
-    @last_record.setter
-    def last_record(self, value):
-        """设置最后一条对话记录"""
-        if self._conversation_poller:
-            self._conversation_poller.last_record = value
-
-    # ==================== 音乐库相关方法（委托给 music_library） ====================
-
-    def get_filename(self, name):
-        """获取音乐文件路径（委托给 music_library）"""
-        return self._music_library.get_filename(name)
-
-    # 判断本地音乐是否存在，网络歌曲不判断
-    def is_music_exist(self, name):
-        """判断本地音乐是否存在（委托给 music_library）"""
-        return self._music_library.is_music_exist(name)
-
-    # 是否是网络电台
-    def is_web_radio_music(self, name):
-        """是否是网络电台（委托给 music_library）"""
-        return self._music_library.is_web_radio_music(name)
-
-    def is_web_music(self, name):
-        """是否是网络歌曲（委托给 music_library）"""
-        return self._music_library.is_web_music(name)
-
-    # 是否是需要通过api获取播放链接的网络歌曲
-    def is_need_use_play_music_api(self, name):
-        """是否需要通过API获取播放链接（委托给 music_library）"""
-        return self._music_library.is_need_use_play_music_api(name)
-
-    async def get_music_tags(self, name):
-        """获取音乐标签信息（委托给 music_library）"""
-        return await self._music_library.get_music_tags(name)
-
-    # 修改标签信息
-    def set_music_tag(self, name, info):
-        """修改标签信息（委托给 music_library）"""
-        return self._music_library.set_music_tag(name, info)
-
-    async def get_music_sec_url(self, name, cur_playlist):
-        """获取歌曲播放时长和播放地址（委托给 music_url_handler）"""
-        return await self._music_url_handler.get_music_sec_url(name, cur_playlist)
-
-    async def get_music_url(self, name):
-        """获取音乐播放地址（委托给 music_url_handler）"""
-        return await self._music_url_handler.get_music_url(name)
-
-    # 给前端调用
-    def refresh_music_tag(self):
-        """刷新音乐标签（委托给 music_library）"""
-        self._music_library.refresh_music_tag()
-
-    def try_load_from_tag_cache(self):
-        """从缓存加载标签（委托给 music_library）"""
-        return self._music_library.try_load_from_tag_cache()
-
-    def try_save_tag_cache(self):
-        """保存标签缓存（委托给 music_library）"""
-        self._music_library.try_save_tag_cache()
-
-    def ensure_single_thread_for_tag(self):
-        """确保标签生成任务单线程执行（委托给 music_library）"""
-        return self._music_library.ensure_single_thread_for_tag()
-
-    def try_gen_all_music_tag(self, only_items=None):
-        """尝试生成所有音乐标签（委托给 music_library）"""
-        self._music_library.try_gen_all_music_tag(only_items)
-
-    async def _gen_all_music_tag(self, only_items=None):
-        """生成所有音乐标签（委托给 music_library）"""
-        await self._music_library._gen_all_music_tag(only_items)
-
     async def analytics_task_daily(self):
         while True:
             await self.analytics.send_daily_event()
@@ -478,7 +284,7 @@ class XiaoMusic:
 
     async def run_forever(self):
         self.log.info("run_forever start")
-        self.try_gen_all_music_tag()  # 事件循环开始后调用一次
+        self._music_library.try_gen_all_music_tag()  # 事件循环开始后调用一次
         self.crontab.start()
         await asyncio.create_task(self.analytics.send_startup_event())
         # 取配置 enable_file_watch 循环开始时调用一次，控制目录监控开关
@@ -490,7 +296,7 @@ class XiaoMusic:
         )  # to keep the reference to task, do not remove this
         async with ClientSession() as session:
             self.log.info("run_forever session created")
-            await self.init_all_data(session)
+            await self._auth_manager.init_all_data(session, self._device_manager)
             # 启动对话循环，传递回调函数
             await self._conversation_poller.run_conversation_loop(
                 session, self.do_check_cmd, self.reset_timer_when_answer
@@ -505,7 +311,7 @@ class XiaoMusic:
 
     # 重置计时器
     async def reset_timer_when_answer(self, answer_length, did):
-        await self.devices[did].reset_timer_when_answer(answer_length)
+        await self._device_manager.devices[did].reset_timer_when_answer(answer_length)
 
     def append_running_task(self, task):
         self.running_task.append(task)
@@ -529,30 +335,20 @@ class XiaoMusic:
         return False
 
     async def check_replay(self, did):
-        return await self.devices[did].check_replay()
-
-    # 检查是否匹配到完全一样的指令
-    def check_full_match_cmd(self, did, query, ctrl_panel):
-        """检查是否完全匹配命令（委托给 command_handler）"""
-        return self._command_handler.check_full_match_cmd(did, query, ctrl_panel)
-
-    # 匹配命令
-    def match_cmd(self, did, query, ctrl_panel):
-        """匹配命令（委托给 command_handler）"""
-        return self._command_handler.match_cmd(did, query, ctrl_panel)
+        return await self._device_manager.devices[did].check_replay()
 
     def find_real_music_name(self, name, n):
         """模糊搜索音乐名称（委托给 music_library）"""
         return self._music_library.find_real_music_name(name, n)
 
     def did_exist(self, did):
-        return did in self.devices
+        return did in self._device_manager.devices
 
     # 播放一个 url
     async def play_url(self, did="", arg1="", **kwargs):
         self.log.info(f"手动推送链接：{arg1}")
         url = arg1
-        return await self.devices[did].group_player_play(url)
+        return await self._device_manager.devices[did].group_player_play(url)
 
     # 设置为单曲循环
     async def set_play_type_one(self, did="", **kwargs):
@@ -575,7 +371,7 @@ class XiaoMusic:
         await self.set_play_type(did, PLAY_TYPE_SEQ)
 
     async def set_play_type(self, did="", play_type=PLAY_TYPE_RND, dotts=True):
-        await self.devices[did].set_play_type(play_type, dotts)
+        await self._device_manager.devices[did].set_play_type(play_type, dotts)
 
     # 设置为刷新列表
     async def gen_music_list(self, **kwargs):
@@ -722,7 +518,7 @@ class XiaoMusic:
             return
 
         # 调用设备播放音乐列表的方法
-        await self.devices[did].play_music_list(list_name, music_name)
+        await self._device_manager.devices[did].play_music_list(list_name, music_name)
 
     # 播放一个播放列表里第几个
     async def play_music_list_index(self, did="", arg1="", **kwargs):
@@ -744,7 +540,9 @@ class XiaoMusic:
         if 0 <= index - 1 < len(play_list):
             music_name = play_list[index - 1]
             self.log.info(f"即将播放 ${arg1} 里的第 ${index} 个: ${music_name}")
-            await self.devices[did].play_music_list(list_name, music_name)
+            await self._device_manager.devices[did].play_music_list(
+                list_name, music_name
+            )
             return
         await self.do_tts(did, f"播放列表{list_name}中找不到第${index}个")
 
@@ -778,27 +576,31 @@ class XiaoMusic:
     async def do_play(
         self, did, name, search_key="", exact=False, update_cur_list=False
     ):
-        return await self.devices[did].play(name, search_key, exact, update_cur_list)
+        return await self._device_manager.devices[did].play(
+            name, search_key, exact, update_cur_list
+        )
 
     # 本地播放
     async def playlocal(self, did="", arg1="", **kwargs):
-        return await self.devices[did].playlocal(arg1, update_cur_list=True)
+        return await self._device_manager.devices[did].playlocal(
+            arg1, update_cur_list=True
+        )
 
     # 本地搜索播放
     async def search_playlocal(self, did="", arg1="", **kwargs):
-        return await self.devices[did].playlocal(
+        return await self._device_manager.devices[did].playlocal(
             arg1, exact=False, update_cur_list=False
         )
 
     async def play_next(self, did="", **kwargs):
-        return await self.devices[did].play_next()
+        return await self._device_manager.devices[did].play_next()
 
     async def play_prev(self, did="", **kwargs):
-        return await self.devices[did].play_prev()
+        return await self._device_manager.devices[did].play_prev()
 
     # 停止
     async def stop(self, did="", arg1="", **kwargs):
-        return await self.devices[did].stop(arg1=arg1)
+        return await self._device_manager.devices[did].stop(arg1=arg1)
 
     # 定时关机
     async def stop_after_minute(self, did="", arg1=0, **kwargs):
@@ -808,7 +610,7 @@ class XiaoMusic:
         except (KeyError, ValueError):
             # 如果阿拉伯数字转换失败，尝试中文数字
             minute = chinese_to_number(str(arg1))
-        return await self.devices[did].stop_after_minute(minute)
+        return await self._device_manager.devices[did].stop_after_minute(minute)
 
     # 添加歌曲到收藏列表
     async def add_to_favorites(self, did="", arg1="", **kwargs):
@@ -833,75 +635,20 @@ class XiaoMusic:
     # 更新每个设备的歌单
     def update_all_playlist(self):
         """更新每个设备的歌单"""
-        for device in self.devices.values():
+        for device in self._device_manager.devices.values():
             device.update_playlist()
-
-    def get_custom_play_list(self):
-        """获取自定义播放列表（委托给 music_library）"""
-        return self._music_library.get_custom_play_list()
-
-    def save_custom_play_list(self):
-        """保存自定义播放列表（委托给 music_library）"""
-        self._music_library.save_custom_play_list(self.save_cur_config)
-
-    # 新增歌单
-    def play_list_add(self, name):
-        """新增歌单（委托给 music_library）"""
-        return self._music_library.play_list_add(name, self.save_cur_config)
-
-    # 移除歌单
-    def play_list_del(self, name):
-        """移除歌单（委托给 music_library）"""
-        return self._music_library.play_list_del(name, self.save_cur_config)
-
-    # 修改歌单名字
-    def play_list_update_name(self, oldname, newname):
-        """修改歌单名字（委托给 music_library）"""
-        return self._music_library.play_list_update_name(
-            oldname, newname, self.save_cur_config
-        )
-
-    # 获取所有自定义歌单
-    def get_play_list_names(self):
-        """获取所有自定义歌单（委托给 music_library）"""
-        return self._music_library.get_play_list_names()
-
-    # 获取歌单中所有歌曲
-    def play_list_musics(self, name):
-        """获取歌单中所有歌曲（委托给 music_library）"""
-        return self._music_library.play_list_musics(name)
-
-    def play_list_update_music(self, name, music_list):
-        """歌单更新歌曲（委托给 music_library）"""
-        return self._music_library.play_list_update_music(
-            name, music_list, self.save_cur_config
-        )
-
-    # 歌单新增歌曲
-    def play_list_add_music(self, name, music_list):
-        """歌单新增歌曲（委托给 music_library）"""
-        return self._music_library.play_list_add_music(
-            name, music_list, self.save_cur_config
-        )
-
-    # 歌单移除歌曲
-    def play_list_del_music(self, name, music_list):
-        """歌单移除歌曲（委托给 music_library）"""
-        return self._music_library.play_list_del_music(
-            name, music_list, self.save_cur_config
-        )
 
     # 获取音量
     async def get_volume(self, did="", **kwargs):
-        return await self.devices[did].get_volume()
+        return await self._device_manager.devices[did].get_volume()
 
     # 设置音量
     async def set_volume(self, did="", arg1=0, **kwargs):
-        if did not in self.devices:
+        if did not in self._device_manager.devices:
             self.log.info(f"设备 did:{did} 不存在, 不能设置音量")
             return
         volume = int(arg1)
-        return await self.devices[did].set_volume(volume)
+        return await self._device_manager.devices[did].set_volume(volume)
 
     # 搜索音乐
     def searchmusic(self, name):
@@ -915,42 +662,32 @@ class XiaoMusic:
 
     # 获取当前的播放列表
     def get_cur_play_list(self, did):
-        return self.devices[did].get_cur_play_list()
+        return self._device_manager.devices[did].get_cur_play_list()
 
     # 正在播放中的音乐
     def playingmusic(self, did):
-        cur_music = self.devices[did].get_cur_music()
+        cur_music = self._device_manager.devices[did].get_cur_music()
         self.log.debug(f"playingmusic. cur_music:{cur_music}")
         return cur_music
 
     def get_offset_duration(self, did):
-        return self.devices[did].get_offset_duration()
+        return self._device_manager.devices[did].get_offset_duration()
 
     # 当前是否正在播放歌曲
     def isplaying(self, did):
-        return self.devices[did].isplaying()
+        return self._device_manager.devices[did].isplaying()
 
     # 获取当前配置
     def getconfig(self):
         """获取当前配置（委托给 config_manager）"""
         return self._config_manager.get_config()
-        
-    def save_token(self, data):
-        cookie_str = data.get("cookie")
-        if cookie_str is None:
-            return 
-        cookie = SimpleCookie()
-        cookie.load(cookie_str)
-        cookies_dict = {k: m.value for k, m in cookie.items()}
 
-        with open(os.path.join(self.config.conf_path, ".mi.token"), "w") as f:
-            json.dump(cookies_dict, f)
     # 保存配置并重新启动
     async def saveconfig(self, data):
         """保存配置并重新启动"""
         # 更新配置
         self.update_config_from_setting(data)
-        self.save_token(data)
+        self._auth_manager.save_token(data.get("cookie"))
         # 配置文件落地
         self.save_cur_config()
         # 重新初始化
@@ -959,7 +696,7 @@ class XiaoMusic:
     # 把当前配置落地
     def save_cur_config(self):
         """把当前配置落地（委托给 config_manager）"""
-        self._config_manager.save_cur_config(self.devices)
+        self._config_manager.save_cur_config(self._device_manager.devices)
 
     def update_config_from_setting(self, data):
         """从设置更新配置"""
@@ -994,7 +731,7 @@ class XiaoMusic:
         self.setup_logger()
         # 创建临时 session 用于初始化数据
         async with ClientSession() as session:
-            await self.init_all_data(session)
+            await self._auth_manager.init_all_data(session, self._device_manager)
         self._music_library.gen_all_music_list()
         self.update_devices()
         self.update_all_playlist()
@@ -1017,7 +754,7 @@ class XiaoMusic:
         if arg1 is None:
             arg1 = {}
         data = arg1
-        device_id = self.get_one_device_id()
+        device_id = self.config.get_one_device_id()
         self.log.info(f"debug_play_by_music_url: {data} {device_id}")
         return await self._auth_manager.mina_service.ubus_request(
             device_id,
@@ -1027,13 +764,13 @@ class XiaoMusic:
         )
 
     async def exec(self, did="", arg1=None, **kwargs):
-        self._cur_did = did
+        self._auth_manager._cur_did = did
         code = arg1 if arg1 else 'code1("hello")'
         await self.plugin_manager.execute_plugin(code)
 
     # 此接口用于插件中获取当前设备
     def get_cur_did(self):
-        return self._cur_did
+        return self._auth_manager._cur_did
 
     async def do_tts(self, did, value):
-        return await self.devices[did].do_tts(value)
+        return await self._device_manager.devices[did].do_tts(value)

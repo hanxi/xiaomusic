@@ -6,6 +6,7 @@
 - 设备信息查询
 """
 
+from xiaomusic.device_player import XiaoMusicDevice
 from xiaomusic.utils import (
     parse_str_to_dict,
 )
@@ -38,6 +39,8 @@ class DeviceManager:
         根据配置中的设备信息和分组信息，更新设备列表和分组映射。
         这个方法需要在设备信息已经从小米服务器获取后调用。
         """
+        XiaoMusicDevice.dict_clear(self.devices)
+
         self.device_id_did = {}
         self.groups = {}
 
@@ -52,18 +55,10 @@ class DeviceManager:
             if group_name not in self.groups:
                 self.groups[group_name] = []
             self.groups[group_name].append(device.device_id)
+            self.devices[did] = XiaoMusicDevice(self, device, group_name)
 
         self.log.info(f"设备列表已更新: device_id_did={self.device_id_did}")
         self.log.info(f"设备分组已更新: groups={self.groups}")
-
-    def get_one_device_id(self):
-        """获取一个设备ID
-
-        Returns:
-            str: 第一个设备的device_id，如果没有设备则返回空字符串
-        """
-        device_id = next(iter(self.device_id_did), "")
-        return device_id
 
     def get_did(self, device_id):
         """根据device_id获取did
@@ -131,6 +126,17 @@ class DeviceManager:
             if did and did in self.devices:
                 devices[did] = self.devices[did]
         return devices
+
+    async def update_device_info(self, auth_manager):
+        """更新设备信息并刷新设备列表
+
+        从认证管理器获取最新的设备信息，然后更新设备列表。
+
+        Args:
+            auth_manager: 认证管理器实例
+        """
+        await auth_manager.try_update_device_id()
+        self.update_devices()
 
     def set_devices(self, devices):
         """设置设备实例字典

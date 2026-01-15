@@ -22,6 +22,7 @@ from xiaomusic.const import (
     PLAY_TYPE_SIN,
     TTS_COMMAND,
 )
+from xiaomusic.events import DEVICE_CONFIG_CHANGED
 from xiaomusic.utils import (
     chmodfile,
     custom_sort_key,
@@ -58,6 +59,7 @@ class XiaoMusicDevice:
         self.auth_manager = xiaomusic._auth_manager
         self.download_path = xiaomusic.download_path
         self.ffmpeg_location = self.config.ffmpeg_location
+        self.event_bus = getattr(xiaomusic, "event_bus", None)
 
         self._download_proc = None  # 下载对象
         self._next_timer = None
@@ -245,7 +247,7 @@ class XiaoMusicDevice:
             )
             # 本地存在歌曲，直接播放
             await self._playmusic(name)
-        elif not self.xiaomusic.is_music_exist(name):
+        elif not self.xiaomusic._music_library.is_music_exist(name):
             self.log.info(f"本地不存在歌曲{name}")
             if self.config.disable_download:
                 await self.do_tts(f"本地不存在歌曲{name}")
@@ -340,7 +342,7 @@ class XiaoMusicDevice:
             self.log.debug(
                 f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}"
             )
-        elif not self.xiaomusic.is_music_exist(name):
+        elif not self.xiaomusic._music_library.is_music_exist(name):
             self.log.info(f"本地不存在歌曲{name}")
             await self.do_tts(f"本地不存在歌曲{name}")
             return
@@ -356,7 +358,9 @@ class XiaoMusicDevice:
         self.device.playlist2music[self.device.cur_playlist] = name
         cur_playlist = self.device.cur_playlist
         self.log.info(f"cur_music {self.get_cur_music()}")
-        sec, url = await self.xiaomusic.get_music_sec_url(name, cur_playlist)
+        sec, url = await self.xiaomusic._music_url_handler.get_music_sec_url(
+            name, cur_playlist
+        )
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
 
@@ -391,7 +395,9 @@ class XiaoMusicDevice:
         self._duration = sec
         self._paused_time = 0
         await self.set_next_music_timeout(sec)
-        self.xiaomusic.save_cur_config()
+        # 发布设备配置变更事件
+        if self.event_bus:
+            self.event_bus.publish(DEVICE_CONFIG_CHANGED)
 
     async def do_tts(self, value):
         """执行TTS（文字转语音）"""
@@ -566,7 +572,7 @@ class XiaoMusicDevice:
                 return ""
 
         name = self._play_list[new_index]
-        if not self.xiaomusic.is_music_exist(name):
+        if not self.xiaomusic._music_library.is_music_exist(name):
             self._play_list.pop(new_index)
             self.log.info(f"pop not exist music: {name}")
             return self.get_music(direction)
@@ -593,7 +599,7 @@ class XiaoMusicDevice:
             return True
         else:
             # 当前播放的歌曲不存在了
-            if not self.xiaomusic.is_music_exist(self.get_cur_music()):
+            if not self.xiaomusic._music_library.is_music_exist(self.get_cur_music()):
                 self.log.info(f"当前播放的歌曲 {self.get_cur_music()} 不存在了")
                 return True
         return False
@@ -687,7 +693,9 @@ class XiaoMusicDevice:
 
     async def group_player_play(self, url, name=""):
         """同一组设备播放"""
-        device_id_list = self.xiaomusic.get_group_device_id_list(self.group_name)
+        device_id_list = self.xiaomusic._device_manager.get_group_device_id_list(
+            self.group_name
+        )
         tasks = [
             self.play_one_url(device_id, url, name) for device_id in device_id_list
         ]
@@ -829,7 +837,9 @@ class XiaoMusicDevice:
     async def set_play_type(self, play_type, dotts=True):
         """设置播放类型"""
         self.device.play_type = play_type
-        self.xiaomusic.save_cur_config()
+        # 发布设备配置变更事件
+        if self.event_bus:
+            self.event_bus.publish(DEVICE_CONFIG_CHANGED)
         if dotts:
             tts = self.config.get_play_type_tts(play_type)
             await self.do_tts(tts)
@@ -859,7 +869,9 @@ class XiaoMusicDevice:
 
     async def group_force_stop_xiaoai(self):
         """强制停止组内所有设备"""
-        device_id_list = self.xiaomusic.get_group_device_id_list(self.group_name)
+        device_id_list = self.xiaomusic._device_manager.get_group_device_id_list(
+            self.group_name
+        )
         self.log.info(f"group_force_stop_xiaoai {self.group_name} {device_id_list}")
         tasks = [self.force_stop_xiaoai(device_id) for device_id in device_id_list]
         results = await asyncio.gather(*tasks)
@@ -899,7 +911,7 @@ class XiaoMusicDevice:
 
     async def cancel_group_next_timer(self):
         """取消组内所有设备的下一首定时器"""
-        devices = self.xiaomusic.get_group_devices(self.group_name)
+        devices = self.xiaomusic._device_manager.get_group_devices(self.group_name)
         self.log.info(f"cancel_group_next_timer {devices}")
         for device in devices.values():
             await device.cancel_next_timer()

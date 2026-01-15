@@ -194,14 +194,14 @@ async def musicinfo(
     name: str, musictag: bool = False, Verifcation=Depends(verification)
 ):
     """音乐信息"""
-    url, _ = await xiaomusic.get_music_url(name)
+    url, _ = await xiaomusic._music_url_handler.get_music_url(name)
     info = {
         "ret": "OK",
         "name": name,
         "url": url,
     }
     if musictag:
-        info["tags"] = await xiaomusic.get_music_tags(name)
+        info["tags"] = await xiaomusic._music_library.get_music_tags(name)
     return info
 
 
@@ -214,13 +214,13 @@ async def musicinfos(
     """批量音乐信息"""
     ret = []
     for music_name in name:
-        url, _ = await xiaomusic.get_music_url(music_name)
+        url, _ = await xiaomusic._music_url_handler.get_music_url(music_name)
         info = {
             "name": music_name,
             "url": url,
         }
         if musictag:
-            info["tags"] = await xiaomusic.get_music_tags(music_name)
+            info["tags"] = await xiaomusic._music_library.get_music_tags(music_name)
         ret.append(info)
     return ret
 
@@ -228,7 +228,7 @@ async def musicinfos(
 @router.post("/setmusictag")
 async def setmusictag(info: MusicInfoObj, Verifcation=Depends(verification)):
     """设置音乐标签"""
-    ret = xiaomusic.set_music_tag(info.musicname, info)
+    ret = xiaomusic._music_library.set_music_tag(info.musicname, info)
     return {"ret": ret}
 
 
@@ -257,7 +257,7 @@ async def playmusic(data: DidPlayMusic, Verifcation=Depends(verification)):
 @router.post("/refreshmusictag")
 async def refreshmusictag(Verifcation=Depends(verification)):
     """刷新音乐标签"""
-    xiaomusic.refresh_music_tag()
+    xiaomusic._music_library.refresh_music_tag()
     return {
         "ret": "OK",
     }

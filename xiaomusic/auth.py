@@ -18,7 +18,10 @@ from miservice import (
 
 from xiaomusic.config import Device
 from xiaomusic.const import COOKIE_TEMPLATE
-from xiaomusic.utils import parse_cookie_string
+from xiaomusic.utils.system_utils import (
+    parse_cookie_string,
+    parse_cookie_string_to_dict,
+)
 
 
 class AuthManager:
@@ -27,19 +30,17 @@ class AuthManager:
     负责处理小米账号的登录、认证和会话管理。
     """
 
-    def __init__(self, config, log, mi_token_home, get_one_device_id_func):
+    def __init__(self, config, log, mi_token_home):
         """初始化认证管理器
 
         Args:
             config: 配置对象
             log: 日志对象
             mi_token_home: token文件路径
-            get_one_device_id_func: 获取一个设备ID的函数
         """
         self.config = config
         self.log = log
         self.mi_token_home = mi_token_home
-        self.get_one_device_id = get_one_device_id_func
 
         # 认证状态
         self.mina_service = None
@@ -51,14 +52,14 @@ class AuthManager:
         # 当前设备DID（用于设备ID更新）
         self._cur_did = None
 
-    async def init_all_data(self, session, try_update_device_id_func):
+    async def init_all_data(self, session, device_manager):
         """初始化所有数据
 
         检查登录状态，如需要则登录，然后更新设备ID和Cookie。
 
         Args:
             session: aiohttp客户端会话
-            try_update_device_id_func: 更新设备ID的函数（来自device_manager）
+            device_manager: 设备管理器实例
         """
         self.mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
         is_need_login = await self.need_login()
@@ -67,7 +68,7 @@ class AuthManager:
             await self.login_miboy(session)
         else:
             self.log.info("already logined")
-        await try_update_device_id_func()
+        await device_manager.update_device_info(self)
         cookie_jar = self.get_cookie()
         if cookie_jar:
             session.cookie_jar.update_cookies(cookie_jar)
@@ -155,6 +156,22 @@ class AuthManager:
             self.log.warning(f"可能登录失败. {e}")
             return {}
 
+    def save_token(self, cookie_str):
+        """保存token到文件
+
+        从请求数据中提取cookie并保存到.mi.token文件。
+
+        Args:
+            cookie_str: Cookie字符串
+        """
+
+        if cookie_str is None:
+            return
+        cookies_dict = parse_cookie_string_to_dict(cookie_str)
+
+        with open(self.mi_token_home, "w") as f:
+            json.dump(cookies_dict, f)
+
     def get_cookie(self):
         """获取Cookie
 
@@ -165,6 +182,8 @@ class AuthManager:
         """
         if self.config.cookie:
             cookie_jar = parse_cookie_string(self.config.cookie)
+            if not os.path.exists(self.mi_token_home):
+                self.save_token(self.config.cookie)
             return cookie_jar
 
         if not os.path.exists(self.mi_token_home):
@@ -175,7 +194,7 @@ class AuthManager:
             user_data = json.loads(f.read())
         user_id = user_data.get("userId")
         service_token = user_data.get("micoapi")[1]
-        device_id = self.get_one_device_id()
+        device_id = self.config.get_one_device_id()
         cookie_string = COOKIE_TEMPLATE.format(
             device_id=device_id, service_token=service_token, user_id=user_id
         )

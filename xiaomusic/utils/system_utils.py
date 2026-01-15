@@ -19,6 +19,20 @@ from requests.utils import cookiejar_from_dict
 log = logging.getLogger(__package__)
 
 
+def parse_cookie_string_to_dict(cookie_string: str):
+    """
+    解析 Cookie 字符串
+    Args:
+        cookie_string: Cookie 字符串
+    Returns:
+        CookieJar 对象
+    """
+    cookie = SimpleCookie()
+    cookie.load(cookie_string)
+    cookies_dict = {k: m.value for k, m in cookie.items()}
+    return cookies_dict
+
+
 def parse_cookie_string(cookie_string: str):
     """
     解析 Cookie 字符串
@@ -29,9 +43,7 @@ def parse_cookie_string(cookie_string: str):
     Returns:
         CookieJar 对象
     """
-    cookie = SimpleCookie()
-    cookie.load(cookie_string)
-    cookies_dict = {k: m.value for k, m in cookie.items()}
+    cookies_dict = parse_cookie_string_to_dict(cookie_string)
     return cookiejar_from_dict(cookies_dict, cookiejar=None, overwrite=True)
 
 
