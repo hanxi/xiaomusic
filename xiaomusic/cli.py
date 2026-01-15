@@ -2,8 +2,8 @@
 import argparse
 import json
 import logging
-import signal
 import os
+import signal
 
 import sentry_sdk
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
