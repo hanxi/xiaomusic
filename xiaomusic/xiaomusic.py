@@ -934,12 +934,23 @@ class XiaoMusic:
     def getconfig(self):
         """获取当前配置（委托给 config_manager）"""
         return self._config_manager.get_config()
+        
+    def save_token(self, data):
+        cookie_str = data.get("cookie")
+        if cookie_str is None:
+            return 
+        cookie = SimpleCookie()
+        cookie.load(cookie_str)
+        cookies_dict = {k: m.value for k, m in cookie.items()}
 
+        with open(os.path.join(self.config.conf_path, ".mi.token"), "w") as f:
+            json.dump(cookies_dict, f)
     # 保存配置并重新启动
     async def saveconfig(self, data):
         """保存配置并重新启动"""
         # 更新配置
         self.update_config_from_setting(data)
+        self.save_token(data)
         # 配置文件落地
         self.save_cur_config()
         # 重新初始化
