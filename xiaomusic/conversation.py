@@ -11,7 +11,7 @@ import asyncio
 import json
 import time
 
-from aiohttp import ClientTimeout
+from aiohttp import ClientSession, ClientTimeout
 
 from xiaomusic.const import GET_ASK_BY_MINA, LATEST_ASK_API
 
@@ -52,9 +52,7 @@ class ConversationPoller:
         self.polling_event = asyncio.Event()
         self.new_record_event = asyncio.Event()
 
-    async def run_conversation_loop(
-        self, session, do_check_cmd_callback, reset_timer_callback
-    ):
+    async def run_conversation_loop(self, do_check_cmd_callback, reset_timer_callback):
         """运行对话循环
 
         持续运行的主循环，负责：
@@ -63,40 +61,40 @@ class ConversationPoller:
         3. 调用回调处理对话命令
 
         Args:
-            session: aiohttp客户端会话
             do_check_cmd_callback: 处理命令的回调函数 async def(did, query, ctrl_panel)
             reset_timer_callback: 重置计时器的回调函数 async def(answer_length, did)
         """
         # 启动轮询任务
-        task = asyncio.create_task(self.poll_latest_ask(session))
-        assert task is not None  # to keep the reference to task, do not remove this
+        async with ClientSession() as session:
+            task = asyncio.create_task(self.poll_latest_ask(session))
+            assert task is not None  # to keep the reference to task, do not remove this
 
-        try:
-            while True:
-                self.polling_event.set()
-                await self.new_record_event.wait()
-                self.new_record_event.clear()
-                new_record = self.last_record
-                self.polling_event.clear()  # stop polling when processing the question
-
-                query = new_record.get("query", "").strip()
-                did = new_record.get("did", "").strip()
-                await do_check_cmd_callback(did, query, False)
-
-                answer = new_record.get("answer")
-                answers = new_record.get("answers", [{}])
-                if answers:
-                    answer = answers[0].get("tts", {}).get("text", "").strip()
-                    await reset_timer_callback(len(answer), did)
-                    self.log.debug(f"query:{query} did:{did} answer:{answer}")
-        except asyncio.CancelledError:
-            self.log.info("Conversation loop cancelled, cleaning up...")
-            task.cancel()
             try:
-                await task
+                while True:
+                    self.polling_event.set()
+                    await self.new_record_event.wait()
+                    self.new_record_event.clear()
+                    new_record = self.last_record
+                    self.polling_event.clear()  # stop polling when processing the question
+
+                    query = new_record.get("query", "").strip()
+                    did = new_record.get("did", "").strip()
+                    await do_check_cmd_callback(did, query, False)
+
+                    answer = new_record.get("answer")
+                    answers = new_record.get("answers", [{}])
+                    if answers:
+                        answer = answers[0].get("tts", {}).get("text", "").strip()
+                        await reset_timer_callback(len(answer), did)
+                        self.log.debug(f"query:{query} did:{did} answer:{answer}")
             except asyncio.CancelledError:
-                pass
-            raise
+                self.log.info("Conversation loop cancelled, cleaning up...")
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+                raise
 
     async def poll_latest_ask(self, session):
         """轮询最新对话记录
@@ -185,9 +183,7 @@ class ConversationPoller:
                     self.log.warning(f"Request failed with status {r.status}")
                     # fix #362
                     if i == 2 and r.status == 401:
-                        await self.auth_manager.init_all_data(
-                            session, self.device_manager
-                        )
+                        await self.auth_manager.init_all_data()
                     continue
 
             except asyncio.CancelledError:
@@ -205,7 +201,7 @@ class ConversationPoller:
                 if i == 2:
                     # tricky way to fix #282 #272 # if it is the third time we re init all data
                     self.log.info("Maybe outof date trying to re init it")
-                    await self.auth_manager.init_all_data(session, self.device_manager)
+                    await self.auth_manager.init_all_data()
             else:
                 return self._get_last_query(device_id, data)
         self.log.warning("get_latest_ask_from_xiaoai. All retries failed.")

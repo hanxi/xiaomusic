@@ -5,8 +5,6 @@ import os
 import re
 from logging.handlers import RotatingFileHandler
 
-from aiohttp import ClientSession
-
 from xiaomusic import __version__
 from xiaomusic.analytics import Analytics
 from xiaomusic.auth import AuthManager
@@ -151,18 +149,14 @@ class XiaoMusic:
         )
 
         # 初始化认证管理器（在配置和设备管理器准备好之后）
-        mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
         self._auth_manager = AuthManager(
             config=self.config,
             log=self.log,
-            mi_token_home=mi_token_home,
+            device_manager=self._device_manager,
         )
 
         # 初始化插件
         self.plugin_manager = PluginManager(self)
-
-        # 更新设备列表（必须在初始化 conversation_poller 之前，因为需要 device_id_did）
-        self._device_manager.update_devices()
 
         # 初始化对话轮询器（在 device_id_did 准备好之后）
         self._conversation_poller = ConversationPoller(
@@ -291,13 +285,11 @@ class XiaoMusic:
         assert (
             analytics_task is not None
         )  # to keep the reference to task, do not remove this
-        async with ClientSession() as session:
-            self.log.info("run_forever session created")
-            await self._auth_manager.init_all_data(session, self._device_manager)
-            # 启动对话循环，传递回调函数
-            await self._conversation_poller.run_conversation_loop(
-                session, self.do_check_cmd, self.reset_timer_when_answer
-            )
+        await self._auth_manager.init_all_data()
+        # 启动对话循环，传递回调函数
+        await self._conversation_poller.run_conversation_loop(
+            self.do_check_cmd, self.reset_timer_when_answer
+        )
 
     # 匹配命令
     async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
@@ -726,11 +718,8 @@ class XiaoMusic:
         for handler in self.log.handlers:
             handler.close()
         self.setup_logger()
-        # 创建临时 session 用于初始化数据
-        async with ClientSession() as session:
-            await self._auth_manager.init_all_data(session, self._device_manager)
+        await self._auth_manager.init_all_data()
         self._music_library.gen_all_music_list()
-        self._device_manager.update_devices()
         self.update_all_playlist()
 
         debug_config = deepcopy_data_no_sensitive_info(self.config)

@@ -3,6 +3,7 @@ import argparse
 import json
 import logging
 import signal
+import os
 
 import sentry_sdk
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
@@ -116,12 +117,12 @@ def main():
         "formatters": {
             "default": {
                 "format": f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s",
-                "datefmt": "%Y-%m-%d %H:%M:%S",
+                "datefmt": "[%Y-%m-%d %H:%M:%S]",
                 "use_colors": False,
             },
             "access": {
                 "format": f"%(asctime)s [{__version__}] [%(levelname)s] %(message)s",
-                "datefmt": "%Y-%m-%d %H:%M:%S",
+                "datefmt": "[%Y-%m-%d %H:%M:%S]",
             },
         },
         "filters": {
@@ -175,9 +176,10 @@ def main():
 
     try:
         filename = config.getsettingfile()
-        with open(filename, encoding="utf-8") as f:
-            data = json.loads(f.read())
-            config.update_config(data)
+        if not os.path.exists(filename):
+            with open(filename, encoding="utf-8") as f:
+                data = json.loads(f.read())
+                config.update_config(data)
     except Exception as e:
         print(f"Execption {e}")
 
@@ -185,34 +187,38 @@ def main():
 
     import uvicorn
 
-    xiaomusic = XiaoMusic(config)
-    HttpInit(xiaomusic)
-    port = int(config.port)
+    async def async_main(config: Config) -> None:
+        xiaomusic = XiaoMusic(config)
+        HttpInit(xiaomusic)
+        port = int(config.port)
 
-    # 创建 uvicorn 配置，禁用其信号处理
-    uvicorn_config = uvicorn.Config(
-        HttpApp,
-        host=["0.0.0.0", "::"],
-        port=port,
-        log_config=LOGGING_CONFIG,
-    )
-    server = uvicorn.Server(uvicorn_config)
+        # 创建 uvicorn 配置，禁用其信号处理
+        uvicorn_config = uvicorn.Config(
+            HttpApp,
+            host=["0.0.0.0", "::"],
+            port=port,
+            log_config=LOGGING_CONFIG,
+        )
+        server = uvicorn.Server(uvicorn_config)
 
-    # 自定义信号处理
-    shutdown_initiated = False
+        # 自定义信号处理
+        shutdown_initiated = False
 
-    def handle_exit(signum, frame):
-        nonlocal shutdown_initiated
-        if not shutdown_initiated:
-            shutdown_initiated = True
-            print("\n正在关闭服务器...")
-            server.should_exit = True
+        def handle_exit(signum, frame):
+            nonlocal shutdown_initiated
+            if not shutdown_initiated:
+                shutdown_initiated = True
+                print("\n正在关闭服务器...")
+                server.should_exit = True
 
-    signal.signal(signal.SIGINT, handle_exit)
-    signal.signal(signal.SIGTERM, handle_exit)
+        signal.signal(signal.SIGINT, handle_exit)
+        signal.signal(signal.SIGTERM, handle_exit)
 
-    # 运行服务器
-    asyncio.run(server.serve())
+        # 运行服务器
+        await server.serve()
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(async_main(config))
 
 
 if __name__ == "__main__":

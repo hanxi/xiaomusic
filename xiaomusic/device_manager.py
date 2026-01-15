@@ -33,7 +33,7 @@ class DeviceManager:
         self.device_id_did = {}  # device_id 到 did 的映射
         self.groups = {}  # 设备分组，key 为组名，value 为 device_id 列表
 
-    def update_devices(self):
+    def _update_devices(self):
         """更新设备列表
 
         根据配置中的设备信息和分组信息，更新设备列表和分组映射。
@@ -136,7 +136,7 @@ class DeviceManager:
             auth_manager: 认证管理器实例
         """
         await auth_manager.try_update_device_id()
-        self.update_devices()
+        self._update_devices()
 
     def set_devices(self, devices):
         """设置设备实例字典

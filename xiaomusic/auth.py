@@ -10,6 +10,7 @@
 import json
 import os
 
+from aiohttp import ClientSession
 from miservice import MiAccount, MiIOService, MiNAService
 
 from xiaomusic.config import Device
@@ -27,17 +28,16 @@ class AuthManager:
     负责处理小米账号的登录、认证和会话管理。
     """
 
-    def __init__(self, config, log, mi_token_home):
+    def __init__(self, config, log, device_manager):
         """初始化认证管理器
 
         Args:
             config: 配置对象
             log: 日志对象
-            mi_token_home: token文件路径
         """
         self.config = config
         self.log = log
-        self.mi_token_home = mi_token_home
+        self.mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
 
         # 认证状态
         self.mina_service = None
@@ -49,27 +49,38 @@ class AuthManager:
         # 当前设备DID（用于设备ID更新）
         self._cur_did = None
 
-    async def init_all_data(self, session, device_manager):
+        self.mi_session = ClientSession()
+        self.device_manager = device_manager
+
+    async def init_all_data(self):
         """初始化所有数据
 
         检查登录状态，如需要则登录，然后更新设备ID和Cookie。
 
-        Args:
-            session: aiohttp客户端会话
-            device_manager: 设备管理器实例
         """
         self.mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
         is_need_login = await self.need_login()
-        if is_need_login:
+        is_can_login = await self.can_login()
+        if is_need_login and is_can_login:
             self.log.info("try login")
-            await self.login_miboy(session)
+            await self.login_miboy()
         else:
-            self.log.info("already logined")
-        await device_manager.update_device_info(self)
+            self.log.info(
+                f"Maybe already logined is_need_login:{is_need_login} is_can_login:{is_can_login}"
+            )
+        await self.device_manager.update_device_info(self)
         cookie_jar = self.get_cookie()
         if cookie_jar:
-            session.cookie_jar.update_cookies(cookie_jar)
-        self.cookie_jar = session.cookie_jar
+            self.mi_session.cookie_jar.update_cookies(cookie_jar)
+        self.cookie_jar = self.mi_session.cookie_jar
+
+    async def can_login(self):
+        if self.config.account and self.config.password:
+            return True
+        if self.get_cookie():
+            return True
+        self.log.warning("没有账号密码 或 cookies 无法登陆")
+        return False
 
     async def need_login(self):
         """检查是否需要登录
@@ -91,17 +102,14 @@ class AuthManager:
             return True
         return False
 
-    async def login_miboy(self, session):
+    async def login_miboy(self):
         """登录小米账号
 
         使用配置的账号密码登录小米账号，并初始化相关服务。
-
-        Args:
-            session: aiohttp客户端会话
         """
         try:
             account = MiAccount(
-                session,
+                self.mi_session,
                 self.config.account,
                 self.config.password,
                 str(self.mi_token_home),
@@ -173,13 +181,14 @@ class AuthManager:
         Args:
             cookie_str: Cookie字符串
         """
-
-        if cookie_str is None:
+        if not cookie_str:
             return
+
         cookies_dict = parse_cookie_string_to_dict(cookie_str)
 
         with open(self.mi_token_home, "w") as f:
             json.dump(cookies_dict, f)
+            self.log.info(f"save_token ok {cookie_str}")
 
     def get_cookie(self):
         """获取Cookie
@@ -201,6 +210,7 @@ class AuthManager:
 
         with open(self.mi_token_home, encoding="utf-8") as f:
             user_data = json.loads(f.read())
+        self.log.info(f"get_cookie user_data:{user_data}")
         user_id = user_data.get("userId")
         service_token = user_data.get("micoapi")[1]
         device_id = self.config.get_one_device_id()
