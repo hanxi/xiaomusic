@@ -4,12 +4,18 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-
+  justify-content: center;
+  min-height: 100vh;
   margin: 0;
   padding: 0;
+  padding-bottom: 60px;
 }
 .index_page {
-  height: 100vh;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .player {
@@ -207,11 +213,20 @@ progress::-webkit-progress-value {
 }
 
 .footer {
-  position: absolute;
+  position: fixed;
   bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 14px;
   color: #555;
   user-select: none;
+}
+
+
+
+
+
+
 }
 
 .timer-tooltip {
