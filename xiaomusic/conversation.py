@@ -175,7 +175,7 @@ class ConversationPoller:
         for i in range(retries):
             try:
                 timeout = ClientTimeout(total=15)
-                hardware = self.get_hardward(device_id)
+                hardware = self.device_manager.get_hardward(device_id)
                 url = LATEST_ASK_API.format(
                     hardware=hardware,
                     timestamp=str(int(time.time() * 1000)),
