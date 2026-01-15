@@ -9,283 +9,308 @@
     <script src="./config.js"></script>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior: none;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: none;
+    }
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .version-info {
+        position: absolute;
+        top: 10px;
+        left: 20px;
+        color: white;
+        font-size: 14px;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 4px 8px;
+        border-radius: 4px;
+        z-index: 10;
+    }
+
+    /* 调整 header 内容的 padding，避免与版本信息重叠 */
+    .header {
+        background: #31c27c;
+        color: white;
+        padding: 20px 20px 20px 60px; /* 左边增加留白 */
+        text-align: center;
+        position: relative;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+    .error {
+        text-align: center;
+        padding: 40px;
+        color: #d32f2f;
+    }
+    .empty {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+    }
+    /* 插件设置专用样式 */
+    .plugins-section {
+        padding: 20px;
+    }
+    .section-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-top: 15px;
+        margin-bottom: 15px;
+        color: #333;
+        padding-bottom: 10px;
+    }
+
+    .border-bottom {
+        margin-top: 15px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #e0e0e0;
+        /*加粗*/
+        padding-bottom: 10px;
+    }
+    .plugin-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .plugin-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        background: #fafafa;
+    }
+    .plugin-info {
+        flex: 1;
+    }
+    .plugin-name {
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+    .plugin-status {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        margin-top: 5px; /* 添加上边距 */
+    }
+    .status-enabled {
+        background: #e8f5e9;
+        color: #4caf50;
+    }
+    .status-disabled {
+        background: #ffebee;
+        color: #f44336;
+    }
+    .plugin-details {
+        font-size: 13px;
+        color: #666;
+    }
+    .plugin-actions {
+        display: flex;
+        gap: 10px;
+    }
+    .action-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: background 0.2s;
+    }
+    .enable-btn {
+        background: #4caf50;
+        color: white;
+    }
+    .enable-btn:hover {
+        background: #45a049;
+    }
+    .disable-btn {
+        background: #f44336;
+        color: white;
+    }
+    .disable-btn:hover {
+        background: #da190b;
+    }
+    .uninstall-btn {
+        background: gray;
+        color: white;
+    }
+    .uninstall-btn:hover {
+        background: dimgray;
+    }
+    .refresh-btn {
+        display: block;
+        margin: 20px auto;
+        padding: 10px 20px;
+        background: #31c27c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .refresh-btn:hover {
+        background: #28a869;
+    }
+    /* 顶部按钮的样式 */
+    .header-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+        width: 100%; /* 确保容器占满可用宽度 */
+    }
+    .header-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: #fff;
+        color: #31c27c;
+        border: 1px solid #31c27c;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .header-btn:hover {
+        background: #f0f0f0;
+    }
+    .material-icons {
+        font-size: 20px;
+    }
+    .edit-btn {
+        background: #2196f3;
+        color: white;
+    }
+
+    .edit-btn:hover {
+        background: #1976d2;
+    }
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
         }
+
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .version-info {
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            color: white;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 4px 8px;
-            border-radius: 4px;
-            z-index: 10;
+            max-width: 100%;
+            margin: 0;
+            border-radius: 0;
+            min-height: 100vh;
         }
 
-        /* 调整 header 内容的 padding，避免与版本信息重叠 */
         .header {
-            background: #31c27c;
-            color: white;
-            padding: 20px 20px 20px 60px; /* 左边增加留白 */
-            text-align: center;
-            position: relative;
+            padding: 15px 10px;
         }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-        .error {
-            text-align: center;
-            padding: 40px;
-            color: #d32f2f;
-        }
-        .empty {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-        /* 插件设置专用样式 */
-        .plugins-section {
-            padding: 20px;
-        }
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 15px;
-            margin-bottom: 15px;
-            color: #333;
-            padding-bottom: 10px;
+        .header h1 {
+            font-size: 1.5rem;
         }
 
-        .border-bottom {
-            margin-top: 15px;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #e0e0e0;
-            /*加粗*/
-            padding-bottom: 10px;
+        .header p {
+            font-size: 0.9rem;
         }
-        .plugin-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .plugin-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 6px;
-            background: #fafafa;
-        }
-        .plugin-info {
-            flex: 1;
-        }
-        .plugin-name {
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-        .plugin-status {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-top: 5px; /* 添加上边距 */
-        }
-        .status-enabled {
-            background: #e8f5e9;
-            color: #4caf50;
-        }
-        .status-disabled {
-            background: #ffebee;
-            color: #f44336;
-        }
-        .plugin-details {
-            font-size: 13px;
-            color: #666;
-        }
-        .plugin-actions {
-            display: flex;
-            gap: 10px;
-        }
-        .action-btn {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background 0.2s;
-        }
-        .enable-btn {
-            background: #4caf50;
-            color: white;
-        }
-        .enable-btn:hover {
-            background: #45a049;
-        }
-        .disable-btn {
-            background: #f44336;
-            color: white;
-        }
-        .disable-btn:hover {
-            background: #da190b;
-        }
-        .uninstall-btn {
-            background: gray;
-            color: white;
-        }
-        .uninstall-btn:hover {
-            background: dimgray;
-        }
-        .refresh-btn {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background: #31c27c;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .refresh-btn:hover {
-            background: #28a869;
-        }
-        /* 顶部按钮的样式 */
+
         .header-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 15px;
+            flex-direction: row;
             flex-wrap: wrap;
-            width: 100%; /* 确保容器占满可用宽度 */
-        }
-        .header-btn {
-            display: inline-flex;
-            align-items: center;
+            justify-content: center;
             gap: 8px;
-            padding: 8px 16px;
-            background: #fff;
-            color: #31c27c;
-            border: 1px solid #31c27c;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-        .header-btn:hover {
-            background: #f0f0f0;
-        }
-        .material-icons {
-            font-size: 20px;
-        }
-        .edit-btn {
-            background: #2196f3;
-            color: white;
+            margin-top: 10px;
+            margin-bottom: 10px;
         }
 
-        .edit-btn:hover {
-            background: #1976d2;
+        .header-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+            flex: 0 0 calc(50% - 4px); /* 与首页的flex: 0 0 auto不同，这里强制每行2个 */
+            min-width: 90px;
+            max-width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            justify-content: center;
+            text-align: center;
         }
-        /* 移动端适配 */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
 
-            .container {
-                max-width: 100%;
-                margin: 0;
-                border-radius: 0;
-                min-height: 100vh;
-            }
-
-            .header {
-                padding: 15px 10px;
-            }
-
-            .header h1 {
-                font-size: 1.5rem;
-            }
-
-            .header p {
-                font-size: 0.9rem;
-            }
-
-            .header-buttons {
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 8px;
-                margin-top: 10px;
-                margin-bottom: 10px;
-            }
-
+        /* 在特别窄的屏幕上调整按钮尺寸 */
+        @media (max-width: 375px) {
             .header-btn {
-                padding: 8px 12px;
-                font-size: 12px;
-                flex: 0 0 calc(50% - 4px); /* 与首页的flex: 0 0 auto不同，这里强制每行2个 */
-                min-width: 90px;
-                max-width: 120px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                justify-content: center;
-                text-align: center;
-            }
-
-            /* 在特别窄的屏幕上调整按钮尺寸 */
-            @media (max-width: 375px) {
-                .header-btn {
-                    min-width: 80px;
-                    max-width: 100px;
-                    padding: 7px 10px;
-                    font-size: 11px;
-                }
-            }
-        }
-
-        /* 小屏设备进一步优化 */
-        @media (max-width: 480px) {
-            .header-buttons {
-                flex-wrap: wrap;
-                gap: 6px;
-            }
-
-            .header-btn {
-                flex: 0 0 calc(50% - 3px); /* 每行2个按钮 */
-                min-width: 90px;
-                max-width: 120px;
-                padding: 8px 10px;
+                min-width: 80px;
+                max-width: 100px;
+                padding: 7px 10px;
                 font-size: 11px;
             }
         }
+    }
 
-        /* 防止动画影响性能 */
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                transition: none !important;
-                animation: none !important;
-            }
+    /* 小屏设备进一步优化 */
+    @media (max-width: 480px) {
+        .header-buttons {
+            flex-wrap: wrap;
+            gap: 6px;
         }
+
+        .header-btn {
+            flex: 0 0 calc(50% - 3px); /* 每行2个按钮 */
+            min-width: 90px;
+            max-width: 120px;
+            padding: 8px 10px;
+            font-size: 11px;
+        }
+    }
+
+    /* 防止动画影响性能 */
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            transition: none !important;
+            animation: none !important;
+        }
+    }
+
+    /* 为插件源配置添加移动端适配 */
+    @media (max-width: 768px) {
+        .plugin-item {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 12px;
+        }
+
+        .plugin-info {
+            margin-bottom: 10px;
+        }
+
+        .plugin-actions {
+            flex-direction: row;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+            min-width: auto;
+        }
+    }
     </style>
 </head>
 <body>
@@ -439,17 +464,30 @@
         }
     }
 
-    // 编辑OpenAPI地址功能
+    // 编辑插件订阅源地址
     function editPluginSource() {
         const urlElement = document.getElementById('source-url');
         const currentUrl = urlElement.textContent;
         const newUrl = prompt('请输入新的插件源地址:', currentUrl);
-        // 校验newUrl格式
+
+        // 检查用户是否点击了取消
+        if (newUrl === null) {
+            // 用户点击了取消，不执行任何操作
+            return;
+        }
+
+        // 检查用户是否输入了空字符串
+        if (newUrl.trim() === '') {
+            alert('插件源地址不能为空！');
+            return;
+        }
+
+        // 校验URL格式
         const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-        if (newUrl && urlPattern.test(newUrl)) {
+        if (urlPattern.test(newUrl)) {
             // 更新地址
             updatePluginSource(newUrl);
-        }else {
+        } else {
             alert('请输入有效的插件源地址！');
         }
     }
@@ -550,15 +588,29 @@
         const urlElement = document.getElementById('openapi-url');
         const currentUrl = urlElement.textContent;
         const newUrl = prompt('请输入新的接口地址:', currentUrl);
-        // 校验newUrl格式
+
+        // 检查用户是否点击了取消
+        if (newUrl === null) {
+            // 用户点击了取消，不执行任何操作
+            return;
+        }
+
+        // 检查用户是否输入了空字符串
+        if (newUrl.trim() === '') {
+            alert('接口地址不能为空！');
+            return;
+        }
+
+        // 校验URL格式
         const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-        if (newUrl && urlPattern.test(newUrl)) {
+        if (urlPattern.test(newUrl)) {
             // 更新接口地址
             updateOpenApiUrl(newUrl);
-        }else {
+        } else {
             alert('请输入有效的接口地址！');
         }
     }
+
 
     // 更新OpenAPI地址
     async function updateOpenApiUrl(newUrl) {
