@@ -18,7 +18,7 @@ RUN echo ${TARGETPLATFORM//\//-} > /platform_id
 
 # 根据TARGETPLATFORM自动选择对应的builder阶段
 ARG TARGETPLATFORM
-FROM base-${TARGETPLATFORM/linux\//linux-} AS builder
+FROM base-${TARGETPLATFORM//\//-} AS builder
 
 # 安装构建依赖（根据基础镜像类型区分）
 RUN if [ -f /etc/alpine-release ]; then \
@@ -70,7 +70,7 @@ COPY xiaomusic.py .
 # -------------------------- 运行阶段 --------------------------
 # 根据TARGETPLATFORM自动选择对应的runner阶段
 ARG TARGETPLATFORM
-FROM run-${TARGETPLATFORM/linux\//linux-} AS runner
+FROM run-${TARGETPLATFORM//\//-} AS runner
 
 # 安装运行时依赖（区分Alpine和Debian）
 RUN if [ -f /etc/alpine-release ]; then \
