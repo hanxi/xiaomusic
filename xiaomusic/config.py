@@ -393,3 +393,21 @@ class Config:
         """
         device = next(iter(self.devices.values()), None)
         return device.device_id if device else ""
+
+    def is_http_server_config(self, key: str) -> bool:
+        """判断配置键是否影响HTTP服务器
+
+        Args:
+            key: 配置键名
+
+        Returns:
+            bool: True表示该配置会影响HTTP服务器，False表示不影响
+        """
+        http_server_keys = {
+            "disable_httpauth",
+            "httpauth_username",
+            "httpauth_password",
+            "port",
+            "hostname",
+        }
+        return key in http_server_keys

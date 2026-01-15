@@ -21,6 +21,8 @@ from xiaomusic.api.dependencies import (
 router = APIRouter()
 
 # JWT 配置
+# 使用固定的 secret 避免重启后 token 失效
+# 在生产环境中应该从环境变量或配置文件读取
 JWT_SECRET = secrets.token_urlsafe(32)
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_SECONDS = 60 * 5  # 5 分钟有效期（足够前端连接和重连）
@@ -28,9 +30,10 @@ JWT_EXPIRE_SECONDS = 60 * 5  # 5 分钟有效期（足够前端连接和重连�
 
 @router.get("/generate_ws_token")
 def generate_ws_token(
-    did: str,
+    did: str = "",
     _: bool = Depends(verification),  # 复用 HTTP Basic 验证
 ):
+    # 允许空 did，用于全局监控
     payload = {
         "did": did,
         "exp": time.time() + JWT_EXPIRE_SECONDS,
@@ -56,13 +59,10 @@ async def ws_playingmusic(websocket: WebSocket):
     try:
         # 解码 JWT（自动校验签名 + 是否过期）
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        did = payload.get("did")
+        did = payload.get("did", "")
 
-        if not did:
-            await websocket.close(code=1008, reason="Invalid token")
-            return
-
-        if not xiaomusic.did_exist(did):
+        # 允许空 did（用于全局监控），但需要检查设备是否存在
+        if did and not xiaomusic.did_exist(did):
             await websocket.close(code=1003, reason="Did not exist")
             return
 

@@ -103,6 +103,54 @@ async def savesetting(request: Request, Verifcation=Depends(verification)):
         raise HTTPException(status_code=400, detail="Invalid JSON") from err
 
 
+@router.post("/api/system/modifiysetting")
+async def modifiysetting(request: Request, Verifcation=Depends(verification)):
+    """修改部分设置"""
+    try:
+        data_json = await request.body()
+        data = json.loads(data_json.decode("utf-8"))
+        debug_data = deepcopy_data_no_sensitive_info(data)
+        log.info(f"modifiysetting: {debug_data}")
+
+        config_obj = xiaomusic.getconfig()
+
+        # 处理密码字段，如果是 ****** 或空字符串则保持原值
+        if "password" in data and (
+            data["password"] == "******" or data["password"] == ""
+        ):
+            data["password"] = config_obj.password
+        if "httpauth_password" in data and (
+            data["httpauth_password"] == "******" or data["httpauth_password"] == ""
+        ):
+            data["httpauth_password"] = config_obj.httpauth_password
+
+        # 检查是否有HTTP服务器相关配置被修改
+        has_http_config_changed = any(
+            config_obj.is_http_server_config(key) for key in data.keys()
+        )
+
+        # 更新配置
+        config_obj.update_config(data)
+
+        # 如果有HTTP配置变更，重置HTTP服务器
+        if has_http_config_changed:
+            from xiaomusic.api.app import app
+            from xiaomusic.api.dependencies import reset_http_server
+
+            reset_http_server(app)
+            log.info("HTTP server configuration has been reset")
+
+        # 保存配置到文件
+        xiaomusic._config_manager.save_cur_config(xiaomusic._device_manager.devices)
+
+        return {"success": True, "message": "Configuration updated successfully"}
+    except json.JSONDecodeError as err:
+        raise HTTPException(status_code=400, detail="Invalid JSON") from err
+    except Exception as err:
+        log.error(f"Error updating configuration: {err}")
+        raise HTTPException(status_code=500, detail=str(err)) from err
+
+
 @router.get("/downloadlog")
 def downloadlog(Verifcation=Depends(verification)):
     """下载日志"""

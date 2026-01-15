@@ -29,7 +29,14 @@
                 id="versionnew" class="new-badge"></span>
         </h1>
 
-        <label for="did">选择播放设备:</label>
+        <label for="did" style="display: flex;align-items: center;">选择播放设备:
+            <div class="toggle-switch-container" style="margin-left: auto;">
+                <label class="toggle-label">对话记录</label>
+                <div id="pullAskToggle" class="toggle-switch" onclick="togglePullAsk()">
+                    <div class="toggle-slider"></div>
+                </div>
+            </div>
+        </label>
         <select id="did" class="device-selector">
             <option value="default">默认设备</option>
         </select>

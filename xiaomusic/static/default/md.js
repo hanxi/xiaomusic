@@ -250,6 +250,9 @@ $.get("/getsetting", function (data, status) {
     $("#device-audio").fadeIn();
     $(".device-enable").removeClass('disabled');
   }
+
+  // 初始化对话记录开关状态
+  updatePullAskUI(data.enable_pull_ask);
 });
 
 function compareVersion(version1, version2) {
@@ -722,8 +725,55 @@ function confirmSearch() {
 
 
 let ws = null;
+let wsReconnectTimer = null;
+let currentDid = null;
+let isConnecting = false;
+
+// 清理 WebSocket 连接
+function cleanupWebSocket() {
+  // 清除重连定时器
+  if (wsReconnectTimer) {
+    clearTimeout(wsReconnectTimer);
+    wsReconnectTimer = null;
+  }
+
+  // 关闭现有连接
+  if (ws) {
+    try {
+      // 移除事件监听器，避免触发 onclose 重连
+      ws.onclose = null;
+      ws.onerror = null;
+      ws.onmessage = null;
+
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close();
+      }
+    } catch (e) {
+      console.error("关闭 WebSocket 失败:", e);
+    }
+    ws = null;
+  }
+
+  isConnecting = false;
+}
+
 // 启动 WebSocket 连接
 function connectWebSocket(did) {
+  // 如果正在连接中，直接返回
+  if (isConnecting) {
+    console.log("WebSocket 正在连接中，跳过重复连接");
+    return;
+  }
+
+  // 如果 did 改变了，需要重新连接
+  if (currentDid !== did) {
+    console.log(`设备切换: ${currentDid} -> ${did}`);
+    cleanupWebSocket();
+    currentDid = did;
+  }
+
+  isConnecting = true;
+
   fetch(`/generate_ws_token?did=${did}`)
     .then((res) => res.json())
     .then((data) => {
@@ -732,49 +782,77 @@ function connectWebSocket(did) {
     })
     .catch((err) => {
       console.error("获取 token 失败:", err);
-      setTimeout(() => connectWebSocket(did), 5000);
+      isConnecting = false;
+      // 5秒后重试
+      wsReconnectTimer = setTimeout(() => connectWebSocket(did), 5000);
     });
 }
 
 function startWebSocket(did, token) {
+  // 再次检查，确保没有重复连接
+  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+    console.log("WebSocket 已存在，跳过创建");
+    isConnecting = false;
+    return;
+  }
+
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
   const wsUrl = `${protocol}://${window.location.host}/ws/playingmusic?token=${token}`;
-  ws = new WebSocket(wsUrl);
 
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.ret !== "OK") return;
+  try {
+    ws = new WebSocket(wsUrl);
 
-    isPlaying = data.is_playing;
-    let cur_music = data.cur_music || "";
+    ws.onopen = () => {
+      console.log("WebSocket 连接成功");
+      isConnecting = false;
+    };
 
-    $("#playering-music").text(
-      isPlaying ? `【播放中】 ${cur_music}` : `【空闲中】 ${cur_music}`
-    );
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.ret !== "OK") return;
 
-    offset = data.offset || 0;
-    duration = data.duration || 0;
+      isPlaying = data.is_playing;
+      let cur_music = data.cur_music || "";
 
-    if (favoritelist.includes(cur_music)) {
-      $(".favorite").addClass("favorite-active");
-    } else {
-      $(".favorite").removeClass("favorite-active");
-    }
+      $("#playering-music").text(
+        isPlaying ? `【播放中】 ${cur_music}` : `【空闲中】 ${cur_music}`
+      );
 
-    localStorage.setItem("cur_music", cur_music);
-    updateProgressUI();
-  };
+      offset = data.offset || 0;
+      duration = data.duration || 0;
 
-  ws.onclose = () => {
-    console.log("WebSocket 已断开，正在重连...");
-    setTimeout(() => startWebSocket(did, token), 3000);
-  };
+      if (favoritelist.includes(cur_music)) {
+        $(".favorite").addClass("favorite-active");
+      } else {
+        $(".favorite").removeClass("favorite-active");
+      }
 
-  ws.onerror = (err) => {
-    console.error("WebSocket 错误:", err);
-    // 发生错误时也尝试重连
-    setTimeout(() => startWebSocket(did, token), 3000);
-  };
+      localStorage.setItem("cur_music", cur_music);
+      updateProgressUI();
+    };
+
+    ws.onclose = (event) => {
+      console.log("WebSocket 已断开", event.code, event.reason);
+      ws = null;
+      isConnecting = false;
+
+      // 只有在非主动关闭的情况下才重连
+      if (event.code !== 1000) {
+        console.log("3秒后尝试重连...");
+        wsReconnectTimer = setTimeout(() => connectWebSocket(did), 3000);
+      }
+    };
+
+    ws.onerror = (err) => {
+      console.error("WebSocket 错误:", err);
+      isConnecting = false;
+      // onerror 后会触发 onclose，所以这里不需要重连
+    };
+  } catch (e) {
+    console.error("创建 WebSocket 失败:", e);
+    isConnecting = false;
+    wsReconnectTimer = setTimeout(() => connectWebSocket(did), 3000);
+  }
 }
 
 // 每秒更新播放进度
@@ -793,3 +871,38 @@ setInterval(() => {
   }
 }, 1000);
 
+
+function togglePullAsk() {
+  console.log("切换对话记录状态");
+  $.get("/getsetting", function (data, status) {
+    const currentState = data.enable_pull_ask;
+    const newState = !currentState;
+
+    $.ajax({
+      type: "POST",
+      url: "/api/system/modifiysetting",
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({
+        enable_pull_ask: newState
+      }),
+      success: (response) => {
+        console.log("对话记录状态切换成功", response);
+        updatePullAskUI(newState);
+        alert(newState ? "对话记录已开启" : "对话记录已关闭");
+      },
+      error: (error) => {
+        console.error("对话记录状态切换失败", error);
+        alert("切换失败，请重试");
+      }
+    });
+  });
+}
+
+function updatePullAskUI(enabled) {
+  const pullAskToggle = $("#pullAskToggle");
+  if (enabled) {
+    pullAskToggle.addClass("active");
+  } else {
+    pullAskToggle.removeClass("active");
+  }
+}
