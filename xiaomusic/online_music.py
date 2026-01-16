@@ -862,9 +862,7 @@ class OnlineMusicService:
             return {"success": False, "error": str(e)}
 
     @staticmethod
-    async def _make_request_with_validation(
-        url: str, timeout: int
-    ) -> str:
+    async def _make_request_with_validation(url: str, timeout: int) -> str:
         """
         通用的URL请求和验证方法
 
@@ -943,6 +941,4 @@ class OnlineMusicService:
         Returns:
             str: 最终的真实播放URL，如果代理不成功则返回原始URL
         """
-        return await OnlineMusicService._make_request_with_validation(
-            url, timeout
-        )
+        return await OnlineMusicService._make_request_with_validation(url, timeout)
