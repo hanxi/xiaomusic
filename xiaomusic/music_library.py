@@ -4,6 +4,7 @@
 """
 
 import asyncio
+import base64
 import copy
 import json
 import os
@@ -12,6 +13,7 @@ import time
 import urllib.parse
 from collections import OrderedDict
 from dataclasses import asdict
+from urllib.parse import urlparse
 
 from xiaomusic.const import SUPPORT_MUSIC_TYPE
 from xiaomusic.events import CONFIG_CHANGED
@@ -24,6 +26,7 @@ from xiaomusic.utils.music_utils import (
     save_picture_by_base64,
     set_music_tag_to_file,
 )
+from xiaomusic.utils.network_utils import MusicUrlCache
 from xiaomusic.utils.system_utils import try_add_access_control_param
 from xiaomusic.utils.text_utils import custom_sort_key, find_best_match, fuzzyfinder
 
@@ -84,6 +87,9 @@ class MusicLibrary:
         self.all_music_tags = {}  # 音乐标签缓存
         self._tag_generation_task = False  # 标签生成任务标志
         self._web_music_duration_cache = {}  # 网络音乐时长缓存（仅内存）
+
+        # URL处理相关
+        self.url_cache = MusicUrlCache()  # URL缓存
 
     def gen_all_music_list(self):
         """生成所有音乐列表
@@ -669,6 +675,7 @@ class MusicLibrary:
                 f"{self.config.hostname}:{self.config.public_port}/picture/{encoded_name}",
             )
 
+        # 如果是网络音乐，获取时长
         if self.is_web_music(name):
             try:
                 duration = await self.get_music_duration(name)
@@ -745,7 +752,7 @@ class MusicLibrary:
 
             # 缓存中没有，获取时长
             try:
-                url = self.all_music[name]
+                url, _ = await self._get_web_music_url(name)
                 duration, _ = await get_web_music_duration(url, self.config)
                 self.log.info(f"网络音乐 {name} 时长: {duration} 秒")
 
@@ -968,3 +975,170 @@ class MusicLibrary:
         """
         self._web_music_duration_cache = {}
         self.log.info("已清空网络音乐时长缓存")
+
+    # ==================== URL处理方法 ====================
+
+    async def get_music_sec_url(self, name, cur_playlist):
+        """获取歌曲播放时长和播放地址
+
+        Args:
+            name: 歌曲名称
+            cur_playlist: 当前歌单名称
+        Returns:
+            tuple: (播放时长(秒), 播放地址)
+        """
+        url, origin_url = await self.get_music_url(name)
+        self.log.info(
+            f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
+        )
+        sec = await self.get_music_duration(name)
+        return sec, url
+
+    async def get_music_url(self, name):
+        """获取音乐播放地址
+
+        Args:
+            name: 歌曲名称
+
+        Returns:
+            tuple: (播放地址, 原始地址) - 网络音乐时可能有原始地址
+        """
+        self.log.info(f"get_music_url name:{name}")
+        if self.is_web_music(name):
+            return await self._get_web_music_url(name)
+        return self._get_local_music_url(name), None
+
+    async def _get_web_music_url(self, name):
+        """获取网络音乐播放地址
+
+        Args:
+            name: 歌曲名称
+
+        Returns:
+            tuple: (播放地址, 原始地址)
+        """
+        self.log.info("in _get_web_music_url")
+        url = self.all_music[name]
+        self.log.info(f"get_music_url web music. name:{name}, url:{url}")
+
+        # 需要通过API获取真实播放地址
+        if self.is_need_use_play_music_api(name):
+            url = await self._get_url_from_api(name, url)
+            if not url:
+                return "", None
+
+        # 是否需要代理
+        if self.config.web_music_proxy or url.startswith("self://"):
+            proxy_url = self._get_proxy_url(url)
+            return proxy_url, url
+
+        return url, None
+
+    async def _get_url_from_api(self, name, url):
+        """通过API获取真实播放地址
+
+        Args:
+            name: 歌曲名称
+            url: 原始URL
+
+        Returns:
+            str: 真实播放地址，失败返回空字符串
+        """
+        headers = self._web_music_api[name].get("headers", {})
+        url = await self.url_cache.get(url, headers, self.config)
+        if not url:
+            self.log.error(f"get_music_url use api fail. name:{name}, url:{url}")
+        return url
+
+    def _get_proxy_url(self, origin_url):
+        """获取代理URL
+
+        Args:
+            origin_url: 原始URL
+
+        Returns:
+            str: 代理URL
+        """
+        urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
+        proxy_url = (
+            f"{self.config.hostname}:{self.config.public_port}/proxy?urlb64={urlb64}"
+        )
+        self.log.info(f"Using proxy url: {proxy_url}")
+        return proxy_url
+
+    def _get_local_music_url(self, name):
+        """获取本地音乐播放地址
+
+        Args:
+            name: 歌曲名称
+
+        Returns:
+            str: 本地音乐播放URL
+        """
+        filename = self.get_filename(name)
+        self.log.info(
+            f"_get_local_music_url local music. name:{name}, filename:{filename}"
+        )
+        return self._get_file_url(filename)
+
+    def _get_file_url(self, filepath):
+        """根据文件路径生成可访问的URL
+
+        Args:
+            filepath: 文件的完整路径
+
+        Returns:
+            str: 文件访问URL
+        """
+        filename = filepath
+
+        # 处理文件路径
+        if filename.startswith(self.config.music_path):
+            filename = filename[len(self.config.music_path) :]
+        filename = filename.replace("\\", "/")
+        if filename.startswith("/"):
+            filename = filename[1:]
+
+        self.log.info(f"_get_file_url filepath:{filepath}, filename:{filename}")
+
+        # 构造URL
+        encoded_name = urlparse.quote(filename)
+        url = f"{self.config.hostname}:{self.config.public_port}/music/{encoded_name}"
+        return try_add_access_control_param(self.config, url)
+
+    @staticmethod
+    async def get_play_url(proxy_url):
+        """获取播放URL
+
+        Args:
+            proxy_url: 代理URL
+
+        Returns:
+            str: 最终重定向的URL
+        """
+        import aiohttp
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(proxy_url) as response:
+                # 获取最终重定向的 URL
+                return str(response.url)
+
+    def expand_self_url(self, parsed_url):
+        """扩展self协议URL
+
+        Args:
+            parsed_url: 解析后的URL对象
+
+        Returns:
+            解析后的URL对象
+        """
+        if parsed_url.scheme != "self":
+            return parsed_url
+
+        url = f"{self.config.hostname}:{self.config.public_port}{parsed_url.path}"
+        if parsed_url.query:
+            url += f"?{parsed_url.query}"
+        if parsed_url.fragment:
+            url += f"#{parsed_url.fragment}"
+
+        return urlparse(url)

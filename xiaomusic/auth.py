@@ -174,7 +174,7 @@ class AuthManager:
             "userId": cookies_dict["userId"],
             "deviceId": self.device_id,
         }
-        self.log.info(f"设置token到account:{accout.token}")
+        self.log.info(f"设置token到account:{account.token}")
 
     def get_cookie(self):
         """获取Cookie

@@ -302,7 +302,7 @@ async def proxy(urlb64: str):
     log.info(f"代理请求: {url}")
 
     parsed_url = urlparse(url)
-    parsed_url = xiaomusic._music_url_handler.expand_self_url(parsed_url)
+    parsed_url = xiaomusic._music_library.expand_self_url(parsed_url)
     if not parsed_url.scheme or not parsed_url.netloc:
         # Fixed: Use a new exception instance since 'e' from previous block is out of scope
         invalid_url_exc = ValueError("URL缺少协议或域名")
@@ -334,7 +334,7 @@ async def proxy(urlb64: str):
             "upgrade-insecure-requests": "1",
             "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
         }
-        if parsed_url.netloc == xiaomusic._music_url_handler.netloc:
+        if parsed_url.netloc == config.get_self_netloc():
             headers["Authorization"] = config.get_basic_auth()
         return headers
 

@@ -420,3 +420,8 @@ class Config:
         credentials = f"{self.httpauth_username}:{self.httpauth_password}"
         encoded_credentials = base64.b64encode(credentials.encode()).decode()
         return f"Basic {encoded_credentials}"
+
+    def get_self_netloc(self):
+        """获取网络地址"""
+        host = self.hostname.split("//", 1)[1]
+        return f"{host}:{self.public_port}"

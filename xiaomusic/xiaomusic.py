@@ -24,7 +24,6 @@ from xiaomusic.device_manager import DeviceManager
 from xiaomusic.events import CONFIG_CHANGED, DEVICE_CONFIG_CHANGED, EventBus
 from xiaomusic.file_watcher import FileWatcherManager
 from xiaomusic.music_library import MusicLibrary
-from xiaomusic.music_url import MusicUrlHandler
 from xiaomusic.online_music import OnlineMusicService
 from xiaomusic.plugin import PluginManager
 from xiaomusic.utils.network_utils import downloadfile
@@ -63,9 +62,6 @@ class XiaoMusic:
 
         # 初始化文件监控管理器
         self._file_watcher = None
-
-        # 初始化音乐URL处理器（延迟初始化，在 init_config 之后）
-        self._music_url_handler = None
 
         # 初始化在线音乐服务（延迟初始化，在 js_plugin_manager 之后）
         self._online_music_service = None
@@ -122,13 +118,6 @@ class XiaoMusic:
 
         # 启动时重新生成一次播放列表
         self._music_library.gen_all_music_list()
-
-        # 初始化音乐URL处理器（在配置和音乐列表准备好之后）
-        self._music_url_handler = MusicUrlHandler(
-            config=self.config,
-            log=self.log,
-            music_library=self._music_library,
-        )
 
         # 初始化在线音乐服务（在 js_plugin_manager 准备好之后）
         self._online_music_service = OnlineMusicService(

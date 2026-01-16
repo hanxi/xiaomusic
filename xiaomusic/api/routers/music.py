@@ -196,7 +196,7 @@ async def musicinfo(
     name: str, musictag: bool = False, Verifcation=Depends(verification)
 ):
     """音乐信息"""
-    url, _ = await xiaomusic._music_url_handler.get_music_url(name)
+    url, _ = await xiaomusic._music_library.get_music_url(name)
     info = {
         "ret": "OK",
         "name": name,
@@ -216,7 +216,7 @@ async def musicinfos(
     """批量音乐信息"""
     ret = []
     for music_name in name:
-        url, _ = await xiaomusic._music_url_handler.get_music_url(music_name)
+        url, _ = await xiaomusic._music_library.get_music_url(music_name)
         info = {
             "name": music_name,
             "url": url,

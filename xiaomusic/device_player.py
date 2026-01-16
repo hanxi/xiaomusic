@@ -355,7 +355,7 @@ class XiaoMusicDevice:
         self.device.playlist2music[self.device.cur_playlist] = name
         cur_playlist = self.device.cur_playlist
         self.log.info(f"cur_music {self.get_cur_music()}")
-        sec, url = await self.xiaomusic._music_url_handler.get_music_sec_url(
+        sec, url = await self.xiaomusic._music_library.get_music_sec_url(
             name, cur_playlist
         )
         await self.group_force_stop_xiaoai()
@@ -651,7 +651,7 @@ class XiaoMusicDevice:
             self.log.info(f"edge-tts 生成的文件路径: {mp3_path}")
 
             # 生成播放 URL
-            url = self.xiaomusic._music_url_handler._get_file_url(mp3_path)
+            url = self.xiaomusic._music_library._get_file_url(mp3_path)
             self.log.info(f"TTS 播放 URL: {url}")
 
             # 播放 TTS 音频
