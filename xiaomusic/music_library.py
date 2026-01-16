@@ -180,10 +180,10 @@ class MusicLibrary:
 
         # 重建索引
         self._extra_index_search = {}
-        for k, v in self.all_music.items():
-            # 如果不是 url，则增加索引
-            if not (v.startswith("http") or v.startswith("https")):
-                self._extra_index_search[v] = k
+        for name, filepath in self.all_music.items():
+            # 如果不是 radio，则增加索引
+            if not self.is_web_radio_music(name):
+                self._extra_index_search[filepath] = name
 
         # all_music 更新，重建 tag（仅在事件循环启动后才会执行）
         self.try_gen_all_music_tag()
@@ -1048,7 +1048,7 @@ class MusicLibrary:
         headers = self._web_music_api[name].get("headers", {})
         url = await self.url_cache.get(url, headers, self.config)
         if not url:
-            self.log.error(f"get_music_url use api fail. name:{name}, url:{url}")
+            self.log.error(f"_get_url_from_api use api fail. name:{name}, url:{url}")
         return url
 
     def _get_proxy_url(self, origin_url):
