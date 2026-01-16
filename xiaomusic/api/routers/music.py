@@ -92,6 +92,7 @@ async def get_plugin_source_url(
             source_url = media_source.get("url")
         else:
             source_url = xiaomusic.default_url()
+        log.info(f"plugin-url {json_data} {source_url}")
         # 直接重定向到真实URL
         return RedirectResponse(url=source_url)
     except Exception as e:

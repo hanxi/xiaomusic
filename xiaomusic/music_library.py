@@ -896,6 +896,9 @@ class MusicLibrary:
         self.log.info(f"ignore_tag_absolute_dirs: {ignore_tag_absolute_dirs}")
 
         for name, file_or_url in only_items.items():
+            # 跳过网络音乐
+            if self.is_web_music(name):
+                continue
             start = time.perf_counter()
             if name not in all_music_tags:
                 try:
@@ -912,14 +915,12 @@ class MusicLibrary:
 
             # 获取并缓存歌曲时长（仅本地音乐）
             if name in all_music_tags and "duration" not in all_music_tags[name]:
-                # 跳过网络音乐的时长获取
-                if not self.is_web_music(name):
-                    try:
-                        duration = await self.get_music_duration(name)
-                        if duration > 0:
-                            all_music_tags[name]["duration"] = duration
-                    except Exception as e:
-                        self.log.warning(f"获取歌曲 {name} 时长失败: {e}")
+                try:
+                    duration = await self.get_music_duration(name)
+                    if duration > 0:
+                        all_music_tags[name]["duration"] = duration
+                except Exception as e:
+                    self.log.warning(f"获取歌曲 {name} 时长失败: {e}")
 
             if (time.perf_counter() - start) < 1:
                 await asyncio.sleep(0.001)
@@ -1123,17 +1124,11 @@ class MusicLibrary:
                 # 获取最终重定向的 URL
                 return str(response.url)
 
-    def expand_self_url(self, parsed_url):
-        """扩展self协议URL
-
-        Args:
-            parsed_url: 解析后的URL对象
-
-        Returns:
-            解析后的URL对象
-        """
+    def expand_self_url(self, origin_url):
+        parsed_url = urlparse(origin_url)
+        self.log.info(f"链接处理前 ${parsed_url}")
         if parsed_url.scheme != "self":
-            return parsed_url
+            return parsed_url, origin_url
 
         url = f"{self.config.hostname}:{self.config.public_port}{parsed_url.path}"
         if parsed_url.query:
@@ -1141,4 +1136,4 @@ class MusicLibrary:
         if parsed_url.fragment:
             url += f"#{parsed_url.fragment}"
 
-        return urlparse(url)
+        return urlparse(url), url

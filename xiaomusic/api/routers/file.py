@@ -301,8 +301,8 @@ async def proxy(urlb64: str):
 
     log.info(f"代理请求: {url}")
 
-    parsed_url = urlparse(url)
-    parsed_url = xiaomusic._music_library.expand_self_url(parsed_url)
+    parsed_url, url = xiaomusic._music_library.expand_self_url(url)
+    log.info(f"链接处理后 ${parsed_url}")
     if not parsed_url.scheme or not parsed_url.netloc:
         # Fixed: Use a new exception instance since 'e' from previous block is out of scope
         invalid_url_exc = ValueError("URL缺少协议或域名")
