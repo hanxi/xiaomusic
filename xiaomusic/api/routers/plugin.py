@@ -116,11 +116,19 @@ async def upload_js_plugin(
 
         plugin_dir = xiaomusic.js_plugin_manager.plugins_dir
         os.makedirs(plugin_dir, exist_ok=True)
+        # 校验命名是否是保留字段【ALL/all/OpenAPI】，是的话抛错
+        sys_files = ["ALL.js", "all.js", "OpenAPI.js", "OPENAPI.js"]
+        if file.filename in sys_files:
+            raise HTTPException(
+                status_code=409,
+                detail=f"插件名非法，不能命名为： {sys_files} ，请修改后再上传！",
+            )
         file_path = os.path.join(plugin_dir, file.filename)
         # 校验是否已存在同名js插件 存在则提示，停止上传
         if os.path.exists(file_path):
             raise HTTPException(
-                status_code=409, detail=f"插件 {file.filename} 已存在，请重命名后再上传"
+                status_code=409,
+                detail=f"插件 {file.filename} 已存在，请重命名后再上传！",
             )
         file_path = os.path.join(plugin_dir, file.filename)
 
@@ -140,6 +148,9 @@ async def upload_js_plugin(
 
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+# ----------------------------开放接口相关函数---------------------------------------
 
 
 @router.get("/api/openapi/load")
@@ -170,5 +181,40 @@ async def update_openapi_url(request: Request, Verifcation=Depends(verification)
         if not request_json or "search_url" not in request_json:
             return {"success": False, "error": "Missing 'search_url' in request body"}
         return xiaomusic.js_plugin_manager.update_openapi_url(search_url)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ----------------------------插件源接口---------------------------------------
+
+
+@router.get("/api/plugin-source/load")
+def get_plugin_source_info(Verifcation=Depends(verification)):
+    """获取插件源配置信息"""
+    try:
+        plugin_source = xiaomusic.js_plugin_manager.get_plugin_source()
+        return {"success": True, "data": plugin_source}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/plugin-source/refresh")
+def refresh_plugin_source(Verifcation=Depends(verification)):
+    """更新订阅源"""
+    try:
+        return xiaomusic.js_plugin_manager.refresh_plugin_source()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/plugin-source/updateUrl")
+async def update_plugin_source(request: Request, Verifcation=Depends(verification)):
+    """更新插件源地址"""
+    try:
+        request_json = await request.json()
+        source_url = request_json.get("source_url")
+        if not request_json or "source_url" not in request_json:
+            return {"success": False, "error": "Missing 'search_url' in request body"}
+        return xiaomusic.js_plugin_manager.update_plugin_source_url(source_url)
     except Exception as e:
         return {"success": False, "error": str(e)}

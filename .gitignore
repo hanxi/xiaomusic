@@ -173,3 +173,4 @@ xiaomusic.log.txt*
 node_modules
 reference/
 .aone_copilot/
+.idea/

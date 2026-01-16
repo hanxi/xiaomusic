@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="./favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>在线音乐搜索</title>
     <!-- ... 公共配置 ... -->
@@ -853,7 +854,6 @@
     let currentLyrics = []; // 存储解析后的歌词
     let lyricLines = []; // 存储歌词DOM元素
     let songList = []; // 存储搜索到的歌曲列表
-    let isOpenAPI = false; // 是否为开放接口
 
     // 页面加载时获取插件列表
     window.onload = function() {
@@ -981,7 +981,6 @@
             const response = await fetch(`/api/search/online?keyword=${encodeURIComponent(keyword)}&plugin=${plugin}`);
             const data = await response.json();
             if (data.success) {
-                isOpenAPI = data.isOpenAPI;
                 displayResults(data.data);
             } else {
                 resultsDiv.innerHTML = `<div class="error">搜索失败: ${data.error}</div>`;
@@ -1117,7 +1116,7 @@
     async function webPlayMusic(mediaItem) {
         try {
             let playUrl;
-            if (mediaItem && isOpenAPI) {
+            if (mediaItem && mediaItem.isOpenAPI) {
                 // playUrl = await sniffRealMusicUrl(mediaItem.url);
                 playUrl = mediaItem.url;
             } else {
@@ -1248,7 +1247,7 @@
         }
         try {
             let lrcText
-            if (mediaItem && isOpenAPI) {//在线接口
+            if (mediaItem && mediaItem.isOpenAPI) {//在线接口
                 // 调用OpenApi接口 GET获取歌词
                 const response = await fetch(mediaItem.lrc, {
                     method: 'GET',
