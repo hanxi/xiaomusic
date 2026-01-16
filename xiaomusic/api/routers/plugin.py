@@ -18,13 +18,12 @@ from xiaomusic.api.dependencies import (
     xiaomusic,
 )
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(verification)])
 
 
 @router.get("/api/js-plugins")
 def get_js_plugins(
     enabled_only: bool = Query(False, description="是否只返回启用的插件"),
-    Verifcation=Depends(verification),
 ):
     """获取插件列表"""
     try:
@@ -45,7 +44,7 @@ def get_js_plugins(
 
 
 @router.put("/api/js-plugins/{plugin_name}/enable")
-def enable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
+def enable_js_plugin(plugin_name: str):
     """启用插件"""
     try:
         if (
@@ -62,7 +61,7 @@ def enable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
 
 
 @router.put("/api/js-plugins/{plugin_name}/disable")
-def disable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
+def disable_js_plugin(plugin_name: str):
     """禁用插件"""
     try:
         if (
@@ -79,7 +78,7 @@ def disable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
 
 
 @router.delete("/api/js-plugins/{plugin_name}/uninstall")
-def uninstall_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
+def uninstall_js_plugin(plugin_name: str):
     """卸载插件"""
     try:
         if (
@@ -96,9 +95,7 @@ def uninstall_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
 
 
 @router.post("/api/js-plugins/upload")
-async def upload_js_plugin(
-    file: UploadFile = File(...), verification_dep=Depends(verification)
-):
+async def upload_js_plugin(file: UploadFile = File(...)):
     """上传 JS 插件"""
     try:
         # 验证文件扩展名
@@ -154,7 +151,7 @@ async def upload_js_plugin(
 
 
 @router.get("/api/openapi/load")
-def get_openapi_info(Verifcation=Depends(verification)):
+def get_openapi_info():
     """获取开放接口配置信息"""
     try:
         openapi_info = xiaomusic.js_plugin_manager.get_openapi_info()
@@ -164,7 +161,7 @@ def get_openapi_info(Verifcation=Depends(verification)):
 
 
 @router.post("/api/openapi/toggle")
-def toggle_openapi(Verifcation=Depends(verification)):
+def toggle_openapi():
     """开放接口状态切换"""
     try:
         return xiaomusic.js_plugin_manager.toggle_openapi()
@@ -173,7 +170,7 @@ def toggle_openapi(Verifcation=Depends(verification)):
 
 
 @router.post("/api/openapi/updateUrl")
-async def update_openapi_url(request: Request, Verifcation=Depends(verification)):
+async def update_openapi_url(request: Request):
     """更新开放接口地址"""
     try:
         request_json = await request.json()
@@ -189,7 +186,7 @@ async def update_openapi_url(request: Request, Verifcation=Depends(verification)
 
 
 @router.get("/api/plugin-source/load")
-def get_plugin_source_info(Verifcation=Depends(verification)):
+def get_plugin_source_info():
     """获取插件源配置信息"""
     try:
         plugin_source = xiaomusic.js_plugin_manager.get_plugin_source()
@@ -199,7 +196,7 @@ def get_plugin_source_info(Verifcation=Depends(verification)):
 
 
 @router.post("/api/plugin-source/refresh")
-def refresh_plugin_source(Verifcation=Depends(verification)):
+def refresh_plugin_source():
     """更新订阅源"""
     try:
         return xiaomusic.js_plugin_manager.refresh_plugin_source()
@@ -208,7 +205,7 @@ def refresh_plugin_source(Verifcation=Depends(verification)):
 
 
 @router.post("/api/plugin-source/updateUrl")
-async def update_plugin_source(request: Request, Verifcation=Depends(verification)):
+async def update_plugin_source(request: Request):
     """更新插件源地址"""
     try:
         request_json = await request.json()

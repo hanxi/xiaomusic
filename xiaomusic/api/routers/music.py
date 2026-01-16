@@ -24,11 +24,11 @@ from xiaomusic.api.models import (
     MusicItem,
 )
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(verification)])
 
 
 @router.get("/searchmusic")
-def searchmusic(name: str = "", Verifcation=Depends(verification)):
+def searchmusic(name: str = ""):
     """搜索音乐"""
     return xiaomusic.searchmusic(name)
 
@@ -42,7 +42,6 @@ async def search_online_music(
     plugin: str = Query("all", description="指定插件名称，all表示搜索所有插件"),
     page: int = Query(1, description="页码"),
     limit: int = Query(20, description="每页数量"),
-    Verifcation=Depends(verification),
 ):
     """在线音乐搜索API"""
     try:
@@ -57,9 +56,7 @@ async def search_online_music(
 
 
 @router.get("/api/proxy/real-url")
-async def get_real_music_url(
-    url: str = Query(..., description="原始url"), Verifcation=Depends(verification)
-):
+async def get_real_music_url(url: str = Query(..., description="原始url")):
     """通过服务端代理获取真实的URL，不止是音频url,可能还有图片url"""
     try:
         # 获取真实的URL
@@ -76,7 +73,6 @@ async def get_real_music_url(
 @router.get("/api/proxy/plugin-url")
 async def get_plugin_source_url(
     data: str = Query(..., description="json对象压缩的base64"),
-    Verifcation=Depends(verification),
 ):
     try:
         # 获取请求数据
@@ -103,7 +99,7 @@ async def get_plugin_source_url(
 
 
 @router.post("/api/play/getMediaSource")
-async def get_media_source(request: Request, Verifcation=Depends(verification)):
+async def get_media_source(request: Request):
     """获取音乐真实播放URL"""
     try:
         # 获取请求数据
@@ -115,7 +111,7 @@ async def get_media_source(request: Request, Verifcation=Depends(verification)):
 
 
 @router.post("/api/play/getLyric")
-async def get_media_lyric(request: Request, Verifcation=Depends(verification)):
+async def get_media_lyric(request: Request):
     """获取音乐歌词"""
     try:
         # 获取请求数据
@@ -127,7 +123,7 @@ async def get_media_lyric(request: Request, Verifcation=Depends(verification)):
 
 
 @router.post("/api/device/pushUrl")
-async def device_push_url(request: Request, Verifcation=Depends(verification)):
+async def device_push_url(request: Request):
     """推送url给设备端播放"""
     try:
         # 获取请求数据
@@ -146,7 +142,7 @@ async def device_push_url(request: Request, Verifcation=Depends(verification)):
 
 
 @router.post("/api/device/pushList")
-async def device_push_list(request: Request, Verifcation=Depends(verification)):
+async def device_push_list(request: Request):
     """WEB前端推送歌单给设备端播放"""
     try:
         # 获取请求数据
@@ -166,7 +162,7 @@ async def device_push_list(request: Request, Verifcation=Depends(verification)):
 
 
 @router.get("/playingmusic")
-def playingmusic(did: str = "", Verifcation=Depends(verification)):
+def playingmusic(did: str = ""):
     """当前播放音乐"""
     if not xiaomusic.did_exist(did):
         return {"ret": "Did not exist"}
@@ -187,15 +183,13 @@ def playingmusic(did: str = "", Verifcation=Depends(verification)):
 
 
 @router.get("/musiclist")
-async def musiclist(Verifcation=Depends(verification)):
+async def musiclist():
     """音乐列表"""
     return xiaomusic.get_music_list()
 
 
 @router.get("/musicinfo")
-async def musicinfo(
-    name: str, musictag: bool = False, Verifcation=Depends(verification)
-):
+async def musicinfo(name: str, musictag: bool = False):
     """音乐信息"""
     url, _ = await xiaomusic._music_library.get_music_url(name)
     info = {
@@ -212,7 +206,6 @@ async def musicinfo(
 async def musicinfos(
     name: list[str] = Query(None),
     musictag: bool = False,
-    Verifcation=Depends(verification),
 ):
     """批量音乐信息"""
     ret = []
@@ -229,14 +222,14 @@ async def musicinfos(
 
 
 @router.post("/setmusictag")
-async def setmusictag(info: MusicInfoObj, Verifcation=Depends(verification)):
+async def setmusictag(info: MusicInfoObj):
     """设置音乐标签"""
     ret = xiaomusic._music_library.set_music_tag(info.musicname, info)
     return {"ret": ret}
 
 
 @router.post("/delmusic")
-async def delmusic(data: MusicItem, Verifcation=Depends(verification)):
+async def delmusic(data: MusicItem):
     """删除音乐"""
     log.info(data)
     await xiaomusic.del_music(data.name)
@@ -244,7 +237,7 @@ async def delmusic(data: MusicItem, Verifcation=Depends(verification)):
 
 
 @router.post("/playmusic")
-async def playmusic(data: DidPlayMusic, Verifcation=Depends(verification)):
+async def playmusic(data: DidPlayMusic):
     """播放音乐"""
     did = data.did
     musicname = data.musicname

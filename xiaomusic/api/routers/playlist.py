@@ -17,11 +17,11 @@ from xiaomusic.api.models import (
     PlayListUpdateObj,
 )
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(verification)])
 
 
 @router.get("/curplaylist")
-async def curplaylist(did: str = "", Verifcation=Depends(verification)):
+async def curplaylist(did: str = ""):
     """当前播放列表"""
     if not xiaomusic.did_exist(did):
         return ""
@@ -29,7 +29,7 @@ async def curplaylist(did: str = "", Verifcation=Depends(verification)):
 
 
 @router.post("/playmusiclist")
-async def playmusiclist(data: DidPlayMusicList, Verifcation=Depends(verification)):
+async def playmusiclist(data: DidPlayMusicList):
     """播放音乐列表"""
     did = data.did
     listname = data.listname
@@ -43,7 +43,7 @@ async def playmusiclist(data: DidPlayMusicList, Verifcation=Depends(verification
 
 
 @router.post("/playlistadd")
-async def playlistadd(data: PlayListObj, Verifcation=Depends(verification)):
+async def playlistadd(data: PlayListObj):
     """新增歌单"""
     ret = xiaomusic.play_list_add(data.name)
     if ret:
@@ -52,7 +52,7 @@ async def playlistadd(data: PlayListObj, Verifcation=Depends(verification)):
 
 
 @router.post("/playlistdel")
-async def playlistdel(data: PlayListObj, Verifcation=Depends(verification)):
+async def playlistdel(data: PlayListObj):
     """移除歌单"""
     ret = xiaomusic.play_list_del(data.name)
     if ret:
@@ -61,9 +61,7 @@ async def playlistdel(data: PlayListObj, Verifcation=Depends(verification)):
 
 
 @router.post("/playlistupdatename")
-async def playlistupdatename(
-    data: PlayListUpdateObj, Verifcation=Depends(verification)
-):
+async def playlistupdatename(data: PlayListUpdateObj):
     """修改歌单名字"""
     ret = xiaomusic.play_list_update_name(data.oldname, data.newname)
     if ret:
@@ -72,7 +70,7 @@ async def playlistupdatename(
 
 
 @router.get("/playlistnames")
-async def getplaylistnames(Verifcation=Depends(verification)):
+async def getplaylistnames():
     """获取所有自定义歌单"""
     names = xiaomusic.get_play_list_names()
     log.info(f"names {names}")
@@ -83,7 +81,7 @@ async def getplaylistnames(Verifcation=Depends(verification)):
 
 
 @router.post("/playlistaddmusic")
-async def playlistaddmusic(data: PlayListMusicObj, Verifcation=Depends(verification)):
+async def playlistaddmusic(data: PlayListMusicObj):
     """歌单新增歌曲"""
     ret = xiaomusic.play_list_add_music(data.name, data.music_list)
     if ret:
@@ -92,7 +90,7 @@ async def playlistaddmusic(data: PlayListMusicObj, Verifcation=Depends(verificat
 
 
 @router.post("/playlistdelmusic")
-async def playlistdelmusic(data: PlayListMusicObj, Verifcation=Depends(verification)):
+async def playlistdelmusic(data: PlayListMusicObj):
     """歌单移除歌曲"""
     ret = xiaomusic.play_list_del_music(data.name, data.music_list)
     if ret:
@@ -101,9 +99,7 @@ async def playlistdelmusic(data: PlayListMusicObj, Verifcation=Depends(verificat
 
 
 @router.post("/playlistupdatemusic")
-async def playlistupdatemusic(
-    data: PlayListMusicObj, Verifcation=Depends(verification)
-):
+async def playlistupdatemusic(data: PlayListMusicObj):
     """歌单更新歌曲"""
     ret = xiaomusic.play_list_update_music(data.name, data.music_list)
     if ret:
@@ -112,7 +108,7 @@ async def playlistupdatemusic(
 
 
 @router.get("/playlistmusics")
-async def getplaylist(name: str, Verifcation=Depends(verification)):
+async def getplaylist(name: str):
     """获取歌单中所有歌曲"""
     ret, musics = xiaomusic.play_list_musics(name)
     return {
