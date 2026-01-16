@@ -1103,7 +1103,7 @@ class MusicLibrary:
         self.log.info(f"_get_file_url filepath:{filepath}, filename:{filename}")
 
         # 构造URL
-        encoded_name = urlparse.quote(filename)
+        encoded_name = urllib.parse.quote(filename)
         url = f"{self.config.hostname}:{self.config.public_port}/music/{encoded_name}"
         return try_add_access_control_param(self.config, url)
 
