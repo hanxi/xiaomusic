@@ -19,11 +19,11 @@ from xiaomusic.api.models import (
     DidVolume,
 )
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(verification)])
 
 
 @router.get("/getvolume")
-async def getvolume(did: str = "", Verifcation=Depends(verification)):
+async def getvolume(did: str = ""):
     """获取音量"""
     if not xiaomusic.did_exist(did):
         return {"volume": 0}
@@ -33,7 +33,7 @@ async def getvolume(did: str = "", Verifcation=Depends(verification)):
 
 
 @router.post("/setvolume")
-async def setvolume(data: DidVolume, Verifcation=Depends(verification)):
+async def setvolume(data: DidVolume):
     """设置音量"""
     did = data.did
     volume = data.volume
@@ -46,7 +46,7 @@ async def setvolume(data: DidVolume, Verifcation=Depends(verification)):
 
 
 @router.post("/cmd")
-async def do_cmd(data: DidCmd, Verifcation=Depends(verification)):
+async def do_cmd(data: DidCmd):
     """执行命令"""
     did = data.did
     cmd = data.cmd
@@ -66,7 +66,7 @@ async def do_cmd(data: DidCmd, Verifcation=Depends(verification)):
 
 
 @router.get("/cmdstatus")
-async def cmd_status(Verifcation=Depends(verification)):
+async def cmd_status():
     """命令状态"""
     finish = await xiaomusic.is_task_finish()
     if finish:
@@ -75,7 +75,7 @@ async def cmd_status(Verifcation=Depends(verification)):
 
 
 @router.get("/playurl")
-async def playurl(did: str, url: str, Verifcation=Depends(verification)):
+async def playurl(did: str, url: str):
     """播放 URL"""
     if not xiaomusic.did_exist(did):
         return {"ret": "Did not exist"}
@@ -85,7 +85,7 @@ async def playurl(did: str, url: str, Verifcation=Depends(verification)):
 
 
 @router.get("/playtts")
-async def playtts(did: str, text: str, Verifcation=Depends(verification)):
+async def playtts(did: str, text: str):
     """播放 TTS"""
     if not xiaomusic.did_exist(did):
         return {"ret": "Did not exist"}
@@ -96,7 +96,7 @@ async def playtts(did: str, text: str, Verifcation=Depends(verification)):
 
 
 @router.post("/device/stop")
-async def stop(data: Did, Verifcation=Depends(verification)):
+async def stop(data: Did):
     """关机"""
     did = data.did
     log.info(f"stop did:{did}")

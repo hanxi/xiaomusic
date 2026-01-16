@@ -50,11 +50,9 @@ class DeviceManager:
             # 构建 device_id 到 did 的映射
             self.device_id_did[device.device_id] = did
             group_name = did2group.get(did)
-            if not group_name:
+            if not group_name or group_name is None:
                 group_name = device.name
-            if group_name not in self.groups:
-                self.groups[group_name] = []
-            self.groups[group_name].append(device.device_id)
+            self.groups.setdefault(group_name, []).append(device.device_id)
             self.devices[did] = XiaoMusicDevice(self.xiaomusic, device, group_name)
 
         self.log.info(f"设备列表已更新: device_id_did={self.device_id_did}")
