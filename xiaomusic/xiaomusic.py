@@ -676,7 +676,6 @@ class XiaoMusic:
         """保存配置并重新启动"""
         # 更新配置
         self.update_config_from_setting(data)
-        self._auth_manager.save_token(data.get("cookie"))
         # 配置文件落地
         self.save_cur_config()
         # 重新初始化

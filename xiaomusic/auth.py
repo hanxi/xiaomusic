@@ -108,17 +108,17 @@ class AuthManager:
         使用配置的账号密码登录小米账号，并初始化相关服务。
         """
         try:
-            account = MiAccount(
+            mi_account = MiAccount(
                 self.mi_session,
                 self.config.account,
                 self.config.password,
                 str(self.mi_token_home),
             )
             # Forced login to refresh to refresh token
-            self.set_token(account)
-            await account.login("micoapi")
-            self.mina_service = MiNAService(account)
-            self.miio_service = MiIOService(account)
+            self.set_token(mi_account)
+            await mi_account.login("micoapi")
+            self.mina_service = MiNAService(mi_account)
+            self.miio_service = MiIOService(mi_account)
             self.login_acount = self.config.account
             self.login_password = self.config.password
             self.log.info(f"登录完成. {self.login_acount}")
@@ -169,26 +169,11 @@ class AuthManager:
         if not self.config.cookie:
             return
         cookies_dict = parse_cookie_string_to_dict(self.config.cookie)
-        account.token["passToken"] = cookies_dict["passToken"]
-        account.token["userId"] = self.config.account
-        account.token["deviceId"] = get_random(16).upper()
-
-    def save_token(self, cookie_str):
-        """保存token到文件
-
-        从请求数据中提取cookie并保存到.mi.token文件。
-
-        Args:
-            cookie_str: Cookie字符串
-        """
-        if not cookie_str:
-            return
-
-        cookies_dict = parse_cookie_string_to_dict(cookie_str)
-
-        with open(self.mi_token_home, "w") as f:
-            json.dump(cookies_dict, f)
-            self.log.info(f"save_token ok {cookie_str}")
+        account.token = {
+            "passToken": cookies_dict["passToken"],
+            "userId": cookies_dict["userId"],
+            "deviceId": get_random(16).upper(),
+        }
 
     def get_cookie(self):
         """获取Cookie
@@ -200,8 +185,6 @@ class AuthManager:
         """
         if self.config.cookie:
             cookie_jar = parse_cookie_string(self.config.cookie)
-            if not os.path.exists(self.mi_token_home):
-                self.save_token(self.config.cookie)
             return cookie_jar
 
         if not os.path.exists(self.mi_token_home):
