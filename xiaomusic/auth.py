@@ -48,7 +48,7 @@ class AuthManager:
 
         # 当前设备DID（用于设备ID更新）
         self._cur_did = None
-
+        self.device_id = get_random(16).upper()
         self.mi_session = ClientSession()
         self.device_manager = device_manager
 
@@ -172,8 +172,9 @@ class AuthManager:
         account.token = {
             "passToken": cookies_dict["passToken"],
             "userId": cookies_dict["userId"],
-            "deviceId": get_random(16).upper(),
+            "deviceId": self.device_id,
         }
+        self.log.info(f"设置token到account:{accout.token}")
 
     def get_cookie(self):
         """获取Cookie
