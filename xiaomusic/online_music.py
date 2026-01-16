@@ -863,7 +863,7 @@ class OnlineMusicService:
 
     @staticmethod
     async def _make_request_with_validation(
-        url: str, timeout: int, convert_m4s: bool = False
+        url: str, timeout: int
     ) -> str:
         """
         通用的URL请求和验证方法
@@ -871,7 +871,6 @@ class OnlineMusicService:
         Args:
             url (str): 原始音乐URL
             timeout (int): 请求超时时间(秒)
-            convert_m4s (bool): 是否将.m4s格式转为.mp3格式
 
         Returns:
             str: 最终的真实播放URL，如果代理不成功则返回原始URL
@@ -929,11 +928,7 @@ class OnlineMusicService:
                     timeout=aiohttp.ClientTimeout(total=timeout),
                 ) as response:
                     # 获取最终重定向后的URL
-                    final_url = str(response.url)
-                    # 如果需要转换m4s格式
-                    if convert_m4s and final_url.lower().endswith(".m4s"):
-                        final_url = final_url[:-4] + ".mp3"
-                    return final_url
+                    return str(response.url)
         except Exception:
             return url  # 返回原始URL
 
@@ -949,20 +944,5 @@ class OnlineMusicService:
             str: 最终的真实播放URL，如果代理不成功则返回原始URL
         """
         return await OnlineMusicService._make_request_with_validation(
-            url, timeout, False
-        )
-
-    @staticmethod
-    async def m4s_to_mp3(url: str, timeout: int = 10) -> str:
-        """
-        通过服务端代理获取开放接口真实的音乐播放URL，并将.m4s格式转为.mp3格式
-        Args:
-            url (str): 原始音乐URL
-            timeout (int): 请求超时时间(秒)
-
-        Returns:
-            str: 最终的真实播放URL（已转换为.mp3格式），如果代理不成功则返回原始URL
-        """
-        return await OnlineMusicService._make_request_with_validation(
-            url, timeout, True
+            url, timeout
         )

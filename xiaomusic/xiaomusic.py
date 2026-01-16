@@ -640,11 +640,6 @@ class XiaoMusic:
         """委托给 OnlineMusicService 的静态方法"""
         return await OnlineMusicService.get_real_url_of_openapi(url, timeout)
 
-    @staticmethod
-    async def m4s_to_mp3(url: str, timeout: int = 10) -> str:
-        """委托给 OnlineMusicService 的静态方法"""
-        return await OnlineMusicService.m4s_to_mp3(url, timeout)
-
     # 调用MusicFree插件获取歌曲列表（委托给 online_music_service）
     async def get_music_list_mf(
         self, plugin="all", keyword="", artist="", page=1, limit=20, **kwargs
