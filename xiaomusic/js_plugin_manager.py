@@ -286,6 +286,182 @@ class JSPluginManager:
             self.log.error(f"Failed to update OpenAPI config: {e}")
             return {"success": False, "error": str(e)}
 
+    def get_plugin_source(self) -> dict[str, Any]:
+        """获取插件源配置信息
+        Returns:
+            Dict[str, Any]: 包含 OpenAPI 配置信息的字典，包括启用状态和搜索 URL
+        """
+        try:
+            # 读取配置文件中的 OpenAPI 配置信息
+            config_data = self._get_config_data()
+            if config_data:
+                # 返回 openapi_info 配置项
+                return config_data.get("plugin_source", {})
+            else:
+                return {"enabled": False}
+        except Exception as e:
+            self.log.error(f"Failed to read plugin source info from config: {e}")
+            return {}
+
+    def refresh_plugin_source(self) -> dict[str, Any]:
+        """更新订阅源"""
+        try:
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, encoding="utf-8") as f:
+                    config_data = json.load(f)
+                plugin_source = config_data.get("plugin_source", {})
+                source_url = plugin_source.get("source_url", "")
+                if source_url:
+                    import requests
+
+                    # 请求源地址
+                    response = requests.get(source_url, timeout=30)
+                    response.raise_for_status()  # 抛出HTTP错误
+                    # 解析响应JSON
+                    json_data = response.json()
+                    # 校验响应格式 - 检查是否包含 plugins 数组
+                    if not isinstance(json_data, dict) or "plugins" not in json_data:
+                        return {"success": False, "error": "无效订阅源！"}
+                    plugins_array = json_data["plugins"]
+                    if not isinstance(plugins_array, list):
+                        return {"success": False, "error": "无效订阅源！"}
+                    # 写入插件文本
+                    self.download_and_save_plugin(plugins_array)
+                    # 使缓存失效
+                    self._invalidate_config_cache()
+                    self.reload_plugins()
+                    return {"success": True}
+                else:
+                    return {"success": False, "error": "未找到配置订阅源！"}
+            else:
+                return {"success": False}
+        except Exception as e:
+            self.log.error(f"Failed to toggle OpenAPI config: {e}")
+            return {"success": False, "error": str(e)}
+
+    def download_and_save_plugin(self, plugins_array: list) -> bool:
+        """下载并保存插件数组中的所有插件
+
+        Args:
+            plugins_array: 插件信息列表，格式如 [{"name": "plugin_name", "url": "plugin_url", "version": "version"}, ...]
+
+        Returns:
+            bool: 所有插件下载保存是否全部成功
+        """
+        if not plugins_array or not isinstance(plugins_array, list):
+            self.log.warning("Empty or invalid plugins array provided")
+            return False
+
+        all_success = True
+
+        for plugin_info in plugins_array:
+            if (
+                not isinstance(plugin_info, dict)
+                or "name" not in plugin_info
+                or "url" not in plugin_info
+            ):
+                self.log.warning(f"Invalid plugin entry: {plugin_info}")
+                all_success = False
+                continue
+
+            plugin_name = plugin_info["name"]
+            plugin_url = plugin_info["url"]
+
+            if not plugin_name or not plugin_url:
+                self.log.warning(f"Invalid plugin entry: {plugin_name} -> {plugin_url}")
+                all_success = False
+                continue
+
+            # 调用单个插件下载方法
+            success = self.download_single_plugin(plugin_name, plugin_url)
+            if not success:
+                all_success = False
+                self.log.error(f"Failed to download plugin: {plugin_name}")
+
+        return all_success
+
+    def download_single_plugin(self, plugin_name: str, plugin_url: str) -> bool:
+        """下载并保存单个插件
+
+        Args:
+            plugin_name: 插件名称
+            plugin_url: 插件下载URL
+
+        Returns:
+            bool: 下载保存是否成功
+        """
+        import requests
+
+        # 检查插件名称是否合法
+        sys_files = ["ALL", "all", "OpenAPI", "OPENAPI"]
+        if plugin_name in sys_files:
+            self.log.error(f"Plugin name {plugin_name} is reserved and cannot be used")
+            return False
+
+        # 创建插件目录
+        os.makedirs(self.plugins_dir, exist_ok=True)
+
+        # 生成文件路径
+        plugin_filename = f"{plugin_name}.js"
+        file_path = os.path.join(self.plugins_dir, plugin_filename)
+
+        # 检查是否已存在同名插件
+        if os.path.exists(file_path):
+            self.log.warning(f"Plugin {plugin_name} already exists, will overwrite")
+
+        try:
+            # 下载插件内容
+            response = requests.get(plugin_url, timeout=30)
+            response.raise_for_status()
+
+            # 验证下载的内容是否为有效的JS代码（简单检查是否以有意义的JS字符开头）
+            content = response.text.strip()
+            if not content:
+                self.log.error(f"Downloaded plugin {plugin_name} has empty content")
+                return False
+
+            # 保存插件文件
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+            self.log.info(f"Successfully downloaded and saved plugin: {plugin_name}")
+
+            # 更新插件配置
+            self.update_plugin_config(plugin_name, plugin_filename)
+            return True
+
+        except requests.exceptions.RequestException as e:
+            self.log.error(
+                f"Failed to download plugin {plugin_name} from {plugin_url}: {e}"
+            )
+            return False
+        except Exception as e:
+            self.log.error(f"Failed to save plugin {plugin_name}: {e}")
+            return False
+
+    def update_plugin_source_url(self, source_url: str) -> dict[str, Any]:
+        """更新开放接口地址"""
+        try:
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, encoding="utf-8") as f:
+                    config_data = json.load(f)
+
+                plugin_source = config_data.get("plugin_source", {})
+                plugin_source["source_url"] = source_url
+                config_data["plugin_source"] = plugin_source
+
+                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+                # 使缓存失效
+                self._invalidate_config_cache()
+                return {"success": True}
+            else:
+                return {"success": False}
+        except Exception as e:
+            self.log.error(f"Failed to update plugin source config: {e}")
+            return {"success": False, "error": str(e)}
+
     """----------------------------------------------------------------------"""
 
     def _get_config_data(self):
@@ -332,9 +508,12 @@ class JSPluginManager:
                 base_config = {
                     "account": "",
                     "password": "",
+                    "auto_add_song": True,
+                    "aiapi_info": {"enabled": False, "api_key": ""},
                     "enabled_plugins": [],
-                    "plugins_info": [],
                     "openapi_info": {"enabled": False, "search_url": ""},
+                    "plugin_source": {"source_url": ""},
+                    "plugins_info": [],
                 }
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(base_config, f, ensure_ascii=False, indent=2)
@@ -423,6 +602,7 @@ class JSPluginManager:
         """刷新插件列表，强制重新加载配置数据"""
         # 强制使缓存失效，重新加载配置
         self._invalidate_config_cache()
+        self.reload_plugins()
         # 返回最新的插件列表
         return self.get_plugin_list()
 
@@ -464,7 +644,13 @@ class JSPluginManager:
             # 读取配置文件中的启用插件列表
             config_data = self._get_config_data()
             if config_data:
-                return config_data.get("enabled_plugins", [])
+                enabled_plugins = config_data.get("enabled_plugins", [])
+                # 追加开放接口名称
+                openapi_info = config_data.get("openapi_info", {})
+                enabled_openapi = openapi_info.get("enabled", False)
+                if enabled_openapi and "OpenAPI" not in enabled_plugins:
+                    enabled_plugins.insert(0, "OpenAPI")
+                return enabled_plugins
             else:
                 return []
         except Exception as e:
@@ -554,7 +740,8 @@ class JSPluginManager:
             # 构造请求参数
             params = {"type": "aggregateSearch", "keyword": keyword, "limit": limit}
             # 使用aiohttp发起异步HTTP GET请求
-            async with aiohttp.ClientSession() as session:
+            connector = aiohttp.TCPConnector(ssl=False)  # 跳过 SSL 验证
+            async with aiohttp.ClientSession(connector=connector) as session:
                 async with session.get(
                     url, params=params, timeout=aiohttp.ClientTimeout(total=10)
                 ) as response:
@@ -667,7 +854,6 @@ class JSPluginManager:
 
         # 获取待处理的数据列表
         data_list = result_data["data"]
-        self.log.info(f"列表信息：：{data_list}")
         # 预计算平台权重，启用插件列表中的前9个插件有权重，排名越靠前权重越高
         enabled_plugins = self.get_enabled_plugins()
         plugin_weights = {p: 9 - i for i, p in enumerate(enabled_plugins[:9])}
@@ -708,8 +894,11 @@ class JSPluginManager:
                     artist_score = 800
                 elif ar in artist:
                     artist_score = 600
-
-            platform_bonus = plugin_weights.get(platform, 0)
+            # 开放接口的平台权重最高 20
+            if platform.startswith("OpenAPI-"):
+                platform_bonus = 20
+            else:
+                platform_bonus = plugin_weights.get(platform, 0)
             return title_score + artist_score + platform_bonus
 
         sorted_data = sorted(data_list, key=calculate_match_score, reverse=True)
@@ -1120,7 +1309,7 @@ class JSPluginManager:
         self.plugins.clear()
         # 重新加载插件
         self._load_plugins()
-        self.log.info("Plugins reloaded successfully")
+        self.log.info(f"最新插件信息：{self.plugins}")
 
     def update_plugin_config(self, plugin_name: str, plugin_file: str):
         """更新插件配置文件"""
