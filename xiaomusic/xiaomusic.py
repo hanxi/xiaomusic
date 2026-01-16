@@ -115,8 +115,6 @@ class XiaoMusic:
             log=self.log,
             music_path=self.music_path,
             download_path=self.download_path,
-            hostname=self.hostname,
-            public_port=self.public_port,
             music_path_depth=self.music_path_depth,
             exclude_dirs=self.exclude_dirs,
             event_bus=self.event_bus,
@@ -129,8 +127,6 @@ class XiaoMusic:
         self._music_url_handler = MusicUrlHandler(
             config=self.config,
             log=self.log,
-            hostname=self.hostname,
-            public_port=self.public_port,
             music_library=self._music_library,
         )
 
@@ -194,14 +190,6 @@ class XiaoMusic:
 
         if not os.path.exists(self.download_path):
             os.makedirs(self.download_path)
-
-        self.hostname = self.config.hostname
-        if not self.hostname.startswith(("http://", "https://")):
-            self.hostname = f"http://{self.hostname}"  # 默认 http
-        self.port = self.config.port
-        self.public_port = self.config.public_port
-        if self.public_port == 0:
-            self.public_port = self.port
 
         self.active_cmd = self.config.active_cmd.split(",")
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
@@ -432,13 +420,6 @@ class XiaoMusic:
         """委托给 online_music_service"""
         return await self._online_music_service.get_music_list_mf(
             plugin, keyword, artist, page, limit, **kwargs
-        )
-
-    # 调用MusicFree插件获取真实播放url（委托给 online_music_service）
-    async def get_media_source_url(self, music_item, quality: str = "standard"):
-        """委托给 online_music_service"""
-        return await self._online_music_service.get_media_source_url(
-            music_item, quality
         )
 
     # 调用MusicFree插件获取歌词（委托给 online_music_service）

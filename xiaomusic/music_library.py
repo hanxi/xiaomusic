@@ -44,8 +44,6 @@ class MusicLibrary:
         log,
         music_path,
         download_path,
-        hostname,
-        public_port,
         music_path_depth,
         exclude_dirs,
         event_bus=None,
@@ -57,8 +55,6 @@ class MusicLibrary:
             log: 日志对象
             music_path: 音乐目录路径
             download_path: 下载目录路径
-            hostname: 主机名
-            public_port: 公开端口
             music_path_depth: 音乐目录扫描深度
             exclude_dirs: 排除的目录列表
             event_bus: 事件总线对象（可选）
@@ -67,8 +63,6 @@ class MusicLibrary:
         self.log = log
         self.music_path = music_path
         self.download_path = download_path
-        self.hostname = hostname
-        self.public_port = public_port
         self.music_path_depth = music_path_depth
         self.exclude_dirs = exclude_dirs
         self.event_bus = event_bus
@@ -636,7 +630,7 @@ class MusicLibrary:
         if name not in self.all_music:
             return False
         url = self.all_music[name]
-        return url.startswith(("http://", "https://"))
+        return url.startswith(("http://", "https://", "self://"))
 
     def is_need_use_play_music_api(self, name):
         """是否是需要通过api获取播放链接的网络歌曲
@@ -672,7 +666,7 @@ class MusicLibrary:
             encoded_name = urllib.parse.quote(picture)
             tags["picture"] = try_add_access_control_param(
                 self.config,
-                f"{self.hostname}:{self.public_port}/picture/{encoded_name}",
+                f"{self.config.hostname}:{self.config.public_port}/picture/{encoded_name}",
             )
 
         if self.is_web_music(name):
@@ -905,7 +899,7 @@ class MusicLibrary:
                             file_or_url, self.config.picture_cache_path
                         )
                     else:
-                        self.log.info(f"{name}/{file_or_url} 无法更新 tag")
+                        self.log.info(f"{name} {file_or_url} 无法更新 tag")
                 except BaseException as e:
                     self.log.exception(f"{e} {file_or_url} error {type(file_or_url)}!")
 

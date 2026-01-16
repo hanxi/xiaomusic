@@ -85,7 +85,9 @@ async def get_plugin_source_url(
         # 将json字符串转换为json对象
         json_data = json.loads(json_str)
         # 调用公共函数处理
-        media_source = await xiaomusic.get_media_source_url(json_data)
+        media_source = await xiaomusic._online_music_service.get_media_source_url(
+            json_data
+        )
         if media_source and media_source.get("url"):
             source_url = media_source.get("url")
         else:
@@ -106,7 +108,7 @@ async def get_media_source(request: Request, Verifcation=Depends(verification)):
         # 获取请求数据
         data = await request.json()
         # 调用公共函数处理
-        return await xiaomusic.get_media_source_url(data)
+        return await xiaomusic._online_music_service.get_media_source_url(data)
     except Exception as e:
         return {"success": False, "error": str(e)}
 

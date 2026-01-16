@@ -529,7 +529,7 @@ class OnlineMusicService:
         """获取插件源代理URL"""
         origin_data = json.dumps(origin_data)
         datab64 = base64.b64encode(origin_data.encode("utf-8")).decode("utf-8")
-        plugin_source_url = f"{self.xiaomusic.hostname}:{self.xiaomusic.public_port}/api/proxy/plugin-url?data={datab64}"
+        plugin_source_url = f"self:///api/proxy/plugin-url?data={datab64}"
         self.log.info(f"plugin_source_url : {plugin_source_url}")
         return plugin_source_url
 

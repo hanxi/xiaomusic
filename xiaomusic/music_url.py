@@ -4,7 +4,7 @@
 """
 
 import base64
-import urllib.parse
+from urllib.parse import urlparse
 
 from xiaomusic.utils.network_utils import MusicUrlCache
 from xiaomusic.utils.system_utils import try_add_access_control_param
@@ -20,8 +20,6 @@ class MusicUrlHandler:
         self,
         config,
         log,
-        hostname,
-        public_port,
         music_library,
     ):
         """初始化URL处理器
@@ -29,16 +27,17 @@ class MusicUrlHandler:
         Args:
             config: 配置对象
             log: 日志对象
-            hostname: 主机名
-            public_port: 公开端口
             music_library: 音乐库管理模块
         """
         self.config = config
         self.log = log
-        self.hostname = hostname
-        self.public_port = public_port
         self.music_library = music_library
         self.url_cache = MusicUrlCache()
+
+    @property
+    def netloc(self):
+        host = self.config.hostname.split("//", 1)[1]
+        return f"{host}:{self.config.public_port}"
 
     async def get_music_sec_url(self, name, cur_playlist):
         """获取歌曲播放时长和播放地址
@@ -122,7 +121,9 @@ class MusicUrlHandler:
             str: 代理URL
         """
         urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
-        proxy_url = f"{self.hostname}:{self.public_port}/proxy?urlb64={urlb64}"
+        proxy_url = (
+            f"{self.config.hostname}:{self.config.public_port}/proxy?urlb64={urlb64}"
+        )
         self.log.info(f"Using proxy url: {proxy_url}")
         return proxy_url
 
@@ -162,8 +163,8 @@ class MusicUrlHandler:
         self.log.info(f"_get_file_url filepath:{filepath}, filename:{filename}")
 
         # 构造URL
-        encoded_name = urllib.parse.quote(filename)
-        url = f"{self.hostname}:{self.public_port}/music/{encoded_name}"
+        encoded_name = urlparse.quote(filename)
+        url = f"{self.config.hostname}:{self.config.public_port}/music/{encoded_name}"
         return try_add_access_control_param(self.config, url)
 
     @staticmethod
@@ -174,3 +175,15 @@ class MusicUrlHandler:
             async with session.get(proxy_url) as response:
                 # 获取最终重定向的 URL
                 return str(response.url)
+
+    def expand_self_url(self, parsed_url):
+        if parsed_url.scheme != "self":
+            return parsed_url
+
+        url = f"{self.config.hostname}:{self.config.public_port}{parsed_url.path}"
+        if parsed_url.query:
+            url += f"?{parsed_url.query}"
+        if parsed_url.fragment:
+            url += f"#{parsed_url.fragment}"
+
+        return urlparse(url)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 from dataclasses import asdict, dataclass, field
@@ -95,9 +96,9 @@ class Config:
     download_path: str = os.getenv("XIAOMUSIC_DOWNLOAD_PATH", "music/download")
     conf_path: str = os.getenv("XIAOMUSIC_CONF_PATH", "conf")
     cache_dir: str = os.getenv("XIAOMUSIC_CACHE_DIR", "music/cache")
-    hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "192.168.2.5")
+    hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "http://192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))  # 监听端口
-    public_port: int = int(os.getenv("XIAOMUSIC_PUBLIC_PORT", 0))  # 歌曲访问端口
+    public_port: int = int(os.getenv("XIAOMUSIC_PUBLIC_PORT", 58090))  # 歌曲访问端口
     proxy: str = os.getenv("XIAOMUSIC_PROXY", None)
     loudnorm: str = os.getenv("XIAOMUSIC_LOUDNORM", None)  # 均衡音量参数
     search_prefix: str = os.getenv(
@@ -267,6 +268,9 @@ class Config:
     def __post_init__(self) -> None:
         if self.proxy:
             validate_proxy(self.proxy)
+        if self.hostname:
+            if not self.hostname.startswith(("http://", "https://")):
+                raise ValueError("hostname scheme must be http or https")
 
         self.init_keyword()
         # 保存配置到 config-example.json 文件
@@ -411,3 +415,8 @@ class Config:
             "hostname",
         }
         return key in http_server_keys
+
+    def get_basic_auth(self):
+        credentials = f"{self.httpauth_username}:{self.httpauth_password}"
+        encoded_credentials = base64.b64encode(credentials.encode()).decode()
+        return f"Basic {encoded_credentials}"
