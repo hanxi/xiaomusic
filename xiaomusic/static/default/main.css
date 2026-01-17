@@ -26,7 +26,6 @@ body {
   text-align: center;
   max-width: 360px;
   position: relative;
-  overflow: hidden;
 }
 
 h1 {
@@ -50,14 +49,17 @@ h1 a:hover {
 }
 
 .new-badge {
+  position: absolute;
+  top: -8px;
+  right: -35px;
   background-color: #ff4757;
   color: white;
   border-radius: 12px;
-  padding: 2px 6px;
-  font-size: 12px;
-  margin-left: 5px;
+  padding: 3px 7px;
+  font-size: 11px;
+  font-weight: bold;
   display: none;
-  width: fit-content;
+  z-index: 10;
 }
 
 label {
