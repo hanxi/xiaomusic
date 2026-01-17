@@ -170,7 +170,7 @@ async def upload_music(playlist: str = Form(...), file: UploadFile = File(...)):
             musics = xiaomusic.music_list.get(playlist, [])
             if musics and len(musics) > 0:
                 first = musics[0]
-                filepath = xiaomusic._music_library.all_music.get(first, "")
+                filepath = xiaomusic.music_library.all_music.get(first, "")
                 if filepath:
                     dest_dir = os.path.dirname(filepath)
 
@@ -203,7 +203,7 @@ async def upload_music(playlist: str = Form(...), file: UploadFile = File(...)):
 
         # 重新生成音乐列表索引
         try:
-            xiaomusic._music_library.gen_all_music_list()
+            xiaomusic.music_library.gen_all_music_list()
         except Exception:
             pass
 
@@ -301,7 +301,7 @@ async def proxy(urlb64: str):
 
     log.info(f"代理请求: {url}")
 
-    parsed_url, url = xiaomusic._music_library.expand_self_url(url)
+    parsed_url, url = xiaomusic.music_library.expand_self_url(url)
     log.info(f"链接处理后 ${parsed_url}")
     if not parsed_url.scheme or not parsed_url.netloc:
         # Fixed: Use a new exception instance since 'e' from previous block is out of scope

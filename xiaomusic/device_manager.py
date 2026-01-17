@@ -6,8 +6,13 @@
 - 设备信息查询
 """
 
+from typing import TYPE_CHECKING, Optional
+
 from xiaomusic.device_player import XiaoMusicDevice
 from xiaomusic.utils.text_utils import parse_str_to_dict
+
+if TYPE_CHECKING:
+    from xiaomusic.xiaomusic import XiaoMusic
 
 
 class DeviceManager:
@@ -16,7 +21,7 @@ class DeviceManager:
     负责管理小米音箱设备列表、分组和设备信息查询。
     """
 
-    def __init__(self, config, log, xiaomusic=None):
+    def __init__(self, config, log, xiaomusic: Optional["XiaoMusic"] = None):
         """初始化设备管理器
 
         Args:

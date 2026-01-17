@@ -46,7 +46,7 @@ class JSAdapter:
             }
 
             # 添加到 all_music 字典中
-            self.xiaomusic._music_library.all_music[music_id] = music_item
+            self.xiaomusic.music_library.all_music[music_id] = music_item
             formatted_ids.append(music_id)
 
         return formatted_ids

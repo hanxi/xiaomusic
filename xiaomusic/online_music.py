@@ -375,7 +375,7 @@ class OnlineMusicService:
             converted_music_list = self._convert_song_list_to_music_items(song_list)
             if not converted_music_list:
                 return {"success": False, "error": "没有有效的歌曲可以添加"}
-            music_library = self.xiaomusic._music_library
+            music_library = self.xiaomusic.music_library
             # 更新配置中的音乐歌单Json
             music_library.update_music_list_json(
                 list_name, converted_music_list, append

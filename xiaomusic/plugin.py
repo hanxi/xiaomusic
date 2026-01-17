@@ -1,10 +1,14 @@
 import importlib
 import inspect
 import pkgutil
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from xiaomusic.xiaomusic import XiaoMusic
 
 
 class PluginManager:
-    def __init__(self, xiaomusic, plugin_dir="plugins"):
+    def __init__(self, xiaomusic: "XiaoMusic", plugin_dir="plugins"):
         self.xiaomusic = xiaomusic
         self.log = xiaomusic.log
         self._funcs = {}

@@ -94,9 +94,10 @@ class _LazyProxy:
 
 
 # 创建代理对象，可以像普通变量一样使用
-xiaomusic = _LazyProxy("_xiaomusic")
-config = _LazyProxy("_config")
-log = _LazyProxy("_log")
+# 添加类型注解以支持 IDE 代码跳转和补全
+xiaomusic: "XiaoMusic" = _LazyProxy("_xiaomusic")  # type: ignore
+config: "Config" = _LazyProxy("_config")  # type: ignore
+log: "logging.Logger" = _LazyProxy("_log")  # type: ignore
 
 
 def verification(

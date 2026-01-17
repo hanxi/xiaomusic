@@ -5,8 +5,12 @@
 
 import asyncio
 import re
+from typing import TYPE_CHECKING
 
 from xiaomusic.config import KEY_WORD_ARG_BEFORE_DICT
+
+if TYPE_CHECKING:
+    from xiaomusic.xiaomusic import XiaoMusic
 
 
 class CommandHandler:
@@ -15,7 +19,7 @@ class CommandHandler:
     负责解析用户的语音指令，匹配对应的命令，并路由到相应的处理方法。
     """
 
-    def __init__(self, config, log, xiaomusic_instance):
+    def __init__(self, config, log, xiaomusic_instance: "XiaoMusic"):
         """初始化命令处理器
 
         Args:
