@@ -208,7 +208,7 @@ class XiaoMusicDevice:
 
     async def _play(self, name="", search_key="", exact=True, update_cur_list=False):
         """播放歌曲（内部实现）"""
-        if search_key == "" and name == "":
+        if not search_key and not name:
             if self.check_play_next():
                 await self._play_next()
                 return
@@ -224,16 +224,17 @@ class XiaoMusicDevice:
                 name, n=self.config.search_music_count
             )
         self.log.info(f"play. names:{names} {len(names)}")
-        if len(names) > 0:
+        if names:
             if not exact:
                 if len(names) > 1:  # 大于一首歌才更新
                     self._play_list = names
                     self.device.cur_playlist = "临时搜索列表"
                     self.update_playlist()
                 else:  # 只有一首歌，append
-                    self._play_list = self._play_list + names
-                    self.device.cur_playlist = "临时搜索列表"
-                    self.update_playlist(reorder=False)
+                    if names[0] not in self._play_list:
+                        self._play_list = self._play_list + names
+                        self.device.cur_playlist = "临时搜索列表"
+                        self.update_playlist(reorder=False)
             name = names[0]
             if update_cur_list and (name not in self._play_list):
                 # 根据当前歌曲匹配歌曲列表
@@ -244,6 +245,7 @@ class XiaoMusicDevice:
             )
             # 本地存在歌曲，直接播放
             await self._playmusic(name)
+
         elif not self.xiaomusic._music_library.is_music_exist(name):
             self.log.info(f"本地不存在歌曲{name}")
             if self.config.disable_download:
