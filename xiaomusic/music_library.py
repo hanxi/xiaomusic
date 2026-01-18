@@ -502,27 +502,25 @@ class MusicLibrary:
             n=n,
             extra_search_index=self._extra_index_search,
         )
-
-        if real_names:
-            if n > 1 and name not in real_names:
-                # 模糊匹配模式，扩大范围再找，最后保留随机 n 个
-                real_names = find_best_match(
-                    name,
-                    all_music_list,
-                    cutoff=self.config.fuzzy_match_cutoff,
-                    n=n * 2,
-                    extra_search_index=self._extra_index_search,
-                )
-                random.shuffle(real_names)
-                real_names = real_names[:n]
-            elif name in real_names:
-                # 可以精确匹配，限制只返回一个（保证网页端播放可用）
-                real_names = [name]
-            self.log.info(f"根据【{name}】找到歌曲【{real_names}】")
-            return real_names
-
+        if not real_names:
+            self.log.info(f"没找到歌曲【{name}】")
+            return []
+        self.log.info(f"根据【{name}】找到歌曲【{real_names}】")
+        if name in real_names:
+            return [name]
+        
+        # 音乐不在查找结果同时n大于1, 模糊匹配模式，扩大范围再找，最后保留随机 n 个
+        if n > 1:
+            real_names = find_best_match(
+                name,
+                all_music_list,
+                cutoff=self.config.fuzzy_match_cutoff,
+                n=n * 2,
+                extra_search_index=self._extra_index_search,
+            )
+            random.shuffle(real_names)
         self.log.info(f"没找到歌曲【{name}】")
-        return []
+        return real_names[:n]
 
     def find_real_music_list_name(self, list_name):
         """模糊搜索播放列表名称
