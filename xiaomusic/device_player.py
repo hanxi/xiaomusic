@@ -361,9 +361,7 @@ class XiaoMusicDevice:
         self.device.playlist2music[self.device.cur_playlist] = name
         cur_playlist = self.device.cur_playlist
         self.log.info(f"cur_music {self.get_cur_music()}")
-        sec, url = await self.xiaomusic.music_library.get_music_sec_url(
-            name, cur_playlist
-        )
+        url, _ = await self.xiaomusic.music_library.get_music_url(name)
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
 
@@ -383,21 +381,37 @@ class XiaoMusicDevice:
         self._play_failed_cnt = 0
 
         self.log.info(f"【{name}】已经开始播放了")
+
+        # 记录歌曲开始播放的时间
+        self._start_time = time.time()
+        self._paused_time = 0
+
+        sec = await self.xiaomusic.music_library.get_music_duration(name)
+        # 存储真实歌曲时长
+        self._duration = sec
         await self.xiaomusic.analytics.send_play_event(name, sec, self.hardware)
 
         # 设置下一首歌曲的播放定时器
-        if sec <= 1:
+        if sec <= 0.1:
             self.log.info(f"【{name}】不会设置下一首歌的定时器")
             return
+
         # 计算自动添加歌曲的延迟时间，为当前歌曲时长的一半，但不超过60秒
         if sec > 30:
             sleep_sec = min(sec / 2, 60)
             await self.auto_add_song(cur_playlist, sleep_sec)
-        sec = sec + self.config.delay_sec
-        self._start_time = time.time()
-        self._duration = sec
-        self._paused_time = 0
-        await self.set_next_music_timeout(sec)
+
+        # 计算获取时长的执行耗时
+        duration_execution_time = time.time() - self._start_time
+        self.log.info(f"获取音乐时长耗时: {duration_execution_time:.3f} 秒")
+        # 调整定时器时长，减去获取音乐时长的执行时间
+        adjusted_sec = sec + self.config.delay_sec - duration_execution_time
+        # 确保调整后的时长不会过小，最小保留0.1秒
+        adjusted_sec = max(adjusted_sec, 0.1)
+        self.log.info(
+            f"原始歌曲时长: {sec:.3f} 秒, 调整后定时器时长: {adjusted_sec:.3f} 秒"
+        )
+        await self.set_next_music_timeout(adjusted_sec)
         # 发布设备配置变更事件
         if self.event_bus:
             self.event_bus.publish(DEVICE_CONFIG_CHANGED)
