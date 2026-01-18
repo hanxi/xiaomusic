@@ -508,7 +508,7 @@ class MusicLibrary:
         self.log.info(f"根据【{name}】找到歌曲【{real_names}】")
         if name in real_names:
             return [name]
-        
+
         # 音乐不在查找结果同时n大于1, 模糊匹配模式，扩大范围再找，最后保留随机 n 个
         if n > 1:
             real_names = find_best_match(
