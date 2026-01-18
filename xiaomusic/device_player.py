@@ -280,9 +280,10 @@ class XiaoMusicDevice:
             )
         ):
             name = self.get_next_music()
+            self.log.info(f"get_next_music {name}")
         self.log.info(f"_play_next. name:{name}, cur_music:{self.get_cur_music()}")
         if name == "":
-            # await self.do_tts("本地没有歌曲")
+            self.log.info("本地没有歌曲")
             return
         await self._play(name, exact=True)
 
@@ -652,6 +653,7 @@ class XiaoMusicDevice:
         from xiaomusic.utils.music_utils import get_local_music_duration
         from xiaomusic.utils.network_utils import text_to_mp3
 
+        self.log.info(f"_text_to_speech_edge_tts {value}")
         try:
             # 取消之前的 TTS 定时器
             if self._tts_timer:
