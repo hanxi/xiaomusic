@@ -9,6 +9,8 @@ from ga4mp import GtagMP
 
 from xiaomusic import __version__
 
+MAX_PARAM_LENGTH = 100
+
 
 class Analytics:
     def __init__(self, log, config):
@@ -51,7 +53,8 @@ class Analytics:
     async def send_play_event(self, name, sec, hardware):
         event = self.gtag.create_new_event(name="play")
         event.set_event_param(name="version", value=__version__)
-        event.set_event_param(name="music", value=name)
+        truncated_name = name[:MAX_PARAM_LENGTH]
+        event.set_event_param(name="music", value=truncated_name)
         event.set_event_param(name="sec", value=sec)
         event.set_event_param(name="hardware", value=hardware)
         await self._send(event)
