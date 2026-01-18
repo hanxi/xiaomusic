@@ -45,8 +45,6 @@ class MusicLibrary:
         self,
         config,
         log,
-        music_path,
-        download_path,
         music_path_depth,
         exclude_dirs,
         event_bus=None,
@@ -56,16 +54,12 @@ class MusicLibrary:
         Args:
             config: 配置对象
             log: 日志对象
-            music_path: 音乐目录路径
-            download_path: 下载目录路径
             music_path_depth: 音乐目录扫描深度
             exclude_dirs: 排除的目录列表
             event_bus: 事件总线对象（可选）
         """
         self.config = config
         self.log = log
-        self.music_path = music_path
-        self.download_path = download_path
         self.music_path_depth = music_path_depth
         self.exclude_dirs = exclude_dirs
         self.event_bus = event_bus
@@ -101,7 +95,7 @@ class MusicLibrary:
 
         # 扫描本地音乐目录
         local_musics = traverse_music_directory(
-            self.music_path,
+            self.config.music_path,
             depth=self.music_path_depth,
             exclude_dirs=self.exclude_dirs,
             support_extension=SUPPORT_MUSIC_TYPE,
@@ -112,10 +106,11 @@ class MusicLibrary:
                 continue
 
             # 处理目录名称
-            if dir_name == os.path.basename(self.music_path):
+            if dir_name == os.path.basename(self.config.music_path):
                 dir_name = "其他"
-            if self.music_path != self.download_path and dir_name == os.path.basename(
-                self.download_path
+            if (
+                self.config.music_path != self.config.download_path
+                and dir_name == os.path.basename(self.config.download_path)
             ):
                 dir_name = "下载"
 

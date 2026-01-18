@@ -58,7 +58,6 @@ class XiaoMusicDevice:
         self.log = xiaomusic.log
         self.xiaomusic = xiaomusic
         self.auth_manager = xiaomusic.auth_manager
-        self.download_path = xiaomusic.download_path
         self.ffmpeg_location = self.config.ffmpeg_location
         self.event_bus = getattr(xiaomusic, "event_bus", None)
 
@@ -498,7 +497,7 @@ class XiaoMusicDevice:
             "--audio-quality",
             "0",
             "--paths",
-            self.download_path,
+            self.config.download_path,
             "-o",
             f"{name}.mp3",
             "--ffmpeg-location",
@@ -522,7 +521,7 @@ class XiaoMusicDevice:
         self.log.info(f"正在下载中 {search_key} {name}")
         await self._download_proc.wait()
         # 下载完成后，修改文件权限
-        file_path = os.path.join(self.download_path, f"{name}.mp3")
+        file_path = os.path.join(self.config.download_path, f"{name}.mp3")
         chmodfile(file_path)
 
     async def check_replay(self):
@@ -547,7 +546,7 @@ class XiaoMusicDevice:
 
     async def add_download_music(self, name):
         """把下载的音乐加入播放列表"""
-        filepath = os.path.join(self.download_path, f"{name}.mp3")
+        filepath = os.path.join(self.config.download_path, f"{name}.mp3")
         self.xiaomusic.music_library.all_music[name] = filepath
         # 应该很快，阻塞运行
         await self.xiaomusic.music_library._gen_all_music_tag({name: filepath})
