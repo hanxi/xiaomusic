@@ -232,6 +232,10 @@ class XiaoMusicDevice:
                 name = self.get_cur_music()
         self.log.info(f"play. search_key:{search_key} name:{name}: exact:{exact}")
 
+        if not name:
+            self.log.info(f"没有歌曲播放了 name:{name} search_key:{search_key}")
+            return
+
         # 本地歌曲不存在时下载
         if exact:
             await self._try_download_play(name, search_key)
