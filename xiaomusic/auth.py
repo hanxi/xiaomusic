@@ -196,6 +196,8 @@ class AuthManager:
             user_data = json.loads(f.read())
         self.log.info(f"get_cookie user_data:{user_data}")
         user_id = user_data.get("userId")
+        if user_id is None:
+            user_id = self.config.account
         service_token = user_data.get("micoapi")[1]
         device_id = self.config.get_one_device_id()
         cookie_string = COOKIE_TEMPLATE.format(
