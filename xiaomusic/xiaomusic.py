@@ -625,7 +625,7 @@ class XiaoMusic:
 
     # 当前是否正在播放歌曲
     def isplaying(self, did):
-        return self.device_manager.devices[did].isplaying()
+        return self.device_manager.devices[did].is_playing
 
     # 获取当前配置
     def getconfig(self):
