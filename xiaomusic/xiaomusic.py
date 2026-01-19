@@ -154,6 +154,7 @@ class XiaoMusic:
             config=self.config,
             log=self.log,
             xiaomusic_instance=self,
+            device_manager=self.device_manager
         )
 
         # 启动统计
