@@ -59,7 +59,7 @@ class CommandHandler:
                 await device.check_replay()
                 return
 
-            # 执行命令
+            # 执行命令 todo 把self.xiaomusic改为从device获取并执行
             func = getattr(self.xiaomusic, opvalue)
             await func(did=did, arg1=oparg)
 
