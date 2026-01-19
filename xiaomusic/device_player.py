@@ -63,7 +63,7 @@ class XiaoMusicDevice:
 
         self._download_proc = None  # 下载对象
         self._next_timer = None
-        self._playing = False
+        self.is_playing = False
         # 播放进度
         self._start_time = 0
         self._duration = 0
@@ -99,7 +99,7 @@ class XiaoMusicDevice:
     def get_offset_duration(self):
         """获取播放偏移量和总时长"""
         duration = self._duration
-        if not self.isplaying():
+        if not self.is_playing:
             return 0, duration
         offset = time.time() - self._start_time - self._paused_time
         return offset, duration
@@ -400,7 +400,7 @@ class XiaoMusicDevice:
         # 取消组内所有的下一首歌曲的定时器
         await self.cancel_group_next_timer()
 
-        self._playing = True
+        self.is_playing = True
         self.device.cur_music = name
         self.device.playlist2music[self.device.cur_playlist] = name
         cur_playlist = self.device.cur_playlist
@@ -414,7 +414,7 @@ class XiaoMusicDevice:
             self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
             await asyncio.sleep(1)
             if (
-                self.isplaying()
+                self.is_playing
                 and self._last_cmd != "stop"
                 and self._play_failed_cnt < 10
             ):
@@ -570,7 +570,7 @@ class XiaoMusicDevice:
 
     async def check_replay(self):
         """检查是否需要继续播放被打断的歌曲"""
-        if self.isplaying() and not self.isdownloading():
+        if self.is_playing and not self.isdownloading():
             if not self.config.continue_play:
                 # 重新播放歌曲
                 self.log.info("现在重新播放歌曲")
@@ -581,12 +581,8 @@ class XiaoMusicDevice:
                 )
         else:
             self.log.info(
-                f"不会继续播放歌曲. isplaying:{self.isplaying()} isdownloading:{self.isdownloading()}"
+                f"不会继续播放歌曲. isplaying:{self.is_playing} isdownloading:{self.isdownloading()}"
             )
-
-    def isplaying(self):
-        """检查当前是否正在播放歌曲"""
-        return self._playing
 
     async def add_download_music(self, name):
         """把下载的音乐加入播放列表"""
@@ -825,7 +821,7 @@ class XiaoMusicDevice:
 
     async def reset_timer_when_answer(self, answer_length):
         """重置计时器（当小爱回答时）"""
-        if not (self.isplaying() and self.config.continue_play):
+        if not (self.is_playing and self.config.continue_play):
             return
         pause_time = answer_length / 5 + 1
         offset, duration = self.get_offset_duration()
@@ -920,7 +916,7 @@ class XiaoMusicDevice:
     async def stop(self, arg1=""):
         """停止播放"""
         self._last_cmd = "stop"
-        self._playing = False
+        self.is_playing = False
         if arg1 != "notts":
             await self.do_tts(self.config.stop_tts_msg)
             await asyncio.sleep(3)  # 等它说完
