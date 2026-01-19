@@ -246,7 +246,7 @@ async def playmusic(data: DidPlayMusic):
         return {"ret": "Did not exist"}
 
     log.info(f"playmusic {did} musicname:{musicname} searchkey:{searchkey}")
-    await xiaomusic.do_play(did, musicname, searchkey)
+    await xiaomusic.do_play(did, musicname, searchkey, exact=True)
     return {"ret": "OK"}
 
 

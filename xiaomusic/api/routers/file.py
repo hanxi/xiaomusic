@@ -159,12 +159,12 @@ async def upload_music(playlist: str = Form(...), file: UploadFile = File(...)):
     """上传音乐文件到当前播放列表对应的目录"""
     try:
         # 选择目标目录：优先尝试由播放列表中已有歌曲推断目录
-        dest_dir = xiaomusic.music_path
+        dest_dir = config.music_path
         # 特殊歌单映射
         if playlist == "下载":
-            dest_dir = xiaomusic.download_path
+            dest_dir = config.download_path
         elif playlist == "其他":
-            dest_dir = xiaomusic.music_path
+            dest_dir = config.music_path
         else:
             # 如果播放列表中存在歌曲，从其中任意一首推断目录
             musics = xiaomusic.music_list.get(playlist, [])

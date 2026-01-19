@@ -109,8 +109,6 @@ class XiaoMusic:
         self.music_library = MusicLibrary(
             config=self.config,
             log=self.log,
-            music_path=self.music_path,
-            download_path=self.download_path,
             music_path_depth=self.music_path_depth,
             exclude_dirs=self.exclude_dirs,
             event_bus=self.event_bus,
@@ -168,17 +166,15 @@ class XiaoMusic:
         debug_config = deepcopy_data_no_sensitive_info(self.config)
         self.log.info(f"Startup OK. {debug_config}")
 
-        if self.config.conf_path == self.music_path:
+        if self.config.conf_path == self.config.music_path:
             self.log.warning("配置文件目录和音乐目录建议设置为不同的目录")
 
     def init_config(self):
-        self.music_path = self.config.music_path
-        self.download_path = self.config.download_path
-        if not self.download_path:
-            self.download_path = self.music_path
+        if not os.path.exists(self.config.music_path):
+            os.makedirs(self.config.music_path)
 
-        if not os.path.exists(self.download_path):
-            os.makedirs(self.download_path)
+        if not os.path.exists(self.config.download_path):
+            os.makedirs(self.config.download_path)
 
         self.active_cmd = self.config.active_cmd.split(",")
         self.exclude_dirs = set(self.config.exclude_dirs.split(","))
@@ -235,7 +231,6 @@ class XiaoMusic:
             self.file_watcher = FileWatcherManager(
                 config=self.config,
                 log=self.log,
-                music_path=self.music_path,
                 on_change_callback=self._on_file_change,
             )
         self.file_watcher.start(loop)

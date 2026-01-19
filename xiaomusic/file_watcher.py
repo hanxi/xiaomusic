@@ -90,18 +90,16 @@ class FileWatcherManager:
     负责启动和停止文件监控服务。
     """
 
-    def __init__(self, config, log, music_path, on_change_callback):
+    def __init__(self, config, log, on_change_callback):
         """初始化文件监控管理器
 
         Args:
             config: 配置对象
             log: 日志对象
-            music_path: 要监控的音乐目录路径
             on_change_callback: 文件变化时的回调函数
         """
         self.config = config
         self.log = log
-        self.music_path = music_path
         self.on_change_callback = on_change_callback
         self._observer = None
         self._file_watch_handler = None
@@ -136,10 +134,10 @@ class FileWatcherManager:
         # 创建并启动监控器
         self._observer = Observer()
         self._observer.schedule(
-            self._file_watch_handler, self.music_path, recursive=True
+            self._file_watch_handler, self.config.music_path, recursive=True
         )
         self._observer.start()
-        self.log.info(f"已启动对 {self.music_path} 的目录监控。")
+        self.log.info(f"已启动对 {self.config.music_path} 的目录监控。")
 
     def stop(self):
         """停止文件监控（支持重入）

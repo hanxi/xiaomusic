@@ -58,7 +58,6 @@ class XiaoMusicDevice:
         self.log = xiaomusic.log
         self.xiaomusic = xiaomusic
         self.auth_manager = xiaomusic.auth_manager
-        self.download_path = xiaomusic.download_path
         self.ffmpeg_location = self.config.ffmpeg_location
         self.event_bus = getattr(xiaomusic, "event_bus", None)
 
@@ -210,6 +209,19 @@ class XiaoMusicDevice:
             update_cur_list=update_cur_list,
         )
 
+    async def _try_download_play(self, name="", search_key=""):
+        if not self.xiaomusic.music_library.is_music_exist(name):
+            self.log.info(f"本地不存在歌曲{name}")
+            if self.config.disable_download:
+                await self.do_tts(f"本地不存在歌曲{name}")
+                return
+
+        # 如果插件播放失败，则执行下载流程
+        await self.download(search_key, name)
+        # 把文件插入到播放列表里
+        await self.add_download_music(name)
+        await self._playmusic(name)
+
     async def _play(self, name="", search_key="", exact=True, update_cur_list=False):
         """播放歌曲（内部实现）"""
         if not search_key and not name:
@@ -219,47 +231,42 @@ class XiaoMusicDevice:
             name = self.cur_music
         self.log.info(f"play. search_key:{search_key} name:{name}: exact:{exact}")
 
+        if not name:
+            self.log.info(f"没有歌曲播放了 name:{name} search_key:{search_key}")
+            return
+
         # 本地歌曲不存在时下载
         if exact:
-            names = self.xiaomusic.find_real_music_name(name, n=1)
-        else:
-            names = self.xiaomusic.find_real_music_name(
-                name, n=self.config.search_music_count
-            )
-        self.log.info(f"play. names:{names} {len(names)}")
-        if names:
-            if not exact:
-                if len(names) > 1:  # 大于一首歌才更新
-                    self._play_list = names
-                    self.device.cur_playlist = "临时搜索列表"
-                    self.update_playlist()
-                else:  # 只有一首歌，append
-                    if names[0] not in self._play_list:
-                        self._play_list = self._play_list + names
-                        self.device.cur_playlist = "临时搜索列表"
-                        self.update_playlist(reorder=False)
-            name = names[0]
-            if update_cur_list and (name not in self._play_list):
-                # 根据当前歌曲匹配歌曲列表
-                self.device.cur_playlist = self.find_cur_playlist(name)
-                self.update_playlist()
-            self.log.debug(
-                f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}"
-            )
-            # 本地存在歌曲，直接播放
-            await self._playmusic(name)
+            await self._try_download_play(name, search_key)
+            return
 
-        elif not self.xiaomusic.music_library.is_music_exist(name):
-            self.log.info(f"本地不存在歌曲{name}")
-            if self.config.disable_download:
-                await self.do_tts(f"本地不存在歌曲{name}")
-                return
-            else:
-                # 如果插件播放失败，则执行下载流程
-                await self.download(search_key, name)
-                # 把文件插入到播放列表里
-                await self.add_download_music(name)
-                await self._playmusic(name)
+        names = self.xiaomusic.find_real_music_name(
+            name, n=self.config.search_music_count
+        )
+        self.log.info(f"play. names:{names} {len(names)}")
+        if not names:
+            await self._try_download_play(name, search_key)
+            return
+
+        if len(names) > 1:  # 大于一首歌才更新
+            self._play_list = names
+            self.device.cur_playlist = "临时搜索列表"
+            self.update_playlist()
+        else:  # 只有一首歌，append
+            if names[0] not in self._play_list:
+                self._play_list = self._play_list + names
+                self.device.cur_playlist = "临时搜索列表"
+                self.update_playlist(reorder=False)
+        name = names[0]
+        if update_cur_list and (name not in self._play_list):
+            # 根据当前歌曲匹配歌曲列表
+            self.device.cur_playlist = self.find_cur_playlist(name)
+            self.update_playlist()
+        self.log.debug(
+            f"当前播放列表为：{list2str(self._play_list, self.config.verbose)}"
+        )
+        # 本地存在歌曲，直接播放
+        await self._playmusic(name)
 
     async def play_next(self):
         """播放下一首（外部接口）"""
@@ -281,7 +288,7 @@ class XiaoMusicDevice:
             name = self.get_next_music()
         self.log.info(f"_play_next. name:{name}, cur_music:{self.cur_music}")
         if name == "":
-            # await self.do_tts("本地没有歌曲")
+            self.log.info("本地没有歌曲")
             return
         await self._play(name, exact=True)
 
@@ -359,9 +366,7 @@ class XiaoMusicDevice:
         self.device.playlist2music[self.device.cur_playlist] = name
         cur_playlist = self.device.cur_playlist
         self.log.info(f"cur_music {self.cur_music}")
-        sec, url = await self.xiaomusic.music_library.get_music_sec_url(
-            name, cur_playlist
-        )
+        url, _ = await self.xiaomusic.music_library.get_music_url(name)
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
 
@@ -381,21 +386,37 @@ class XiaoMusicDevice:
         self._play_failed_cnt = 0
 
         self.log.info(f"【{name}】已经开始播放了")
+
+        # 记录歌曲开始播放的时间
+        self._start_time = time.time()
+        self._paused_time = 0
+
+        sec = await self.xiaomusic.music_library.get_music_duration(name)
+        # 存储真实歌曲时长
+        self._duration = sec
         await self.xiaomusic.analytics.send_play_event(name, sec, self.hardware)
 
         # 设置下一首歌曲的播放定时器
-        if sec <= 1:
+        if sec <= 0.1:
             self.log.info(f"【{name}】不会设置下一首歌的定时器")
             return
+
         # 计算自动添加歌曲的延迟时间，为当前歌曲时长的一半，但不超过60秒
         if sec > 30:
             sleep_sec = min(sec / 2, 60)
             await self.auto_add_song(cur_playlist, sleep_sec)
-        sec = sec + self.config.delay_sec
-        self._start_time = time.time()
-        self._duration = sec
-        self._paused_time = 0
-        await self.set_next_music_timeout(sec)
+
+        # 计算获取时长的执行耗时
+        duration_execution_time = time.time() - self._start_time
+        self.log.info(f"获取音乐时长耗时: {duration_execution_time:.3f} 秒")
+        # 调整定时器时长，减去获取音乐时长的执行时间
+        adjusted_sec = sec + self.config.delay_sec - duration_execution_time
+        # 确保调整后的时长不会过小，最小保留0.1秒
+        adjusted_sec = max(adjusted_sec, 0.1)
+        self.log.info(
+            f"原始歌曲时长: {sec:.3f} 秒, 调整后定时器时长: {adjusted_sec:.3f} 秒"
+        )
+        await self.set_next_music_timeout(adjusted_sec)
         # 发布设备配置变更事件
         if self.event_bus:
             self.event_bus.publish(DEVICE_CONFIG_CHANGED)
@@ -481,7 +502,7 @@ class XiaoMusicDevice:
             "--audio-quality",
             "0",
             "--paths",
-            self.download_path,
+            self.config.download_path,
             "-o",
             f"{name}.mp3",
             "--ffmpeg-location",
@@ -505,7 +526,7 @@ class XiaoMusicDevice:
         self.log.info(f"正在下载中 {search_key} {name}")
         await self._download_proc.wait()
         # 下载完成后，修改文件权限
-        file_path = os.path.join(self.download_path, f"{name}.mp3")
+        file_path = os.path.join(self.config.download_path, f"{name}.mp3")
         chmodfile(file_path)
 
     async def check_replay(self):
@@ -530,7 +551,7 @@ class XiaoMusicDevice:
 
     async def add_download_music(self, name):
         """把下载的音乐加入播放列表"""
-        filepath = os.path.join(self.download_path, f"{name}.mp3")
+        filepath = os.path.join(self.config.download_path, f"{name}.mp3")
         self.xiaomusic.music_library.all_music[name] = filepath
         # 应该很快，阻塞运行
         await self.xiaomusic.music_library._gen_all_music_tag({name: filepath})
@@ -636,6 +657,7 @@ class XiaoMusicDevice:
         from xiaomusic.utils.music_utils import get_local_music_duration
         from xiaomusic.utils.network_utils import text_to_mp3
 
+        self.log.info(f"_text_to_speech_edge_tts {value}")
         try:
             # 取消之前的 TTS 定时器
             if self._tts_timer:
