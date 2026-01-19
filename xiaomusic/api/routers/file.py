@@ -289,8 +289,13 @@ async def get_picture(request: Request, file_path: str, key: str = "", code: str
 
 
 @router.get("/proxy", summary="基于正常下载逻辑的代理接口")
-async def proxy(urlb64: str):
-    """代理接口"""
+async def proxy(urlb64: str, radio: bool = None):
+    """代理接口
+
+    Args:
+        urlb64: Base64编码的URL
+        radio: 是否为电台直播流。None时自动识别，True强制使用长超时，False强制使用短超时
+    """
     try:
         # 将Base64编码的URL解码为字符串
         url_bytes = base64.b64decode(urlb64)
@@ -310,9 +315,14 @@ async def proxy(urlb64: str):
             status_code=400, detail="无效的URL格式"
         ) from invalid_url_exc
 
-    # 创建会话并确保关闭
+    # 直播流使用更长的超时时间（24小时），普通文件使用10分钟
+    timeout_seconds = 86400 if radio else 600
+    log.info(
+        f"代理模式: {'电台直播流' if radio else '普通文件'}, 超时时间: {timeout_seconds}秒"
+    )
+
     session = aiohttp.ClientSession(
-        timeout=aiohttp.ClientTimeout(total=600),
+        timeout=aiohttp.ClientTimeout(total=timeout_seconds, sock_read=300),
         connector=aiohttp.TCPConnector(ssl=True),
     )
 
@@ -363,8 +373,22 @@ async def proxy(urlb64: str):
             finally:
                 await close_session()
 
-        # 提取文件名
-        filename = parsed_url.path.split("/")[-1].split("?")[0] or "output.mp3"
+        # 提取文件名，根据URL扩展名智能判断
+        filename = parsed_url.path.split("/")[-1].split("?")[0]
+        if not filename:
+            # 根据URL扩展名或Content-Type设置默认文件名
+            path_lower = parsed_url.path.lower()
+            if path_lower.endswith(".m3u8"):
+                filename = "stream.m3u8"
+            elif path_lower.endswith(".m3u"):
+                filename = "stream.m3u"
+            else:
+                # 根据Content-Type推断
+                content_type = resp.headers.get("Content-Type", "").lower()
+                if "mpegurl" in content_type or "m3u8" in content_type:
+                    filename = "stream.m3u8"
+                else:
+                    filename = "output.mp3"
 
         return StreamingResponse(
             stream_generator(),
