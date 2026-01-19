@@ -621,7 +621,7 @@ class XiaoMusic:
 
     # 正在播放中的音乐
     def playingmusic(self, did):
-        cur_music = self.device_manager.devices[did].get_cur_music()
+        cur_music = self.device_manager.devices[did].cur_music
         self.log.debug(f"playingmusic. cur_music:{cur_music}")
         return cur_music
 

@@ -93,7 +93,8 @@ class XiaoMusicDevice:
         """获取设备硬件型号"""
         return self.device.hardware
 
-    def get_cur_music(self):
+    @property
+    def cur_music(self):
         """获取当前播放的音乐名称"""
         return self.device.cur_music
 
@@ -117,21 +118,20 @@ class XiaoMusicDevice:
         # 当前播放的歌曲是歌单中的最后一曲
         is_last_song = False
         cur_playlist = self._play_list
-        cur_music = self.get_cur_music()
         play_list_len = len(cur_playlist)
         if play_list_len != 0:
-            index = self._play_list.index(cur_music)
+            index = self._play_list.index(self.cur_music)
             is_last_song = index == play_list_len - 1
         # 四个条件都满足，才自动添加下一首
         if auto_add_song and is_online and play_all and is_last_song:
-            await self._add_singer_song(cur_list_name, cur_music, sleep_sec)
+            await self._add_singer_song(cur_list_name, sleep_sec)
 
     # 启用延时器，搜索当前歌曲歌手的其他不在歌单内的歌曲
-    async def _add_singer_song(self, list_name, cur_music, sleep_sec):
+    async def _add_singer_song(self, list_name, sleep_sec):
         # 取消之前的定时器（如果存在）
         # self.cancel_add_song_timer()
         # 以 '-' 分割，获取歌手名称
-        singer_name = cur_music.split("-")[1]
+        singer_name = self.cur_music.split("-")[1]
         # 创建新的定时器，20秒后执行
         self._add_song_timer = asyncio.create_task(
             self._delayed_add_singer_song(list_name, singer_name, sleep_sec)
@@ -175,7 +175,7 @@ class XiaoMusicDevice:
                 self._play_list
             )
         elif (
-            self.device.cur_playlist == "临时搜索列表" and len(self._play_list) == 0
+                self.device.cur_playlist == "临时搜索列表" and len(self._play_list) == 0
         ) or (self.device.cur_playlist not in self.xiaomusic.music_library.music_list):
             self.device.cur_playlist = "全部"
         else:
@@ -216,8 +216,7 @@ class XiaoMusicDevice:
             if self.check_play_next():
                 await self._play_next()
                 return
-            else:
-                name = self.get_cur_music()
+            name = self.cur_music
         self.log.info(f"play. search_key:{search_key} name:{name}: exact:{exact}")
 
         # 本地歌曲不存在时下载
@@ -269,18 +268,18 @@ class XiaoMusicDevice:
     async def _play_next(self):
         """播放下一首（内部实现）"""
         self.log.info("开始播放下一首")
-        name = self.get_cur_music()
+        name = self.cur_music
         if (
-            self.device.play_type == PLAY_TYPE_ALL
-            or self.device.play_type == PLAY_TYPE_RND
-            or self.device.play_type == PLAY_TYPE_SEQ
-            or name == ""
-            or (
+                self.device.play_type == PLAY_TYPE_ALL
+                or self.device.play_type == PLAY_TYPE_RND
+                or self.device.play_type == PLAY_TYPE_SEQ
+                or name == ""
+                or (
                 (name not in self._play_list) and self.device.play_type != PLAY_TYPE_ONE
-            )
+        )
         ):
             name = self.get_next_music()
-        self.log.info(f"_play_next. name:{name}, cur_music:{self.get_cur_music()}")
+        self.log.info(f"_play_next. name:{name}, cur_music:{self.cur_music}")
         if name == "":
             # await self.do_tts("本地没有歌曲")
             return
@@ -293,16 +292,16 @@ class XiaoMusicDevice:
     async def _play_prev(self):
         """播放上一首（内部实现）"""
         self.log.info("开始播放上一首")
-        name = self.get_cur_music()
+        name = self.cur_music
         if (
-            self.device.play_type == PLAY_TYPE_ALL
-            or self.device.play_type == PLAY_TYPE_RND
-            or self.device.play_type == PLAY_TYPE_SEQ
-            or name == ""
-            or (name not in self._play_list)
+                self.device.play_type == PLAY_TYPE_ALL
+                or self.device.play_type == PLAY_TYPE_RND
+                or self.device.play_type == PLAY_TYPE_SEQ
+                or name == ""
+                or (name not in self._play_list)
         ):
             name = self.get_prev_music()
-        self.log.info(f"_play_prev. name:{name}, cur_music:{self.get_cur_music()}")
+        self.log.info(f"_play_prev. name:{name}, cur_music:{self.cur_music}")
         if name == "":
             await self.do_tts("本地没有歌曲")
             return
@@ -315,8 +314,7 @@ class XiaoMusicDevice:
             if self.check_play_next():
                 await self._play_next()
                 return
-            else:
-                name = self.get_cur_music()
+            name = self.cur_music
 
         self.log.info(f"playlocal. name:{name}")
 
@@ -360,7 +358,7 @@ class XiaoMusicDevice:
         self.device.cur_music = name
         self.device.playlist2music[self.device.cur_playlist] = name
         cur_playlist = self.device.cur_playlist
-        self.log.info(f"cur_music {self.get_cur_music()}")
+        self.log.info(f"cur_music {self.cur_music}")
         sec, url = await self.xiaomusic.music_library.get_music_sec_url(
             name, cur_playlist
         )
@@ -372,9 +370,9 @@ class XiaoMusicDevice:
             self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
             await asyncio.sleep(1)
             if (
-                self.isplaying()
-                and self._last_cmd != "stop"
-                and self._play_failed_cnt < 10
+                    self.isplaying()
+                    and self._last_cmd != "stop"
+                    and self._play_failed_cnt < 10
             ):
                 self._play_failed_cnt = self._play_failed_cnt + 1
                 await self._play_next()
@@ -415,7 +413,7 @@ class XiaoMusicDevice:
         # 最大等8秒
         sec = min(8, int(len(value) / 3))
         await asyncio.sleep(sec)
-        self.log.info(f"do_tts ok. cur_music:{self.get_cur_music()}")
+        self.log.info(f"do_tts ok. cur_music:{self.cur_music}")
         await self.check_replay()
 
     async def force_stop_xiaoai(self, device_id):
@@ -437,8 +435,8 @@ class XiaoMusicDevice:
         self.log.info(playing_info)
         # WTF xiaomi api
         is_playing = (
-            json.loads(playing_info.get("data", {}).get("info", "{}")).get("status", -1)
-            == 1
+                json.loads(playing_info.get("data", {}).get("info", "{}")).get("status", -1)
+                == 1
         )
         return is_playing
 
@@ -549,7 +547,7 @@ class XiaoMusicDevice:
             return ""
         index = 0
         try:
-            index = self._play_list.index(self.get_cur_music())
+            index = self._play_list.index(self.cur_music)
         except ValueError:
             pass
 
@@ -559,8 +557,8 @@ class XiaoMusicDevice:
             if direction == "next":
                 new_index = index + 1
                 if (
-                    self.device.play_type == PLAY_TYPE_SEQ
-                    and new_index >= play_list_len
+                        self.device.play_type == PLAY_TYPE_SEQ
+                        and new_index >= play_list_len
                 ):
                     self.log.info("顺序播放结束")
                     return ""
@@ -592,18 +590,18 @@ class XiaoMusicDevice:
     def check_play_next(self):
         """判断是否需要播放下一首歌曲"""
         # 当前歌曲不在当前播放列表
-        if self.get_cur_music() not in self._play_list:
-            self.log.info(f"当前歌曲 {self.get_cur_music()} 不在当前播放列表")
+        if self.cur_music not in self._play_list:
+            self.log.info(f"当前歌曲 {self.cur_music} 不在当前播放列表")
             return True
 
         # 当前没我在播放的歌曲
-        if self.get_cur_music() == "":
+        if self.cur_music == "":
             self.log.info("当前没我在播放的歌曲")
             return True
         else:
             # 当前播放的歌曲不存在了
-            if not self.xiaomusic.music_library.is_music_exist(self.get_cur_music()):
-                self.log.info(f"当前播放的歌曲 {self.get_cur_music()} 不存在了")
+            if not self.xiaomusic.music_library.is_music_exist(self.cur_music):
+                self.log.info(f"当前播放的歌曲 {self.cur_music} 不存在了")
                 return True
         return False
 
@@ -719,7 +717,7 @@ class XiaoMusicDevice:
                     f"play_one_url continue_play device_id:{device_id} ret:{ret} url:{url} audio_id:{audio_id}"
                 )
             elif self.config.use_music_api or (
-                self.hardware in NEED_USE_PLAY_MUSIC_API
+                    self.hardware in NEED_USE_PLAY_MUSIC_API
             ):
                 ret = await self.auth_manager.mina_service.play_by_music_url(
                     device_id, url, audio_id=audio_id
@@ -966,7 +964,7 @@ class XiaoMusicDevice:
             return "最近新增"
         for list_name, play_list in music_list.items():
             if (list_name not in ["全部", "所有歌曲", "所有电台", "临时搜索列表"]) and (
-                name in play_list
+                    name in play_list
             ):
                 return list_name
         if name in music_list.get("所有歌曲", []):
