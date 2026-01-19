@@ -216,10 +216,10 @@ class XiaoMusicDevice:
                 await self.do_tts(f"本地不存在歌曲{name}")
                 return
 
-        # 如果插件播放失败，则执行下载流程
-        await self.download(search_key, name)
-        # 把文件插入到播放列表里
-        await self.add_download_music(name)
+            # 如果插件播放失败，则执行下载流程
+            await self.download(search_key, name)
+            # 把文件插入到播放列表里
+            await self.add_download_music(name)
         await self._playmusic(name)
 
     async def _play(self, name="", search_key="", exact=True, update_cur_list=False):
