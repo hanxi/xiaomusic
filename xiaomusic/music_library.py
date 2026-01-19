@@ -1023,7 +1023,9 @@ class MusicLibrary:
 
         # 是否需要代理
         if self.config.web_music_proxy or url.startswith("self://"):
-            proxy_url = self._get_proxy_url(url)
+            # 判断是否为电台，传入 radio 参数
+            is_radio = self.is_web_radio_music(name)
+            proxy_url = self._get_proxy_url(url, radio=is_radio)
             return proxy_url, url
 
         return url, None
@@ -1044,11 +1046,12 @@ class MusicLibrary:
             self.log.error(f"_get_url_from_api use api fail. name:{name}, url:{url}")
         return url
 
-    def _get_proxy_url(self, origin_url):
+    def _get_proxy_url(self, origin_url, radio=None):
         """获取代理URL
 
         Args:
             origin_url: 原始URL
+            radio: 是否为电台直播流，None时不传参数
 
         Returns:
             str: 代理URL
@@ -1057,6 +1060,8 @@ class MusicLibrary:
         proxy_url = (
             f"{self.config.hostname}:{self.config.public_port}/proxy?urlb64={urlb64}"
         )
+        if radio is not None:
+            proxy_url += f"&radio={'true' if radio else 'false'}"
         self.log.info(f"Using proxy url: {proxy_url}")
         return proxy_url
 
