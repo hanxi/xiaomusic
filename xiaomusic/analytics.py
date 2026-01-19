@@ -71,8 +71,10 @@ class Analytics:
 
     async def run_with_cancel(self, func, *args, **kwargs):
         try:
-            asyncio.create_task(asyncio.to_thread(func, *args, **kwargs))
             self.log.info("analytics run_with_cancel success")
+            # Store the task reference to prevent it from being garbage collected
+            # This ensures the task runs to completion
+            return asyncio.create_task(asyncio.to_thread(func, *args, **kwargs))
         except Exception as e:
             self.log.warning(f"analytics run_with_cancel failed {e}")
             return None
@@ -115,12 +117,10 @@ class Analytics:
             # 获取系统信息
             os_name = platform.system()  # 操作系统名称，如 'Windows', 'Linux', 'Darwin'
             os_version = platform.version()  # 操作系统版本号
-            architecture = "unknow"
             try:
                 architecture = platform.architecture()[0]  # '32bit' or '64bit'
             except Exception as e:
                 architecture = f"Error {e}"
-                pass
             machine = platform.machine()  # 机器类型，如 'x86_64', 'arm64'
 
             # 获取 Python 版本信息
