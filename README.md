@@ -24,19 +24,19 @@
 已经支持在 web 页面配置其他参数，docker 启动命令如下:
 
 ```bash
-docker run -p 58090:8090 -e XIAOMUSIC_PUBLIC_PORT=58090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf hanxi/xiaomusic
+docker run -p 58090:8090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf hanxi/xiaomusic
 ```
 
 🔥 国内：
 
 ```bash
-docker run -p 58090:8090 -e XIAOMUSIC_PUBLIC_PORT=58090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf docker.hanxi.cc/hanxi/xiaomusic
+docker run -p 58090:8090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf docker.hanxi.cc/hanxi/xiaomusic
 ```
 
 测试版：
 
 ```
-docker run -p 58090:8090 -e XIAOMUSIC_PUBLIC_PORT=58090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf hanxi/xiaomusic:main
+docker run -p 58090:8090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf hanxi/xiaomusic:main
 ```
 
 对应的 docker compose 配置如下：
@@ -49,8 +49,6 @@ services:
     restart: unless-stopped
     ports:
       - 58090:8090
-    environment:
-      XIAOMUSIC_PUBLIC_PORT: 58090
     volumes:
       - /xiaomusic_music:/app/music
       - /xiaomusic_conf:/app/conf
@@ -66,8 +64,6 @@ services:
     restart: unless-stopped
     ports:
       - 58090:8090
-    environment:
-      XIAOMUSIC_PUBLIC_PORT: 58090
     volumes:
       - /xiaomusic_music:/app/music
       - /xiaomusic_conf:/app/conf
@@ -83,8 +79,6 @@ services:
     restart: unless-stopped
     ports:
       - 58090:8090
-    environment:
-      XIAOMUSIC_PUBLIC_PORT: 58090
     volumes:
       - /xiaomusic_music:/app/music
       - /xiaomusic_conf:/app/conf
