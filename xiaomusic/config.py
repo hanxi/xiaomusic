@@ -270,7 +270,7 @@ class Config:
             validate_proxy(self.proxy)
         if self.hostname:
             if not self.hostname.startswith(("http://", "https://")):
-                raise ValueError("hostname scheme must be http or https")
+                self.hostname = f"http://{self.hostname}"  # 默认 http
 
         self.init_keyword()
         # 保存配置到 config-example.json 文件
