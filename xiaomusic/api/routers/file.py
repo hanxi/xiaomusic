@@ -67,20 +67,20 @@ def _process_m3u8_content(m3u8_content: str, base_url: str, radio: bool = None) 
     """
     from urllib.parse import urljoin
 
-    lines = m3u8_content.split('\n')
+    lines = m3u8_content.split("\n")
     processed_lines = []
 
     for line in lines:
         stripped_line = line.strip()
 
         # 跳过注释行和空行
-        if not stripped_line or stripped_line.startswith('#'):
+        if not stripped_line or stripped_line.startswith("#"):
             processed_lines.append(line)
             continue
 
         # 处理资源行（.ts、.m3u8 等）
         # 判断是否为 URL（包含协议或以 / 开头）
-        if stripped_line.startswith(('http://', 'https://', '/')):
+        if stripped_line.startswith(("http://", "https://", "/")):
             # 绝对 URL，直接使用
             resource_url = stripped_line
         else:
@@ -95,7 +95,7 @@ def _process_m3u8_content(m3u8_content: str, base_url: str, radio: bool = None) 
 
         processed_lines.append(proxy_url)
 
-    return '\n'.join(processed_lines)
+    return "\n".join(processed_lines)
 
 
 @router.post("/api/file/cleantempdir")
