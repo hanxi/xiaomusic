@@ -54,13 +54,13 @@ from xiaomusic.utils.system_utils import try_add_access_control_param
 router = APIRouter()
 
 
-def _process_m3u8_content(m3u8_content: str, base_url: str, radio: bool = None) -> str:
+def _process_m3u8_content(m3u8_content: str, base_url: str, is_radio: bool) -> str:
     """处理 m3u8 文件内容，将资源 URL 替换为代理 URL
 
     Args:
         m3u8_content: m3u8 文件内容
         base_url: m3u8 文件的 URL（用于解析相对路径）
-        radio: 是否为电台直播流
+        is_radio: 是否为电台直播流
 
     Returns:
         str: 处理后的 m3u8 内容
@@ -87,11 +87,10 @@ def _process_m3u8_content(m3u8_content: str, base_url: str, radio: bool = None) 
             # 相对 URL，需要拼接
             resource_url = urljoin(base_url, stripped_line)
 
-        # 将资源 URL 替换为代理 URL
+        # 将资源 URL 替换为代理 URL，使用路径参数方式
         urlb64 = base64.b64encode(resource_url.encode("utf-8")).decode("utf-8")
-        proxy_url = f"/proxy?urlb64={urlb64}"
-        if radio is not None:
-            proxy_url += f"&radio={'true' if radio else 'false'}"
+        proxy_type = "radio" if is_radio else "music"
+        proxy_url = f"/proxy/{proxy_type}?urlb64={urlb64}"
 
         processed_lines.append(proxy_url)
 
@@ -332,13 +331,15 @@ async def get_picture(request: Request, file_path: str, key: str = "", code: str
     return FileResponse(absolute_file_path)
 
 
-@router.get("/proxy", summary="基于正常下载逻辑的代理接口")
-async def proxy(urlb64: str, radio: bool = None):
-    """代理接口
+async def _proxy_handler(urlb64: str, is_radio: bool):
+    """代理处理核心逻辑
 
     Args:
         urlb64: Base64编码的URL
-        radio: 是否为电台直播流。None时自动识别，True强制使用长超时，False强制使用短超时
+        is_radio: 是否为电台直播流
+
+    Returns:
+        Response: 代理响应
     """
     try:
         # 将Base64编码的URL解码为字符串
@@ -353,16 +354,15 @@ async def proxy(urlb64: str, radio: bool = None):
     parsed_url, url = xiaomusic.music_library.expand_self_url(url)
     log.info(f"链接处理后 ${parsed_url}")
     if not parsed_url.scheme or not parsed_url.netloc:
-        # Fixed: Use a new exception instance since 'e' from previous block is out of scope
         invalid_url_exc = ValueError("URL缺少协议或域名")
         raise HTTPException(
             status_code=400, detail="无效的URL格式"
         ) from invalid_url_exc
 
     # 直播流使用更长的超时时间（24小时），普通文件使用10分钟
-    timeout_seconds = 86400 if radio else 600
+    timeout_seconds = 86400 if is_radio else 600
     log.info(
-        f"代理模式: {'电台直播流' if radio else '普通文件'}, 超时时间: {timeout_seconds}秒"
+        f"代理模式: {'电台直播流' if is_radio else '普通文件'}, 超时时间: {timeout_seconds}秒"
     )
 
     session = aiohttp.ClientSession(
@@ -438,7 +438,7 @@ async def proxy(urlb64: str, radio: bool = None):
                 await close_session()
 
                 # 处理 m3u8 内容，替换资源 URL
-                processed_content = _process_m3u8_content(m3u8_content, url, radio)
+                processed_content = _process_m3u8_content(m3u8_content, url, is_radio)
 
                 # 返回处理后的内容
                 return Response(
@@ -476,3 +476,28 @@ async def proxy(urlb64: str, radio: bool = None):
     except Exception as e:
         await close_session()
         raise HTTPException(status_code=500, detail=f"发生错误: {str(e)}") from e
+
+
+@router.get("/proxy/{type}", summary="类型化代理接口")
+async def proxy_with_type(type: str, urlb64: str):
+    """支持路径参数的代理接口
+
+    Args:
+        type: 类型，music 或 radio
+        urlb64: Base64编码的URL
+    """
+    if type not in ("music", "radio"):
+        raise HTTPException(status_code=400, detail="type 参数必须是 music 或 radio")
+
+    is_radio = type == "radio"
+    return await _proxy_handler(urlb64, is_radio=is_radio)
+
+
+@router.get("/proxy", summary="基于正常下载逻辑的代理接口")
+async def proxy(urlb64: str):
+    """代理接口（向后兼容）
+
+    Args:
+        urlb64: Base64编码的URL
+    """
+    return await _proxy_handler(urlb64, is_radio=False)
