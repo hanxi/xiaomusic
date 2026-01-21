@@ -7,7 +7,9 @@ body {
   background-color: #f5f5f5;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
   font-size: 14px;
   color: #333;
   line-height: 1.6;
@@ -77,20 +79,20 @@ body {
   .setting-header {
     padding: 15px;
   }
-  
+
   .header-inner {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .setting-header h2 {
     font-size: 20px;
   }
-  
+
   .header-buttons {
     width: 100%;
   }
-  
+
   .header-buttons button {
     flex: 1;
     min-width: 0;
@@ -142,7 +144,7 @@ body {
     padding: 15px;
     margin-bottom: 15px;
   }
-  
+
   .card-title {
     font-size: 16px;
   }
@@ -195,7 +197,9 @@ body {
   font-size: 14px;
   color: #333;
   background-color: #fff;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .setting-card input[type="text"]:focus,
@@ -225,7 +229,9 @@ body {
   padding: 10px 20px;
   font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.1s ease;
+  transition:
+    background-color 0.3s ease,
+    transform 0.1s ease;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
@@ -266,14 +272,14 @@ button.mini-button {
     padding: 12px 16px;
     min-height: 44px;
   }
-  
+
   .setting-card button.mini-button,
   button.mini-button {
     padding: 8px 12px !important;
     font-size: 13px !important;
     min-height: 36px !important;
   }
-  
+
   .mini-button .material-icons {
     font-size: 16px !important;
   }
@@ -354,7 +360,9 @@ button.mini-button {
 .advanced-config-content {
   max-height: 10000px;
   overflow: hidden;
-  transition: max-height 0.5s ease, opacity 0.3s ease;
+  transition:
+    max-height 0.5s ease,
+    opacity 0.3s ease;
   opacity: 1;
 }
 
@@ -395,7 +403,7 @@ button.mini-button {
 }
 
 .auth-tab-button::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -472,13 +480,13 @@ button.mini-button {
     gap: 8px;
     padding: 4px;
   }
-  
+
   .auth-tab-button {
     padding: 12px 12px !important;
     font-size: 13px !important;
     gap: 6px;
   }
-  
+
   .auth-tab-button .material-icons {
     font-size: 18px !important;
   }
@@ -504,13 +512,56 @@ button.mini-button {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
+/* 可折叠区域头部 */
+.section-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+  transition: all 0.3s ease;
+}
+
+.section-header:hover {
+  border-bottom-color: #007bff;
+}
+
 .button-section-title {
   font-size: 16px;
   font-weight: 600;
   color: #333;
-  margin: 0 0 15px 0;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #f0f0f0;
+  margin: 0;
+}
+
+.section-toggle-icon {
+  font-size: 16px;
+  font-weight: bold;
+  color: #007bff;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+
+.section-header.collapsed .section-toggle-icon {
+  transform: rotate(-90deg);
+}
+
+/* 可折叠内容区域 */
+.section-content {
+  max-height: 5000px;
+  overflow: hidden;
+  transition:
+    max-height 0.4s ease,
+    opacity 0.3s ease;
+  opacity: 1;
+}
+
+.section-content.collapsed {
+  max-height: 0;
+  opacity: 0;
 }
 
 .button-grid {
@@ -631,46 +682,46 @@ button.mini-button {
   .setting-footer {
     padding: 0 15px 30px;
   }
-  
+
   .button-section {
     padding: 15px;
     margin-bottom: 15px;
   }
-  
+
   .button-section-title {
     font-size: 15px;
   }
-  
+
   .button-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .link-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .button-grid button {
     min-height: 44px;
   }
-  
+
   .link-card {
     padding: 14px;
     min-height: 60px;
   }
-  
+
   .link-card-icon {
     width: 36px;
     height: 36px;
   }
-  
+
   .link-card-icon .material-icons {
     font-size: 20px;
   }
-  
+
   .link-card-title {
     font-size: 14px;
   }
-  
+
   .link-card-description {
     font-size: 12px;
   }
@@ -735,7 +786,9 @@ footer a:hover {
   height: auto;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .qrcode:hover {
@@ -747,7 +800,7 @@ footer a:hover {
   .community-buttons-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .qrcode {
     max-width: 240px;
   }
@@ -805,7 +858,9 @@ hr {
   color: #333;
   background-color: #fff;
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .file-upload-section input[type="file"]:hover {
@@ -839,12 +894,12 @@ hr {
   .file-upload-section {
     gap: 10px;
   }
-  
+
   .file-upload-section input[type="file"] {
     flex: 1;
     min-width: 0;
   }
-  
+
   .file-upload-section button {
     flex-shrink: 0;
     min-width: 120px;
@@ -920,21 +975,21 @@ hr {
 
 /* Material Icons 字体 */
 @font-face {
-  font-family: 'Material Icons';
+  font-family: "Material Icons";
   font-style: normal;
   font-weight: 400;
-  src: url(./materialicons.woff2) format('woff2');
+  src: url(./materialicons.woff2) format("woff2");
 }
 
 @font-face {
-  font-family: 'Material Icons Outlined';
+  font-family: "Material Icons Outlined";
   font-style: normal;
   font-weight: 400;
-  src: url(./materialiconsoutlined.woff2) format('woff2');
+  src: url(./materialiconsoutlined.woff2) format("woff2");
 }
 
 .material-icons {
-  font-family: 'Material Icons';
+  font-family: "Material Icons";
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -945,12 +1000,12 @@ hr {
   white-space: nowrap;
   word-wrap: normal;
   direction: ltr;
-  -webkit-font-feature-settings: 'liga';
+  -webkit-font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
 }
 
 .material-icons-outlined {
-  font-family: 'Material Icons Outlined';
+  font-family: "Material Icons Outlined";
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -961,6 +1016,6 @@ hr {
   white-space: nowrap;
   word-wrap: normal;
   direction: ltr;
-  -webkit-font-feature-settings: 'liga';
+  -webkit-font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
 }

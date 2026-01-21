@@ -631,68 +631,78 @@
 
     <div class="setting-footer">
       <div class="button-section">
-        <h3 class="button-section-title">功能操作</h3>
-        <div class="button-grid">
-          <button id="refresh_music_tag">
-            <span class="material-icons">refresh</span>
-            <span>刷新tag</span>
-          </button>
-          <button id="clear_cache">
-            <span class="material-icons">delete_sweep</span>
-            <span>清空缓存</span>
-          </button>
-          <button id="cleantempdir">
-            <span class="material-icons">folder_delete</span>
-            <span>清空临时目录</span>
-          </button>
-          <a href="/downloadlog" download="xiaomusic.txt">
-            <button>
-              <span class="material-icons">download</span>
-              <span>下载日志文件</span>
+        <div class="section-header collapsed" id="operationToggle">
+          <h3 class="button-section-title">功能操作</h3>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-content collapsed" id="operationContent">
+          <div class="button-grid">
+            <button id="refresh_music_tag">
+              <span class="material-icons">refresh</span>
+              <span>刷新tag</span>
             </button>
-          </a>
+            <button id="clear_cache">
+              <span class="material-icons">delete_sweep</span>
+              <span>清空缓存</span>
+            </button>
+            <button id="cleantempdir">
+              <span class="material-icons">folder_delete</span>
+              <span>清空临时目录</span>
+            </button>
+            <a href="/downloadlog" download="xiaomusic.txt">
+              <button>
+                <span class="material-icons">download</span>
+                <span>下载日志文件</span>
+              </button>
+            </a>
+          </div>
         </div>
       </div>
 
       <div class="button-section">
-        <h3 class="button-section-title">工具链接</h3>
-        <div class="link-grid">
-          <a href="/docs" target="_blank" class="link-card">
-            <div class="link-card-icon">
-              <span class="material-icons">description</span>
-            </div>
-            <div class="link-card-content">
-              <div class="link-card-title">接口文档</div>
-              <div class="link-card-description">查看 API 接口文档</div>
-            </div>
-          </a>
-          <a href="./m3u.html" target="_blank" class="link-card">
-            <div class="link-card-icon">
-              <span class="material-icons">swap_horiz</span>
-            </div>
-            <div class="link-card-content">
-              <div class="link-card-title">m3u转换</div>
-              <div class="link-card-description">转换 m3u 播放列表格式</div>
-            </div>
-          </a>
-          <a href="./downloadtool.html" target="_blank" class="link-card">
-            <div class="link-card-icon">
-              <span class="material-icons">cloud_download</span>
-            </div>
-            <div class="link-card-content">
-              <div class="link-card-title">歌曲下载工具</div>
-              <div class="link-card-description">在线搜索并下载歌曲</div>
-            </div>
-          </a>
-          <a href="./merge/index.html" target="_blank" class="link-card">
-            <div class="link-card-icon">
-              <span class="material-icons">merge_type</span>
-            </div>
-            <div class="link-card-content">
-              <div class="link-card-title">歌单合并工具</div>
-              <div class="link-card-description">合并多个歌单文件</div>
-            </div>
-          </a>
+        <div class="section-header collapsed" id="toolsToggle">
+          <h3 class="button-section-title">工具链接</h3>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-content collapsed" id="toolsContent">
+          <div class="link-grid">
+            <a href="/docs" target="_blank" class="link-card">
+              <div class="link-card-icon">
+                <span class="material-icons">description</span>
+              </div>
+              <div class="link-card-content">
+                <div class="link-card-title">接口文档</div>
+                <div class="link-card-description">查看 API 接口文档</div>
+              </div>
+            </a>
+            <a href="./m3u.html" target="_blank" class="link-card">
+              <div class="link-card-icon">
+                <span class="material-icons">swap_horiz</span>
+              </div>
+              <div class="link-card-content">
+                <div class="link-card-title">m3u转换</div>
+                <div class="link-card-description">转换 m3u 播放列表格式</div>
+              </div>
+            </a>
+            <a href="./downloadtool.html" target="_blank" class="link-card">
+              <div class="link-card-icon">
+                <span class="material-icons">cloud_download</span>
+              </div>
+              <div class="link-card-content">
+                <div class="link-card-title">歌曲下载工具</div>
+                <div class="link-card-description">在线搜索并下载歌曲</div>
+              </div>
+            </a>
+            <a href="./merge/index.html" target="_blank" class="link-card">
+              <div class="link-card-icon">
+                <span class="material-icons">merge_type</span>
+              </div>
+              <div class="link-card-content">
+                <div class="link-card-title">歌单合并工具</div>
+                <div class="link-card-description">合并多个歌单文件</div>
+              </div>
+            </a>
+          </div>
         </div>
       </div>
 
