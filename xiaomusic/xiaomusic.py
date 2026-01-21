@@ -35,8 +35,6 @@ class XiaoMusic:
     def __init__(self, config: Config):
         self.config = config
 
-        self.last_cmd = ""  # <--- 【新增这行】初始化变量
-
         # 初始化事件总线
         self.event_bus = EventBus()
 

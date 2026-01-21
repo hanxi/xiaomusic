@@ -31,6 +31,7 @@ class CommandHandler:
         self.log = log
         self.xiaomusic = xiaomusic_instance
         self.active_cmd = config.active_cmd.split(",") if config.active_cmd else []
+        self.last_cmd = ""
 
     async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
         """检查并执行命令
@@ -50,7 +51,7 @@ class CommandHandler:
         self.log.info(f"收到消息:{query} 控制面板:{ctrl_panel} did:{did}")
 
         # 记录最后一条命令
-        self.xiaomusic.last_cmd = query
+        self.last_cmd = query
 
         try:
             # 匹配命令
