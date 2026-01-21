@@ -86,9 +86,12 @@ async def savesetting(request: Request):
         debug_data = deepcopy_data_no_sensitive_info(data)
         log.info(f"saveconfig: {debug_data}")
         config_obj = xiaomusic.getconfig()
-        if data["password"] == "******" or data["password"] == "":
+        if data.get("password") == "******" or data.get("password", "") == "":
             data["password"] = config_obj.password
-        if data["httpauth_password"] == "******" or data["httpauth_password"] == "":
+        if (
+            data.get("httpauth_password") == "******"
+            or data.get("httpauth_password", "") == ""
+        ):
             data["httpauth_password"] = config_obj.httpauth_password
         await xiaomusic.saveconfig(data)
 

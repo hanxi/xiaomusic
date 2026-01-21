@@ -25,7 +25,7 @@ $(function () {
 
     //如果device_list为空，则可能是未设置小米账号密码或者已设置密码，但是没有过小米验证，此处需要提示用户
     if (device_list.length == 0) {
-      const loginTips = accountPassValid ? `<div class="login-tips">未发现可用的小爱设备，请检查账号密码是否输错，并关闭加速代理或在<a href="https://www.mi.com">小米官网</a>登陆过人脸或滑块验证。如仍未解决。请根据<a href="https://github.com/hanxi/xiaomusic/issues/99">FAQ</a>的内容解决问题。</div>` : `<div class="login-tips">未发现可用的小爱设备，请先在下面的输入框中设置小米的<b>账号、密码</b></div>`;
+      const loginTips = accountPassValid ? `<div class="login-tips">未发现可用的小爱设备，请检查账号密码是否输错，并关闭加速代理或在<a href="https://www.mi.com">小米官网</a>登陆过人脸或滑块验证。如仍未解决。请根据<a href="https://github.com/hanxi/xiaomusic/issues/99">FAQ</a>的内容解决问题。</div>` : `<div class="login-tips">未发现可用的小爱设备，请先在下面的输入框中设置小米的<b>账号、密码或者cookie</b></div>`;
       $(selector).append(loginTips);
       return;
     }
@@ -190,6 +190,7 @@ $(function () {
 
   $("#clear_cache").on("click", () => {
     localStorage.clear();
+    alert("清除成功");
   });
 
   $("#cleantempdir").on("click", () => {
@@ -241,6 +242,48 @@ $(function () {
     }
     console.log(port);
     $("#public_port").val(port);
+  });
+
+  // 高级配置折叠功能
+  const toggleBtn = $("#advancedConfigToggle");
+  const content = $("#advancedConfigContent");
+
+  // 从localStorage读取折叠状态，默认折叠
+  const isCollapsed =
+    localStorage.getItem("advancedConfigCollapsed") !== "false";
+
+  // 初始化状态
+  if (isCollapsed) {
+    toggleBtn.addClass("collapsed");
+    content.addClass("collapsed");
+  }
+
+  // 点击切换折叠状态
+  toggleBtn.on("click", function () {
+    const willCollapse = !toggleBtn.hasClass("collapsed");
+
+    if (willCollapse) {
+      toggleBtn.addClass("collapsed");
+      content.addClass("collapsed");
+      localStorage.setItem("advancedConfigCollapsed", "true");
+    } else {
+      toggleBtn.removeClass("collapsed");
+      content.removeClass("collapsed");
+      localStorage.setItem("advancedConfigCollapsed", "false");
+    }
+  });
+
+  // Tab 切换功能
+  $(".auth-tab-button").on("click", function () {
+    const tabName = $(this).data("tab");
+    
+    // 移除所有 active 类
+    $(".auth-tab-button").removeClass("active");
+    $(".auth-tab-content").removeClass("active");
+    
+    // 添加当前 active 类
+    $(this).addClass("active");
+    $("#tab-" + tabName).addClass("active");
   });
 
 });
