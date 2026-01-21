@@ -124,7 +124,7 @@ function addToFavorites() {
 
 function openSettings() {
   console.log("打开设置");
-  window.open("setting.html");
+  window.location.href = "setting.html";
 }
 function toggleVolume() {
   $("#volume-component").toggle();
