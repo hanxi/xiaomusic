@@ -972,22 +972,6 @@ class MusicLibrary:
 
     # ==================== URL处理方法 ====================
 
-    async def get_music_sec_url(self, name, cur_playlist):
-        """获取歌曲播放时长和播放地址
-
-        Args:
-            name: 歌曲名称
-            cur_playlist: 当前歌单名称
-        Returns:
-            tuple: (播放时长(秒), 播放地址)
-        """
-        url, origin_url = await self.get_music_url(name)
-        self.log.info(
-            f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
-        )
-        sec = await self.get_music_duration(name)
-        return sec, url
-
     async def get_music_url(self, name):
         """获取音乐播放地址
 
