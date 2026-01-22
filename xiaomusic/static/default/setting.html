@@ -1,364 +1,739 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width">
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
     <title>小爱音箱操控面板</title>
-    <script src="./jquery-3.7.1.min.js?version=1768727088"></script>
-    <script src="./setting.js?version=1768727088"></script>
-    <link rel="stylesheet" type="text/css" href="./main.css?version=1768727088">
+    <script src="./jquery-3.7.1.min.js?version=1768990761"></script>
+    <script src="./setting.js?version=1768990761"></script>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="./setting.css?version=1768990761"
+    />
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"
+    ></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments)};
-    gtag('js', new Date());
-    gtag('config', 'G-Z09NC1K7ZW');
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-Z09NC1K7ZW");
     </script>
-
-    <!-- umami -->
-    <!-- <script async defer src="https://umami.hanxi.cc/script.js" data-website-id="7bfb0890-4115-4260-8892-b391513e7e99"></script> -->
-
-    <!--
-<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
-<script>
-var vConsole = new window.VConsole();
-</script>
--->
-
   </head>
   <body>
-    <h2>小爱音箱设置面板
-      (<a id="version" href="https://xdocs.hanxi.cc/issues/changelog.html">版本未知</a>)
-    </h2>
-    <hr>
-
-    <div class="rows">
-      <label for="mi_did">*勾选设备(至少勾选1个):</label>
-      <div id="mi_did">
-      </div>
-    </div>
-    <br>
-
-    <div id="setting">
-      <div class="rows">
-        <label for="account">*小米账号:</label>
-        <input id="account" type="text" placeholder="填写小米登录账号" />
-
-        <label for="password">*小米密码:</label>
-        <input id="password" type="password" placeholder="填写小米登录密码" />
-
-        <label for="cookie">Cookie (可选):</label>
-        <input id="cookie" type="text" placeholder="可选：粘贴完整的 Cookie 字符串" />
-
-        <label for="hostname" class="setting-label">*NAS的IP或域名:
-          <button class="option-inline mini-button" id="auto-hostname">
-            <span class="material-icons">edit</span>
-            <span>自动填</span>
+    <div class="setting-header">
+      <div class="header-inner">
+        <h2>
+          <span>小爱音箱设置面板</span>
+          (<a
+            id="version"
+            href="https://xdocs.hanxi.cc/issues/changelog.html"
+            target="_blank"
+            >版本未知</a
+          >)
+        </h2>
+        <div class="header-buttons">
+          <button onclick="location.href = '/static/default/index.html'">
+            <span class="material-icons">home</span>
+            <span>返回首页</span>
           </button>
-        </label>
-        <input id="hostname" type="text" />
-
-        <label for="public_port" class="setting-label">*本地端口:
-          <button class="option-inline mini-button" id="auto-port">
-            <span class="material-icons">edit</span>
-            <span>自动填</span>
+          <button class="save-button">
+            <span class="material-icons">save</span>
+            <span>保存配置</span>
           </button>
-        </label>
-        <input id="public_port" type="number" value="58090" />
-      </div>
-      <hr>
-
-      <div class="rows">
-        <label for="verbose">是否开启调试日志:</label>
-        <select id="verbose">
-          <option value="true">true</option>
-          <option value="false" selected>false</option>
-        </select>
-
-        <label for="group_list">设备分组配置（不推荐，声音不同步）:<a href="https://xdocs.hanxi.cc/issues/366.html" target="_blank">文档</a></label>
-        <input id="group_list" type="text" placeholder="did1:组名1,did2:组名1,did3:组名2" />
-
-        <label for="music_path">音乐目录:</label>
-        <input id="music_path" type="text" value="music" />
-
-        <label for="enable_file_watch">启用目录监控(自动刷新音乐列表):</label>
-        <select id="enable_file_watch">
-          <option value="true">开启</option>
-          <option value="false" selected>关闭</option>
-        </select>
-
-        <label for="file_watch_debounce">刷新列表延迟时间(秒):</label>
-        <input id="file_watch_debounce" type="number" value="10" />
-
-        <label for="download_path">音乐下载目录(必须是music的子目录):</label>
-        <input id="download_path" type="text" value='music/download' />
-
-        <label for="conf_path">配置文件目录:</label>
-        <input id="conf_path" type="text" />
-
-        <label for="cache_dir">缓存文件目录:</label>
-        <input id="cache_dir" type="text" value='music/cache' />
-
-        <label for="temp_path">临时文件目录:</label>
-        <input id="temp_path" type="text" value="music/tmp" />
-
-        <label for="enable_auto_clean_temp">启用定时清理临时文件(每日凌晨3点):</label>
-        <select id="enable_auto_clean_temp">
-          <option value="true" selected>开启</option>
-          <option value="false">关闭</option>
-        </select>
-
-        <label for="edge_tts_voice">Edge-TTS 语音角色:</label>
-        <select id="edge_tts_voice">
-          <option value="">不使用(默认)</option>
-          <option value="zh-CN-XiaoxiaoNeural">晓晓 (女声,温柔)</option>
-          <option value="zh-CN-XiaoyiNeural" selected>晓伊 (女声,活泼)</option>
-          <option value="zh-CN-YunjianNeural">云健 (男声,成熟)</option>
-          <option value="zh-CN-YunxiNeural">云希 (男声,阳光)</option>
-          <option value="zh-CN-YunxiaNeural">云夏 (男声,少年)</option>
-          <option value="zh-CN-YunyangNeural">云扬 (男声,新闻)</option>
-          <option value="zh-CN-liaoning-XiaobeiNeural">晓北 (女声,东北)</option>
-          <option value="zh-CN-shaanxi-XiaoniNeural">晓妮 (女声,陕西)</option>
-          <option value="zh-HK-HiuGaaiNeural">曉佳 (女声,粤语)</option>
-          <option value="zh-HK-HiuMaanNeural">曉曼 (女声,粤语)</option>
-          <option value="zh-HK-WanLungNeural">雲龍 (男声,粤语)</option>
-          <option value="zh-TW-HsiaoChenNeural">曉臻 (女声,台湾)</option>
-          <option value="zh-TW-YunJheNeural">雲哲 (男声,台湾)</option>
-          <option value="zh-TW-HsiaoYuNeural">曉雨 (女声,台湾)</option>
-        </select>
-
-        <label for="ffmpeg_location">ffmpeg路径:</label>
-        <input id="ffmpeg_location" type="text" value="./ffmpeg/bin" />
-
-        <label for="log_file">日志路径:</label>
-        <input id="log_file" type="text" value="xiaomusic.log.txt" />
-
-        <label for="active_cmd">允许唤醒的命令:</label>
-        <input id="active_cmd" type="text" value="play,online_play,random_play,playlocal,play_music_list,stop" />
-
-        <label for="exclude_dirs">忽略目录(逗号分割):</label>
-        <input id="exclude_dirs" type="text" value="@eaDir,tmp" />
-
-        <label for="ignore_tag_dirs">不扫描标签信息目录(逗号分割):</label>
-        <input id="ignore_tag_dirs" type="text" value="" />
-
-        <label for="music_path_depth">目录深度:</label>
-        <input id="music_path_depth" type="number" value="10" />
-
-        <label for="search_music_count">搜索歌曲数量:</label>
-        <input id="search_music_count" type="number" value="100" />
-
-        <label for="search_prefix">XIAOMUSIC_SEARCH(歌曲下载方式):</label>
-        <select id="search_prefix">
-          <option value="bilisearch:">bilisearch:</option>
-          <option value="ytsearch:">ytsearch:</option>
-        </select>
-
-        <label for="proxy">XIAOMUSIC_PROXY(ytsearch需要):</label>
-        <input id="proxy" type="text" placeholder="http://192.168.2.5:8080" />
-
-        <label for="get_duration_type">获取时长方式:</label>
-        <select id="get_duration_type">
-          <option value="ffprobe" selected>ffprobe</option>
-          <option value="mutagen">mutagen</option>
-        </select>
-
-        <label for="loudnorm">均衡歌曲音量大小(loudnorm滤镜):</label>
-        <input id="loudnorm" type="text" placeholder="loudnorm=I=-14:TP=-1.5:LRA=6" />
-
-        <label for="remove_id3tag">去除MP3 ID3v2和填充:</label>
-        <select id="remove_id3tag">
-          <option value="true">true</option>
-          <option value="false" selected>false</option>
-        </select>
-
-        <label for="convert_to_mp3">转换为MP3:</label>
-        <select id="convert_to_mp3">
-          <option value="true">true</option>
-          <option value="false" selected>false</option>
-        </select>
-
-        <label for="disable_httpauth">关闭控制台密码验证:</label>
-        <select id="disable_httpauth">
-          <option value="true" selected>true</option>
-          <option value="false">false</option>
-        </select>
-        <label for="httpauth_username">控制台账户:</label>
-        <input id="httpauth_username" type="text" value="" />
-        <label for="httpauth_password">控制台密码:</label>
-        <input id="httpauth_password" type="password" value="" />
-
-        <label for="disable_download">关闭下载功能:</label>
-        <select id="disable_download">
-          <option value="true">true</option>
-          <option value="false" selected>false</option>
-        </select>
-
-        <label for="use_music_audio_id">触屏版显示歌曲ID:</label>
-        <input id="use_music_audio_id" type="text" value="1582971365183456177" />
-        <label for="use_music_id">触屏版显示歌曲分段ID:</label>
-        <input id="use_music_id" type="text" value="355454500" />
-
-        <label for="fuzzy_match_cutoff">模糊匹配阈值(0.1~0.9):</label>
-        <input id="fuzzy_match_cutoff" type="number" value="0.6" />
-
-        <label for="enable_fuzzy_match">开启模糊搜索:</label>
-        <select id="enable_fuzzy_match">
-          <option value="true" selected>true</option>
-          <option value="false">false</option>
-        </select>
-
-        <label for="use_music_api">型号兼容模式:</label>
-        <select id="use_music_api">
-          <option value="true">true</option>
-          <option value="false" selected>false</option>
-        </select>
-
-        <label for="continue_play">启用继续播放(可能导致兼容性问题):</label>
-        <select id="continue_play">
-          <option value="true">true</option>
-          <option value="false" selected>false</option>
-        </select>
-
-        <label for="enable_pull_ask">获取对话记录:</label>
-        <select id="enable_pull_ask">
-          <option value="true">true</option>
-          <option value="false selected">false</option>
-        </select>
-
-        <label for="pull_ask_sec">获取对话记录间隔(秒):</label>
-        <input id="pull_ask_sec" type="number" value="1" />
-
-        <label for="delay_sec">下一首歌延迟播放秒数(支持负数):</label>
-        <input id="delay_sec" type="number" value="0" />
-
-        <label for="stop_tts_msg">停止提示音:</label>
-        <input id="stop_tts_msg" type="text" value="收到,再见" />
-        <label for="play_type_one_tts_msg">单曲循环提示音:</label>
-        <input id="play_type_one_tts_msg" type="text" value="已经设置为单曲循环" />
-        <label for="play_type_all_tts_msg">全部循环提示音:</label>
-        <input id="play_type_all_tts_msg" type="text" value="已经设置为全部循环" />
-        <label for="play_type_rnd_tts_msg">随机播放提示音:</label>
-        <input id="play_type_rnd_tts_msg" type="text" value="已经设置为随机播放" />
-        <label for="play_type_sin_tts_msg">单曲播放提示音:</label>
-        <input id="play_type_sin_tts_msg" type="text" value="已经设置为单曲播放" />
-        <label for="play_type_seq_tts_msg">顺序播放提示音:</label>
-        <input id="play_type_seq_tts_msg" type="text" value="已经设置为顺序播放" />
-
-        <label for="keywords_playlocal">播放本地歌曲口令:</label>
-        <input id="keywords_playlocal" type="text" value="播放本地歌曲,本地播放歌曲" />
-        <label for="keywords_play">播放歌曲口令:</label>
-        <input id="keywords_play" type="text" value="播放歌曲,放歌曲" />
-        <label for="keywords_playlist">播放列表口令:</label>
-        <input id="keywords_playlist" type="text" value="播放列表,播放歌单" />
-        <label for="keywords_stop">停止口令:</label>
-        <input id="keywords_stop" type="text" value="关机,暂停,停止,停止播放" />
-        <label for="keywords_search_playlocal">本地搜索播放口令(会产生临时播放列表):</label>
-        <input id="keywords_search_playlocal" type="text" value="本地搜索播放" />
-        <label for="keywords_search_play">搜索播放口令(会产生临时播放列表):</label>
-        <input id="keywords_search_play" type="text" value="搜索播放" />
-        <label for="keywords_online_play">在线播放口令(在线搜索接口或插件):</label>
-        <input id="keywords_online_play" type="text" value="在线播放" />
-        <label for="keywords_singer_play">播放歌手口令(会搜索歌手并创建歌单):</label>
-        <input id="keywords_singer_play" type="text" value="播放歌手" />
-
-        <label for="enable_yt_dlp_cookies">启用yt-dlp-cookies(需要先上传yt-dlp-cookies.txt文件):</label>
-        <select id="enable_yt_dlp_cookies">
-          <option value="true">true</option>
-          <option value="false" selected>false</option>
-        </select>
-
-        <label for="enable_save_tag">启用ID3标签写入文件:</label>
-        <select id="enable_save_tag">
-          <option value="true">true</option>
-          <option value="false" selected>false</option>
-        </select>
-
-        <label for="get_ask_by_mina">特殊型号获取对话记录:</label>
-        <select id="get_ask_by_mina">
-          <option value="true">true</option>
-          <option value="false" selected>false</option>
-        </select>
-
-        <label for="recently_added_playlist_len">最近新增的歌曲数量:</label>
-        <input id="recently_added_playlist_len" type="number" value="50" />
-
-        <label for="enable_cmd_del_music">开启语音删除歌曲:</label>
-        <select id="enable_cmd_del_music">
-          <option value="true">true</option>
-          <option value="false" selected>false</option>
-        </select>
-
-        <label for="enable_analytics">开启谷歌数据统计(无敏感数据):</label>
-        <select id="enable_analytics">
-          <option value="true" selected>true</option>
-          <option value="false">false</option>
-        </select>
-
-        <label for="web_music_proxy">网络歌曲过代理:</label>
-        <select id="web_music_proxy">
-          <option value="true" selected>true</option>
-          <option value="false">false</option>
-        </select>
-
-        <label for="music_list_url"  class="setting-label">歌单地址:
-          <button class="option-inline mini-button" id="get_music_list">
-            <span class="material-icons">sync_alt</span>
-            <span>获取歌单</span>
-          </button>
-        </label>
-        <input id="music_list_url" type="text" value="https://gist.githubusercontent.com/hanxi/dda82d964a28f8110f8fba81c3ff8314/raw/example.json" />
-
-        <label for="music_list_json">歌单内容:<a href="https://xdocs.hanxi.cc/issues/78.html" target="_blank">格式文档</a></label>
-        <textarea id="music_list_json" type="text"></textarea>
-
-        <label for="crontab_json">定时任务:<a href="https://xdocs.hanxi.cc/issues/182.html" target="_blank">格式文档</a></label>
-        <textarea id="crontab_json" type="text"></textarea>
-      </div>
-    </div>
-    <hr>
-
-    <div class="rows">
-      <label for="yt_dlp_cookies_file">上传yt_dlp_cookies.txt文件:<a href="https://xdocs.hanxi.cc/issues/210.html" target="_blank">文档</a></label>
-      <input id="yt_dlp_cookies_file" name="file" type="file">
-      <button id="upload_yt_dlp_cookie">上传</button>
-    </div>
-    <hr>
-
-    <div class="buttons">
-      <div class="button-group">
-        <button onclick="location.href='/static/default/index.html';">返回首页</button>
-        <button class="save-button">保存</button>
-      </div>
-
-      <div class="button-group">
-        <button id="refresh_music_tag">刷新tag</button>
-        <button id="clear_cache">清空缓存</button>
-        <button id="cleantempdir">清空临时目录</button>
-        <a href="/downloadlog" download="xiaomusic.txt"><button>下载日志文件</button></a>
-      </div>
-
-      <div class="button-group">
-        <a href="/docs" target="_blank"><button>接口文档</button></a>
-        <a href="./m3u.html" target="_blank"><button>m3u转换</button></a>
-        <a href="./downloadtool.html" target="_blank"><button>歌曲下载工具</button></a>
-        <a href="./merge/index.html" target="_blank"><button>歌单合并工具</button></a>
-      </div>
-
-      <div class="button-group">
-        <a href="./debug.html" target="_blank"><button>调试工具</button></a>
-        <a href="https://afdian.com/a/imhanxi" target="_blank"><button>💰 爱发电</button></a>
-        <a href="https://github.com/hanxi/xiaomusic" target="_blank"><button>点个 Star ⭐</button></a>
+        </div>
       </div>
     </div>
 
-    <div class="rows">
-      <img class="qrcode" src="./qrcode.png" alt="请涵曦喝奶茶🧋">
+    <div class="setting-container" id="setting">
+      <div class="setting-card">
+        <h3 class="card-title">设备选择</h3>
+        <div class="card-content">
+          <label for="mi_did">*勾选设备(至少勾选1个):</label>
+          <div id="mi_did" class="device-selection"></div>
+        </div>
+      </div>
+
+      <div class="setting-card">
+        <h3 class="card-title">基础设置</h3>
+        <div class="card-content">
+          <!-- Tab 导航 -->
+          <div class="auth-tabs">
+            <button class="auth-tab-button active" data-tab="account-password">
+              <span class="material-icons">account_circle</span>
+              <span>账号密码登录</span>
+            </button>
+            <button class="auth-tab-button" data-tab="cookie">
+              <span class="material-icons">cookie</span>
+              <span>Cookie 登录</span>
+            </button>
+          </div>
+
+          <!-- Tab 内容区域 -->
+          <div class="auth-tab-panels">
+            <!-- 账号密码登录面板 -->
+            <div class="auth-tab-content active" id="tab-account-password">
+              <div class="rows">
+                <div class="form-item">
+                  <label for="account">*小米账号:</label>
+                  <input
+                    id="account"
+                    type="text"
+                    placeholder="填写小米登录账号"
+                  />
+                </div>
+
+                <div class="form-item">
+                  <label for="password">*小米密码:</label>
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="填写小米登录密码"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Cookie 登录面板 -->
+            <div class="auth-tab-content" id="tab-cookie">
+              <div class="rows">
+                <div class="form-item">
+                  <label for="cookie"
+                    >*Cookie:<a
+                      href="https://xdocs.hanxi.cc/issues/688.html"
+                      target="_blank"
+                      >文档</a
+                    ></label
+                  >
+                  <input
+                    id="cookie"
+                    type="text"
+                    placeholder="粘贴完整的 Cookie 字符串"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 公共配置项 -->
+          <div class="rows" style="margin-top: 20px">
+            <div class="form-item">
+              <label for="hostname" class="setting-label"
+                >*NAS的IP或域名:
+                <button class="option-inline mini-button" id="auto-hostname">
+                  <span class="material-icons">auto_fix_high</span>
+                  <span>自动填</span>
+                </button>
+              </label>
+              <input id="hostname" type="text" />
+            </div>
+
+            <div class="form-item">
+              <label for="public_port" class="setting-label"
+                >*本地端口:
+                <button class="option-inline mini-button" id="auto-port">
+                  <span class="material-icons">auto_fix_high</span>
+                  <span>自动填</span>
+                </button>
+              </label>
+              <input id="public_port" type="number" value="58090" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="advanced-config-toggle" id="advancedConfigToggle">
+        <span>⚠️</span>
+        <span class="advanced-config-toggle-text"
+          >以下为高级配置，请谨慎修改，错误配置可能影响系统运行</span
+        >
+        <span class="advanced-config-toggle-icon">▼</span>
+      </div>
+
+      <div class="advanced-config-content" id="advancedConfigContent">
+        <div class="setting-card">
+          <h3 class="card-title">文件路径配置</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="music_path">音乐目录:</label>
+              <input id="music_path" type="text" value="music" />
+
+              <label for="download_path"
+                >音乐下载目录(必须是music的子目录):</label
+              >
+              <input id="download_path" type="text" value="music/download" />
+
+              <label for="conf_path">配置文件目录:</label>
+              <input id="conf_path" type="text" />
+
+              <label for="cache_dir">缓存文件目录:</label>
+              <input id="cache_dir" type="text" value="music/cache" />
+
+              <label for="temp_path">临时文件目录:</label>
+              <input id="temp_path" type="text" value="music/tmp" />
+
+              <label for="ffmpeg_location">ffmpeg路径:</label>
+              <input id="ffmpeg_location" type="text" value="./ffmpeg/bin" />
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <h3 class="card-title">文件监控与管理</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="enable_file_watch"
+                >启用目录监控(自动刷新音乐列表):</label
+              >
+              <select id="enable_file_watch">
+                <option value="true">开启</option>
+                <option value="false" selected>关闭</option>
+              </select>
+
+              <label for="file_watch_debounce">刷新列表延迟时间(秒):</label>
+              <input id="file_watch_debounce" type="number" value="10" />
+
+              <label for="enable_auto_clean_temp"
+                >启用定时清理临时文件(每日凌晨3点):</label
+              >
+              <select id="enable_auto_clean_temp">
+                <option value="true" selected>开启</option>
+                <option value="false">关闭</option>
+              </select>
+
+              <label for="exclude_dirs">忽略目录(逗号分割):</label>
+              <input id="exclude_dirs" type="text" value="@eaDir,tmp" />
+
+              <label for="ignore_tag_dirs">不扫描标签信息目录(逗号分割):</label>
+              <input id="ignore_tag_dirs" type="text" value="" />
+
+              <label for="music_path_depth">目录深度:</label>
+              <input id="music_path_depth" type="number" value="10" />
+
+              <label for="recently_added_playlist_len"
+                >最近新增的歌曲数量:</label
+              >
+              <input
+                id="recently_added_playlist_len"
+                type="number"
+                value="50"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <h3 class="card-title">播放控制配置</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="delay_sec">下一首歌延迟播放秒数(支持负数):</label>
+              <input id="delay_sec" type="number" value="0" />
+
+              <label for="continue_play"
+                >启用继续播放(可能导致兼容性问题):</label
+              >
+              <select id="continue_play">
+                <option value="true">true</option>
+                <option value="false" selected>false</option>
+              </select>
+
+              <label for="use_music_api">型号兼容模式:</label>
+              <select id="use_music_api">
+                <option value="true">true</option>
+                <option value="false" selected>false</option>
+              </select>
+
+              <label for="use_music_audio_id">触屏版显示歌曲ID:</label>
+              <input
+                id="use_music_audio_id"
+                type="text"
+                value="1582971365183456177"
+              />
+
+              <label for="use_music_id">触屏版显示歌曲分段ID:</label>
+              <input id="use_music_id" type="text" value="355454500" />
+
+              <label for="active_cmd">允许唤醒的命令:</label>
+              <input
+                id="active_cmd"
+                type="text"
+                value="play,search_play,set_play_type_rnd,playlocal,search_playlocal,play_music_list,play_music_list_index,stop_after_minute,stop,play_next,play_prev,set_play_type_one,set_play_type_all,set_play_type_sin,set_play_type_seq,gen_music_list,add_to_favorites,del_from_favorites,cmd_del_music,online_play,singer_play"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <h3 class="card-title">搜索与匹配配置</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="search_music_count">搜索歌曲数量:</label>
+              <input id="search_music_count" type="number" value="100" />
+
+              <label for="fuzzy_match_cutoff">模糊匹配阈值(0.1~0.9):</label>
+              <input id="fuzzy_match_cutoff" type="number" value="0.6" />
+
+              <label for="enable_fuzzy_match">开启模糊搜索:</label>
+              <select id="enable_fuzzy_match">
+                <option value="true" selected>true</option>
+                <option value="false">false</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <h3 class="card-title">音频处理配置</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="get_duration_type">获取时长方式:</label>
+              <select id="get_duration_type">
+                <option value="ffprobe" selected>ffprobe</option>
+                <option value="mutagen">mutagen</option>
+              </select>
+
+              <label for="loudnorm">均衡歌曲音量大小(loudnorm滤镜):</label>
+              <input
+                id="loudnorm"
+                type="text"
+                placeholder="loudnorm=I=-14:TP=-1.5:LRA=6"
+              />
+
+              <label for="remove_id3tag">去除MP3 ID3v2和填充:</label>
+              <select id="remove_id3tag">
+                <option value="true">true</option>
+                <option value="false" selected>false</option>
+              </select>
+
+              <label for="convert_to_mp3">转换为MP3:</label>
+              <select id="convert_to_mp3">
+                <option value="true">true</option>
+                <option value="false" selected>false</option>
+              </select>
+
+              <label for="enable_save_tag">启用ID3标签写入文件:</label>
+              <select id="enable_save_tag">
+                <option value="true">true</option>
+                <option value="false" selected>false</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <h3 class="card-title">语音与TTS配置</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="edge_tts_voice">Edge-TTS 语音角色:</label>
+              <select id="edge_tts_voice">
+                <option value="">不使用(默认)</option>
+                <option value="zh-CN-XiaoxiaoNeural">晓晓 (女声,温柔)</option>
+                <option value="zh-CN-XiaoyiNeural" selected>
+                  晓伊 (女声,活泼)
+                </option>
+                <option value="zh-CN-YunjianNeural">云健 (男声,成熟)</option>
+                <option value="zh-CN-YunxiNeural">云希 (男声,阳光)</option>
+                <option value="zh-CN-YunxiaNeural">云夏 (男声,少年)</option>
+                <option value="zh-CN-YunyangNeural">云扬 (男声,新闻)</option>
+                <option value="zh-CN-liaoning-XiaobeiNeural">
+                  晓北 (女声,东北)
+                </option>
+                <option value="zh-CN-shaanxi-XiaoniNeural">
+                  晓妮 (女声,陕西)
+                </option>
+                <option value="zh-HK-HiuGaaiNeural">曉佳 (女声,粤语)</option>
+                <option value="zh-HK-HiuMaanNeural">曉曼 (女声,粤语)</option>
+                <option value="zh-HK-WanLungNeural">雲龍 (男声,粤语)</option>
+                <option value="zh-TW-HsiaoChenNeural">曉臻 (女声,台湾)</option>
+                <option value="zh-TW-YunJheNeural">雲哲 (男声,台湾)</option>
+                <option value="zh-TW-HsiaoYuNeural">曉雨 (女声,台湾)</option>
+              </select>
+
+              <label for="stop_tts_msg">停止提示音:</label>
+              <input id="stop_tts_msg" type="text" value="收到,再见" />
+
+              <label for="play_type_one_tts_msg">单曲循环提示音:</label>
+              <input
+                id="play_type_one_tts_msg"
+                type="text"
+                value="已经设置为单曲循环"
+              />
+
+              <label for="play_type_all_tts_msg">全部循环提示音:</label>
+              <input
+                id="play_type_all_tts_msg"
+                type="text"
+                value="已经设置为全部循环"
+              />
+
+              <label for="play_type_rnd_tts_msg">随机播放提示音:</label>
+              <input
+                id="play_type_rnd_tts_msg"
+                type="text"
+                value="已经设置为随机播放"
+              />
+
+              <label for="play_type_sin_tts_msg">单曲播放提示音:</label>
+              <input
+                id="play_type_sin_tts_msg"
+                type="text"
+                value="已经设置为单曲播放"
+              />
+
+              <label for="play_type_seq_tts_msg">顺序播放提示音:</label>
+              <input
+                id="play_type_seq_tts_msg"
+                type="text"
+                value="已经设置为顺序播放"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <h3 class="card-title">语音命令配置</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="keywords_playlocal">播放本地歌曲口令:</label>
+              <input
+                id="keywords_playlocal"
+                type="text"
+                value="播放本地歌曲,本地播放歌曲"
+              />
+
+              <label for="keywords_play">播放歌曲口令:</label>
+              <input id="keywords_play" type="text" value="播放歌曲,放歌曲" />
+
+              <label for="keywords_playlist">播放列表口令:</label>
+              <input
+                id="keywords_playlist"
+                type="text"
+                value="播放列表,播放歌单"
+              />
+
+              <label for="keywords_stop">停止口令:</label>
+              <input
+                id="keywords_stop"
+                type="text"
+                value="关机,暂停,停止,停止播放"
+              />
+
+              <label for="keywords_search_playlocal"
+                >本地搜索播放口令(会产生临时播放列表):</label
+              >
+              <input
+                id="keywords_search_playlocal"
+                type="text"
+                value="本地搜索播放"
+              />
+
+              <label for="keywords_search_play"
+                >搜索播放口令(会产生临时播放列表):</label
+              >
+              <input id="keywords_search_play" type="text" value="搜索播放" />
+
+              <label for="keywords_online_play"
+                >在线播放口令(在线搜索接口或插件):</label
+              >
+              <input id="keywords_online_play" type="text" value="在线播放" />
+
+              <label for="keywords_singer_play"
+                >播放歌手口令(会搜索歌手并创建歌单):</label
+              >
+              <input id="keywords_singer_play" type="text" value="播放歌手" />
+
+              <label for="enable_cmd_del_music">开启语音删除歌曲:</label>
+              <select id="enable_cmd_del_music">
+                <option value="true">true</option>
+                <option value="false" selected>false</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <h3 class="card-title">网络与下载配置</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="search_prefix">XIAOMUSIC_SEARCH(歌曲下载方式):</label>
+              <select id="search_prefix">
+                <option value="bilisearch:">bilisearch:</option>
+                <option value="ytsearch:">ytsearch:</option>
+              </select>
+
+              <label for="proxy">XIAOMUSIC_PROXY(ytsearch需要):</label>
+              <input
+                id="proxy"
+                type="text"
+                placeholder="http://192.168.2.5:8080"
+              />
+
+              <label for="web_music_proxy">网络歌曲过代理:</label>
+              <select id="web_music_proxy">
+                <option value="true" selected>true</option>
+                <option value="false">false</option>
+              </select>
+
+              <label for="disable_download">关闭下载功能:</label>
+              <select id="disable_download">
+                <option value="true">true</option>
+                <option value="false" selected>false</option>
+              </select>
+
+              <label for="enable_yt_dlp_cookies"
+                >启用yt-dlp-cookies(需要先上传yt-dlp-cookies.txt文件):</label
+              >
+              <select id="enable_yt_dlp_cookies">
+                <option value="true">true</option>
+                <option value="false" selected>false</option>
+              </select>
+
+              <label for="yt_dlp_cookies_file"
+                >上传yt_dlp_cookies.txt文件:<a
+                  href="https://xdocs.hanxi.cc/issues/210.html"
+                  target="_blank"
+                  >文档</a
+                ></label
+              >
+              <div class="file-upload-section">
+                <input id="yt_dlp_cookies_file" name="file" type="file" />
+                <button id="upload_yt_dlp_cookie">
+                  <span class="material-icons">upload_file</span>
+                  <span>上传yt_dlp_cookies</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <h3 class="card-title">设备与对话配置</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="group_list"
+                >设备分组配置（不推荐，声音不同步）:<a
+                  href="https://xdocs.hanxi.cc/issues/366.html"
+                  target="_blank"
+                  >文档</a
+                ></label
+              >
+              <input
+                id="group_list"
+                type="text"
+                placeholder="did1:组名1,did2:组名1,did3:组名2"
+              />
+
+              <label for="enable_pull_ask">获取对话记录:</label>
+              <select id="enable_pull_ask">
+                <option value="true">true</option>
+                <option value="false selected">false</option>
+              </select>
+
+              <label for="pull_ask_sec">获取对话记录间隔(秒):</label>
+              <input id="pull_ask_sec" type="number" value="1" />
+
+              <label for="get_ask_by_mina">特殊型号获取对话记录:</label>
+              <select id="get_ask_by_mina">
+                <option value="true">true</option>
+                <option value="false" selected>false</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <h3 class="card-title">歌单与定时任务</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="music_list_url" class="setting-label"
+                >歌单地址:
+                <button class="option-inline mini-button" id="get_music_list">
+                  <span class="material-icons">sync_alt</span>
+                  <span>获取歌单</span>
+                </button>
+              </label>
+              <input
+                id="music_list_url"
+                type="text"
+                value="https://gist.githubusercontent.com/hanxi/dda82d964a28f8110f8fba81c3ff8314/raw/example.json"
+              />
+
+              <label for="music_list_json"
+                >歌单内容:<a
+                  href="https://xdocs.hanxi.cc/issues/78.html"
+                  target="_blank"
+                  >格式文档</a
+                ></label
+              >
+              <textarea id="music_list_json" type="text"></textarea>
+
+              <label for="crontab_json"
+                >定时任务:<a
+                  href="https://xdocs.hanxi.cc/issues/182.html"
+                  target="_blank"
+                  >格式文档</a
+                ></label
+              >
+              <textarea id="crontab_json" type="text"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <h3 class="card-title">安全与访问控制</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="disable_httpauth">关闭控制台密码验证:</label>
+              <select id="disable_httpauth">
+                <option value="true" selected>true</option>
+                <option value="false">false</option>
+              </select>
+
+              <label for="httpauth_username">控制台账户:</label>
+              <input id="httpauth_username" type="text" value="" />
+
+              <label for="httpauth_password">控制台密码:</label>
+              <input id="httpauth_password" type="password" value="" />
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <h3 class="card-title">其他配置</h3>
+          <div class="card-content">
+            <div class="rows">
+              <label for="verbose">是否开启调试日志:</label>
+              <select id="verbose">
+                <option value="true">true</option>
+                <option value="false" selected>false</option>
+              </select>
+
+              <label for="log_file">日志路径:</label>
+              <input id="log_file" type="text" value="xiaomusic.log.txt" />
+
+              <label for="enable_analytics"
+                >开启谷歌数据统计(无敏感数据):</label
+              >
+              <select id="enable_analytics">
+                <option value="true" selected>true</option>
+                <option value="false">false</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="setting-footer">
+      <div class="button-section">
+        <div class="section-header collapsed" id="operationToggle">
+          <h3 class="button-section-title">功能操作</h3>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-content collapsed" id="operationContent">
+          <div class="button-grid">
+            <button id="refresh_music_tag">
+              <span class="material-icons">refresh</span>
+              <span>刷新tag</span>
+            </button>
+            <button id="clear_cache">
+              <span class="material-icons">delete_sweep</span>
+              <span>清空缓存</span>
+            </button>
+            <button id="cleantempdir">
+              <span class="material-icons">folder_delete</span>
+              <span>清空临时目录</span>
+            </button>
+            <a href="/downloadlog" download="xiaomusic.txt">
+              <button>
+                <span class="material-icons">download</span>
+                <span>下载日志文件</span>
+              </button>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="button-section">
+        <div class="section-header collapsed" id="toolsToggle">
+          <h3 class="button-section-title">工具链接</h3>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-content collapsed" id="toolsContent">
+          <div class="link-grid">
+            <a href="/docs" target="_blank" class="link-card">
+              <div class="link-card-icon">
+                <span class="material-icons">description</span>
+              </div>
+              <div class="link-card-content">
+                <div class="link-card-title">接口文档</div>
+                <div class="link-card-description">查看 API 接口文档</div>
+              </div>
+            </a>
+            <a href="./m3u.html" target="_blank" class="link-card">
+              <div class="link-card-icon">
+                <span class="material-icons">swap_horiz</span>
+              </div>
+              <div class="link-card-content">
+                <div class="link-card-title">m3u转换</div>
+                <div class="link-card-description">转换 m3u 播放列表格式</div>
+              </div>
+            </a>
+            <a href="./downloadtool.html" target="_blank" class="link-card">
+              <div class="link-card-icon">
+                <span class="material-icons">cloud_download</span>
+              </div>
+              <div class="link-card-content">
+                <div class="link-card-title">歌曲下载工具</div>
+                <div class="link-card-description">在线搜索并下载歌曲</div>
+              </div>
+            </a>
+            <a href="./merge/index.html" target="_blank" class="link-card">
+              <div class="link-card-icon">
+                <span class="material-icons">merge_type</span>
+              </div>
+              <div class="link-card-content">
+                <div class="link-card-title">歌单合并工具</div>
+                <div class="link-card-description">合并多个歌单文件</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="button-section">
+        <h3 class="button-section-title">社区支持</h3>
+        <div class="community-support-content">
+          <div class="community-buttons-grid">
+            <a href="https://afdian.com/a/imhanxi" target="_blank">
+              <button class="btn-sponsor">
+                <span class="material-icons">favorite</span>
+                <span>爱发电</span>
+              </button>
+            </a>
+            <a href="https://github.com/hanxi/xiaomusic" target="_blank">
+              <button class="btn-github">
+                <span class="material-icons">star</span>
+                <span>点个 Star</span>
+              </button>
+            </a>
+          </div>
+          <div class="qrcode-container">
+            <img class="qrcode" src="./qrcode.png" alt="请涵曦喝奶茶🧋" />
+          </div>
+        </div>
+      </div>
     </div>
     <footer>
-      <p>Powered by <a href="https://xdocs.hanxi.cc" target="_blank">XiaoMusic</a></p>
+      <p>
+        Powered by
+        <a href="https://xdocs.hanxi.cc" target="_blank">XiaoMusic</a>
+      </p>
     </footer>
   </body>
 </html>

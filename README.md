@@ -21,25 +21,7 @@
 
 ## 👋 最简配置运行
 
-已经支持在 web 页面配置其他参数，docker 启动命令如下:
-
-```bash
-docker run -p 58090:8090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf hanxi/xiaomusic
-```
-
-🔥 国内：
-
-```bash
-docker run -p 58090:8090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf docker.hanxi.cc/hanxi/xiaomusic
-```
-
-测试版：
-
-```
-docker run -p 58090:8090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf hanxi/xiaomusic:main
-```
-
-对应的 docker compose 配置如下：
+已经支持在 web 设置页面配置其他参数，不再需要设置环境变量， docker compose 配置如下（选一个即可）：
 
 ```yaml
 services:
@@ -84,10 +66,28 @@ services:
       - /xiaomusic_conf:/app/conf
 ```
 
+对应的 docker 启动命令如下:
+
+```bash
+docker run -p 58090:8090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf hanxi/xiaomusic
+```
+
+🔥 国内：
+
+```bash
+docker run -p 58090:8090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf docker.hanxi.cc/hanxi/xiaomusic
+```
+
+测试版：
+
+```
+docker run -p 58090:8090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/conf hanxi/xiaomusic:main
+```
+
 - 其中 conf 目录为配置文件存放目录，music 目录为音乐存放目录，建议分开配置为不同的目录。
 - /xiaomusic_music 和 /xiaomusic_conf 是 docker 所在的主机的目录，可以修改为其他目录。如果报错找不到 /xiaomusic_music 目录，可以先执行 `mkdir -p /xiaomusic_{music,conf}` 命令新建目录。
 - /app/music 和 /app/conf 是 docker 容器里的目录，不要去修改。
-- XIAOMUSIC_PUBLIC_PORT 是用来配置 NAS 本地端口的。8090 是容器端口，不要去修改。
+- 58090 是 NAS 本地端口的。8090 是容器端口，不要去修改。
 - 后台访问地址为： http://NAS_IP:58090
 
 > [!NOTE]
@@ -136,15 +136,12 @@ services:
 - 【全部循环】
 - 【随机播放】
 - 【关机】，【停止播放】，两个效果是一样的。
-- 【刷新列表】，当复制了歌曲进 music 目录后，可以用这个口令刷新歌单。
-- 【播放列表+列表名】，比如：播放列表其他。
+- 【播放歌单+目录名】，比如：播放歌单其他。
 - 【加入收藏】，把当前播放的歌曲加入收藏歌单。
 - 【取消收藏】，把当前播放的歌曲从收藏歌单里移除。
-- 【播放列表收藏】，这个用于播放收藏歌单。
-- ~【播放本地歌曲+歌名】，这个口令和播放歌曲的区别是本地找不到也不会去下载。~
-- 【播放列表第几个+列表名】，具体见： <https://github.com/hanxi/xiaomusic/issues/158>
+- 【播放歌单收藏】，这个用于播放收藏歌单。
+- 【播放歌单第几个+列表名】，具体见： <https://github.com/hanxi/xiaomusic/issues/158>
 - 【搜索播放+关键词】，会搜索关键词作为临时搜索列表播放，比如说【搜索播放林俊杰】，会播放所有林俊杰的歌。
-- 【本地搜索播放+关键词】，跟搜索播放的区别是本地找不到也不会去下载。
 
 > [!TIP]
 > 隐藏玩法: 对小爱同学说播放歌曲小猪佩奇的故事，会先下载小猪佩奇的故事，然后再播放小猪佩奇的故事。
@@ -237,8 +234,8 @@ docker build -t xiaomusic .
 | L05C | [小米小爱音箱Play 增强版](https://home.mi.com/baike/index.html#/detail?model=xiaomi.wifispeaker.l05c)   |
 | L09A | [小米音箱Art](https://home.mi.com/webapp/content/baike/product/index.html?model=xiaomi.wifispeaker.l09a) |
 | LX04 X10A X08A | 已经支持的触屏版 |
-| X08C X08E X8F | 已经不需要设置了. ~需要设置【型号兼容模式】选项为 true~ |
-| M01/XMYX01JY | 小米小爱音箱HD 需要设置【特殊型号获取对话记录】选项为 true 才能语音播放|
+| X08C X08E X8F | 已经支持 |
+| M01/XMYX01JY | 小米小爱音箱HD |
 | OH2P | XIAOMI 智能音箱 Pro |
 | OH2 | XIAOMI 智能音箱 |
 
@@ -246,8 +243,7 @@ docker build -t xiaomusic .
 
 > [!NOTE]
 > 如果你的设备支持播放，请反馈给我添加到支持列表里，谢谢。
-> 目前应该所有设备类型都已经支持播放，有问题随时反馈。
-> 其他触屏版不能播放可以设置【型号兼容模式】选项为 true 试试。见 <https://github.com/hanxi/xiaomusic/issues/30>
+> 目前应该所有设备类型都已经支持播放，有问题可随时反馈。
 
 ## 🎵 支持音乐格式
 
@@ -270,10 +266,6 @@ docker build -t xiaomusic .
 > [!NOTE]
 > 欢迎有想法的朋友们制作更多的歌单转换工具。
 
-## 🍺 更多其他可选配置
-
-见 <https://github.com/hanxi/xiaomusic/issues/333>
-
 ## ⚠️ 安全提醒
 
 > [!IMPORTANT]
@@ -281,18 +273,11 @@ docker build -t xiaomusic .
 > 1. 如果配置了公网访问 xiaomusic ，请一定要开启密码登陆，并设置复杂的密码。且不要在公共场所的 WiFi 环境下使用，否则可能造成小米账号密码泄露。
 > 2. 强烈不建议将小爱音箱的小米账号绑定摄像头，代码难免会有 bug ，一旦小米账号密码泄露，可能监控录像也会泄露。
 
-## 🤔 高级篇
-
-- 自定义口令功能 <https://github.com/hanxi/xiaomusic/issues/105>
-- <https://github.com/hanxi/xiaomusic/issues/312>
-- <https://github.com/hanxi/xiaomusic/issues/269>
-- <https://github.com/hanxi/xiaomusic/issues/159>
-
 ## 📢 讨论区
 
+- <https://github.com/hanxi/xiaomusic/issues>
 - [点击链接加入QQ频道【xiaomusic】](https://pd.qq.com/s/e2jybz0ss)
 - [点击链接加入群聊【xiaomusic官方交流群3】 1072151477](https://qm.qq.com/q/lxIhquqbza)
-- <https://github.com/hanxi/xiaomusic/issues>
 - [微信群二维码](https://github.com/hanxi/xiaomusic/issues/86)
 
 ## ❤️ 感谢

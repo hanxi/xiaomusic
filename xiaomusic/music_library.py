@@ -972,22 +972,6 @@ class MusicLibrary:
 
     # ==================== URL处理方法 ====================
 
-    async def get_music_sec_url(self, name, cur_playlist):
-        """获取歌曲播放时长和播放地址
-
-        Args:
-            name: 歌曲名称
-            cur_playlist: 当前歌单名称
-        Returns:
-            tuple: (播放时长(秒), 播放地址)
-        """
-        url, origin_url = await self.get_music_url(name)
-        self.log.info(
-            f"get_music_sec_url. name:{name} url:{url} origin_url:{origin_url}"
-        )
-        sec = await self.get_music_duration(name)
-        return sec, url
-
     async def get_music_url(self, name):
         """获取音乐播放地址
 
@@ -1025,7 +1009,7 @@ class MusicLibrary:
         if self.config.web_music_proxy or url.startswith("self://"):
             # 判断是否为电台，传入 radio 参数
             is_radio = self.is_web_radio_music(name)
-            proxy_url = self._get_proxy_url(url, radio=is_radio)
+            proxy_url = self._get_proxy_url(url, is_radio=is_radio)
             return proxy_url, url
 
         return url, None
@@ -1046,22 +1030,21 @@ class MusicLibrary:
             self.log.error(f"_get_url_from_api use api fail. name:{name}, url:{url}")
         return url
 
-    def _get_proxy_url(self, origin_url, radio=None):
+    def _get_proxy_url(self, origin_url, is_radio=None):
         """获取代理URL
 
         Args:
             origin_url: 原始URL
-            radio: 是否为电台直播流，None时不传参数
+            is_radio: 是否为电台直播流
 
         Returns:
             str: 代理URL
         """
         urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
-        proxy_url = (
-            f"{self.config.hostname}:{self.config.public_port}/proxy?urlb64={urlb64}"
-        )
-        if radio is not None:
-            proxy_url += f"&radio={'true' if radio else 'false'}"
+
+        # 使用路径参数方式，避免查询参数转义问题
+        proxy_type = "radio" if is_radio else "music"
+        proxy_url = f"{self.config.hostname}:{self.config.public_port}/proxy/{proxy_type}?urlb64={urlb64}"
         self.log.info(f"Using proxy url: {proxy_url}")
         return proxy_url
 

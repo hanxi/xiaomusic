@@ -19,7 +19,7 @@ class CommandHandler:
     负责解析用户的语音指令，匹配对应的命令，并路由到相应的处理方法。
     """
 
-    def __init__(self, config, log, xiaomusic_instance, device_manager):
+    def __init__(self, config, log, device_manager):
         """初始化命令处理器
 
         Args:
@@ -31,8 +31,8 @@ class CommandHandler:
         self.config = config
         self.log = log
         self.device_manager = device_manager
-        self.xiaomusic = xiaomusic_instance
         self.active_cmd = config.active_cmd.split(",") if config.active_cmd else []
+        self.last_cmd = ""
 
     async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
         """检查并执行命令
@@ -49,6 +49,10 @@ class CommandHandler:
             **kwargs: 其他参数
         """
         self.log.info(f"收到消息:{query} 控制面板:{ctrl_panel} did:{did}")
+
+        # 记录最后一条命令
+        self.last_cmd = query
+
         try:
             device = self.device_manager.devices[did]
             # 匹配命令
@@ -60,7 +64,7 @@ class CommandHandler:
                 return
 
             # 执行命令 todo 把self.xiaomusic改为从device获取并执行
-            func = getattr(self.xiaomusic, opvalue)
+            func = getattr(self.device, opvalue)
             await func(did=did, arg1=oparg)
 
         except Exception as e:
