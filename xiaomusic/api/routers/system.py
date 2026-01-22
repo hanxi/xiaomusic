@@ -144,7 +144,7 @@ async def modifiysetting(request: Request):
             log.info("HTTP server configuration has been reset")
 
         # 保存配置到文件
-        xiaomusic.config_manager.save_cur_config(xiaomusic.device_manager.devices)
+        xiaomusic.save_cur_config()
 
         return {"success": True, "message": "Configuration updated successfully"}
     except json.JSONDecodeError as err:
