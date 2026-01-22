@@ -250,6 +250,52 @@ progress::-webkit-progress-value {
   height: auto;
 }
 
+/* 无障碍样式 - 屏幕阅读器专用类 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* 无障碍样式 - 焦点样式增强 */
+*:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+button:focus,
+select:focus,
+input:focus,
+.control-button:focus,
+.icon-item:focus,
+.option-inline:focus,
+.toggle-switch:focus {
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* 确保自定义按钮在获得焦点时有明显的视觉反馈 */
+[role="button"]:focus,
+[role="switch"]:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
 .login-tips {
   color: red;
   font-size: 12px;
