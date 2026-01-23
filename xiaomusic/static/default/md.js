@@ -788,10 +788,13 @@ function debounce(func, delay) {
     timeout = setTimeout(() => func.apply(this, args), delay);
   };
 }
+
+let selectedSearchResult = null;
+
 function handleSearch() {
   const searchInput = document.getElementById("search");
-  const musicSelect = document.getElementById("music-name");
-  const musicSelectLabel = document.getElementById("music-name-label");
+  const resultsContainer = document.getElementById("music-name");
+  const musicFilenameInput = document.getElementById("music-filename");
 
   searchInput.addEventListener(
     "input",
@@ -799,81 +802,83 @@ function handleSearch() {
       const query = searchInput.value.trim();
 
       if (query.length === 0) {
-        musicSelect.innerHTML = "";
-        musicSelect.style.display = "none";
-        musicSelectLabel.style.display = "none";
+        resultsContainer.innerHTML = '<div class="search-result-empty">请输入搜索关键词</div>';
+        selectedSearchResult = null;
+        musicFilenameInput.style.display = "none";
         return;
       }
 
-      musicSelect.style.display = "block";
-      musicSelectLabel.style.display = "block";
+      // 显示加载状态
+      resultsContainer.innerHTML = '<div class="search-result-empty">搜索中...</div>';
+
       fetch(`/searchmusic?name=${encodeURIComponent(query)}`)
         .then((response) => response.json())
         .then((data) => {
-          musicSelect.innerHTML = ""; // 清空现有选项
+          resultsContainer.innerHTML = ""; // 清空现有内容
 
-          // 找到的优先显示
+          // 添加用户输入作为关键词选项（始终显示在第一位）
+          const keywordItem = document.createElement("div");
+          keywordItem.className = "search-result-item keyword-option";
+          keywordItem.textContent = `🔍 使用关键词播放: ${query}`;
+          keywordItem.dataset.value = query;
+          keywordItem.dataset.isKeyword = "true";
+          keywordItem.onclick = function() {
+            selectSearchResult(this);
+          };
+          resultsContainer.appendChild(keywordItem);
+
+          // 找到的歌曲结果
           if (data.length > 0) {
             data.forEach((song) => {
-              const option = document.createElement("option");
-              option.value = song;
-              option.textContent = song;
-              musicSelect.appendChild(option);
+              const item = document.createElement("div");
+              item.className = "search-result-item";
+              item.textContent = song;
+              item.dataset.value = song;
+              item.dataset.isKeyword = "false";
+              item.onclick = function() {
+                selectSearchResult(this);
+              };
+              resultsContainer.appendChild(item);
             });
+          } else {
+            // 没有找到本地歌曲
+            const emptyItem = document.createElement("div");
+            emptyItem.className = "search-result-empty";
+            emptyItem.textContent = "没有找到本地歌曲，可使用关键词在线播放";
+            resultsContainer.appendChild(emptyItem);
           }
 
-          // 添加用户输入作为一个选项
-          const userOption = document.createElement("option");
-          userOption.value = query;
-          userOption.textContent = `使用关键词播放: ${query}`;
-          musicSelect.appendChild(userOption);
-
-          // 提示没找到
-          if (data.length === 0) {
-            const option = document.createElement("option");
-            option.textContent = "没有匹配的结果";
-            option.disabled = true;
-            musicSelect.appendChild(option);
-          }
+          // 默认选中关键词选项
+          selectSearchResult(keywordItem);
         })
         .catch((error) => {
           console.error("Error fetching data:", error);
+          resultsContainer.innerHTML = '<div class="search-result-empty">搜索失败，请重试</div>';
         });
     }, 600),
   );
+}
 
-  // 动态显示保存文件名输入框
-  const musicNameSelect = document.getElementById("music-name");
+function selectSearchResult(element) {
+  // 移除所有选中状态
+  const allItems = document.querySelectorAll(".search-result-item");
+  allItems.forEach(item => item.classList.remove("selected"));
+
+  // 添加选中状态
+  element.classList.add("selected");
+  selectedSearchResult = {
+    value: element.dataset.value,
+    isKeyword: element.dataset.isKeyword === "true"
+  };
+
+  // 根据是否是关键词选项决定是否显示文件名输入框
   const musicFilenameInput = document.getElementById("music-filename");
-  function updateInputVisibility() {
-    const selectedOption =
-      musicNameSelect.options[musicNameSelect.selectedIndex];
-    var startsWithKeyword;
-    if (musicNameSelect.options.length === 0) {
-      startsWithKeyword = false;
-    } else {
-      startsWithKeyword = selectedOption.text.startsWith("使用关键词播放:");
-    }
-
-    if (startsWithKeyword) {
-      musicFilenameInput.style.display = "block";
-      musicFilenameInput.placeholder =
-        "请输入保存为的文件名称(默认:" + selectedOption.value + ")";
-    } else {
-      musicFilenameInput.style.display = "none";
-    }
+  if (selectedSearchResult.isKeyword) {
+    musicFilenameInput.style.display = "block";
+    musicFilenameInput.placeholder = `请输入保存为的文件名称(默认: ${selectedSearchResult.value})`;
+  } else {
+    musicFilenameInput.style.display = "none";
   }
-  // 观察元素修改
-  const observer = new MutationObserver((mutationsList) => {
-    for (const mutation of mutationsList) {
-      if (mutation.type === "childList") {
-        updateInputVisibility();
-      }
-    }
-  });
-  observer.observe(musicNameSelect, { childList: true });
-  // 监听用户输入
-  musicNameSelect.addEventListener("change", updateInputVisibility);
 }
 
 handleSearch();
@@ -936,19 +941,20 @@ function timedShutDown(cmd) {
 }
 
 function confirmSearch() {
+  if (!selectedSearchResult) {
+    alert("请先选择一个搜索结果");
+    return;
+  }
+
   var search_key = $("#search").val();
-  if (search_key == null) {
-    search_key = "";
-  }
-  var filename = $("#music-name").val();
+  var filename = selectedSearchResult.value;
   var musicfilename = $("#music-filename").val();
-  if (
-    (filename == null || filename == "" || filename == search_key) &&
-    musicfilename != null &&
-    musicfilename != ""
-  ) {
-    filename = musicfilename;
+
+  // 如果是关键词选项且用户输入了自定义文件名
+  if (selectedSearchResult.isKeyword && musicfilename && musicfilename.trim() !== "") {
+    filename = musicfilename.trim();
   }
+
   console.log("confirmSearch", filename, search_key);
   do_play_music(filename, search_key);
   toggleSearch();
