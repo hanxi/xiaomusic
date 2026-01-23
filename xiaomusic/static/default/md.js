@@ -42,6 +42,42 @@ function announceToScreenReader(message) {
   }
 }
 
+// 批量填充 select 选项（优化读屏性能）
+function fillSelectOptions(
+  selectElement,
+  options,
+  selectedValue,
+  announceMessage,
+) {
+  const $select = $(selectElement);
+
+  // 设置忙碌状态，告知读屏软件正在加载
+  $select.attr("aria-busy", "true");
+
+  // 构建所有 option 的 HTML 字符串
+  const optionsHtml = options
+    .map((opt) => {
+      const isSelected = opt.value === selectedValue;
+      const selectedAttr = isSelected ? " selected" : "";
+      // 转义 HTML 特殊字符
+      const escapedText = $("<div>").text(opt.text).html();
+      const escapedValue = $("<div>").text(opt.value).html();
+      return `<option value="${escapedValue}"${selectedAttr}>${escapedText}</option>`;
+    })
+    .join("");
+
+  // 一次性设置所有选项
+  $select.html(optionsHtml);
+
+  // 恢复状态
+  $select.attr("aria-busy", "false");
+
+  // 通知读屏软件加载完成
+  if (announceMessage) {
+    announceToScreenReader(announceMessage);
+  }
+}
+
 // 弹窗焦点管理
 let lastFocusedElement = null;
 const openDialogs = new Set();
@@ -762,16 +798,18 @@ $.get("/getsetting", function (data, status) {
 
   $("#did").empty();
   var dids = data.mi_did.split(",");
+
+  // 收集所有设备选项
+  var deviceOptions = [];
   $.each(dids, function (index, value) {
     var cur_device = Object.values(data.devices).find(
       (device) => device.did === value,
     );
     if (cur_device) {
-      var option = $("<option></option>")
-        .val(value)
-        .text(cur_device.name)
-        .prop("selected", value === did);
-      $("#did").append(option);
+      deviceOptions.push({
+        value: value,
+        text: cur_device.name,
+      });
 
       if (value === did) {
         playModeIndex = cur_device.play_type;
@@ -784,11 +822,20 @@ $.get("/getsetting", function (data, status) {
       }
     }
   });
-  var option = $("<option></option>")
-    .val("web_device")
-    .text("本机")
-    .prop("selected", "web_device" === did);
-  $("#did").append(option);
+
+  // 添加本机选项
+  deviceOptions.push({
+    value: "web_device",
+    text: "本机",
+  });
+
+  // 批量填充设备选项
+  fillSelectOptions(
+    "#did",
+    deviceOptions,
+    did,
+    `设备列表已加载，共 ${deviceOptions.length} 个设备`,
+  );
 
   console.log("cur_did", did);
   $("#did").change(function () {
@@ -870,12 +917,24 @@ function _refresh_music_list(callback) {
   $.get("/musiclist", function (data, status) {
     console.log(data, status);
     favoritelist = data["收藏"];
+
+    // 收集所有播放列表选项
+    var playlistOptions = [];
     $.each(data, function (key, value) {
       let cnt = value.length;
-      $("#music_list").append(
-        $("<option></option>").val(key).text(`${key} (${cnt})`),
-      );
+      playlistOptions.push({
+        value: key,
+        text: `${key} (${cnt})`,
+      });
     });
+
+    // 批量填充播放列表选项
+    fillSelectOptions(
+      "#music_list",
+      playlistOptions,
+      null, // 选中值将在后面通过 trigger('change') 设置
+      `播放列表已加载，共 ${playlistOptions.length} 个列表`,
+    );
 
     $("#music_list").change(function () {
       const selectedValue = $(this).val();
@@ -883,14 +942,23 @@ function _refresh_music_list(callback) {
       $("#music_name").empty();
       const cur_music = localStorage.getItem("cur_music");
       console.log("#music_name cur_music", cur_music);
+
+      // 收集所有歌曲选项
+      var songOptions = [];
       $.each(data[selectedValue], function (index, item) {
-        $("#music_name").append(
-          $("<option></option>")
-            .val(item)
-            .text(item)
-            .prop("selected", item == cur_music),
-        );
+        songOptions.push({
+          value: item,
+          text: item,
+        });
       });
+
+      // 批量填充歌曲选项
+      fillSelectOptions(
+        "#music_name",
+        songOptions,
+        cur_music,
+        `歌曲列表已加载，共 ${songOptions.length} 首歌曲`,
+      );
 
       // 本机播放：更新播放列表
       var did = $("#did").val();
@@ -1713,7 +1781,12 @@ function initWebPlayer() {
     if (playMode === 4) {
       const playList = WebPlayer.getPlayList();
       const currentIndex = WebPlayer.getCurrentIndex();
-      console.log("Sequential play mode, current index:", currentIndex, "playlist length:", playList.length);
+      console.log(
+        "Sequential play mode, current index:",
+        currentIndex,
+        "playlist length:",
+        playList.length,
+      );
       if (currentIndex >= playList.length - 1) {
         console.log("Reached end of playlist, stop playing");
         updateWebPlayingUI();
