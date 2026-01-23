@@ -1,26 +1,28 @@
 // ============ 字体加载检测 ============
 // 检测字体加载完成，避免图标文字闪烁
-(function() {
+(function () {
   // 使用 Promise.race 实现超时保护
-  const fontLoadTimeout = new Promise(resolve => {
+  const fontLoadTimeout = new Promise((resolve) => {
     setTimeout(() => {
-      console.warn('字体加载超时，强制显示图标');
-      resolve('timeout');
+      console.warn("字体加载超时，强制显示图标");
+      resolve("timeout");
     }, 3000);
   });
 
-  const fontLoadReady = document.fonts.ready.then(() => 'loaded');
+  const fontLoadReady = document.fonts.ready.then(() => "loaded");
 
-  Promise.race([fontLoadReady, fontLoadTimeout]).then((result) => {
-    document.body.classList.add('fonts-loaded');
-    if (result === 'loaded') {
-      console.log('Material Icons 字体加载完成');
-    }
-  }).catch((error) => {
-    console.error('字体加载检测失败:', error);
-    // 出错时也显示图标，避免永久隐藏
-    document.body.classList.add('fonts-loaded');
-  });
+  Promise.race([fontLoadReady, fontLoadTimeout])
+    .then((result) => {
+      document.body.classList.add("fonts-loaded");
+      if (result === "loaded") {
+        console.log("Material Icons 字体加载完成");
+      }
+    })
+    .catch((error) => {
+      console.error("字体加载检测失败:", error);
+      // 出错时也显示图标，避免永久隐藏
+      document.body.classList.add("fonts-loaded");
+    });
 })();
 
 // $(function () {
@@ -185,15 +187,175 @@ const playModes = {
 
 let favoritelist = []; //收藏列表
 
+// ============ 本机播放器状态管理 ============
+
+// 本机播放器状态管理对象
+const WebPlayer = {
+  // 获取当前播放列表名称
+  getPlaylist: function () {
+    return localStorage.getItem("web_playlist") || "全部";
+  },
+
+  // 设置当前播放列表
+  setPlaylist: function (playlist) {
+    localStorage.setItem("web_playlist", playlist);
+  },
+
+  // 获取当前播放歌曲
+  getCurrentMusic: function () {
+    return localStorage.getItem("web_current_music") || "";
+  },
+
+  // 设置当前播放歌曲
+  setCurrentMusic: function (music) {
+    localStorage.setItem("web_current_music", music);
+  },
+
+  // 获取播放模式
+  getPlayMode: function () {
+    const mode = localStorage.getItem("web_play_mode");
+    return mode !== null ? parseInt(mode) : 2; // 默认随机播放
+  },
+
+  // 设置播放模式
+  setPlayMode: function (mode) {
+    localStorage.setItem("web_play_mode", mode.toString());
+  },
+
+  // 获取播放列表数组
+  getPlayList: function () {
+    const list = localStorage.getItem("web_play_list");
+    return list ? JSON.parse(list) : [];
+  },
+
+  // 设置播放列表数组
+  setPlayList: function (list) {
+    localStorage.setItem("web_play_list", JSON.stringify(list));
+  },
+
+  // 获取当前播放索引
+  getCurrentIndex: function () {
+    const index = localStorage.getItem("web_current_index");
+    return index !== null ? parseInt(index) : -1;
+  },
+
+  // 设置当前播放索引
+  setCurrentIndex: function (index) {
+    localStorage.setItem("web_current_index", index.toString());
+  },
+
+  // 获取音量
+  getVolume: function () {
+    const volume = localStorage.getItem("web_volume");
+    return volume !== null ? parseInt(volume) : 50;
+  },
+
+  // 设置音量
+  setVolume: function (volume) {
+    localStorage.setItem("web_volume", volume.toString());
+  },
+
+  // 获取收藏列表
+  getFavorites: function () {
+    const favorites = localStorage.getItem("web_favorites");
+    return favorites ? JSON.parse(favorites) : [];
+  },
+
+  // 设置收藏列表
+  setFavorites: function (favorites) {
+    localStorage.setItem("web_favorites", JSON.stringify(favorites));
+  },
+
+  // 添加到收藏
+  addToFavorites: function (music) {
+    const favorites = this.getFavorites();
+    if (!favorites.includes(music)) {
+      favorites.push(music);
+      this.setFavorites(favorites);
+    }
+  },
+
+  // 从收藏移除
+  removeFromFavorites: function (music) {
+    let favorites = this.getFavorites();
+    favorites = favorites.filter((item) => item !== music);
+    this.setFavorites(favorites);
+  },
+
+  // 检查是否已收藏
+  isFavorited: function (music) {
+    return this.getFavorites().includes(music);
+  },
+};
+
+// 本机播放：加载并播放指定歌曲
+function loadAndPlayMusic(musicName) {
+  console.log("loadAndPlayMusic:", musicName);
+
+  $.get(`/musicinfo?name=${musicName}`, function (data, status) {
+    console.log(data);
+    if (data.ret == "OK") {
+      const audioElement = document.getElementById("audio");
+
+      // 设置音频源
+      audioElement.src = data.url;
+
+      // 播放音频
+      audioElement
+        .play()
+        .then(() => {
+          console.log("播放成功:", musicName);
+
+          // 更新本机播放状态
+          WebPlayer.setCurrentMusic(musicName);
+
+          // 更新播放列表和索引
+          const playlist = $("#music_list").val();
+          WebPlayer.setPlaylist(playlist);
+
+          const playList = WebPlayer.getPlayList();
+          const index = playList.indexOf(musicName);
+          if (index !== -1) {
+            WebPlayer.setCurrentIndex(index);
+          }
+
+          // 更新 UI
+          updateWebPlayingUI();
+
+          // 更新收藏按钮状态
+          updateWebFavoriteButton();
+        })
+        .catch((error) => {
+          console.error("播放失败:", error);
+          alert("播放失败: " + error.message);
+        });
+    }
+  });
+}
+
 function webPlay() {
   console.log("webPlay");
   const music_name = $("#music_name").val();
-  $.get(`/musicinfo?name=${music_name}`, function (data, status) {
-    console.log(data);
-    if (data.ret == "OK") {
-      validHost(data.url) && $("audio").attr("src", data.url);
-    }
-  });
+
+  if (!music_name) {
+    alert("请选择要播放的歌曲");
+    return;
+  }
+
+  // 获取当前播放列表
+  const playlist = $("#music_list").val();
+  const playlistData = $("#music_name option")
+    .map(function () {
+      return $(this).val();
+    })
+    .get();
+
+  // 保存播放列表到 localStorage
+  WebPlayer.setPlayList(playlistData);
+  WebPlayer.setPlaylist(playlist);
+
+  // 加载并播放歌曲
+  loadAndPlayMusic(music_name);
 }
 
 function play() {
@@ -226,62 +388,245 @@ function playOnDevice() {
   });
 }
 function stopPlay() {
-  $.ajax({
-    type: "POST",
-    url: "/device/stop",
-    contentType: "application/json; charset=utf-8",
-    data: JSON.stringify({
-      did: did,
-    }),
-    success: () => {
-      console.log("stop play succ");
-    },
-    error: () => {
-      console.log("stop play failed");
-    },
-  });
+  var did = $("#did").val();
+
+  if (did == "web_device") {
+    // 本机播放：停止播放
+    const audioElement = document.getElementById("audio");
+    audioElement.pause();
+    audioElement.currentTime = 0;
+
+    // 更新 UI
+    updateWebPlayingUI();
+
+    console.log("本机停止播放");
+  } else {
+    // 设备播放：调用后端接口
+    $.ajax({
+      type: "POST",
+      url: "/device/stop",
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({
+        did: did,
+      }),
+      success: () => {
+        console.log("stop play succ");
+      },
+      error: () => {
+        console.log("stop play failed");
+      },
+    });
+  }
 }
 
 function prevTrack() {
-  sendcmd("上一首");
+  var did = $("#did").val();
+
+  if (did == "web_device") {
+    // 本机播放：播放上一首
+    webPlayPrevious();
+  } else {
+    // 设备播放：发送命令
+    sendcmd("上一首");
+  }
 }
 
 function nextTrack() {
-  sendcmd("下一首");
+  var did = $("#did").val();
+
+  if (did == "web_device") {
+    // 本机播放：播放下一首
+    webPlayNext();
+  } else {
+    // 设备播放：发送命令
+    sendcmd("下一首");
+  }
+}
+
+// 本机播放：播放上一首
+function webPlayPrevious() {
+  const playList = WebPlayer.getPlayList();
+  const currentIndex = WebPlayer.getCurrentIndex();
+
+  if (playList.length === 0) {
+    alert("播放列表为空");
+    return;
+  }
+
+  let prevIndex;
+  const playMode = WebPlayer.getPlayMode();
+
+  if (playMode === 2) {
+    // 随机播放：随机选择一首（不包括当前）
+    const availableIndices = playList
+      .map((_, i) => i)
+      .filter((i) => i !== currentIndex);
+    if (availableIndices.length > 0) {
+      prevIndex =
+        availableIndices[Math.floor(Math.random() * availableIndices.length)];
+    } else {
+      prevIndex = 0;
+    }
+  } else {
+    // 其他模式：播放前一首
+    prevIndex = currentIndex - 1;
+    if (prevIndex < 0) {
+      prevIndex = playList.length - 1;
+    }
+  }
+
+  const prevMusic = playList[prevIndex];
+  if (prevMusic) {
+    loadAndPlayMusic(prevMusic);
+  }
+}
+
+// 本机播放：播放下一首
+function webPlayNext() {
+  const playList = WebPlayer.getPlayList();
+  const currentIndex = WebPlayer.getCurrentIndex();
+
+  if (playList.length === 0) {
+    alert("播放列表为空");
+    return;
+  }
+
+  let nextIndex;
+  const playMode = WebPlayer.getPlayMode();
+
+  switch (playMode) {
+    case 0: // 单曲循环
+      nextIndex = currentIndex;
+      break;
+
+    case 1: // 全部循环
+      nextIndex = (currentIndex + 1) % playList.length;
+      break;
+
+    case 2: // 随机播放
+      const availableIndices = playList
+        .map((_, i) => i)
+        .filter((i) => i !== currentIndex);
+      if (availableIndices.length > 0) {
+        nextIndex =
+          availableIndices[Math.floor(Math.random() * availableIndices.length)];
+      } else {
+        nextIndex = Math.floor(Math.random() * playList.length);
+      }
+      break;
+
+    case 3: // 单曲播放
+      // 不自动播放下一首
+      return;
+
+    case 4: // 顺序播放
+      nextIndex = currentIndex + 1;
+      if (nextIndex >= playList.length) {
+        // 到末尾停止
+        return;
+      }
+      break;
+
+    default:
+      nextIndex = (currentIndex + 1) % playList.length;
+  }
+
+  const nextMusic = playList[nextIndex];
+  if (nextMusic) {
+    loadAndPlayMusic(nextMusic);
+  }
 }
 
 function togglePlayMode(isSend = true) {
+  var did = $("#did").val();
   const modeBtnIcon = $("#modeBtn .material-icons");
-  if (playModeIndex === "") {
-    playModeIndex = 2;
+
+  if (did == "web_device") {
+    // 本机播放：使用 localStorage 管理播放模式
+    let currentMode = WebPlayer.getPlayMode();
+
+    // 更新图标和提示
+    modeBtnIcon.text(playModes[currentMode].icon);
+    $("#modeBtn .tooltip").text(playModes[currentMode].cmd);
+
+    console.log(`当前播放模式: ${currentMode} ${playModes[currentMode].cmd}`);
+
+    // 切换到下一个模式
+    const nextMode = (currentMode + 1) % Object.keys(playModes).length;
+    WebPlayer.setPlayMode(nextMode);
+
+    // 更新 audio 元素的 loop 属性
+    const audioElement = document.getElementById("audio");
+    if (nextMode === 0) {
+      // 单曲循环
+      audioElement.loop = true;
+    } else {
+      audioElement.loop = false;
+    }
+
+    announceToScreenReader(`播放模式已切换为${playModes[currentMode].cmd}`);
+  } else {
+    // 设备播放：使用原有逻辑
+    if (playModeIndex === "") {
+      playModeIndex = 2;
+    }
+    modeBtnIcon.text(playModes[playModeIndex].icon);
+    $("#modeBtn .tooltip").text(playModes[playModeIndex].cmd);
+
+    isSend && sendcmd(playModes[playModeIndex].cmd);
+    console.log(
+      `当前播放模式: ${playModeIndex} ${playModes[playModeIndex].cmd}`,
+    );
+    playModeIndex = (playModeIndex + 1) % Object.keys(playModes).length;
   }
-  modeBtnIcon.text(playModes[playModeIndex].icon);
-  $("#modeBtn .tooltip").text(playModes[playModeIndex].cmd);
-  // return;
-  isSend && sendcmd(playModes[playModeIndex].cmd);
-  console.log(`当前播放模式: ${playModeIndex} ${playModes[playModeIndex].cmd}`);
-  playModeIndex = (playModeIndex + 1) % Object.keys(playModes).length;
 }
 
 function addToFavorites() {
+  var did = $("#did").val();
   const isLiked = $(".favorite").hasClass("favorite-active");
-  const cmd = isLiked ? "取消收藏" : "加入收藏";
-  const musicName = $("#music_name").val();
 
-  if (isLiked) {
-    $(".favorite").removeClass("favorite-active");
-    // 取消收藏
-    favoritelist = favoritelist.filter((item) => item != musicName);
-    updateFavoriteAria(false);
-    announceToScreenReader(`已取消收藏 ${musicName}`);
+  if (did == "web_device") {
+    // 本机播放：使用 localStorage 管理收藏
+    const musicName = WebPlayer.getCurrentMusic() || $("#music_name").val();
+
+    if (!musicName) {
+      alert("请先选择或播放一首歌曲");
+      return;
+    }
+
+    if (isLiked) {
+      $(".favorite").removeClass("favorite-active");
+      // 取消收藏
+      WebPlayer.removeFromFavorites(musicName);
+      updateFavoriteAria(false);
+      announceToScreenReader(`已取消收藏 ${musicName}`);
+    } else {
+      $(".favorite").addClass("favorite-active");
+      // 加入收藏
+      WebPlayer.addToFavorites(musicName);
+      updateFavoriteAria(true);
+      announceToScreenReader(`已收藏 ${musicName}`);
+    }
   } else {
-    $(".favorite").addClass("favorite-active");
-    // 加入收藏
-    favoritelist.push(musicName);
-    updateFavoriteAria(true);
-    announceToScreenReader(`已收藏 ${musicName}`);
+    // 设备播放：使用原有逻辑
+    const cmd = isLiked ? "取消收藏" : "加入收藏";
+    const musicName = $("#music_name").val();
+
+    if (isLiked) {
+      $(".favorite").removeClass("favorite-active");
+      // 取消收藏
+      favoritelist = favoritelist.filter((item) => item != musicName);
+      updateFavoriteAria(false);
+      announceToScreenReader(`已取消收藏 ${musicName}`);
+    } else {
+      $(".favorite").addClass("favorite-active");
+      // 加入收藏
+      favoritelist.push(musicName);
+      updateFavoriteAria(true);
+      announceToScreenReader(`已收藏 ${musicName}`);
+    }
+    sendcmd(cmd);
   }
-  sendcmd(cmd);
 }
 
 function openSettings() {
@@ -366,6 +711,11 @@ function confirmDelete() {
   });
 }
 function formatTime(seconds) {
+  // 处理无效值
+  if (!isFinite(seconds) || isNaN(seconds) || seconds < 0) {
+    return "0:00";
+  }
+
   const minutes = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${minutes}:${secs < 10 ? "0" : ""}${secs}`; // Format time as mm:ss
@@ -374,24 +724,32 @@ function formatTime(seconds) {
 var offset = 0;
 var duration = 0;
 let no_warning = localStorage.getItem("no-warning");
+
+// 全局 did 变量初始化，默认为本机播放
+var did = localStorage.getItem("cur_did") || "web_device";
+
 // 拉取现有配置
 $.get("/getsetting", function (data, status) {
   console.log(data, status);
   localStorage.setItem("mi_did", data.mi_did);
 
-  var did = localStorage.getItem("cur_did");
+  did = localStorage.getItem("cur_did") || "web_device";
   var dids = [];
   if (data.mi_did != null) {
     dids = data.mi_did.split(",");
   }
   console.log("cur_did", did);
   console.log("dids", dids);
-  if (
-    did != "web_device" &&
-    dids.length > 0 &&
-    (did == null || did == "" || !dids.includes(did))
-  ) {
+
+  // 如果当前 did 不是 web_device，且配置了设备列表，但 did 不在列表中，则使用第一个设备
+  if (did != "web_device" && dids.length > 0 && !dids.includes(did)) {
     did = dids[0];
+    localStorage.setItem("cur_did", did);
+  }
+
+  // 如果 did 仍然为空或未设置，默认使用 web_device
+  if (!did || did === "") {
+    did = "web_device";
     localStorage.setItem("cur_did", did);
   }
 
@@ -442,13 +800,34 @@ $.get("/getsetting", function (data, status) {
   });
 
   if (did == "web_device") {
+    // 本机播放：显示 audio 控件和进度条
     $("#audio").fadeIn();
-    $("#device-audio").fadeOut();
-    $(".device-enable").addClass("disabled");
+    $("#device-audio").fadeIn(); // 保持显示，因为进度条在这里
+
+    // 本机播放：禁用设备相关按钮，启用本机按钮
+    // 搜索、定时、测试按钮禁用
+    $(".icon-item").each(function () {
+      const text = $(this).find("p").text();
+      if (text === "搜索" || text === "定时" || text === "测试") {
+        $(this).addClass("disabled");
+        $(this).css("opacity", "0.5");
+        $(this).css("pointer-events", "none");
+      }
+    });
+
+    // 其他按钮启用（播放模式、上一曲、播放、下一曲、停止、收藏、音量、设置）
+    $("#modeBtn").removeClass("disabled");
+    $(".favorite").removeClass("disabled");
   } else {
+    // 设备播放：隐藏 audio 控件，显示进度条
     $("#audio").fadeOut();
     $("#device-audio").fadeIn();
+
+    // 设备播放：恢复所有按钮
     $(".device-enable").removeClass("disabled");
+    $(".icon-item").removeClass("disabled");
+    $(".icon-item").css("opacity", "");
+    $(".icon-item").css("pointer-events", "");
   }
 
   // 初始化对话记录开关状态
@@ -512,6 +891,29 @@ function _refresh_music_list(callback) {
             .prop("selected", item == cur_music),
         );
       });
+
+      // 本机播放：更新播放列表
+      var did = $("#did").val();
+      if (did == "web_device") {
+        const playlistData = $("#music_name option")
+          .map(function () {
+            return $(this).val();
+          })
+          .get();
+        WebPlayer.setPlayList(playlistData);
+        WebPlayer.setPlaylist(selectedValue);
+        console.log("本机播放列表已更新:", selectedValue);
+      }
+    });
+
+    // 监听歌曲选择变化（本机播放）
+    $("#music_name").on("change", function () {
+      var did = $("#did").val();
+      if (did == "web_device") {
+        const selectedMusic = $(this).val();
+        // 仅更新选择，不自动播放
+        console.log("本机选择歌曲:", selectedMusic);
+      }
     });
 
     $("#music_list").trigger("change");
@@ -718,15 +1120,30 @@ $("#play").on("click", () => {
 
 $("#volume").on("change", function () {
   var value = $(this).val();
+  var did = $("#did").val();
+
   updateVolumeAria(value);
-  $.ajax({
-    type: "POST",
-    url: "/setvolume",
-    contentType: "application/json; charset=utf-8",
-    data: JSON.stringify({ did: did, volume: value }),
-    success: () => {},
-    error: () => {},
-  });
+
+  if (did == "web_device") {
+    // 本机播放：直接控制 audio 元素音量
+    const audioElement = document.getElementById("audio");
+    audioElement.volume = value / 100; // audio.volume 范围是 0-1
+
+    // 保存到 localStorage
+    WebPlayer.setVolume(value);
+
+    console.log("本机音量已设置为:", value);
+  } else {
+    // 设备播放：调用后端接口
+    $.ajax({
+      type: "POST",
+      url: "/setvolume",
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({ did: did, volume: value }),
+      success: () => {},
+      error: () => {},
+    });
+  }
 });
 
 function check_status_refresh_music_list(retries) {
@@ -802,14 +1219,16 @@ function handleSearch() {
       const query = searchInput.value.trim();
 
       if (query.length === 0) {
-        resultsContainer.innerHTML = '<div class="search-result-empty">请输入搜索关键词</div>';
+        resultsContainer.innerHTML =
+          '<div class="search-result-empty">请输入搜索关键词</div>';
         selectedSearchResult = null;
         musicFilenameInput.style.display = "none";
         return;
       }
 
       // 显示加载状态
-      resultsContainer.innerHTML = '<div class="search-result-empty">搜索中...</div>';
+      resultsContainer.innerHTML =
+        '<div class="search-result-empty">搜索中...</div>';
 
       fetch(`/searchmusic?name=${encodeURIComponent(query)}`)
         .then((response) => response.json())
@@ -822,7 +1241,7 @@ function handleSearch() {
           keywordItem.textContent = `🔍 使用关键词播放: ${query}`;
           keywordItem.dataset.value = query;
           keywordItem.dataset.isKeyword = "true";
-          keywordItem.onclick = function() {
+          keywordItem.onclick = function () {
             selectSearchResult(this);
           };
           resultsContainer.appendChild(keywordItem);
@@ -835,7 +1254,7 @@ function handleSearch() {
               item.textContent = song;
               item.dataset.value = song;
               item.dataset.isKeyword = "false";
-              item.onclick = function() {
+              item.onclick = function () {
                 selectSearchResult(this);
               };
               resultsContainer.appendChild(item);
@@ -853,7 +1272,8 @@ function handleSearch() {
         })
         .catch((error) => {
           console.error("Error fetching data:", error);
-          resultsContainer.innerHTML = '<div class="search-result-empty">搜索失败，请重试</div>';
+          resultsContainer.innerHTML =
+            '<div class="search-result-empty">搜索失败，请重试</div>';
         });
     }, 600),
   );
@@ -862,13 +1282,13 @@ function handleSearch() {
 function selectSearchResult(element) {
   // 移除所有选中状态
   const allItems = document.querySelectorAll(".search-result-item");
-  allItems.forEach(item => item.classList.remove("selected"));
+  allItems.forEach((item) => item.classList.remove("selected"));
 
   // 添加选中状态
   element.classList.add("selected");
   selectedSearchResult = {
     value: element.dataset.value,
-    isKeyword: element.dataset.isKeyword === "true"
+    isKeyword: element.dataset.isKeyword === "true",
   };
 
   // 根据是否是关键词选项决定是否显示文件名输入框
@@ -951,7 +1371,11 @@ function confirmSearch() {
   var musicfilename = $("#music-filename").val();
 
   // 如果是关键词选项且用户输入了自定义文件名
-  if (selectedSearchResult.isKeyword && musicfilename && musicfilename.trim() !== "") {
+  if (
+    selectedSearchResult.isKeyword &&
+    musicfilename &&
+    musicfilename.trim() !== ""
+  ) {
     filename = musicfilename.trim();
   }
 
@@ -1191,4 +1615,185 @@ $(document).on("keydown", '[role="button"], [role="switch"]', function (e) {
 $(document).ready(function () {
   const isFavorited = $(".favorite").hasClass("favorite-active");
   updateFavoriteAria(isFavorited);
+});
+
+// ============ 本机播放器 UI 更新函数 ============
+
+// 更新本机播放状态 UI
+function updateWebPlayingUI() {
+  const audioElement = document.getElementById("audio");
+  const currentMusic = WebPlayer.getCurrentMusic();
+
+  if (!audioElement) return;
+
+  const isPlaying = !audioElement.paused;
+  const statusText = isPlaying ? "【播放中】" : "【暂停】";
+
+  $("#playering-music").text(statusText + (currentMusic || "无"));
+}
+
+// 更新本机收藏按钮状态
+function updateWebFavoriteButton() {
+  const currentMusic = WebPlayer.getCurrentMusic();
+
+  if (!currentMusic) return;
+
+  const isFavorited = WebPlayer.isFavorited(currentMusic);
+
+  if (isFavorited) {
+    $(".favorite").addClass("favorite-active");
+  } else {
+    $(".favorite").removeClass("favorite-active");
+  }
+
+  updateFavoriteAria(isFavorited);
+}
+
+// ============ 本机播放器事件监听器 ============
+
+// 初始化本机播放器
+function initWebPlayer() {
+  const audioElement = document.getElementById("audio");
+
+  if (!audioElement) {
+    console.error("Audio element not found");
+    return;
+  }
+
+  // 从 localStorage 恢复音量
+  const savedVolume = WebPlayer.getVolume();
+  audioElement.volume = savedVolume / 100;
+  $("#volume").val(savedVolume);
+  updateVolumeAria(savedVolume);
+
+  // 从 localStorage 恢复播放模式
+  const savedMode = WebPlayer.getPlayMode();
+  const modeBtnIcon = $("#modeBtn .material-icons");
+  modeBtnIcon.text(playModes[savedMode].icon);
+  $("#modeBtn .tooltip").text(playModes[savedMode].cmd);
+
+  // 设置单曲循环模式
+  if (savedMode === 0) {
+    audioElement.loop = true;
+  }
+
+  // 监听播放事件
+  audioElement.addEventListener("play", function () {
+    console.log("Audio play event");
+    updateWebPlayingUI();
+  });
+
+  // 监听暂停事件
+  audioElement.addEventListener("pause", function () {
+    console.log("Audio pause event");
+    updateWebPlayingUI();
+  });
+
+  // 监听播放结束事件
+  audioElement.addEventListener("ended", function () {
+    console.log("Audio ended event");
+
+    const playMode = WebPlayer.getPlayMode();
+
+    // 单曲循环模式下，loop 属性会自动处理，不需要手动处理
+    if (playMode === 0) {
+      return;
+    }
+
+    // 单曲播放模式：不自动播放下一首
+    if (playMode === 3) {
+      updateWebPlayingUI();
+      return;
+    }
+
+    // 顺序播放模式：到末尾停止
+    if (playMode === 4) {
+      const playList = WebPlayer.getPlayList();
+      const currentIndex = WebPlayer.getCurrentIndex();
+      if (currentIndex >= playList.length - 1) {
+        updateWebPlayingUI();
+        return;
+      }
+    }
+
+    // 其他模式：自动播放下一首
+    webPlayNext();
+  });
+
+  // 监听时间更新事件
+  audioElement.addEventListener("timeupdate", function () {
+    const currentTime = audioElement.currentTime;
+    const duration = audioElement.duration;
+
+    // 检查是否为流媒体（duration 为 Infinity）
+    const isStream = !isFinite(duration);
+
+    if (isStream) {
+      // 流媒体：只显示当前播放时间，不显示进度条
+      $("#current-time").text(formatTime(currentTime));
+      $("#duration").text("直播流");
+      $("#progress").val(0); // 进度条设为 0
+      console.log("Stream playing, current time:", currentTime);
+    } else if (duration > 0) {
+      // 普通音频：显示进度条和时长
+      const progressPercent = (currentTime / duration) * 100;
+      $("#progress").val(progressPercent);
+      $("#current-time").text(formatTime(currentTime));
+      $("#duration").text(formatTime(duration));
+
+      // 更新 ARIA 属性
+      updateProgressAria(currentTime, duration);
+    }
+  });
+
+  // 监听元数据加载事件
+  audioElement.addEventListener("loadedmetadata", function () {
+    const duration = audioElement.duration;
+    console.log("Audio metadata loaded, duration:", duration);
+
+    // 检查是否为流媒体
+    const isStream = !isFinite(duration);
+
+    if (isStream) {
+      // 流媒体：显示特殊标识
+      $("#duration").text("直播流");
+      $("#progress").val(0);
+      $("#current-time").text("0:00");
+      console.log("Stream detected");
+    } else if (duration > 0) {
+      // 普通音频文件
+      $("#duration").text(formatTime(duration));
+      $("#progress").val(0);
+      $("#current-time").text("0:00");
+    } else {
+      // 无效的 duration
+      $("#duration").text("0:00");
+      $("#progress").val(0);
+      $("#current-time").text("0:00");
+    }
+  });
+
+  // 监听错误事件（已有，但确保本机播放也能正确处理）
+  // 原有的 error 事件监听器已经存在，不需要重复添加
+
+  console.log("Web player initialized");
+}
+
+// 页面加载完成后初始化本机播放器
+$(document).ready(function () {
+  // 等待设备选择器初始化完成后再执行
+  setTimeout(function () {
+    var did = $("#did").val();
+
+    if (did == "web_device") {
+      initWebPlayer();
+
+      // 恢复上次播放的歌曲信息（仅显示，不自动播放）
+      const lastMusic = WebPlayer.getCurrentMusic();
+      if (lastMusic) {
+        updateWebPlayingUI();
+        updateWebFavoriteButton();
+      }
+    }
+  }, 100);
 });
