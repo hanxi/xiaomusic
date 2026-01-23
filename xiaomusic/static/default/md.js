@@ -545,15 +545,15 @@ function togglePlayMode(isSend = true) {
     // 本机播放：使用 localStorage 管理播放模式
     let currentMode = WebPlayer.getPlayMode();
 
-    // 更新图标和提示
-    modeBtnIcon.text(playModes[currentMode].icon);
-    $("#modeBtn .tooltip").text(playModes[currentMode].cmd);
-
-    console.log(`当前播放模式: ${currentMode} ${playModes[currentMode].cmd}`);
-
     // 切换到下一个模式
     const nextMode = (currentMode + 1) % Object.keys(playModes).length;
     WebPlayer.setPlayMode(nextMode);
+
+    // 更新图标和提示（显示新的模式）
+    modeBtnIcon.text(playModes[nextMode].icon);
+    $("#modeBtn .tooltip").text(playModes[nextMode].cmd);
+
+    console.log(`播放模式已切换为: ${nextMode} ${playModes[nextMode].cmd}`);
 
     // 更新 audio 元素的 loop 属性
     const audioElement = document.getElementById("audio");
@@ -564,7 +564,7 @@ function togglePlayMode(isSend = true) {
       audioElement.loop = false;
     }
 
-    announceToScreenReader(`播放模式已切换为${playModes[currentMode].cmd}`);
+    announceToScreenReader(`播放模式已切换为${playModes[nextMode].cmd}`);
   } else {
     // 设备播放：使用原有逻辑
     if (playModeIndex === "") {
@@ -1691,17 +1691,20 @@ function initWebPlayer() {
 
   // 监听播放结束事件
   audioElement.addEventListener("ended", function () {
-    console.log("Audio ended event");
+    console.log("Audio ended event triggered");
 
     const playMode = WebPlayer.getPlayMode();
+    console.log("Current play mode:", playMode, playModes[playMode].cmd);
 
     // 单曲循环模式下，loop 属性会自动处理，不需要手动处理
     if (playMode === 0) {
+      console.log("Single loop mode, audio.loop will handle it");
       return;
     }
 
     // 单曲播放模式：不自动播放下一首
     if (playMode === 3) {
+      console.log("Single play mode, stop after current song");
       updateWebPlayingUI();
       return;
     }
@@ -1710,13 +1713,16 @@ function initWebPlayer() {
     if (playMode === 4) {
       const playList = WebPlayer.getPlayList();
       const currentIndex = WebPlayer.getCurrentIndex();
+      console.log("Sequential play mode, current index:", currentIndex, "playlist length:", playList.length);
       if (currentIndex >= playList.length - 1) {
+        console.log("Reached end of playlist, stop playing");
         updateWebPlayingUI();
         return;
       }
     }
 
     // 其他模式：自动播放下一首
+    console.log("Auto playing next song...");
     webPlayNext();
   });
 
