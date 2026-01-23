@@ -1,3 +1,28 @@
+// ============ 字体加载检测 ============
+// 检测字体加载完成，避免图标文字闪烁
+(function() {
+  // 使用 Promise.race 实现超时保护
+  const fontLoadTimeout = new Promise(resolve => {
+    setTimeout(() => {
+      console.warn('字体加载超时，强制显示图标');
+      resolve('timeout');
+    }, 3000);
+  });
+
+  const fontLoadReady = document.fonts.ready.then(() => 'loaded');
+
+  Promise.race([fontLoadReady, fontLoadTimeout]).then((result) => {
+    document.body.classList.add('fonts-loaded');
+    if (result === 'loaded') {
+      console.log('Material Icons 字体加载完成');
+    }
+  }).catch((error) => {
+    console.error('字体加载检测失败:', error);
+    // 出错时也显示图标，避免永久隐藏
+    document.body.classList.add('fonts-loaded');
+  });
+})();
+
 $(function () {
   // 拉取版本
   $.get("/getversion", function (data, status) {

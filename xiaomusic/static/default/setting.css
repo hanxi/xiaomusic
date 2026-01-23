@@ -1,3 +1,35 @@
+/* ==================== Material Icons 字体定义 ==================== */
+/* fallback */
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url(./materialicons.woff2) format('woff2');
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  visibility: hidden;
+}
+
+/* 字体加载完成后显示图标 */
+.fonts-loaded .material-icons {
+  visibility: visible;
+}
+
 /* 全局样式重置 */
 * {
   box-sizing: border-box;

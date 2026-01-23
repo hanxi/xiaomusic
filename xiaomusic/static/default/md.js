@@ -1,3 +1,28 @@
+// ============ 字体加载检测 ============
+// 检测字体加载完成，避免图标文字闪烁
+(function() {
+  // 使用 Promise.race 实现超时保护
+  const fontLoadTimeout = new Promise(resolve => {
+    setTimeout(() => {
+      console.warn('字体加载超时，强制显示图标');
+      resolve('timeout');
+    }, 3000);
+  });
+
+  const fontLoadReady = document.fonts.ready.then(() => 'loaded');
+
+  Promise.race([fontLoadReady, fontLoadTimeout]).then((result) => {
+    document.body.classList.add('fonts-loaded');
+    if (result === 'loaded') {
+      console.log('Material Icons 字体加载完成');
+    }
+  }).catch((error) => {
+    console.error('字体加载检测失败:', error);
+    // 出错时也显示图标，避免永久隐藏
+    document.body.classList.add('fonts-loaded');
+  });
+})();
+
 // $(function () {
 
 // })
@@ -26,8 +51,16 @@ function openDialog(dialogId) {
   // 保存当前焦点元素
   lastFocusedElement = document.activeElement;
 
+  // 显示遮罩层
+  const overlay = document.getElementById("component-overlay");
+  if (overlay) {
+    overlay.style.display = "block";
+    setTimeout(() => overlay.classList.add("show"), 10);
+  }
+
   // 显示弹窗
   dialog.style.display = "block";
+  setTimeout(() => dialog.classList.add("show"), 10);
   openDialogs.add(dialogId);
 
   // 将焦点移到弹窗内第一个可交互元素
@@ -45,15 +78,35 @@ function closeDialog(dialogId) {
   const dialog = document.getElementById(dialogId);
   if (!dialog) return;
 
-  // 隐藏弹窗
-  dialog.style.display = "none";
+  // 隐藏弹窗动画
+  dialog.classList.remove("show");
   openDialogs.delete(dialogId);
+
+  // 如果没有其他打开的弹窗，隐藏遮罩层
+  if (openDialogs.size === 0) {
+    const overlay = document.getElementById("component-overlay");
+    if (overlay) {
+      overlay.classList.remove("show");
+      setTimeout(() => (overlay.style.display = "none"), 300);
+    }
+  }
+
+  // 延迟隐藏弹窗以显示动画
+  setTimeout(() => {
+    dialog.style.display = "none";
+  }, 300);
 
   // 恢复焦点到触发按钮
   if (lastFocusedElement) {
     lastFocusedElement.focus();
     lastFocusedElement = null;
   }
+}
+
+// 关闭所有弹窗
+function closeAllDialogs() {
+  const dialogs = Array.from(openDialogs);
+  dialogs.forEach((dialogId) => closeDialog(dialogId));
 }
 
 // 更新进度条 ARIA 属性

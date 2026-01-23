@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小爱音箱操控面板</title>
+    <!-- 预加载字体文件，减少加载延迟 -->
+    <link rel="preload" href="./materialicons.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./materialiconsoutlined.woff2" as="font" type="font/woff2" crossorigin>
     <script src="./jquery-3.7.1.min.js?version=1769128214"></script>
     <link rel="stylesheet" href="./main.css?version=1769128214">
     <link rel="icon" href="./favicon.ico">
@@ -25,11 +28,11 @@
 <body class="index_page">
     <div class="player" role="main" aria-label="音乐播放器">
         <h1>小爱音箱播放器
-            <a href="https://xdocs.hanxi.cc/issues/changelog.html" target="_blank" style="position: relative;"><span  id="version">0.4.0</span><span id="versionnew" class="new-badge"></span></a>
+            <a href="https://xdocs.hanxi.cc/issues/changelog.html" target="_blank" class="version-link"><span id="version">0.4.0</span><span id="versionnew" class="new-badge"></span></a>
         </h1>
 
-        <label for="did" style="display: flex;align-items: center;">选择播放设备:
-            <div class="toggle-switch-container" style="margin-left: auto;">
+        <label for="did" class="label-with-toggle">选择播放设备:
+            <div class="toggle-switch-container">
                 <label class="toggle-label">语音口令</label>
                 <div id="pullAskToggle" class="toggle-switch" role="switch" aria-checked="false" aria-label="语音口令开关" onclick="togglePullAsk()" tabindex="0">
                     <div class="toggle-slider"></div>
@@ -40,7 +43,7 @@
             <option value="default">默认设备</option>
         </select>
 
-        <label for="music_list" style="display: flex;align-items: center;">选择播放列表:
+        <label for="music_list" class="label-with-action">选择播放列表:
             <div class="option-inline" onclick="refreshlist()" role="button" aria-label="刷新播放列表" tabindex="0">
                 <span class="material-icons" aria-hidden="true">refresh</span>
                 <span class="tooltip">刷新列表</span>
@@ -49,8 +52,8 @@
         <select id="music_list" class="playlist-selector">
         </select>
 
-        <label for="music_name" style="display: flex;align-items: center;">选择歌曲:
-            <div style="display: flex;align-items: center;margin-left: auto;">
+        <label for="music_name" class="label-with-action">选择歌曲:
+            <div class="action-buttons">
                 <div class="option-inline" onclick="triggerUpload()" role="button" aria-label="上传歌曲" tabindex="0">
                     <span class="material-icons" aria-hidden="true">file_upload</span>
                     <span class="tooltip">上传歌曲</span>
@@ -64,17 +67,17 @@
         <select id="music_name" class="song-selector">
         </select>
 
-        <input id="upload-file" type="file" accept=".mp3,.m4a,.wav,.flac,.aac,.ogg,.ape" style="display:none" />
+        <input id="upload-file" type="file" accept=".mp3,.m4a,.wav,.flac,.aac,.ogg,.ape" class="hidden-input" />
 
-        <div id="device-audio">
+        <div id="device-audio" class="audio-section">
             <progress class="progress" id="progress" value="0" max="100" role="progressbar" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="未播放"></progress>
-            <div style="display: flex; justify-content: space-between; width: 100%;">
+            <div class="time-info">
                 <span class="current-time" id="current-time">0:00</span>
                 <div class="current-song" id="playering-music">当前播放歌曲：无</div>
                 <span class="duration" id="duration">00:00</span>
             </div>
         </div>
-        <audio id="audio" controls src="" autoplay></audio>
+        <audio id="audio" controls src="" autoplay class="hidden-audio"></audio>
 
         <div class="buttons">
             <div class="player-controls button-group">
@@ -129,15 +132,18 @@
         </div>
     </div>
 
+    <!-- 弹窗遮罩层 -->
+    <div class="component-overlay" id="component-overlay" onclick="closeAllDialogs()"></div>
+
     <!-- 搜索组件 -->
     <div class="component" id="search-component" role="dialog" aria-modal="true" aria-labelledby="search-title">
         <h2 id="search-title">搜索歌曲</h2>
         <input type="text" id="search" class="search-input" placeholder="请输入搜索关键词(如:MV高清版 周杰伦 七里香)">
-        <label for="music-name" id="music-name-label" style="display: none;">确认选择:</label>
-        <select id="music-name" style="display: none;">
+        <label for="music-name" id="music-name-label" class="hidden-element">确认选择:</label>
+        <select id="music-name" class="hidden-element">
             <!-- 动态生成选项 -->
         </select>
-        <input id="music-filename" type="text" placeholder="请输入保存为的文件名称(如:周杰伦七里香)" style="display: none;"></input>
+        <input id="music-filename" type="text" placeholder="请输入保存为的文件名称(如:周杰伦七里香)" class="hidden-element"></input>
         <div class="component-button-group">
             <button onclick="confirmSearch()">确定</button>
             <button onclick="toggleSearch()" class="close-button">关闭</button>
@@ -151,7 +157,7 @@
         <button onclick="timedShutDown('10分钟后关机')">10分钟后关机</button>
         <button onclick="timedShutDown('30分钟后关机')">30分钟后关机</button>
         <button onclick="timedShutDown('60分钟后关机')">60分钟后关机</button>
-        <span class="tooltip timer-tooltip" style="display: none;">已发送指令</span>
+        <span class="tooltip timer-tooltip hidden-element">已发送指令</span>
         <div class="component-button-one">
             <button onclick="toggleTimer()" class="close-button">关闭</button>
         </div>
@@ -208,7 +214,7 @@
     <div class="component" id="delete-component" role="dialog" aria-modal="true" aria-labelledby="delete-title">
         <h2 id="delete-title">警告</h2>
         <p>你确定要删除歌曲 <span id="delete-music-name"></span> 吗？</p>
-        <p style="font-weight: bold;">注意：该操作会永久删除该歌曲且不可撤销</p>
+        <p class="warning-text">注意：该操作会永久删除该歌曲且不可撤销</p>
         <div class="component-button-group">
             <button onclick="confirmDelete()">确定</button>
             <button onclick="toggleDelete()" class="close-button">关闭</button>
