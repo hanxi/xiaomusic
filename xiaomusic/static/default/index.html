@@ -140,7 +140,7 @@
         <input id="music-filename" type="text" placeholder="请输入保存为的文件名称(如:周杰伦七里香)" style="display: none;"></input>
         <div class="component-button-group">
             <button onclick="confirmSearch()">确定</button>
-            <button onclick="toggleSearch()">关闭</button>
+            <button onclick="toggleSearch()" class="close-button">关闭</button>
         </div>
     </div>
 
@@ -153,25 +153,45 @@
         <button onclick="timedShutDown('60分钟后关机')">60分钟后关机</button>
         <span class="tooltip timer-tooltip" style="display: none;">已发送指令</span>
         <div class="component-button-one">
-            <button onclick="toggleTimer()">关闭</button>
+            <button onclick="toggleTimer()" class="close-button">关闭</button>
         </div>
     </div>
 
     <!-- 播放链接组件 -->
     <div class="component" id="playlink-component" role="dialog" aria-modal="true" aria-labelledby="playlink-title">
-        <h2 id="playlink-title">播放链接</h2>
-        <input type="text" id="music-url" class="search-input" placeholder="请输入播放链接"
-            value="https://lhttp.qtfm.cn/live/4915/64k.mp3">
-        <h2>播放文字</h2>
-        <input type="text" id="text-tts" class="search-input" placeholder="请输入文字" value="播放文字测试">
-
-        <div class="component-button-group">
-            <button onclick="playUrl()">播放链接</button>
-            <button onclick="playProxyUrl()">代理播放链接</button>
+        <h2 id="playlink-title">播放测试</h2>
+        
+        <!-- 播放链接卡片 -->
+        <div class="card-section">
+            <h3 class="card-title">🔗 播放链接</h3>
+            <input type="text" id="music-url" class="search-input" placeholder="请输入播放链接"
+                value="https://lhttp.qtfm.cn/live/4915/64k.mp3">
+            <div class="component-button-group">
+                <button onclick="playUrl()">播放链接</button>
+                <button onclick="playProxyUrl()">代理播放</button>
+            </div>
         </div>
-        <div class="component-button-group">
-            <button onclick="playTts()">播放文字</button>
-            <button onclick="togglePlayLink()">关闭</button>
+
+        <!-- 播放文字卡片 -->
+        <div class="card-section">
+            <h3 class="card-title">💬 播放文字</h3>
+            <input type="text" id="text-tts" class="search-input" placeholder="请输入文字" value="播放文字测试">
+            <div class="component-button-group">
+                <button onclick="playTts()">播放文字</button>
+            </div>
+        </div>
+
+        <!-- 自定义口令卡片 -->
+        <div class="card-section">
+            <h3 class="card-title">🎤 自定义口令</h3>
+            <input type="text" id="custom-cmd" class="search-input" placeholder="请输入自定义口令" value="">
+            <div class="component-button-group">
+                <button onclick="sendCustomCmd()">发送口令</button>
+            </div>
+        </div>
+
+        <div class="component-button-one">
+            <button onclick="togglePlayLink()" class="close-button">关闭</button>
         </div>
     </div>
 
@@ -181,7 +201,7 @@
         <h2 id="volume-title">调节音量</h2>
         <input type="range" id="volume" class="volume-slider" aria-label="音量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" />
         <div class="component-button-one">
-            <button onclick="toggleVolume()">关闭</button>
+            <button onclick="toggleVolume()" class="close-button">关闭</button>
         </div>
     </div>
     <!-- 删除确认组件 -->
@@ -191,7 +211,7 @@
         <p style="font-weight: bold;">注意：该操作会永久删除该歌曲且不可撤销</p>
         <div class="component-button-group">
             <button onclick="confirmDelete()">确定</button>
-            <button onclick="toggleDelete()">关闭</button>
+            <button onclick="toggleDelete()" class="close-button">关闭</button>
         </div>
     </div>
     <!-- 警告组件 -->

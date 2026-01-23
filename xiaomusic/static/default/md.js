@@ -569,6 +569,28 @@ function playTts() {
   });
 }
 
+function sendCustomCmd() {
+  var cmd = $("#custom-cmd").val();
+  if (!cmd || cmd.trim() === "") {
+    alert("请输入自定义口令");
+    return;
+  }
+  $.ajax({
+    type: "POST",
+    url: "/cmd",
+    contentType: "application/json; charset=utf-8",
+    data: JSON.stringify({ did: did, cmd: cmd }),
+    success: () => {
+      console.log("发送自定义口令成功:", cmd);
+      alert(`口令 "${cmd}" 已发送`);
+    },
+    error: () => {
+      console.log("发送自定义口令失败:", cmd);
+      alert(`口令 "${cmd}" 发送失败`);
+    },
+  });
+}
+
 function do_play_music(musicname, searchkey) {
   $.ajax({
     type: "POST",
