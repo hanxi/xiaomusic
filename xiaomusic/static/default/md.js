@@ -987,53 +987,58 @@ function _refresh_music_list(callback) {
       }
     });
 
-    $("#music_list").trigger("change");
+    // 本机模式：直接使用 WebPlayer 的状态，不调用后端接口
+    if (did == "web_device") {
+      const savedPlaylist = WebPlayer.getPlaylist();
+      const savedMusic = WebPlayer.getCurrentMusic();
 
-    // 获取当前播放列表
-    $.get(`/curplaylist?did=${did}`, function (playlist, status) {
-      if (playlist != "") {
-        $("#music_list").val(playlist);
+      console.log(
+        "恢复本机播放状态 - 歌单:",
+        savedPlaylist,
+        "歌曲:",
+        savedMusic,
+      );
+
+      // 恢复歌单选择
+      if (savedPlaylist && data.hasOwnProperty(savedPlaylist)) {
+        $("#music_list").val(savedPlaylist);
         $("#music_list").trigger("change");
+
+        // 等待歌单切换完成后，恢复歌曲选择
+        setTimeout(function () {
+          if (
+            savedMusic &&
+            $("#music_name option[value='" + savedMusic + "']").length > 0
+          ) {
+            $("#music_name").val(savedMusic);
+            console.log("已恢复歌曲选择:", savedMusic);
+          }
+        }, 100);
       } else {
-        // 使用本地记录的
-        playlist = localStorage.getItem("cur_playlist");
-        if (data.hasOwnProperty(playlist)) {
+        // 没有保存的歌单，使用默认
+        $("#music_list").trigger("change");
+      }
+      callback();
+    } else {
+      // 设备模式：使用原有逻辑
+      $("#music_list").trigger("change");
+
+      // 获取当前播放列表
+      $.get(`/curplaylist?did=${did}`, function (playlist, status) {
+        if (playlist != "") {
           $("#music_list").val(playlist);
           $("#music_list").trigger("change");
+        } else {
+          // 使用本地记录的
+          playlist = localStorage.getItem("cur_playlist");
+          if (data.hasOwnProperty(playlist)) {
+            $("#music_list").val(playlist);
+            $("#music_list").trigger("change");
+          }
         }
-      }
-
-      // 本机模式：恢复上次选中的歌单和歌曲
-      if (did == "web_device") {
-        const savedPlaylist = WebPlayer.getPlaylist();
-        const savedMusic = WebPlayer.getCurrentMusic();
-
-        console.log(
-          "恢复本机播放状态 - 歌单:",
-          savedPlaylist,
-          "歌曲:",
-          savedMusic,
-        );
-
-        // 恢复歌单选择
-        if (savedPlaylist && data.hasOwnProperty(savedPlaylist)) {
-          $("#music_list").val(savedPlaylist);
-          $("#music_list").trigger("change");
-
-          // 等待歌单切换完成后，恢复歌曲选择
-          setTimeout(function () {
-            if (
-              savedMusic &&
-              $("#music_name option[value='" + savedMusic + "']").length > 0
-            ) {
-              $("#music_name").val(savedMusic);
-              console.log("已恢复歌曲选择:", savedMusic);
-            }
-          }, 100);
-        }
-      }
-    });
-    callback();
+      });
+      callback();
+    }
   });
 }
 
