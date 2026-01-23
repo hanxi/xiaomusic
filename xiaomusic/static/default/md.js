@@ -979,8 +979,11 @@ function _refresh_music_list(callback) {
       var did = $("#did").val();
       if (did == "web_device") {
         const selectedMusic = $(this).val();
-        // 仅更新选择，不自动播放
-        console.log("本机选择歌曲:", selectedMusic);
+        // 保存用户选择的歌曲（不自动播放）
+        if (selectedMusic) {
+          WebPlayer.setCurrentMusic(selectedMusic);
+          console.log("本机选择歌曲已保存:", selectedMusic);
+        }
       }
     });
 
@@ -997,6 +1000,36 @@ function _refresh_music_list(callback) {
         if (data.hasOwnProperty(playlist)) {
           $("#music_list").val(playlist);
           $("#music_list").trigger("change");
+        }
+      }
+
+      // 本机模式：恢复上次选中的歌单和歌曲
+      if (did == "web_device") {
+        const savedPlaylist = WebPlayer.getPlaylist();
+        const savedMusic = WebPlayer.getCurrentMusic();
+
+        console.log(
+          "恢复本机播放状态 - 歌单:",
+          savedPlaylist,
+          "歌曲:",
+          savedMusic,
+        );
+
+        // 恢复歌单选择
+        if (savedPlaylist && data.hasOwnProperty(savedPlaylist)) {
+          $("#music_list").val(savedPlaylist);
+          $("#music_list").trigger("change");
+
+          // 等待歌单切换完成后，恢复歌曲选择
+          setTimeout(function () {
+            if (
+              savedMusic &&
+              $("#music_name option[value='" + savedMusic + "']").length > 0
+            ) {
+              $("#music_name").val(savedMusic);
+              console.log("已恢复歌曲选择:", savedMusic);
+            }
+          }, 100);
         }
       }
     });
