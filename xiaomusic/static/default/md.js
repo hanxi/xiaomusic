@@ -1,6 +1,109 @@
 // $(function () {
 
 // })
+
+// ============ 无障碍辅助函数 ============
+
+// 屏幕阅读器状态通知函数
+function announceToScreenReader(message) {
+  const announcer = document.getElementById("sr-announcer");
+  if (announcer) {
+    announcer.textContent = "";
+    setTimeout(() => {
+      announcer.textContent = message;
+    }, 100);
+  }
+}
+
+// 弹窗焦点管理
+let lastFocusedElement = null;
+const openDialogs = new Set();
+
+function openDialog(dialogId) {
+  const dialog = document.getElementById(dialogId);
+  if (!dialog) return;
+
+  // 保存当前焦点元素
+  lastFocusedElement = document.activeElement;
+
+  // 显示弹窗
+  dialog.style.display = "block";
+  openDialogs.add(dialogId);
+
+  // 将焦点移到弹窗内第一个可交互元素
+  setTimeout(() => {
+    const firstFocusable = dialog.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    )[0];
+    if (firstFocusable) {
+      firstFocusable.focus();
+    }
+  }, 100);
+}
+
+function closeDialog(dialogId) {
+  const dialog = document.getElementById(dialogId);
+  if (!dialog) return;
+
+  // 隐藏弹窗
+  dialog.style.display = "none";
+  openDialogs.delete(dialogId);
+
+  // 恢复焦点到触发按钮
+  if (lastFocusedElement) {
+    lastFocusedElement.focus();
+    lastFocusedElement = null;
+  }
+}
+
+// 更新进度条 ARIA 属性
+function updateProgressAria(currentTime, totalTime) {
+  const progress = document.getElementById("progress");
+  if (progress) {
+    const percentage =
+      totalTime > 0 ? Math.round((currentTime / totalTime) * 100) : 0;
+    progress.setAttribute("aria-valuenow", percentage);
+
+    const currentMin = Math.floor(currentTime / 60);
+    const currentSec = Math.floor(currentTime % 60);
+    const totalMin = Math.floor(totalTime / 60);
+    const totalSec = Math.floor(totalTime % 60);
+    progress.setAttribute(
+      "aria-valuetext",
+      `已播放 ${currentMin} 分 ${currentSec} 秒，共 ${totalMin} 分 ${totalSec} 秒`,
+    );
+  }
+}
+
+// 更新音量滑块 ARIA 属性
+function updateVolumeAria(volume) {
+  const volumeSlider = document.getElementById("volume");
+  if (volumeSlider) {
+    volumeSlider.setAttribute("aria-valuenow", volume);
+  }
+}
+
+// 更新收藏按钮 ARIA 属性
+function updateFavoriteAria(isFavorited) {
+  const favoriteBtn = document.querySelector(".favorite");
+  if (favoriteBtn) {
+    favoriteBtn.setAttribute(
+      "aria-label",
+      isFavorited ? "取消收藏" : "收藏歌曲",
+    );
+  }
+}
+
+// 更新语音口令开关 ARIA 属性
+function updatePullAskAria(isEnabled) {
+  const toggle = document.getElementById("pullAskToggle");
+  if (toggle) {
+    toggle.setAttribute("aria-checked", isEnabled ? "true" : "false");
+  }
+}
+
+// ============ 原有代码 ============
+
 let isPlaying = false;
 let playModeIndex = 2;
 //重新设计playModes
@@ -63,7 +166,7 @@ function playOnDevice() {
       console.log(
         "%cmd.js:42 validHost(data.url) ",
         "color: #007acc;",
-        validHost(data.url)
+        validHost(data.url),
       );
       validHost(data.url) && do_play_music_list(music_list, music_name);
     }
@@ -96,7 +199,7 @@ function nextTrack() {
 
 function togglePlayMode(isSend = true) {
   const modeBtnIcon = $("#modeBtn .material-icons");
-  if (playModeIndex === '') {
+  if (playModeIndex === "") {
     playModeIndex = 2;
   }
   modeBtnIcon.text(playModes[playModeIndex].icon);
@@ -110,14 +213,20 @@ function togglePlayMode(isSend = true) {
 function addToFavorites() {
   const isLiked = $(".favorite").hasClass("favorite-active");
   const cmd = isLiked ? "取消收藏" : "加入收藏";
+  const musicName = $("#music_name").val();
+
   if (isLiked) {
     $(".favorite").removeClass("favorite-active");
     // 取消收藏
-    favoritelist = favoritelist.filter((item) => item != $("#music_name").val());
+    favoritelist = favoritelist.filter((item) => item != musicName);
+    updateFavoriteAria(false);
+    announceToScreenReader(`已取消收藏 ${musicName}`);
   } else {
     $(".favorite").addClass("favorite-active");
     // 加入收藏
-    favoritelist.push($("#music_name").val());
+    favoritelist.push(musicName);
+    updateFavoriteAria(true);
+    announceToScreenReader(`已收藏 ${musicName}`);
   }
   sendcmd(cmd);
 }
@@ -127,28 +236,63 @@ function openSettings() {
   window.location.href = "setting.html";
 }
 function toggleVolume() {
-  $("#volume-component").toggle();
+  const isVisible = $("#volume-component").is(":visible");
+  if (isVisible) {
+    closeDialog("volume-component");
+  } else {
+    openDialog("volume-component");
+  }
 }
 
 function toggleSearch() {
-  $("#search-component").toggle();
+  const isVisible = $("#search-component").is(":visible");
+  if (isVisible) {
+    closeDialog("search-component");
+  } else {
+    openDialog("search-component");
+  }
 }
+
 function toggleTimer() {
-  $("#timer-component").toggle();
+  const isVisible = $("#timer-component").is(":visible");
+  if (isVisible) {
+    closeDialog("timer-component");
+  } else {
+    openDialog("timer-component");
+  }
 }
+
 function togglePlayLink() {
-  $("#playlink-component").toggle(); // 切换播放链接的显示状态
+  const isVisible = $("#playlink-component").is(":visible");
+  if (isVisible) {
+    closeDialog("playlink-component");
+  } else {
+    openDialog("playlink-component");
+  }
 }
+
 function toggleLocalPlay() {
   $("#audio").fadeIn();
 }
+
 function toggleWarning() {
-  $("#warning-component").toggle(); // 切换警告框的显示状态
+  const isVisible = $("#warning-component").is(":visible");
+  if (isVisible) {
+    closeDialog("warning-component");
+  } else {
+    openDialog("warning-component");
+  }
 }
+
 function toggleDelete() {
   var del_music_name = $("#music_name").val();
   $("#delete-music-name").text(del_music_name);
-  $("#delete-component").toggle(); // 切换删除框的显示状态
+  const isVisible = $("#delete-component").is(":visible");
+  if (isVisible) {
+    closeDialog("delete-component");
+  } else {
+    openDialog("delete-component");
+  }
 }
 function confirmDelete() {
   var del_music_name = $("#music_name").val();
@@ -189,7 +333,11 @@ $.get("/getsetting", function (data, status) {
   }
   console.log("cur_did", did);
   console.log("dids", dids);
-  if (did != "web_device" && dids.length > 0 && (did == null || did == "" || !dids.includes(did))) {
+  if (
+    did != "web_device" &&
+    dids.length > 0 &&
+    (did == null || did == "" || !dids.includes(did))
+  ) {
     did = dids[0];
     localStorage.setItem("cur_did", did);
   }
@@ -205,7 +353,7 @@ $.get("/getsetting", function (data, status) {
   var dids = data.mi_did.split(",");
   $.each(dids, function (index, value) {
     var cur_device = Object.values(data.devices).find(
-      (device) => device.did === value
+      (device) => device.did === value,
     );
     if (cur_device) {
       var option = $("<option></option>")
@@ -219,7 +367,7 @@ $.get("/getsetting", function (data, status) {
         console.log(
           "%c当前设备播放模式: ",
           "color: #007acc;",
-          cur_device.play_type
+          cur_device.play_type,
         );
         togglePlayMode(false);
       }
@@ -243,11 +391,11 @@ $.get("/getsetting", function (data, status) {
   if (did == "web_device") {
     $("#audio").fadeIn();
     $("#device-audio").fadeOut();
-    $(".device-enable").addClass('disabled');
+    $(".device-enable").addClass("disabled");
   } else {
     $("#audio").fadeOut();
     $("#device-audio").fadeIn();
-    $(".device-enable").removeClass('disabled');
+    $(".device-enable").removeClass("disabled");
   }
 
   // 初始化对话记录开关状态
@@ -293,7 +441,7 @@ function _refresh_music_list(callback) {
     $.each(data, function (key, value) {
       let cnt = value.length;
       $("#music_list").append(
-        $("<option></option>").val(key).text(`${key} (${cnt})`)
+        $("<option></option>").val(key).text(`${key} (${cnt})`),
       );
     });
 
@@ -304,7 +452,12 @@ function _refresh_music_list(callback) {
       const cur_music = localStorage.getItem("cur_music");
       console.log("#music_name cur_music", cur_music);
       $.each(data[selectedValue], function (index, item) {
-        $("#music_name").append($("<option></option>").val(item).text(item).prop("selected", item == cur_music));
+        $("#music_name").append(
+          $("<option></option>")
+            .val(item)
+            .text(item)
+            .prop("selected", item == cur_music),
+        );
       });
     });
 
@@ -399,7 +552,7 @@ function playUrl() {
 function playProxyUrl() {
   const origin_url = $("#music-url").val();
   const protocol = window.location.protocol;
-  const host= window.location.host;
+  const host = window.location.host;
   const baseUrl = `${protocol}//${host}`;
   const urlb64 = btoa(origin_url);
   const url = `${baseUrl}/proxy?urlb64=${urlb64}`;
@@ -456,21 +609,21 @@ document.addEventListener("DOMContentLoaded", function () {
       form.append("playlist", playlist);
       form.append("file", file);
       try {
-        const resp = await fetch('/uploadmusic', {
-          method: 'POST',
+        const resp = await fetch("/uploadmusic", {
+          method: "POST",
           body: form,
         });
-        if (!resp.ok) throw new Error('网络错误');
+        if (!resp.ok) throw new Error("网络错误");
         const data = await resp.json();
-        if (data && data.ret === 'OK') {
-          alert('上传成功: ' + data.filename);
+        if (data && data.ret === "OK") {
+          alert("上传成功: " + data.filename);
           refresh_music_list();
         } else {
-          alert('上传失败');
+          alert("上传失败");
         }
       } catch (err) {
         console.error(err);
-        alert('上传失败');
+        alert("上传失败");
       }
     });
   }
@@ -490,13 +643,14 @@ $("#play").on("click", () => {
 
 $("#volume").on("change", function () {
   var value = $(this).val();
+  updateVolumeAria(value);
   $.ajax({
     type: "POST",
     url: "/setvolume",
     contentType: "application/json; charset=utf-8",
     data: JSON.stringify({ did: did, volume: value }),
-    success: () => { },
-    error: () => { },
+    success: () => {},
+    error: () => {},
   });
 });
 
@@ -539,7 +693,7 @@ function sendcmd(cmd) {
       }
       if (
         ["全部循环", "单曲循环", "随机播放", "单曲播放", "顺序播放"].includes(
-          cmd
+          cmd,
         )
       ) {
         location.reload();
@@ -610,7 +764,7 @@ function handleSearch() {
         .catch((error) => {
           console.error("Error fetching data:", error);
         });
-    }, 600)
+    }, 600),
   );
 
   // 动态显示保存文件名输入框
@@ -666,12 +820,12 @@ $("audio").on("error", (e) => {
     "%c网页播放出现错误: ",
     "color: #007acc;",
     e.currentTarget.error.code,
-    e.currentTarget.error.message
+    e.currentTarget.error.message,
   );
   alert(
     e.currentTarget.error.code == 4
       ? "无法打开媒体文件，XIAOMUSIC_HOSTNAME或端口地址错误，请重新设置"
-      : "在线播放失败，请截图反馈: " + e.currentTarget.error.message
+      : "在线播放失败，请截图反馈: " + e.currentTarget.error.message,
   );
 });
 function validHost(url) {
@@ -713,15 +867,17 @@ function confirmSearch() {
   }
   var filename = $("#music-name").val();
   var musicfilename = $("#music-filename").val();
-  if ((filename == null || filename == "" || filename == search_key)
-    && (musicfilename != null && musicfilename != "")) {
+  if (
+    (filename == null || filename == "" || filename == search_key) &&
+    musicfilename != null &&
+    musicfilename != ""
+  ) {
     filename = musicfilename;
   }
   console.log("confirmSearch", filename, search_key);
   do_play_music(filename, search_key);
   toggleSearch();
 }
-
 
 let ws = null;
 let wsReconnectTimer = null;
@@ -744,7 +900,10 @@ function cleanupWebSocket() {
       ws.onerror = null;
       ws.onmessage = null;
 
-      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+      if (
+        ws.readyState === WebSocket.OPEN ||
+        ws.readyState === WebSocket.CONNECTING
+      ) {
         ws.close();
       }
     } catch (e) {
@@ -789,13 +948,16 @@ function connectWebSocket(did) {
 
 function startWebSocket(did, token) {
   // 再次检查，确保没有重复连接
-  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+  if (
+    ws &&
+    (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)
+  ) {
     console.log("WebSocket 已存在，跳过创建");
     isConnecting = false;
     return;
   }
 
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
   const wsUrl = `${protocol}://${window.location.host}/ws/playingmusic?token=${token}`;
 
   try {
@@ -814,7 +976,7 @@ function startWebSocket(did, token) {
       let cur_music = data.cur_music || "";
 
       $("#playering-music").text(
-        isPlaying ? `【播放中】 ${cur_music}` : `【空闲中】 ${cur_music}`
+        isPlaying ? `【播放中】 ${cur_music}` : `【空闲中】 ${cur_music}`,
       );
 
       offset = data.offset || 0;
@@ -859,6 +1021,9 @@ function updateProgressUI() {
   const progressPercent = duration > 0 ? (offset / duration) * 100 : 0;
   $("#progress").val(progressPercent);
   $("#current-time").text(formatTime(offset));
+
+  // 更新进度条 ARIA 属性
+  updateProgressAria(offset, duration);
   $("#duration").text(formatTime(duration));
 }
 
@@ -869,7 +1034,6 @@ setInterval(() => {
     updateProgressUI();
   }
 }, 1000);
-
 
 function togglePullAsk() {
   console.log("切换对话记录状态");
@@ -882,7 +1046,7 @@ function togglePullAsk() {
       url: "/api/system/modifiysetting",
       contentType: "application/json; charset=utf-8",
       data: JSON.stringify({
-        enable_pull_ask: newState
+        enable_pull_ask: newState,
       }),
       success: (response) => {
         console.log("对话记录状态切换成功", response);
@@ -892,7 +1056,7 @@ function togglePullAsk() {
       error: (error) => {
         console.error("对话记录状态切换失败", error);
         alert("切换失败，请重试");
-      }
+      },
     });
   });
 }
@@ -904,4 +1068,46 @@ function updatePullAskUI(enabled) {
   } else {
     pullAskToggle.removeClass("active");
   }
+  // 更新 ARIA 属性
+  updatePullAskAria(enabled);
 }
+
+// ============ 无障碍功能初始化 ============
+
+// 键盘事件监听
+$(document).on("keydown", function (e) {
+  // 如果焦点在输入框、文本域或选择框中，不处理快捷键
+  const tagName = document.activeElement.tagName.toLowerCase();
+  if (tagName === "input" || tagName === "textarea" || tagName === "select") {
+    return;
+  }
+
+  // ESC 键 - 关闭当前打开的弹窗
+  if (e.key === "Escape") {
+    if (openDialogs.size > 0) {
+      const dialogId = Array.from(openDialogs)[openDialogs.size - 1];
+      closeDialog(dialogId);
+      e.preventDefault();
+    }
+  }
+
+  // 空格键 - 播放
+  if (e.key === " " || e.code === "Space") {
+    play();
+    e.preventDefault();
+  }
+});
+
+// 为自定义按钮添加键盘支持（Enter 和 Space 键）
+$(document).on("keydown", '[role="button"], [role="switch"]', function (e) {
+  if (e.key === "Enter" || e.key === " ") {
+    $(this).click();
+    e.preventDefault();
+  }
+});
+
+// 初始化收藏按钮的 ARIA 状态
+$(document).ready(function () {
+  const isFavorited = $(".favorite").hasClass("favorite-active");
+  updateFavoriteAria(isFavorited);
+});

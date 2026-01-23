@@ -347,4 +347,145 @@ $(function () {
       localStorage.setItem("toolsCollapsed", "false");
     }
   });
+
+  // ============ 无障碍功能 ============
+
+  // Tab 切换功能增强
+  const tabButtons = $(".auth-tab-button");
+  const tabPanels = $(".auth-tab-content");
+
+  // Tab 切换函数
+  function switchTab(index) {
+    // 更新按钮状态
+    tabButtons.removeClass("active").attr("aria-selected", "false");
+    $(tabButtons[index]).addClass("active").attr("aria-selected", "true");
+
+    // 更新面板显示
+    tabPanels.removeClass("active");
+    $(tabPanels[index]).addClass("active");
+
+    // 移动焦点到激活的 Tab
+    tabButtons[index].focus();
+  }
+
+  // Tab 按钮点击事件
+  tabButtons.on("click", function () {
+    const index = tabButtons.index(this);
+    switchTab(index);
+  });
+
+  // Tab 键盘导航
+  tabButtons.on("keydown", function (e) {
+    const currentIndex = tabButtons.index(this);
+    let newIndex = currentIndex;
+
+    switch (e.key) {
+      case "ArrowLeft":
+        // 左箭头 - 前一个 Tab
+        newIndex = currentIndex > 0 ? currentIndex - 1 : tabButtons.length - 1;
+        e.preventDefault();
+        break;
+      case "ArrowRight":
+        // 右箭头 - 下一个 Tab
+        newIndex = currentIndex < tabButtons.length - 1 ? currentIndex + 1 : 0;
+        e.preventDefault();
+        break;
+      case "Home":
+        // Home 键 - 第一个 Tab
+        newIndex = 0;
+        e.preventDefault();
+        break;
+      case "End":
+        // End 键 - 最后一个 Tab
+        newIndex = tabButtons.length - 1;
+        e.preventDefault();
+        break;
+      default:
+        return;
+    }
+
+    if (newIndex !== currentIndex) {
+      switchTab(newIndex);
+    }
+  });
+
+  // 高级配置折叠按钮的 ARIA 更新
+  function updateAdvancedConfigAria() {
+    const isExpanded = !toggleBtn.hasClass("collapsed");
+    toggleBtn.attr("aria-expanded", isExpanded ? "true" : "false");
+  }
+
+  // 初始化 ARIA 状态
+  updateAdvancedConfigAria();
+
+  // 修改高级配置折叠点击事件，添加 ARIA 更新
+  toggleBtn.off("click").on("click", function () {
+    const willCollapse = !toggleBtn.hasClass("collapsed");
+
+    if (willCollapse) {
+      toggleBtn.addClass("collapsed");
+      content.addClass("collapsed");
+      localStorage.setItem("advancedCollapsed", "true");
+    } else {
+      toggleBtn.removeClass("collapsed");
+      content.removeClass("collapsed");
+      localStorage.setItem("advancedCollapsed", "false");
+    }
+
+    // 更新 ARIA 属性
+    updateAdvancedConfigAria();
+  });
+
+  // 高级配置折叠按钮的键盘支持
+  toggleBtn.on("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") {
+      $(this).click();
+      e.preventDefault();
+    }
+  });
+
+  // 工具折叠按钮的 ARIA 更新
+  function updateToolsAria() {
+    const isExpanded = !toolsToggle.hasClass("collapsed");
+    toolsToggle.attr("aria-expanded", isExpanded ? "true" : "false");
+  }
+
+  // 初始化工具折叠的 ARIA 状态
+  if (typeof toolsToggle !== "undefined" && toolsToggle.length > 0) {
+    updateToolsAria();
+
+    // 修改工具折叠点击事件，添加 ARIA 更新
+    toolsToggle.off("click").on("click", function () {
+      const willCollapse = !toolsToggle.hasClass("collapsed");
+
+      if (willCollapse) {
+        toolsToggle.addClass("collapsed");
+        toolsContent.addClass("collapsed");
+        localStorage.setItem("toolsCollapsed", "true");
+      } else {
+        toolsToggle.removeClass("collapsed");
+        toolsContent.removeClass("collapsed");
+        localStorage.setItem("toolsCollapsed", "false");
+      }
+
+      // 更新 ARIA 属性
+      updateToolsAria();
+    });
+
+    // 工具折叠按钮的键盘支持
+    toolsToggle.on("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        $(this).click();
+        e.preventDefault();
+      }
+    });
+  }
+
+  // 为所有自定义按钮添加键盘支持
+  $('[role="button"]').on("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") {
+      $(this).click();
+      e.preventDefault();
+    }
+  });
 });

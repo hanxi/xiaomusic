@@ -568,7 +568,7 @@ class XiaoMusic:
             self.log.warning("当前没有在播放歌曲，添加歌曲到收藏列表失败")
             return
 
-        self.play_list_add_music("收藏", [name])
+        self.music_library.play_list_add_music("收藏", [name])
 
     # 从收藏列表中移除
     async def del_from_favorites(self, did="", arg1="", **kwargs):
@@ -578,7 +578,7 @@ class XiaoMusic:
             self.log.warning("当前没有在播放歌曲，从收藏列表中移除失败")
             return
 
-        self.play_list_del_music("收藏", [name])
+        self.music_library.play_list_del_music("收藏", [name])
 
     # 更新每个设备的歌单
     def update_all_playlist(self):

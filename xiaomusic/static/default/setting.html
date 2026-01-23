@@ -1,15 +1,15 @@
 <!doctype html>
-<html>
+<html lang="zh-CN">
   <head>
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width" />
     <title>小爱音箱操控面板</title>
-    <script src="./jquery-3.7.1.min.js?version=1768990761"></script>
-    <script src="./setting.js?version=1768990761"></script>
+    <script src="./jquery-3.7.1.min.js?version=1769128214"></script>
+    <script src="./setting.js?version=1769128214"></script>
     <link
       rel="stylesheet"
       type="text/css"
-      href="./setting.css?version=1768990761"
+      href="./setting.css?version=1769128214"
     />
 
     <script
@@ -26,7 +26,7 @@
     </script>
   </head>
   <body>
-    <div class="setting-header">
+    <div class="setting-header" role="banner">
       <div class="header-inner">
         <h2>
           <span>小爱音箱设置面板</span>
@@ -38,19 +38,22 @@
           >)
         </h2>
         <div class="header-buttons">
-          <button onclick="location.href = '/static/default/index.html'">
-            <span class="material-icons">home</span>
+          <button
+            onclick="location.href = '/static/default/index.html'"
+            aria-label="返回首页"
+          >
+            <span class="material-icons" aria-hidden="true">home</span>
             <span>返回首页</span>
           </button>
-          <button class="save-button">
-            <span class="material-icons">save</span>
+          <button class="save-button" aria-label="保存配置">
+            <span class="material-icons" aria-hidden="true">save</span>
             <span>保存配置</span>
           </button>
         </div>
       </div>
     </div>
 
-    <div class="setting-container" id="setting">
+    <div class="setting-container" id="setting" role="main">
       <div class="setting-card">
         <h3 class="card-title">设备选择</h3>
         <div class="card-content">
@@ -63,13 +66,27 @@
         <h3 class="card-title">基础设置</h3>
         <div class="card-content">
           <!-- Tab 导航 -->
-          <div class="auth-tabs">
-            <button class="auth-tab-button active" data-tab="account-password">
-              <span class="material-icons">account_circle</span>
+          <div class="auth-tabs" role="tablist" aria-label="登录方式选择">
+            <button
+              class="auth-tab-button active"
+              data-tab="account-password"
+              role="tab"
+              aria-selected="true"
+              aria-controls="tab-account-password"
+            >
+              <span class="material-icons" aria-hidden="true"
+                >account_circle</span
+              >
               <span>账号密码登录</span>
             </button>
-            <button class="auth-tab-button" data-tab="cookie">
-              <span class="material-icons">cookie</span>
+            <button
+              class="auth-tab-button"
+              data-tab="cookie"
+              role="tab"
+              aria-selected="false"
+              aria-controls="tab-cookie"
+            >
+              <span class="material-icons" aria-hidden="true">cookie</span>
               <span>Cookie 登录</span>
             </button>
           </div>
@@ -77,7 +94,12 @@
           <!-- Tab 内容区域 -->
           <div class="auth-tab-panels">
             <!-- 账号密码登录面板 -->
-            <div class="auth-tab-content active" id="tab-account-password">
+            <div
+              class="auth-tab-content active"
+              id="tab-account-password"
+              role="tabpanel"
+              aria-labelledby="account-password-tab"
+            >
               <div class="rows">
                 <div class="form-item">
                   <label for="account">*小米账号:</label>
@@ -85,6 +107,7 @@
                     id="account"
                     type="text"
                     placeholder="填写小米登录账号"
+                    aria-required="true"
                   />
                 </div>
 
@@ -94,13 +117,19 @@
                     id="password"
                     type="password"
                     placeholder="填写小米登录密码"
+                    aria-required="true"
                   />
                 </div>
               </div>
             </div>
 
             <!-- Cookie 登录面板 -->
-            <div class="auth-tab-content" id="tab-cookie">
+            <div
+              class="auth-tab-content"
+              id="tab-cookie"
+              role="tabpanel"
+              aria-labelledby="cookie-tab"
+            >
               <div class="rows">
                 <div class="form-item">
                   <label for="cookie"
@@ -114,6 +143,7 @@
                     id="cookie"
                     type="text"
                     placeholder="粘贴完整的 Cookie 字符串"
+                    aria-required="true"
                   />
                 </div>
               </div>
@@ -125,29 +155,53 @@
             <div class="form-item">
               <label for="hostname" class="setting-label"
                 >*NAS的IP或域名:
-                <button class="option-inline mini-button" id="auto-hostname">
-                  <span class="material-icons">auto_fix_high</span>
+                <button
+                  class="option-inline mini-button"
+                  id="auto-hostname"
+                  aria-label="自动填写主机名"
+                >
+                  <span class="material-icons" aria-hidden="true"
+                    >auto_fix_high</span
+                  >
                   <span>自动填</span>
                 </button>
               </label>
-              <input id="hostname" type="text" />
+              <input id="hostname" type="text" aria-required="true" />
             </div>
 
             <div class="form-item">
               <label for="public_port" class="setting-label"
                 >*本地端口:
-                <button class="option-inline mini-button" id="auto-port">
-                  <span class="material-icons">auto_fix_high</span>
+                <button
+                  class="option-inline mini-button"
+                  id="auto-port"
+                  aria-label="自动填写端口"
+                >
+                  <span class="material-icons" aria-hidden="true"
+                    >auto_fix_high</span
+                  >
                   <span>自动填</span>
                 </button>
               </label>
-              <input id="public_port" type="number" value="58090" />
+              <input
+                id="public_port"
+                type="number"
+                value="58090"
+                aria-required="true"
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <div class="advanced-config-toggle" id="advancedConfigToggle">
+      <div
+        class="advanced-config-toggle"
+        id="advancedConfigToggle"
+        role="button"
+        aria-expanded="false"
+        aria-controls="advancedConfigContent"
+        tabindex="0"
+      >
         <span>⚠️</span>
         <span class="advanced-config-toggle-text"
           >以下为高级配置，请谨慎修改，错误配置可能影响系统运行</span

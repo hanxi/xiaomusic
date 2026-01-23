@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小爱音箱操控面板</title>
-    <script src="./jquery-3.7.1.min.js?version=1768990761"></script>
-    <link rel="stylesheet" href="./main.css?version=1768990761">
+    <script src="./jquery-3.7.1.min.js?version=1769128214"></script>
+    <link rel="stylesheet" href="./main.css?version=1769128214">
     <link rel="icon" href="./favicon.ico">
 
     <!-- Google tag (gtag.js) -->
@@ -23,7 +23,7 @@
 </head>
 
 <body class="index_page">
-    <div class="player">
+    <div class="player" role="main" aria-label="音乐播放器">
         <h1>小爱音箱播放器
             <a href="https://xdocs.hanxi.cc/issues/changelog.html" target="_blank" style="position: relative;"><span  id="version">0.4.0</span><span id="versionnew" class="new-badge"></span></a>
         </h1>
@@ -31,7 +31,7 @@
         <label for="did" style="display: flex;align-items: center;">选择播放设备:
             <div class="toggle-switch-container" style="margin-left: auto;">
                 <label class="toggle-label">语音口令</label>
-                <div id="pullAskToggle" class="toggle-switch" onclick="togglePullAsk()">
+                <div id="pullAskToggle" class="toggle-switch" role="switch" aria-checked="false" aria-label="语音口令开关" onclick="togglePullAsk()" tabindex="0">
                     <div class="toggle-slider"></div>
                 </div>
             </div>
@@ -41,8 +41,8 @@
         </select>
 
         <label for="music_list" style="display: flex;align-items: center;">选择播放列表:
-            <div class="option-inline" onclick="refreshlist()">
-                <span class="material-icons">refresh</span>
+            <div class="option-inline" onclick="refreshlist()" role="button" aria-label="刷新播放列表" tabindex="0">
+                <span class="material-icons" aria-hidden="true">refresh</span>
                 <span class="tooltip">刷新列表</span>
             </div>
         </label>
@@ -51,12 +51,12 @@
 
         <label for="music_name" style="display: flex;align-items: center;">选择歌曲:
             <div style="display: flex;align-items: center;margin-left: auto;">
-                <div class="option-inline" onclick="triggerUpload()">
-                    <span class="material-icons">file_upload</span>
+                <div class="option-inline" onclick="triggerUpload()" role="button" aria-label="上传歌曲" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">file_upload</span>
                     <span class="tooltip">上传歌曲</span>
                 </div>
-                <div  class="option-inline" onclick="toggleDelete()">
-                    <span class="material-icons">delete</span>
+                <div class="option-inline" onclick="toggleDelete()" role="button" aria-label="删除歌曲" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">delete</span>
                     <span class="tooltip">删除歌曲</span>
                 </div>
             </div>
@@ -67,7 +67,7 @@
         <input id="upload-file" type="file" accept=".mp3,.m4a,.wav,.flac,.aac,.ogg,.ape" style="display:none" />
 
         <div id="device-audio">
-            <progress class="progress" id="progress" value="0" max="100"></progress>
+            <progress class="progress" id="progress" value="0" max="100" role="progressbar" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="未播放"></progress>
             <div style="display: flex; justify-content: space-between; width: 100%;">
                 <span class="current-time" id="current-time">0:00</span>
                 <div class="current-song" id="playering-music">当前播放歌曲：无</div>
@@ -78,51 +78,51 @@
 
         <div class="buttons">
             <div class="player-controls button-group">
-                <div id="modeBtn" onclick="togglePlayMode()" class="control-button device-enable">
-                    <span class="material-icons">shuffle</span>
+                <div id="modeBtn" onclick="togglePlayMode()" class="control-button device-enable" role="button" aria-label="切换播放模式" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">shuffle</span>
                     <span class="tooltip">切换播放模式</span>
                 </div>
-                <div onclick="prevTrack()" class="control-button device-enable">
-                    <span class="material-icons">skip_previous</span>
+                <div onclick="prevTrack()" class="control-button device-enable" role="button" aria-label="上一首" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">skip_previous</span>
                     <span class="tooltip">上一首</span>
                 </div>
-                <div onclick="play()" class="control-button">
-                    <span class="material-icons-outlined play">play_circle_outline</span>
+                <div onclick="play()" class="control-button" role="button" aria-label="播放" tabindex="0">
+                    <span class="material-icons-outlined play" aria-hidden="true">play_circle_outline</span>
                     <span class="tooltip">播放</span>
                 </div>
-                <div onclick="nextTrack()" class="control-button device-enable">
-                    <span class="material-icons">skip_next</span>
+                <div onclick="nextTrack()" class="control-button device-enable" role="button" aria-label="下一首" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">skip_next</span>
                     <span class="tooltip">下一首</span>
                 </div>
-                <div onclick="stopPlay()" class="control-button device-enable">
-                    <span class="material-icons">stop</span>
+                <div onclick="stopPlay()" class="control-button device-enable" role="button" aria-label="关机" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">stop</span>
                     <span class="tooltip">关机</span>
                 </div>
 
             </div>
             <div class="mode-controls button-group">
-                <div onclick="addToFavorites()" class="favorite icon-item device-enable">
-                    <span class="material-icons">favorite</span>
+                <div onclick="addToFavorites()" class="favorite icon-item device-enable" role="button" aria-label="收藏歌曲" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">favorite</span>
                     <p>收藏</p>
                 </div>
-                <div onclick="toggleVolume()" class="icon-item device-enable">
-                    <span class="material-icons">volume_up</span>
+                <div onclick="toggleVolume()" class="icon-item device-enable" role="button" aria-label="调节音量" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">volume_up</span>
                     <p>音量</p>
                 </div>
-                <div onclick="toggleSearch()" class="icon-item device-enable">
-                    <span class="material-icons">search</span>
+                <div onclick="toggleSearch()" class="icon-item device-enable" role="button" aria-label="搜索歌曲" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">search</span>
                     <p>搜索</p>
                 </div>
-                <div onclick="toggleTimer()" class="icon-item device-enable">
-                    <span class="material-icons">timer</span>
+                <div onclick="toggleTimer()" class="icon-item device-enable" role="button" aria-label="定时关机" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">timer</span>
                     <p>定时</p>
                 </div>
-                <div onclick="togglePlayLink()" class="icon-item device-enable">
-                    <span class="material-icons">emoji_nature</span>
+                <div onclick="togglePlayLink()" class="icon-item device-enable" role="button" aria-label="播放链接测试" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">emoji_nature</span>
                     <p>测试</p>
                 </div>
-                <div onclick="openSettings()" class="icon-item">
-                    <span class="material-icons">settings</span>
+                <div onclick="openSettings()" class="icon-item" role="button" aria-label="打开设置" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">settings</span>
                     <p>设置</p>
                 </div>
             </div>
@@ -130,8 +130,8 @@
     </div>
 
     <!-- 搜索组件 -->
-    <div class="component" id="search-component">
-        <h2>搜索歌曲</h2>
+    <div class="component" id="search-component" role="dialog" aria-modal="true" aria-labelledby="search-title">
+        <h2 id="search-title">搜索歌曲</h2>
         <input type="text" id="search" class="search-input" placeholder="请输入搜索关键词(如:MV高清版 周杰伦 七里香)">
         <label for="music-name" id="music-name-label" style="display: none;">确认选择:</label>
         <select id="music-name" style="display: none;">
@@ -145,8 +145,8 @@
     </div>
 
     <!-- 定时关机组件 -->
-    <div class="component" id="timer-component">
-        <h2>定时关机</h2>
+    <div class="component" id="timer-component" role="dialog" aria-modal="true" aria-labelledby="timer-title">
+        <h2 id="timer-title">定时关机</h2>
 
         <button onclick="timedShutDown('10分钟后关机')">10分钟后关机</button>
         <button onclick="timedShutDown('30分钟后关机')">30分钟后关机</button>
@@ -158,8 +158,8 @@
     </div>
 
     <!-- 播放链接组件 -->
-    <div class="component" id="playlink-component">
-        <h2>播放链接</h2>
+    <div class="component" id="playlink-component" role="dialog" aria-modal="true" aria-labelledby="playlink-title">
+        <h2 id="playlink-title">播放链接</h2>
         <input type="text" id="music-url" class="search-input" placeholder="请输入播放链接"
             value="https://lhttp.qtfm.cn/live/4915/64k.mp3">
         <h2>播放文字</h2>
@@ -177,16 +177,16 @@
 
 
     <!-- 音量组件 -->
-    <div class="component" id="volume-component">
-        <h2>调节音量</h2>
-        <input type="range" id="volume" class="volume-slider" />
+    <div class="component" id="volume-component" role="dialog" aria-modal="true" aria-labelledby="volume-title">
+        <h2 id="volume-title">调节音量</h2>
+        <input type="range" id="volume" class="volume-slider" aria-label="音量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" />
         <div class="component-button-one">
             <button onclick="toggleVolume()">关闭</button>
         </div>
     </div>
     <!-- 删除确认组件 -->
-    <div class="component" id="delete-component">
-        <h2>警告</h2>
+    <div class="component" id="delete-component" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+        <h2 id="delete-title">警告</h2>
         <p>你确定要删除歌曲 <span id="delete-music-name"></span> 吗？</p>
         <p style="font-weight: bold;">注意：该操作会永久删除该歌曲且不可撤销</p>
         <div class="component-button-group">
@@ -195,8 +195,8 @@
         </div>
     </div>
     <!-- 警告组件 -->
-    <div class="component" id="warning-component">
-        <h2>警告</h2>
+    <div class="component" id="warning-component" role="dialog" aria-modal="true" aria-labelledby="warning-title">
+        <h2 id="warning-title">警告</h2>
         <p>当前页面的HOST与设置中的HOST不一致，请检查是否设置错误</p>
         <p>当前HOST: <span id="local-host"></span></p>
         <p>设置中的HOST: <span id="setting-host"></span></p>
@@ -206,11 +206,14 @@
             <button onclick="toggleWarning()">取消</button>
         </div>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         Powered by XiaoMusic
     </div>
 
-    <script src="./md.js?version=1768990761">
+    <!-- 屏幕阅读器状态通知区域 -->
+    <div id="sr-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="./md.js?version=1769128214">
     </script>
 </body>
 
