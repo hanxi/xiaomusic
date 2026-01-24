@@ -115,7 +115,7 @@ class Crontab:
             cron = kwargs["cron"]
             music_list = cron["music_list"]
             music_name = cron.get("first", "")
-            ret = xiaomusic.play_list_update_music(name, music_list)
+            ret = xiaomusic.music_library.play_list_update_music(name, music_list)
             if not ret:
                 self.log.warning(f"crontb play_list_update_music failed name:{name}")
             await xiaomusic.do_play_music_list(did, name, music_name)
