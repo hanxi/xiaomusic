@@ -37,7 +37,7 @@ services:
   xiaomusic:
     image: hanxi/xiaomusic
     container_name: xiaomusic
-    restart: unless-stopped
+    restart: always
     ports:
       - 58090:8090
     volumes:
@@ -52,7 +52,7 @@ services:
   xiaomusic:
     image: docker.hanxi.cc/hanxi/xiaomusic
     container_name: xiaomusic
-    restart: unless-stopped
+    restart: always
     ports:
       - 58090:8090
     volumes:
@@ -67,7 +67,7 @@ services:
   xiaomusic:
     image: hanxi/xiaomusic:main
     container_name: xiaomusic
-    restart: unless-stopped
+    restart: always
     ports:
       - 58090:8090
     volumes:
