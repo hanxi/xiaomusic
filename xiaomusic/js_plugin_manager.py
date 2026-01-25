@@ -34,6 +34,12 @@ class JSPluginManager:
         self.pending_requests = {}
         self._is_shutting_down = False  # 添加关闭标志
 
+        # 进程重启控制
+        self._restart_count = 0  # 重启计数器
+        self._last_restart_time = 0  # 上次重启时间戳
+        self._restart_window = 60  # 重启时间窗口（秒）
+        self._max_restarts_in_window = 1  # 时间窗口内最大重启次数
+
         # ... 配置文件相关 ...
         self._config_cache = None
         self._config_cache_time = 0
@@ -80,9 +86,42 @@ class JSPluginManager:
                 break
             if self.node_process and self.node_process.poll() is not None:
                 if not self._is_shutting_down:
-                    self.log.warning("Node.js process died, restarting...")
-                    self._start_node_process()
+                    self._attempt_restart_node_process()
             time.sleep(5)
+
+    def _attempt_restart_node_process(self):
+        """尝试重启 Node.js 进程，带有限制机制"""
+        current_time = time.time()
+
+        # 检查是否在重启时间窗口内
+        if current_time - self._last_restart_time < self._restart_window:
+            # 在时间窗口内，检查重启次数
+            if self._restart_count >= self._max_restarts_in_window:
+                self.log.error(
+                    f"Node.js process restart limit exceeded: {self._restart_count} restarts in {self._restart_window} seconds. "
+                    "Manual intervention required."
+                )
+                return False
+        else:
+            # 超出时间窗口，重置计数器
+            self._restart_count = 0
+
+        # 执行重启
+        self._restart_count += 1
+        self._last_restart_time = current_time
+
+        remaining_attempts = self._max_restarts_in_window - self._restart_count
+        self.log.warning(
+            f"Node.js process died, attempting restart ({self._restart_count}/{self._max_restarts_in_window}). "
+            f"Remaining attempts in current window: {remaining_attempts}"
+        )
+
+        try:
+            self._start_node_process()
+            return True
+        except Exception as e:
+            self.log.error(f"Failed to restart Node.js process: {e}")
+            return False
 
     def _start_message_handler(self):
         """启动消息处理线程"""
@@ -126,8 +165,23 @@ class JSPluginManager:
     ) -> dict[str, Any]:
         """发送消息到 Node.js 子进程"""
         with self._lock:
+            # 检查进程状态，必要时尝试重启
             if not self.node_process or self.node_process.poll() is not None:
-                raise Exception("Node.js process not available")
+                self.log.warning(
+                    "Node.js process not available, checking restart possibility..."
+                )
+                # 尝试重启进程
+                if not self._attempt_restart_node_process():
+                    raise Exception("Node.js process not available and restart failed")
+
+                # 等待进程稳定
+                time.sleep(1)
+
+                # 再次检查进程状态
+                if not self.node_process or self.node_process.poll() is not None:
+                    raise Exception(
+                        "Node.js process not available after restart attempt"
+                    )
 
             message_id = f"msg_{int(time.time() * 1000)}"
             message["id"] = message_id
@@ -1356,6 +1410,30 @@ class JSPluginManager:
 
         except Exception as e:
             self.log.error(f"Failed to update plugin config: {e}")
+
+    def reset_restart_limit(self):
+        """重置重启限制计数器，允许重新开始重启尝试"""
+        self._restart_count = 0
+        self._last_restart_time = 0
+        self.log.info("Node.js process restart limit has been reset")
+
+    def get_restart_status(self) -> dict[str, Any]:
+        """获取重启状态信息"""
+        current_time = time.time()
+        time_since_last_restart = (
+            current_time - self._last_restart_time if self._last_restart_time > 0 else 0
+        )
+        time_until_reset = max(0, self._restart_window - time_since_last_restart)
+
+        return {
+            "restart_count": self._restart_count,
+            "max_restarts_in_window": self._max_restarts_in_window,
+            "restart_window": self._restart_window,
+            "time_since_last_restart": time_since_last_restart,
+            "time_until_reset": time_until_reset,
+            "can_restart": self._restart_count < self._max_restarts_in_window
+            or time_since_last_restart >= self._restart_window,
+        }
 
     def shutdown(self):
         """关闭插件管理器"""
