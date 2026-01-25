@@ -147,7 +147,9 @@ class XiaoMusic:
 
         # 初始化命令处理器（在所有依赖准备好之后）
         self.command_handler = CommandHandler(
-            config=self.config, log=self.log, device_manager=self.device_manager
+            config=self.config,
+            log=self.log,
+            xiaomusic_instance=self,
         )
 
         # 启动统计
@@ -296,30 +298,30 @@ class XiaoMusic:
         url = arg1
         return await self.device_manager.devices[did].group_player_play(url)
 
-    # 设置为单曲循环
+    # 口令:单曲循环
     async def set_play_type_one(self, did="", **kwargs):
         await self.set_play_type(did, PLAY_TYPE_ONE)
 
-    # 设置为全部循环
+    # 口令:全部循环
     async def set_play_type_all(self, did="", **kwargs):
         await self.set_play_type(did, PLAY_TYPE_ALL)
 
-    # 设置为随机播放
+    # 口令:随机播放
     async def set_play_type_rnd(self, did="", **kwargs):
         await self.set_play_type(did, PLAY_TYPE_RND)
 
-    # 设置为单曲播放
+    # 口令:单曲播放
     async def set_play_type_sin(self, did="", **kwargs):
         await self.set_play_type(did, PLAY_TYPE_SIN)
 
-    # 设置为顺序播放
+    # 口令:顺序播放
     async def set_play_type_seq(self, did="", **kwargs):
         await self.set_play_type(did, PLAY_TYPE_SEQ)
 
     async def set_play_type(self, did="", play_type=PLAY_TYPE_RND, dotts=True):
         await self.device_manager.devices[did].set_play_type(play_type, dotts)
 
-    # 设置为刷新列表
+    # 口令:刷新列表
     async def gen_music_list(self, **kwargs):
         self.music_library.gen_all_music_list()
         self.update_all_playlist()
@@ -337,7 +339,7 @@ class XiaoMusic:
             self.log.debug(f"refresh_web_music_list url:{url} content:{content}")
         self.log.info(f"refresh_web_music_list ok {url}")
 
-    # 删除歌曲
+    # 口令:删除歌曲
     async def cmd_del_music(self, did="", arg1="", **kwargs):
         if not self.config.enable_cmd_del_music:
             await self.do_tts(did, "语音删除歌曲功能未开启")
@@ -413,12 +415,12 @@ class XiaoMusic:
             did, search_key, name
         )
 
-    # 在线播放：在线搜索、播放
+    # 口令:在线播放：在线搜索、播放
     async def online_play(self, did="", arg1="", **kwargs):
         """委托给 online_music_service"""
         return await self.online_music_service.online_play(did, arg1, **kwargs)
 
-    # 播放歌手：在线搜索歌手并存为列表播放
+    # 口令:播放歌手：在线搜索歌手并存为列表播放
     async def singer_play(self, did="", arg1="", **kwargs):
         """委托给 online_music_service"""
         return await self.online_music_service.singer_play(did, arg1, **kwargs)
@@ -436,7 +438,7 @@ class XiaoMusic:
         """模糊搜索播放列表名称（委托给 music_library）"""
         return self.music_library.find_real_music_list_name(list_name)
 
-    # 播放一个播放列表
+    # 口令:播放歌单
     async def play_music_list(self, did="", arg1="", **kwargs):
         parts = arg1.split("|")
         list_name = parts[0]
@@ -457,7 +459,7 @@ class XiaoMusic:
         # 调用设备播放音乐列表的方法
         await self.device_manager.devices[did].play_music_list(list_name, music_name)
 
-    # 播放一个播放列表里第几个
+    # 口令:播放列表第
     async def play_music_list_index(self, did="", arg1="", **kwargs):
         patternarg = r"^([零一二三四五六七八九十百千万亿]+)个(.*)"
         # 匹配参数
@@ -483,7 +485,7 @@ class XiaoMusic:
             return
         await self.do_tts(did, f"播放列表{list_name}中找不到第${index}个")
 
-    # 播放
+    # 口令:播放歌曲
     async def play(self, did="", arg1="", **kwargs):
         parts = arg1.split("|")
         search_key = parts[0]
@@ -494,25 +496,27 @@ class XiaoMusic:
         # 语音播放会根据歌曲匹配更新当前播放列表
         return await self.do_play(did, name, search_key)
 
-    # 后台搜索播放
+    # 网页面板搜索播放
     async def do_play(self, did, name, search_key=""):
         return await self.device_manager.devices[did].play(name, search_key)
 
-    # 本地播放
+    # 口令:播放本地歌曲
     async def playlocal(self, did="", arg1="", **kwargs):
         return await self.device_manager.devices[did].playlocal(arg1)
 
+    # 口令:下一首
     async def play_next(self, did="", **kwargs):
         return await self.device_manager.devices[did].play_next()
 
+    # 口令:上一首
     async def play_prev(self, did="", **kwargs):
         return await self.device_manager.devices[did].play_prev()
 
-    # 停止
+    # 口令:停止
     async def stop(self, did="", arg1="", **kwargs):
         return await self.device_manager.devices[did].stop(arg1=arg1)
 
-    # 定时关机
+    # 口令:分钟后关机
     async def stop_after_minute(self, did="", arg1=0, **kwargs):
         try:
             # 尝试阿拉伯数字转换中文数字
@@ -522,7 +526,7 @@ class XiaoMusic:
             minute = chinese_to_number(str(arg1))
         return await self.device_manager.devices[did].stop_after_minute(minute)
 
-    # 添加歌曲到收藏列表
+    # 口令:加入收藏,收藏歌曲
     async def add_to_favorites(self, did="", arg1="", **kwargs):
         name = arg1 if arg1 else self.playingmusic(did)
         self.log.info(f"add_to_favorites {name}")
@@ -532,7 +536,7 @@ class XiaoMusic:
 
         self.music_library.play_list_add_music("收藏", [name])
 
-    # 从收藏列表中移除
+    # 口令:取消收藏
     async def del_from_favorites(self, did="", arg1="", **kwargs):
         name = arg1 if arg1 else self.playingmusic(did)
         self.log.info(f"del_from_favorites {name}")

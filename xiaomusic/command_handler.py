@@ -7,6 +7,8 @@ import asyncio
 import re
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from xiaomusic.xiaomusic import XiaoMusic
 from xiaomusic.config import KEY_WORD_ARG_BEFORE_DICT
 
 if TYPE_CHECKING:
@@ -19,18 +21,17 @@ class CommandHandler:
     负责解析用户的语音指令，匹配对应的命令，并路由到相应的处理方法。
     """
 
-    def __init__(self, config, log, device_manager):
+    def __init__(self, config, log, xiaomusic_instance: "XiaoMusic"):
         """初始化命令处理器
 
         Args:
             config: 配置对象
             log: 日志对象
             xiaomusic_instance: XiaoMusic 主类实例，用于调用命令执行方法
-            device_manager: 设备管理
         """
         self.config = config
         self.log = log
-        self.device_manager = device_manager
+        self.xiaomusic = xiaomusic_instance
         self.last_cmd = ""
 
     async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
@@ -53,7 +54,7 @@ class CommandHandler:
         self.last_cmd = query
 
         try:
-            device = self.device_manager.devices[did]
+            device = self.xiaomusic.device_manager.devices[did]
             # 匹配命令
             opvalue, oparg = self.match_cmd(device, query, ctrl_panel)
             if not opvalue:
@@ -63,7 +64,7 @@ class CommandHandler:
                 return
 
             # 执行命令
-            func = getattr(self.device, opvalue)
+            func = getattr(self.xiaomusic, opvalue)
             await func(did=did, arg1=oparg)
 
         except Exception as e:
