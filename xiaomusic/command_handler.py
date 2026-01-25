@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from xiaomusic.config import KEY_WORD_ARG_BEFORE_DICT
 
 if TYPE_CHECKING:
-    from xiaomusic.xiaomusic import XiaoMusic
+    pass
 
 
 class CommandHandler:
@@ -124,11 +124,11 @@ class CommandHandler:
 
             # 检查是否在激活命令中
             if (
-                    not ctrl_panel
-                    and not device.is_playing
-                    and self.active_cmd
-                    and opvalue not in self.active_cmd
-                    and opkey not in self.active_cmd
+                not ctrl_panel
+                and not device.is_playing
+                and self.active_cmd
+                and opvalue not in self.active_cmd
+                and opkey not in self.active_cmd
             ):
                 self.log.info(f"不在激活命令中 {opvalue}")
                 continue
@@ -163,9 +163,9 @@ class CommandHandler:
         opvalue = self.config.key_word_dict.get(query)
         # 控制面板/正在播放时允许执行/是否在激活命令中
         if (
-                ctrl_panel
-                or device.is_playing
-                or not self.active_cmd
-                or opvalue in self.active_cmd
+            ctrl_panel
+            or device.is_playing
+            or not self.active_cmd
+            or opvalue in self.active_cmd
         ):
             return opvalue

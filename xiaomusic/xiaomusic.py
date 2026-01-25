@@ -149,9 +149,7 @@ class XiaoMusic:
 
         # 初始化命令处理器（在所有依赖准备好之后）
         self.command_handler = CommandHandler(
-            config=self.config,
-            log=self.log,
-            device_manager=self.device_manager
+            config=self.config, log=self.log, device_manager=self.device_manager
         )
 
         # 启动统计
