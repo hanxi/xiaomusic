@@ -335,8 +335,9 @@ docker build -t xiaomusic .
 ### 📱 配套应用
 
 - [微信小程序: 卯卯音乐](https://github.com/F-loat/xiaoplayer)
-- [风花雪乐(风花雪月) - 支持xiaomusic的手机App](https://github.com/jokezc/mi_music)
+- [手机APP: 风花雪乐](https://github.com/jokezc/mi_music)
 - [JS在线播放插件](https://github.com/boluofan/xiaomusic-online)
+- [手机APP: HMusic](https://github.com/hpcll/HMusic)
 
 ### ❤️ 致谢
 
