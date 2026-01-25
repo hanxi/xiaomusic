@@ -30,7 +30,7 @@ router = APIRouter(dependencies=[Depends(verification)])
 @router.get("/searchmusic")
 def searchmusic(name: str = ""):
     """搜索音乐"""
-    return xiaomusic.searchmusic(name)
+    return xiaomusic.music_library.searchmusic(name)
 
 
 """======================在线搜索相关接口============================="""
@@ -185,7 +185,7 @@ def playingmusic(did: str = ""):
 @router.get("/musiclist")
 async def musiclist():
     """音乐列表"""
-    return xiaomusic.get_music_list()
+    return xiaomusic.music_library.get_music_list()
 
 
 @router.get("/musicinfo")
@@ -246,7 +246,7 @@ async def playmusic(data: DidPlayMusic):
         return {"ret": "Did not exist"}
 
     log.info(f"playmusic {did} musicname:{musicname} searchkey:{searchkey}")
-    await xiaomusic.do_play(did, musicname, searchkey, exact=True)
+    await xiaomusic.do_play(did, musicname, searchkey)
     return {"ret": "OK"}
 
 

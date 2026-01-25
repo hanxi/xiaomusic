@@ -31,7 +31,6 @@ class CommandHandler:
         self.config = config
         self.log = log
         self.device_manager = device_manager
-        self.active_cmd = config.active_cmd.split(",") if config.active_cmd else []
         self.last_cmd = ""
 
     async def do_check_cmd(self, did="", query="", ctrl_panel=True, **kwargs):
@@ -63,7 +62,7 @@ class CommandHandler:
                 await device.check_replay()
                 return
 
-            # 执行命令 todo 把self.xiaomusic改为从device获取并执行
+            # 执行命令
             func = getattr(self.device, opvalue)
             await func(did=did, arg1=oparg)
 
@@ -123,12 +122,13 @@ class CommandHandler:
             opvalue = self.config.key_word_dict.get(opkey)
 
             # 检查是否在激活命令中
+            active_cmd_arr = self.config.get_active_cmd_arr()
             if (
                 not ctrl_panel
                 and not device.is_playing
-                and self.active_cmd
-                and opvalue not in self.active_cmd
-                and opkey not in self.active_cmd
+                and active_cmd_arr
+                and opvalue not in active_cmd_arr
+                and opkey not in active_cmd_arr
             ):
                 self.log.info(f"不在激活命令中 {opvalue}")
                 continue
@@ -160,12 +160,13 @@ class CommandHandler:
         if query not in self.config.key_match_order:
             return None
 
+        active_cmd_arr = self.config.get_active_cmd_arr()
         opvalue = self.config.key_word_dict.get(query)
         # 控制面板/正在播放时允许执行/是否在激活命令中
         if (
             ctrl_panel
             or device.is_playing
-            or not self.active_cmd
-            or opvalue in self.active_cmd
+            or not active_cmd_arr
+            or opvalue in active_cmd_arr
         ):
             return opvalue

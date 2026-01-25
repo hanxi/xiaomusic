@@ -34,7 +34,7 @@ class DeviceManager:
         self.xiaomusic = xiaomusic
 
         # 设备相关数据结构
-        self.devices = {}  # key 为 did，value 为 XiaoMusicDevice 实例
+        self.devices: dict[str, XiaoMusicDevice] = {}
         self.device_id_did = {}  # device_id 到 did 的映射
         self.groups = {}  # 设备分组，key 为组名，value 为 device_id 列表
 
@@ -141,7 +141,7 @@ class DeviceManager:
         await auth_manager.try_update_device_id()
         self._update_devices()
 
-    def set_devices(self, devices):
+    def set_devices(self, devices: dict[str, XiaoMusicDevice]):
         """设置设备实例字典
 
         这个方法用于在主类中设置实际的设备实例。

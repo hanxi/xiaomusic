@@ -45,8 +45,6 @@ class MusicLibrary:
         self,
         config,
         log,
-        music_path_depth,
-        exclude_dirs,
         event_bus=None,
     ):
         """初始化音乐库
@@ -54,14 +52,10 @@ class MusicLibrary:
         Args:
             config: 配置对象
             log: 日志对象
-            music_path_depth: 音乐目录扫描深度
-            exclude_dirs: 排除的目录列表
             event_bus: 事件总线对象（可选）
         """
         self.config = config
         self.log = log
-        self.music_path_depth = music_path_depth
-        self.exclude_dirs = exclude_dirs
         self.event_bus = event_bus
 
         # 音乐库数据
@@ -94,10 +88,11 @@ class MusicLibrary:
         all_music_by_dir = {}
 
         # 扫描本地音乐目录
+        exclude_dirs_set = self.config.get_exclude_dirs_set()
         local_musics = traverse_music_directory(
             self.config.music_path,
-            depth=self.music_path_depth,
-            exclude_dirs=self.exclude_dirs,
+            depth=self.config.music_path_depth,
+            exclude_dirs=exclude_dirs_set,
             support_extension=SUPPORT_MUSIC_TYPE,
         )
 
@@ -128,7 +123,6 @@ class MusicLibrary:
         # 初始化播放列表（使用 OrderedDict 保持顺序）
         self.music_list = OrderedDict(
             {
-                "临时搜索列表": [],
                 "所有歌曲": [],
                 "所有电台": [],
                 "收藏": [],

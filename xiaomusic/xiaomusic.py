@@ -107,8 +107,6 @@ class XiaoMusic:
         self.music_library = MusicLibrary(
             config=self.config,
             log=self.log,
-            music_path_depth=self.music_path_depth,
-            exclude_dirs=self.exclude_dirs,
             event_bus=self.event_bus,
         )
 
@@ -172,9 +170,6 @@ class XiaoMusic:
         if not os.path.exists(self.config.download_path):
             os.makedirs(self.config.download_path)
 
-        self.active_cmd = self.config.active_cmd.split(",")
-        self.exclude_dirs = set(self.config.exclude_dirs.split(","))
-        self.music_path_depth = self.config.music_path_depth
         self.continue_play = self.config.continue_play
 
     def setup_logger(self):
@@ -291,10 +286,6 @@ class XiaoMusic:
 
     async def check_replay(self, did):
         return await self.device_manager.devices[did].check_replay()
-
-    def find_real_music_name(self, name, n):
-        """模糊搜索音乐名称（委托给 music_library）"""
-        return self.music_library.find_real_music_name(name, n)
 
     def did_exist(self, did):
         return did in self.device_manager.devices
@@ -501,42 +492,15 @@ class XiaoMusic:
             name = search_key
 
         # 语音播放会根据歌曲匹配更新当前播放列表
-        return await self.do_play(
-            did, name, search_key, exact=True, update_cur_list=True
-        )
-
-    # 搜索播放：会产生临时播放列表
-    async def search_play(self, did="", arg1="", **kwargs):
-        parts = arg1.split("|")
-        search_key = parts[0]
-        name = parts[1] if len(parts) > 1 else search_key
-        if not name:
-            name = search_key
-
-        # 语音搜索播放会更新当前播放列表为临时播放列表
-        return await self.do_play(
-            did, name, search_key, exact=False, update_cur_list=False
-        )
+        return await self.do_play(did, name, search_key)
 
     # 后台搜索播放
-    async def do_play(
-        self, did, name, search_key="", exact=False, update_cur_list=False
-    ):
-        return await self.device_manager.devices[did].play(
-            name, search_key, exact, update_cur_list
-        )
+    async def do_play(self, did, name, search_key=""):
+        return await self.device_manager.devices[did].play(name, search_key)
 
     # 本地播放
     async def playlocal(self, did="", arg1="", **kwargs):
-        return await self.device_manager.devices[did].playlocal(
-            arg1, update_cur_list=True
-        )
-
-    # 本地搜索播放
-    async def search_playlocal(self, did="", arg1="", **kwargs):
-        return await self.device_manager.devices[did].playlocal(
-            arg1, exact=False, update_cur_list=False
-        )
+        return await self.device_manager.devices[did].playlocal(arg1)
 
     async def play_next(self, did="", **kwargs):
         return await self.device_manager.devices[did].play_next()
@@ -595,16 +559,6 @@ class XiaoMusic:
             return
         volume = int(arg1)
         return await self.device_manager.devices[did].set_volume(volume)
-
-    # 搜索音乐
-    def searchmusic(self, name):
-        """搜索音乐（委托给 music_library）"""
-        return self.music_library.searchmusic(name)
-
-    # 获取播放列表
-    def get_music_list(self):
-        """获取播放列表（委托给 music_library）"""
-        return self.music_library.get_music_list()
 
     # 获取当前的播放列表
     def get_cur_play_list(self, did):

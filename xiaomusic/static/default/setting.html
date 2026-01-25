@@ -319,7 +319,7 @@
               <input
                 id="active_cmd"
                 type="text"
-                value="play,search_play,set_play_type_rnd,playlocal,search_playlocal,play_music_list,play_music_list_index,stop_after_minute,stop,play_next,play_prev,set_play_type_one,set_play_type_all,set_play_type_sin,set_play_type_seq,gen_music_list,add_to_favorites,del_from_favorites,cmd_del_music,online_play,singer_play"
+                value="play,set_play_type_rnd,playlocal,play_music_list,play_music_list_index,stop_after_minute,stop,play_next,play_prev,set_play_type_one,set_play_type_all,set_play_type_sin,set_play_type_seq,gen_music_list,add_to_favorites,del_from_favorites,cmd_del_music,online_play,singer_play"
               />
             </div>
           </div>
@@ -329,9 +329,6 @@
           <h3 class="card-title">搜索与匹配配置</h3>
           <div class="card-content">
             <div class="rows">
-              <label for="search_music_count">搜索歌曲数量:</label>
-              <input id="search_music_count" type="number" value="100" />
-
               <label for="fuzzy_match_cutoff">模糊匹配阈值(0.1~0.9):</label>
               <input id="fuzzy_match_cutoff" type="number" value="0.6" />
 
@@ -479,20 +476,6 @@
                 type="text"
                 value="关机,暂停,停止,停止播放"
               />
-
-              <label for="keywords_search_playlocal"
-                >本地搜索播放口令(会产生临时播放列表):</label
-              >
-              <input
-                id="keywords_search_playlocal"
-                type="text"
-                value="本地搜索播放"
-              />
-
-              <label for="keywords_search_play"
-                >搜索播放口令(会产生临时播放列表):</label
-              >
-              <input id="keywords_search_play" type="text" value="搜索播放" />
 
               <label for="keywords_online_play"
                 >在线播放口令(在线搜索接口或插件):</label

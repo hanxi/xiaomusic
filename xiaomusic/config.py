@@ -110,7 +110,7 @@ class Config:
     )  # mutagen or ffprobe
     active_cmd: str = os.getenv(
         "XIAOMUSIC_ACTIVE_CMD",
-        "play,search_play,set_play_type_rnd,playlocal,search_playlocal,play_music_list,play_music_list_index,stop_after_minute,stop,play_next,play_prev,set_play_type_one,set_play_type_all,set_play_type_sin,set_play_type_seq,gen_music_list,add_to_favorites,del_from_favorites,cmd_del_music,online_play,singer_play",
+        "play,set_play_type_rnd,playlocal,play_music_list,play_music_list_index,stop_after_minute,stop,play_next,play_prev,set_play_type_one,set_play_type_all,set_play_type_sin,set_play_type_seq,gen_music_list,add_to_favorites,del_from_favorites,cmd_del_music,online_play,singer_play",
     )
     exclude_dirs: str = os.getenv("XIAOMUSIC_EXCLUDE_DIRS", "@eaDir,tmp")
     ignore_tag_dirs: str = os.getenv("XIAOMUSIC_IGNORE_TAG_DIRS", "")
@@ -148,11 +148,7 @@ class Config:
     keywords_playlocal: str = os.getenv(
         "XIAOMUSIC_KEYWORDS_PLAYLOCAL", "播放本地歌曲,本地播放歌曲"
     )
-    keywords_search_playlocal: str = os.getenv(
-        "XIAOMUSIC_KEYWORDS_SEARCH_PLAYLOCAL", "本地搜索播放"
-    )
     keywords_play: str = os.getenv("XIAOMUSIC_KEYWORDS_PLAY", "播放歌曲,放歌曲")
-    keywords_search_play: str = os.getenv("XIAOMUSIC_KEYWORDS_SEARCH_PLAY", "搜索播放")
     keywords_online_play: str = os.getenv("XIAOMUSIC_KEYWORDS_ONLINE_PLAY", "在线播放")
     keywords_singer_play: str = os.getenv("XIAOMUSIC_KEYWORDS_SINGER_PLAY", "播放歌手")
     keywords_stop: str = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止,停止播放")
@@ -223,8 +219,6 @@ class Config:
     enable_cmd_del_music: bool = (
         os.getenv("XIAOMUSIC_ENABLE_CMD_DEL_MUSIC", "false").lower() == "true"
     )
-    # 搜索歌曲数量
-    search_music_count: int = int(os.getenv("XIAOMUSIC_SEARCH_MUSIC_COUNT", "100"))
     # 网络歌曲使用proxy
     web_music_proxy: bool = (
         os.getenv("XIAOMUSIC_WEB_MUSIC_PROXY", "true").lower() == "true"
@@ -249,13 +243,11 @@ class Config:
             if k not in self.key_match_order:
                 self.key_match_order.append(k)
 
-    def init_keyword(self):
+    def init(self):
         self.key_match_order = default_key_match_order()
         self.key_word_dict = default_key_word_dict()
         self.append_keyword(self.keywords_playlocal, "playlocal")
-        self.append_keyword(self.keywords_search_playlocal, "search_playlocal")
         self.append_keyword(self.keywords_play, "play")
-        self.append_keyword(self.keywords_search_play, "search_play")
         self.append_keyword(self.keywords_online_play, "online_play")
         self.append_keyword(self.keywords_singer_play, "singer_play")
         self.append_keyword(self.keywords_stop, "stop")
@@ -265,6 +257,10 @@ class Config:
             x for x in self.key_match_order if x in self.key_word_dict
         ]
 
+        # 转换数据
+        self._active_cmd_arr = self.active_cmd.split(",") if self.active_cmd else []
+        self._exclude_dirs_set = set(self.exclude_dirs.split(","))
+
     def __post_init__(self) -> None:
         if self.proxy:
             validate_proxy(self.proxy)
@@ -272,7 +268,7 @@ class Config:
             if not self.hostname.startswith(("http://", "https://")):
                 self.hostname = f"http://{self.hostname}"  # 默认 http
 
-        self.init_keyword()
+        self.init()
         # 保存配置到 config-example.json 文件
         if self.enable_config_example:
             with open("config-example.json", "w") as f:
@@ -329,7 +325,13 @@ class Config:
             converted_value = self.convert_value(k, v, type_hints)
             if converted_value is not None:
                 setattr(self, k, converted_value)
-        self.init_keyword()
+        self.init()
+
+    def get_active_cmd_arr(self):
+        return self._active_cmd_arr
+
+    def get_exclude_dirs_set(self):
+        return self._exclude_dirs_set
 
     # 获取设置文件
     def getsettingfile(self):
