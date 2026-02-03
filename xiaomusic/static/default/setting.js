@@ -256,7 +256,7 @@ $(function () {
   });
 
   $("#auto-port").on("click", () => {
-    const port = window.location.port;
+    let port = window.location.port;
     if (port == 0) {
       const protocol = window.location.protocol;
       if (protocol == "https:") {
