@@ -827,6 +827,19 @@ class XiaoMusicDevice:
         self.log.info("get_volume. volume:%d", volume)
         return volume
 
+    async def get_player_status(self):
+        """获取完整播放状态"""
+        try:
+            playing_info = await self.auth_manager.mina_service.player_get_status(
+                self.device_id
+            )
+            self.log.info(f"get_player_status. playing_info:{playing_info}")
+            info = json.loads(playing_info.get("data", {}).get("info", "{}"))
+            return info
+        except Exception as e:
+            self.log.warning(f"Execption {e}")
+        return {"volume": 0, "status": 0}
+
     async def set_play_type(self, play_type, dotts=True):
         """设置播放类型"""
         self.device.play_type = play_type

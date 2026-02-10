@@ -32,6 +32,23 @@ async def getvolume(did: str = ""):
     return {"volume": volume}
 
 
+@router.get("/getplayerstatus")
+async def getplayerstatus(did: str = ""):
+    """获取完整播放状态
+
+    返回小米音箱的完整播放状态，包括：
+    - status: 播放状态 (0=停止, 1=播放)
+    - volume: 音量
+    - play_song_detail: 播放详情
+        - position: 当前播放位置（毫秒）
+        - duration: 总时长（毫秒）
+    """
+    if not xiaomusic.did_exist(did):
+        return {"status": 0, "volume": 0}
+
+    return await xiaomusic.get_player_status(did=did)
+
+
 @router.post("/setvolume")
 async def setvolume(data: DidVolume):
     """设置音量"""

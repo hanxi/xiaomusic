@@ -556,6 +556,10 @@ class XiaoMusic:
     async def get_volume(self, did="", **kwargs):
         return await self.device_manager.devices[did].get_volume()
 
+    # 获取完整播放状态
+    async def get_player_status(self, did="", **kwargs):
+        return await self.device_manager.devices[did].get_player_status()
+
     # 设置音量
     async def set_volume(self, did="", arg1=0, **kwargs):
         if did not in self.device_manager.devices:
