@@ -167,15 +167,28 @@ async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verificat
 
 @router.post("/downloadonemusic")
 async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verification)):
-    """下载单首歌曲"""
+    """下载单首歌曲
+
+    Args:
+        data.name: 文件名（可选）
+        data.url: 下载链接（必填）
+        data.dirname: 子目录名（可选），相对于下载目录
+    """
     try:
-        download_proc = await download_one_music(config, data.url, data.name)
+        download_proc = await download_one_music(
+            config, data.url, data.name, data.dirname
+        )
+
+        # 计算实际下载路径
+        download_path = config.download_path
+        if data.dirname:
+            download_path = os.path.join(config.download_path, data.dirname)
 
         async def check_download_proc():
             # 等待子进程完成
             exit_code = await download_proc.wait()
             log.info(f"Download completed with exit code {exit_code}")
-            chmoddir(config.download_path)
+            chmoddir(download_path)
 
         asyncio.create_task(check_download_proc())
         return {"ret": "OK"}
