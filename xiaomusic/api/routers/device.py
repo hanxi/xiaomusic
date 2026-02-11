@@ -21,6 +21,12 @@ from xiaomusic.api.models import (
 
 router = APIRouter(dependencies=[Depends(verification)])
 
+@router.get("/device_list")
+async def device_list():
+    """获取设备列表"""
+    await xiaomusic.auth_manager.init_all_data()
+    devices = await xiaomusic.auth_manager.try_update_device_id()
+    return {"devices": devices}
 
 @router.get("/getvolume")
 async def getvolume(did: str = ""):
