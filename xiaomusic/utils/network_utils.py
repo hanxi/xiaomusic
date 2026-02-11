@@ -191,7 +191,9 @@ async def download_playlist(config, url: str, dirname: str):
     return download_proc
 
 
-async def download_one_music(config, url: str, name: str = "", dirname: str = ""):
+async def download_one_music(
+    config, url: str, name: str = "", download_root: str | None = None
+):
     """
     下载单首歌曲
 
@@ -199,20 +201,16 @@ async def download_one_music(config, url: str, name: str = "", dirname: str = ""
         config: 配置对象
         url: 歌曲 URL
         name: 文件名（可选）
-        dirname: 子目录名（可选），相对于 download_path
+        download_root: 下载目录（可选），默认为 config.download_path
 
     Returns:
         下载进程对象
     """
-    # 计算下载路径
-    download_path = config.download_path
-    if dirname:
-        download_path = os.path.join(config.download_path, dirname)
-        os.makedirs(download_path, exist_ok=True)
-
     title = "%(title)s.%(ext)s"
     if name:
         title = f"{name}.%(ext)s"
+    download_root = download_root or config.download_path
+
     sbp_args = (
         "yt-dlp",
         "--no-playlist",
@@ -222,7 +220,7 @@ async def download_one_music(config, url: str, name: str = "", dirname: str = ""
         "--audio-quality",
         "0",
         "--paths",
-        download_path,
+        download_root,
         "-o",
         title,
         "--ffmpeg-location",
