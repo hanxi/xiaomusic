@@ -26,6 +26,8 @@ dependencies = [
     "miservice-fork",
     "edge-tts>=7.2.3",
     "psutil>=5.9.0",
+    "pycryptodome>=3.23.0",
+    "qrcode>=8.2"
 ]
 requires-python = ">=3.10"
 readme = "README.md"
