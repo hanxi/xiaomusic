@@ -151,6 +151,21 @@
                 </div>
               </div>
             </div>
+            <!-- 二维码登录面板 -->
+            <div class="auth-tab-content" id="tab-qrcode" role="tabpanel" aria-labelledby="qrcode-tab">
+                <div class="rows">
+                    <div class="form-item">
+                        <label>*扫码登录:</label>
+                        <!-- 显示二维码的容器：点击按钮后再显示 -->
+                        <div id="qrcode-container">
+                            <img id="qrcode-image" src="" alt="二维码" class="qrcode-image-hidden" />
+                            <p id="qrcode-status">点击下方按钮获取登录二维码</p>
+                        </div>
+                        <button id="refresh-qrcode">获取二维码</button>
+                        <button id="comfit-qrcode">已扫码</button>
+                    </div>
+                </div>
+            </div>
           </div>
 
           <!-- 公共配置项 -->

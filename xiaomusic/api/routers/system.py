@@ -45,7 +45,8 @@ from xiaomusic.utils.system_utils import (
 )
 
 router = APIRouter(dependencies=[Depends(verification)])
-
+auth_data_path = config.conf_path if config.conf_path else None
+mi_jia_api = MiJiaAPI(auth_data_path=auth_data_path)
 
 @router.get("/")
 async def read_index():
@@ -55,6 +56,53 @@ async def read_index():
     )  # xiaomusic 目录
     return FileResponse(f"{folder}/static/index.html")
 
+@router.get("/api/get_qrcode")
+async def get_qrcode():
+    """生成小米账号扫码登录用二维码，返回 base64 图片 URL。"""
+    try:
+        qrcode_data = mi_jia_api.get_qrcode()
+        # 已登录时 get_qrcode 返回 False，无需扫码
+        if qrcode_data is False:
+            return {
+                "success": True,
+                "already_logged_in": True,
+                "qrcode_url": "",
+                "message": "已登录，无需扫码",
+            }
+
+        # 优先使用小米返回的官方二维码图片 URL，与扫码内容一致且最可靠
+        print(qrcode_data)
+        if qrcode_data.get("qr"):
+            qrcode_url = qrcode_data["qr"]
+        else:
+            # 无 qr 时用 loginUrl 本地生成二维码图
+            qr = QRCode(version=1, box_size=8, border=2)
+            qr.add_data(qrcode_data["loginUrl"])
+            qr.make(fit=True)
+            img = qr.make_image(fill_color="black", back_color="white")
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            buf.seek(0)
+            b64 = base64.b64encode(buf.read()).decode("ascii")
+            qrcode_url = f"data:image/png;base64,{b64}"
+        # 返回二维码的同时，在后台启动 get_logint_status，不阻塞本次响应
+        asyncio.create_task(get_logint_status(qrcode_data["lp"]))
+        return {
+            "success": True,
+            "qrcode_url": qrcode_url,
+            "status_url": qrcode_data.get("lp", ""),
+        }
+    except Exception as e:
+        log.exception("get_qrcode failed: %s", e)
+        return {"success": False, "message": str(e)}
+
+
+async def get_logint_status(lp: str):
+    """轮询获取扫码登录状态"""
+    try:
+        await asyncio.to_thread(mi_jia_api.get_logint_status, lp)
+    except ValueError as e:
+        log.exception("get_logint_status failed: %s", e)
 
 @router.get("/getversion")
 def getversion():

@@ -514,3 +514,40 @@ $(function () {
     }
   });
 });
+
+// 获取二维码的函数（点击「获取二维码」后再请求并显示）
+function fetchQRCode() {
+  const qrcodeImage = document.getElementById("qrcode-image");
+  const qrcodeStatus = document.getElementById("qrcode-status");
+  const refreshBtn = document.getElementById("refresh-qrcode");
+
+  if (!qrcodeImage || !qrcodeStatus) return;
+
+  qrcodeImage.src = "";
+  qrcodeStatus.textContent = "正在生成二维码...";
+  if (refreshBtn) refreshBtn.textContent = "刷新二维码";
+
+  fetch("/api/get_qrcode")
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        if (data.already_logged_in) {
+          qrcodeStatus.textContent = data.message || "已登录，无需扫码";
+          qrcodeImage.classList.add("qrcode-image-hidden");
+        } else {
+          qrcodeImage.src = data.qrcode_url || "";
+          qrcodeImage.classList.remove("qrcode-image-hidden");
+          qrcodeStatus.textContent = "请使用米家App扫码登录，扫码成功后请刷新页面以获取设备列表";
+        }
+      } else {
+        qrcodeStatus.textContent = data.message || "二维码生成失败，请稍后重试";
+      }
+    })
+    .catch((error) => {
+      console.error("获取二维码失败:", error);
+      qrcodeStatus.textContent = "网络错误，请检查连接";
+    });
+  // 显示二维码区域并进入加载状态
+
+
+}
