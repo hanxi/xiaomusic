@@ -1095,3 +1095,7 @@ hr {
   -webkit-font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
 }
+/* 二维码登录：未点击获取前不显示图片 */
+#qrcode-container .qrcode-image-hidden {
+  display: none !important;
+}
