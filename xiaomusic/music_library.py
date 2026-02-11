@@ -229,10 +229,61 @@ class MusicLibrary:
 
             # 合并新的自定义歌单
             custom_play_list = self.get_custom_play_list()
+            custom_play_list, changed = self._normalize_custom_playlist_conflicts(
+                custom_play_list
+            )
+            if changed:
+                self.custom_play_list = custom_play_list
+                self.config.custom_play_list_json = json.dumps(
+                    custom_play_list, ensure_ascii=False
+                )
+
             for k, v in custom_play_list.items():
                 self.music_list[k] = list(v)
         except Exception as e:
             self.log.exception(f"Execption {e}")
+
+    def _is_reserved_playlist_name(self, name):
+        """判断是否与系统/目录歌单冲突（自定义歌单不可占用）"""
+        return name in self.default_music_list_names
+
+    def _build_custom_conflict_name(self, base_name, existed_names):
+        """为冲突的自定义歌单生成可用的新名称"""
+        suffix = "(自定义)"
+        candidate = f"{base_name}{suffix}"
+        if candidate not in existed_names:
+            return candidate
+
+        index = 2
+        while True:
+            candidate = f"{base_name}{suffix}{index}"
+            if candidate not in existed_names:
+                return candidate
+            index += 1
+
+    def _normalize_custom_playlist_conflicts(self, custom_play_list):
+        """清理历史同名冲突：目录/系统歌单名被自定义占用时自动改名"""
+        normalized = {}
+        changed = False
+
+        reserved_names = set(self.default_music_list_names)
+        occupied_names = set(reserved_names)
+
+        for name, musics in custom_play_list.items():
+            final_name = name
+            if final_name in reserved_names or final_name in occupied_names:
+                final_name = self._build_custom_conflict_name(name, occupied_names)
+                changed = True
+                self.log.info(
+                    "自定义歌单名与系统/目录歌单冲突，已自动改名: %s -> %s",
+                    name,
+                    final_name,
+                )
+
+            occupied_names.add(final_name)
+            normalized[final_name] = list(musics)
+
+        return normalized, changed
 
     def get_custom_play_list(self):
         """获取自定义播放列表
@@ -269,6 +320,9 @@ class MusicLibrary:
             bool: 是否成功
         """
         custom_play_list = self.get_custom_play_list()
+        if self._is_reserved_playlist_name(name):
+            self.log.info(f"歌单名字与系统/目录歌单冲突 {name}")
+            return False
         if name in custom_play_list:
             return False
         custom_play_list[name] = []
@@ -304,6 +358,9 @@ class MusicLibrary:
         custom_play_list = self.get_custom_play_list()
         if oldname not in custom_play_list:
             self.log.info(f"旧歌单名字不存在 {oldname}")
+            return False
+        if self._is_reserved_playlist_name(newname):
+            self.log.info(f"新歌单名字与系统/目录歌单冲突 {newname}")
             return False
         if newname in custom_play_list:
             self.log.info(f"新歌单名字已存在 {newname}")
