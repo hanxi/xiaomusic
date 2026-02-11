@@ -79,6 +79,8 @@ class AuthManager:
             return True
         if self.get_cookie():
             return True
+        if os.path.isfile(os.path.join(self.config.conf_path, "auth.json")):
+            return True
         self.log.warning("没有账号密码 或 cookies 无法登陆")
         return False
 
@@ -166,16 +168,25 @@ class AuthManager:
         """
         设置token到account
         """
-        if not self.config.cookie:
+        auth_path = os.path.join(self.config.conf_path, "auth.json")
+        if os.path.isfile(auth_path):
+            with open(auth_path, encoding="utf-8") as f:
+                user_data = json.loads(f.read())
+                self.device_id = user_data["deviceId"]
+                account.token = {
+                    "passToken": user_data["passToken"],
+                    "userId": user_data["userId"],
+                    "deviceId": self.device_id,
+                }
+        elif self.config.cookie:
+            cookies_dict = parse_cookie_string_to_dict(self.config.cookie)
+            account.token = {
+                "passToken": cookies_dict["passToken"],
+                "userId": cookies_dict["userId"],
+                "deviceId": self.device_id,
+            }
+        else:
             return
-        cookies_dict = parse_cookie_string_to_dict(self.config.cookie)
-        account.token = {
-            "passToken": cookies_dict["passToken"],
-            "userId": cookies_dict["userId"],
-            "deviceId": self.device_id,
-        }
-        self.log.info(f"设置token到account:{account.token}")
-
     def get_cookie(self):
         """获取Cookie
 
