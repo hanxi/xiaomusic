@@ -166,29 +166,28 @@ $(function () {
     autoSelectOne();
   });
 
-  $("#refresh-device-list").on("click", function () {
+    $("#update-devices").on("click", function () {
     var $btn = $(this);
     var oldText = $btn.text();
-    $btn.prop("disabled", true).text("获取中…");
-    $.get("/device_list", function (data) {
-      var accountPassValid = !!($("#account").val() && $("#password").val());
-      var currentMiDid = getSelectedDids("#mi_did");
-      // /device_list 返回 { devices: { did: Device } }，转为 updateCheckbox 需要的 [ { miotDID, hardware, name } ]
-      var raw = data.devices || {};
-      var deviceList = Object.keys(raw).map(function (did) {
-        var d = raw[did];
-        return { miotDID: d.did || did, hardware: d.hardware || "", name: d.name || "" };
-      });
-      updateCheckbox("#mi_did", currentMiDid, deviceList, accountPassValid);
-      autoSelectOne();
-    })
+    $btn.prop("disabled", true).text("更新中…");
+    $.get("/device_list")
+      .done(function (data) {
+        var currentMiDid = getSelectedDids("#mi_did");
+        var raw = data.devices || {};
+        var deviceList = Object.keys(raw).map(function (did) {
+          var d = raw[did];
+          return { miotDID: d.did || did, hardware: d.hardware || "", name: d.name || "" };
+        });
+        updateCheckbox("#mi_did", currentMiDid, deviceList);
+      })
       .fail(function (xhr) {
-        alert("获取设备列表失败: " + (xhr.responseJSON && xhr.responseJSON.detail ? xhr.responseJSON.detail : xhr.statusText));
+        alert("更新设备列表失败: " + (xhr.responseJSON && xhr.responseJSON.detail ? xhr.responseJSON.detail : xhr.statusText));
       })
       .always(function () {
         $btn.prop("disabled", false).text(oldText);
       });
   });
+
 
   $(".save-button").on("click", () => {
     var setting = $("#setting");
