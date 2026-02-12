@@ -24,8 +24,7 @@ router = APIRouter(dependencies=[Depends(verification)])
 @router.get("/device_list")
 async def device_list():
     """获取设备列表"""
-    await xiaomusic.auth_manager.init_all_data()
-    devices = await xiaomusic.auth_manager.try_update_device_id()
+    devices = await xiaomusic.getalldevices()
     return {"devices": devices}
 
 @router.get("/getvolume")
