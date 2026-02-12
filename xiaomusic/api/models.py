@@ -57,6 +57,7 @@ class DownloadOneMusic(BaseModel):
     name: str = ""
     url: str
     dirname: str = ""
+    playlist_name: str = ""
 
 
 class PlayListObj(BaseModel):
