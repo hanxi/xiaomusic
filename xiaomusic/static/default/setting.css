@@ -21,6 +21,7 @@
   word-wrap: normal;
   direction: ltr;
   -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
   visibility: hidden;
 }
@@ -485,6 +486,11 @@ button.mini-button {
 /* 添加图标支持 */
 .auth-tab-button .material-icons {
   font-size: 18px !important;
+  width: 20px;
+  min-width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .auth-tab-panels {
@@ -520,18 +526,36 @@ button.mini-button {
 /* 移动端适配 */
 @media (max-width: 640px) {
   .auth-tabs {
-    gap: 8px;
-    padding: 4px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 6px;
   }
 
   .auth-tab-button {
-    padding: 12px 12px !important;
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: center;
+    justify-content: initial;
+    padding: 12px 14px !important;
     font-size: 13px !important;
-    gap: 6px;
+    column-gap: 8px;
+    text-align: left;
   }
 
   .auth-tab-button .material-icons {
-    font-size: 18px !important;
+    font-size: 17px !important;
+    width: 18px;
+    min-width: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .auth-tab-button > span:last-child {
+    min-width: 0;
+    text-align: left;
   }
 }
 
@@ -1160,6 +1184,7 @@ hr {
   word-wrap: normal;
   direction: ltr;
   -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
 }
 
@@ -1176,5 +1201,6 @@ hr {
   word-wrap: normal;
   direction: ltr;
   -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
 }
