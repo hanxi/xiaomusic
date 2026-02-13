@@ -1,10 +1,47 @@
 // 获取二维码的函数（点击「获取二维码」后再请求并显示）
+let qrcodeCountdownTimer = null;
+const DEFAULT_QRCODE_EXPIRE_SECONDS = 120;
+
+function stopQRCodeCountdown() {
+  if (qrcodeCountdownTimer) {
+    clearInterval(qrcodeCountdownTimer);
+    qrcodeCountdownTimer = null;
+  }
+}
+
+function startQRCodeCountdown($qrcodeStatus, $qrcodeImage, expireSeconds) {
+  stopQRCodeCountdown();
+
+  let remainSeconds = Number(expireSeconds);
+  if (!Number.isFinite(remainSeconds) || remainSeconds <= 0) {
+    remainSeconds = DEFAULT_QRCODE_EXPIRE_SECONDS;
+  }
+  remainSeconds = Math.floor(remainSeconds);
+
+  const updateCountdownText = function () {
+    if (remainSeconds <= 0) {
+      stopQRCodeCountdown();
+      $qrcodeImage.addClass("qrcode-image-hidden");
+      $qrcodeStatus.text("二维码已过期，请点击“刷新二维码”重新获取");
+      return;
+    }
+    $qrcodeStatus.text(
+      "请使用米家App扫码登录，二维码将在 " + remainSeconds + " 秒后过期"
+    );
+    remainSeconds -= 1;
+  };
+
+  updateCountdownText();
+  qrcodeCountdownTimer = setInterval(updateCountdownText, 1000);
+}
+
 function fetchQRCode() {
   var $qrcodeImage = $("#qrcode-image");
   var $qrcodeStatus = $("#qrcode-status");
   var $refreshBtn = $("#refresh-qrcode");
 
   if (!$qrcodeImage.length || !$qrcodeStatus.length) return;
+  stopQRCodeCountdown();
 
   $qrcodeImage.attr("src", "");
   $qrcodeStatus.text("正在生成二维码...");
@@ -18,7 +55,7 @@ function fetchQRCode() {
           $qrcodeImage.addClass("qrcode-image-hidden");
         } else {
           $qrcodeImage.attr("src", data.qrcode_url || "").removeClass("qrcode-image-hidden");
-          $qrcodeStatus.text("请使用米家App扫码登录，扫码成功后请刷新页面以获取设备列表");
+          startQRCodeCountdown($qrcodeStatus, $qrcodeImage, data.expire_seconds);
         }
       } else {
         $qrcodeStatus.text(data.message || "二维码生成失败，请稍后重试");
