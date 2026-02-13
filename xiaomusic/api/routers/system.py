@@ -1,5 +1,5 @@
 """系统管理路由"""
-
+import asyncio
 import json
 import os
 import io
@@ -44,7 +44,7 @@ from xiaomusic.utils.system_utils import (
     restart_xiaomusic,
     update_version,
 )
-
+from xiaomusic.qrcode_login import MiJiaAPI
 router = APIRouter(dependencies=[Depends(verification)])
 auth_data_path = config.conf_path if config.conf_path else None
 mi_jia_api = MiJiaAPI(auth_data_path=auth_data_path)
@@ -92,6 +92,7 @@ async def get_qrcode():
             "success": True,
             "qrcode_url": qrcode_url,
             "status_url": qrcode_data.get("lp", ""),
+            "expire_seconds": config.qrcode_timeout,
         }
     except Exception as e:
         log.exception("get_qrcode failed: %s", e)

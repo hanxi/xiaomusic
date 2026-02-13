@@ -1,6 +1,75 @@
+// 获取二维码的函数（点击「获取二维码」后再请求并显示）
+let qrcodeCountdownTimer = null;
+const DEFAULT_QRCODE_EXPIRE_SECONDS = 120;
+
+function stopQRCodeCountdown() {
+  if (qrcodeCountdownTimer) {
+    clearInterval(qrcodeCountdownTimer);
+    qrcodeCountdownTimer = null;
+  }
+}
+
+function startQRCodeCountdown($qrcodeStatus, $qrcodeImage, expireSeconds) {
+  stopQRCodeCountdown();
+
+  let remainSeconds = Number(expireSeconds);
+  if (!Number.isFinite(remainSeconds) || remainSeconds <= 0) {
+    remainSeconds = DEFAULT_QRCODE_EXPIRE_SECONDS;
+  }
+  remainSeconds = Math.floor(remainSeconds);
+
+  const updateCountdownText = function () {
+    if (remainSeconds <= 0) {
+      stopQRCodeCountdown();
+      $qrcodeImage.addClass("qrcode-image-hidden");
+      $qrcodeStatus.text("二维码已过期，请点击“刷新二维码”重新获取");
+      return;
+    }
+    $qrcodeStatus.text(
+      "请使用米家App扫码登录，二维码将在 " + remainSeconds + " 秒后过期"
+    );
+    remainSeconds -= 1;
+  };
+
+  updateCountdownText();
+  qrcodeCountdownTimer = setInterval(updateCountdownText, 1000);
+}
+
+function fetchQRCode() {
+  var $qrcodeImage = $("#qrcode-image");
+  var $qrcodeStatus = $("#qrcode-status");
+  var $refreshBtn = $("#refresh-qrcode");
+
+  if (!$qrcodeImage.length || !$qrcodeStatus.length) return;
+  stopQRCodeCountdown();
+
+  $qrcodeImage.attr("src", "");
+  $qrcodeStatus.text("正在生成二维码...");
+  $refreshBtn.text("刷新二维码");
+
+  $.get("/api/get_qrcode")
+    .done(function (data) {
+      if (data.success) {
+        if (data.already_logged_in) {
+          $qrcodeStatus.text(data.message || "已登录，无需更新");
+          $qrcodeImage.addClass("qrcode-image-hidden");
+        } else {
+          $qrcodeImage.attr("src", data.qrcode_url || "").removeClass("qrcode-image-hidden");
+          startQRCodeCountdown($qrcodeStatus, $qrcodeImage, data.expire_seconds);
+        }
+      } else {
+        $qrcodeStatus.text(data.message || "二维码生成失败，请稍后重试");
+      }
+    })
+    .fail(function (xhr) {
+      console.error("获取二维码失败:", xhr);
+      $qrcodeStatus.text("网络错误，请检查连接");
+    });
+}
+
 // ============ 字体加载检测 ============
 // 检测字体加载完成，避免图标文字闪烁
-(function() {
+(function () {
   // 使用 Promise.race 实现超时保护
   const fontLoadTimeout = new Promise(resolve => {
     setTimeout(() => {
@@ -24,6 +93,8 @@
 })();
 
 $(function () {
+  $("#refresh-qrcode").on("click", fetchQRCode);
+
   // 拉取版本
   $.get("/getversion", function (data, status) {
     console.log(data, status, data["version"]);
@@ -94,13 +165,28 @@ $(function () {
     return selectedDids.join(",");
   }
 
-  // 拉取现有配置
-  $.get("/getsetting?need_device_list=true", function (data, status) {
-    console.log(data, status);
-    const accountPassValid = data.account && data.password;
-    updateCheckbox("#mi_did", data.mi_did, data.device_list, accountPassValid);
+  // 获取设备列表（供“获取设备列表”按钮和初始加载共用）
+  function fetchDeviceList(callback) {
+    $.get("/getsetting?need_device_list=true", function (data, status) {
+      if (typeof callback === "function") {
+        callback(data, status);
+      }
+    }).fail(function (xhr) {
+      alert(
+        "获取设备列表失败: " +
+          (xhr.responseJSON && xhr.responseJSON.detail
+            ? xhr.responseJSON.detail
+            : xhr.statusText)
+      );
+    });
+  }
 
-    // 初始化显示
+  // 初始加载：拉取配置并填充表单与设备列表
+  fetchDeviceList(function (data, status) {
+    console.log(data, status);
+    var accountPassValid = data.account && data.password;
+    updateCheckbox("#mi_did", data.mi_did || "", data.device_list || [], accountPassValid);
+
     for (const key in data) {
       const $element = $("#" + key);
       if ($element.length) {
@@ -116,6 +202,29 @@ $(function () {
 
     autoSelectOne();
   });
+
+    $("#update-devices").on("click", function () {
+    var $btn = $(this);
+    var oldText = $btn.text();
+    $btn.prop("disabled", true).text("更新中…");
+    $.get("/device_list")
+      .done(function (data) {
+        var currentMiDid = getSelectedDids("#mi_did");
+        var raw = data.devices || {};
+        var deviceList = Object.keys(raw).map(function (did) {
+          var d = raw[did];
+          return { miotDID: d.did || did, hardware: d.hardware || "", name: d.name || "" };
+        });
+        updateCheckbox("#mi_did", currentMiDid, deviceList);
+      })
+      .fail(function (xhr) {
+        alert("更新设备列表失败: " + (xhr.responseJSON && xhr.responseJSON.detail ? xhr.responseJSON.detail : xhr.statusText));
+      })
+      .always(function () {
+        $btn.prop("disabled", false).text(oldText);
+      });
+  });
+
 
   $(".save-button").on("click", () => {
     var setting = $("#setting");
@@ -309,6 +418,25 @@ $(function () {
     // 添加当前 active 类
     $(this).addClass("active");
     $("#tab-" + tabName).addClass("active");
+  });
+
+  // 高级配置 Tab 切换：委托到高级配置容器，阻止冒泡并强制切换面板
+  $("#advancedConfigContent").on("click", ".config-tab-button", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    var $btn = $(this);
+    var panelId = $btn.attr("aria-controls") || ("tab-" + $btn.data("tab"));
+    if (!panelId) return;
+
+    $("#advancedConfigContent .config-tab-button").removeClass("active").attr("aria-selected", "false");
+    $btn.addClass("active").attr("aria-selected", "true");
+
+    $("#advancedConfigContent .config-tab-content").removeClass("active");
+    var $panel = $("#" + panelId);
+    if ($panel.length) {
+      $panel.addClass("active");
+    }
   });
 
   // 功能操作区域折叠功能
@@ -514,40 +642,3 @@ $(function () {
     }
   });
 });
-
-// 获取二维码的函数（点击「获取二维码」后再请求并显示）
-function fetchQRCode() {
-  const qrcodeImage = document.getElementById("qrcode-image");
-  const qrcodeStatus = document.getElementById("qrcode-status");
-  const refreshBtn = document.getElementById("refresh-qrcode");
-
-  if (!qrcodeImage || !qrcodeStatus) return;
-
-  qrcodeImage.src = "";
-  qrcodeStatus.textContent = "正在生成二维码...";
-  if (refreshBtn) refreshBtn.textContent = "刷新二维码";
-
-  fetch("/api/get_qrcode")
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success) {
-        if (data.already_logged_in) {
-          qrcodeStatus.textContent = data.message || "已登录，无需扫码";
-          qrcodeImage.classList.add("qrcode-image-hidden");
-        } else {
-          qrcodeImage.src = data.qrcode_url || "";
-          qrcodeImage.classList.remove("qrcode-image-hidden");
-          qrcodeStatus.textContent = "请使用米家App扫码登录，扫码成功后请刷新页面以获取设备列表";
-        }
-      } else {
-        qrcodeStatus.textContent = data.message || "二维码生成失败，请稍后重试";
-      }
-    })
-    .catch((error) => {
-      console.error("获取二维码失败:", error);
-      qrcodeStatus.textContent = "网络错误，请检查连接";
-    });
-  // 显示二维码区域并进入加载状态
-
-
-}

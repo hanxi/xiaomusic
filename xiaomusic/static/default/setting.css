@@ -21,6 +21,7 @@
   word-wrap: normal;
   direction: ltr;
   -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
   visibility: hidden;
 }
@@ -209,19 +210,19 @@ body {
   }
 }
 
-/* 表单元素样式 */
-.setting-card label {
+/* 表单元素样式（.setting-panel 统一基础设置与高级 Tab 内表单样式） */
+.setting-panel label {
   margin-bottom: 6px;
   font-size: 14px;
   color: #555;
   font-weight: 500;
 }
 
-.setting-card input[type="text"],
-.setting-card input[type="password"],
-.setting-card input[type="number"],
-.setting-card select,
-.setting-card textarea {
+.setting-panel input[type="text"],
+.setting-panel input[type="password"],
+.setting-panel input[type="number"],
+.setting-panel select,
+.setting-panel textarea {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #ddd;
@@ -234,24 +235,24 @@ body {
     box-shadow 0.2s ease;
 }
 
-.setting-card input[type="text"]:focus,
-.setting-card input[type="password"]:focus,
-.setting-card input[type="number"]:focus,
-.setting-card select:focus,
-.setting-card textarea:focus {
+.setting-panel input[type="text"]:focus,
+.setting-panel input[type="password"]:focus,
+.setting-panel input[type="number"]:focus,
+.setting-panel select:focus,
+.setting-panel textarea:focus {
   outline: none;
   border-color: #007bff;
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-.setting-card textarea {
+.setting-panel textarea {
   min-height: 120px;
   resize: vertical;
   font-family: monospace;
 }
 
-/* 按钮样式 */
-.setting-card button,
+/* 按钮样式（面板内按钮与 header/footer 统一） */
+.setting-panel button,
 .header-buttons button,
 .setting-footer button {
   background-color: #007bff;
@@ -271,20 +272,20 @@ body {
   gap: 6px;
 }
 
-.setting-card button:hover,
+.setting-panel button:hover,
 .header-buttons button:hover,
 .setting-footer button:hover {
   background-color: #0056b3;
 }
 
-.setting-card button:active,
+.setting-panel button:active,
 .header-buttons button:active,
 .setting-footer button:active {
   transform: translateY(1px);
 }
 
 /* 小按钮样式 */
-.setting-card button.mini-button,
+.setting-panel button.mini-button,
 button.mini-button {
   padding: 4px 10px !important;
   font-size: 12px !important;
@@ -298,14 +299,14 @@ button.mini-button {
 }
 
 @media (max-width: 640px) {
-  .setting-card button,
+  .setting-panel button,
   .header-buttons button,
   .setting-footer button {
     padding: 12px 16px;
     min-height: 44px;
   }
 
-  .setting-card button.mini-button,
+  .setting-panel button.mini-button,
   button.mini-button {
     padding: 8px 12px !important;
     font-size: 13px !important;
@@ -318,6 +319,11 @@ button.mini-button {
 }
 
 /* 设备选择区域 */
+#refresh-device-list {
+  margin-left: 10px;
+  margin-bottom: 8px;
+}
+
 .device-selection {
   display: flex;
   flex-wrap: wrap;
@@ -480,6 +486,11 @@ button.mini-button {
 /* 添加图标支持 */
 .auth-tab-button .material-icons {
   font-size: 18px !important;
+  width: 20px;
+  min-width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .auth-tab-panels {
@@ -495,6 +506,31 @@ button.mini-button {
   display: block;
 }
 
+/* 二维码登录：未点击获取前不显示图片 */
+#qrcode-container .qrcode-image-hidden {
+  display: none !important;
+}
+
+#qrcode-container {
+  width: 100%;
+  max-width: 320px;
+}
+
+#qrcode-image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 8px 0 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#qrcode-status {
+  overflow-wrap: anywhere;
+}
+
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -509,18 +545,110 @@ button.mini-button {
 /* 移动端适配 */
 @media (max-width: 640px) {
   .auth-tabs {
-    gap: 8px;
-    padding: 4px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 6px;
   }
 
   .auth-tab-button {
-    padding: 12px 12px !important;
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: center;
+    justify-content: initial;
+    padding: 12px 14px !important;
     font-size: 13px !important;
-    gap: 6px;
+    column-gap: 8px;
+    text-align: left;
   }
 
   .auth-tab-button .material-icons {
-    font-size: 18px !important;
+    font-size: 17px !important;
+    width: 18px;
+    min-width: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .auth-tab-button > span:last-child {
+    min-width: 0;
+    text-align: left;
+  }
+
+  #qrcode-container {
+    max-width: 260px;
+  }
+}
+
+/* 高级配置 Tab 切换 */
+.config-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 4px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+}
+
+.config-tab-button {
+  flex: 0 1 auto;
+  min-width: 0;
+  background: transparent !important;
+  border: none !important;
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #6c757d !important;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border-radius: 8px !important;
+  z-index: 1;
+  transform: none !important;
+}
+
+.config-tab-button:hover {
+  color: #495057 !important;
+  background: transparent !important;
+}
+
+.config-tab-button.active {
+  color: #007bff !important;
+  font-weight: 600 !important;
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.config-tab-panels {
+  position: relative;
+}
+
+.config-tab-content {
+  display: none !important;
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.config-tab-content.active {
+  display: block !important;
+}
+
+.config-tab-content .card-content {
+  margin-top: 0;
+  padding: 0 20px 20px 20px;
+}
+
+@media (max-width: 640px) {
+  .config-tabs {
+    gap: 6px;
+    padding: 4px;
+  }
+
+  .config-tab-button {
+    padding: 8px 10px !important;
+    font-size: 12px !important;
   }
 }
 
@@ -882,12 +1010,14 @@ footer a:hover {
   }
 }
 
-/* 链接样式 */
+/* 链接样式（面板内与卡片内统一） */
+.setting-panel a,
 .setting-card a {
   color: #007bff;
   text-decoration: none;
 }
 
+.setting-panel a:hover,
 .setting-card a:hover {
   text-decoration: underline;
 }
@@ -1077,6 +1207,7 @@ hr {
   word-wrap: normal;
   direction: ltr;
   -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
 }
 
@@ -1093,9 +1224,6 @@ hr {
   word-wrap: normal;
   direction: ltr;
   -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
-}
-/* 二维码登录：未点击获取前不显示图片 */
-#qrcode-container .qrcode-image-hidden {
-  display: none !important;
 }
