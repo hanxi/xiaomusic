@@ -511,6 +511,25 @@ button.mini-button {
   display: none !important;
 }
 
+#qrcode-container {
+  width: 100%;
+  max-width: 320px;
+}
+
+#qrcode-image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 8px 0 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#qrcode-status {
+  overflow-wrap: anywhere;
+}
+
 
 @keyframes fadeInUp {
   from {
@@ -556,6 +575,10 @@ button.mini-button {
   .auth-tab-button > span:last-child {
     min-width: 0;
     text-align: left;
+  }
+
+  #qrcode-container {
+    max-width: 260px;
   }
 }
 
