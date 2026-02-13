@@ -43,7 +43,7 @@ from xiaomusic.utils.system_utils import (
     restart_xiaomusic,
     update_version,
 )
-
+from xiaomusic.qrcode_login import MiJiaAPI
 router = APIRouter(dependencies=[Depends(verification)])
 auth_data_path = config.conf_path if config.conf_path else None
 mi_jia_api = MiJiaAPI(auth_data_path=auth_data_path)
