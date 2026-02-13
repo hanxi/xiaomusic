@@ -3,6 +3,7 @@ import asyncio
 import json
 import os
 import io
+import base64
 import shutil
 import tempfile
 from dataclasses import (
