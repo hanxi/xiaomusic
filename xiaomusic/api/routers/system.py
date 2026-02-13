@@ -2,12 +2,13 @@
 import asyncio
 import json
 import os
+import io
 import shutil
 import tempfile
 from dataclasses import (
     asdict,
 )
-
+from qrcode.main import QRCode
 from fastapi import (
     APIRouter,
     Depends,
@@ -81,7 +82,7 @@ async def get_qrcode():
             qr.make(fit=True)
             img = qr.make_image(fill_color="black", back_color="white")
             buf = io.BytesIO()
-            img.save(buf, format="PNG")
+            img.save(buf, "PNG")
             buf.seek(0)
             b64 = base64.b64encode(buf.read()).decode("ascii")
             qrcode_url = f"data:image/png;base64,{b64}"
