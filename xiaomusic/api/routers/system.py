@@ -91,6 +91,7 @@ async def get_qrcode():
             "success": True,
             "qrcode_url": qrcode_url,
             "status_url": qrcode_data.get("lp", ""),
+            "expire_seconds": config.qrcode_timeout,
         }
     except Exception as e:
         log.exception("get_qrcode failed: %s", e)
