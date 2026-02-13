@@ -172,9 +172,13 @@ async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verificat
     Args:
         data.name: 文件名（可选）
         data.url: 下载链接（必填）
-        data.dirname: 子目录名（可选），相对于 music 根目录
+        data.dirname: 子目录名（可选，兼容字段），相对于 music 根目录
+        data.playlist_name: 下载成功后要关联的歌单名（可选）
     """
     try:
+        pre_all_music_names = set(xiaomusic.music_library.all_music.keys())
+        playlist_name = (data.playlist_name or "").strip()
+
         download_root = config.download_path
         if data.dirname:
             download_root = safe_join_path(config.music_path, data.dirname)
@@ -191,10 +195,60 @@ async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verificat
             # 等待子进程完成
             exit_code = await download_proc.wait()
             log.info(f"Download completed with exit code {exit_code}")
+
+            if exit_code != 0:
+                return
+
             try:
                 chmoddir(download_root)
             except Exception:
                 pass
+
+            try:
+                xiaomusic.music_library.gen_all_music_list()
+                xiaomusic.update_all_playlist()
+            except Exception as e:
+                log.exception(f"refresh music list failed after download: {e}")
+                return
+
+            if not playlist_name:
+                return
+
+            resolved_music_name = ""
+            if data.name and data.name in xiaomusic.music_library.all_music:
+                resolved_music_name = data.name
+            else:
+                new_music_names = [
+                    name
+                    for name in xiaomusic.music_library.all_music.keys()
+                    if name not in pre_all_music_names
+                ]
+                if len(new_music_names) == 1:
+                    resolved_music_name = new_music_names[0]
+                elif data.name:
+                    for name in new_music_names:
+                        if name.startswith(data.name):
+                            resolved_music_name = name
+                            break
+
+            if not resolved_music_name:
+                log.warning(
+                    f"download succeeded but failed to resolve music name for playlist: {playlist_name}"
+                )
+                return
+
+            added = xiaomusic.music_library.play_list_add_music(
+                playlist_name, [resolved_music_name]
+            )
+            if added:
+                xiaomusic.update_all_playlist()
+                log.info(
+                    f"downloadonemusic auto add success: {resolved_music_name} -> {playlist_name}"
+                )
+            else:
+                log.warning(
+                    f"downloadonemusic auto add failed: {resolved_music_name} -> {playlist_name}"
+                )
 
         asyncio.create_task(check_download_proc())
         return {"ret": "OK"}
