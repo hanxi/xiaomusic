@@ -1,5 +1,21 @@
 # 版本日志
 
+## v0.4.23 (2026-02-17)
+
+### Feat
+
+- **api**: support playlist_name in downloadonemusic (#756)
+- **api**: support downloadonemusic dirname under music_path (#751)
+- 二维码登录功能 (#750)
+- add dirname parameter to /downloadonemusic API (#749)
+- add /getplayerstatus API to get full player status (#747)
+
+### Fix
+
+- 漏提交base64 (#761)
+- **playlist**: avoid custom/folder name collisions (#752)
+- 点击 本地端口-自动填功能 报错 #742
+
 ## v0.4.22 (2026-01-26)
 
 ### Feat
