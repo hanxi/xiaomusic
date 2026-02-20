@@ -107,6 +107,8 @@ docker run -p 58090:8090 -v /xiaomusic_music:/app/music -v /xiaomusic_conf:/app/
 
 遇到问题可以去 web 设置页面底部点击【下载日志文件】按钮，然后搜索一下日志文件内容确保里面没有账号密码信息后(有就删除这些敏感信息)，然后在提 issues 反馈问题时把下载的日志文件带上。
 
+> [!TIP]
+> 作者新写了一个更简洁的个人音乐服务器，支持更强的插件扩展 <https://github.com/mimusic-org/mimusic>
 
 > [!TIP]
 > 作者写的一个游戏服务器开发实战课程 <https://www.lanqiao.cn/courses/2770> ，购买时记得使用优惠码: `2CZ2UA5u` 。
