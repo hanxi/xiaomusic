@@ -5,96 +5,197 @@
     <link rel="icon" href="./favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>在线音乐搜索</title>
-    <!-- ... 公共配置 ... -->
     <script src="./config.js"></script>
+    <link rel="preload" href="../default/materialicons.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="../default/materialiconsoutlined.woff2" as="font" type="font/woff2" crossorigin>
     <style>
+        /* ==================== Material Icons 字体定义 ==================== */
+        @font-face {
+            font-family: 'Material Icons';
+            font-style: normal;
+            font-weight: 400;
+            font-display: block;
+            src: url(../default/materialicons.woff2) format('woff2');
+        }
+
+        .material-icons {
+            font-family: 'Material Icons';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+            visibility: hidden;
+        }
+
+        .fonts-loaded .material-icons {
+            visibility: visible;
+        }
+
+        /* 全局样式 */
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: none;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
+
+        /* 页面头部样式 */
+        .header {
+            background: #fff;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
+
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .header p {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
         .version-info {
             position: absolute;
             top: 10px;
             left: 20px;
-            color: white;
+            color: #6c757d;
             font-size: 14px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 123, 255, 0.1);
             padding: 4px 8px;
             border-radius: 4px;
             z-index: 10;
         }
 
-        /* 调整 header 内容的 padding，避免与版本信息重叠 */
-        .header {
-            background: #31c27c;
-            color: white;
-            padding: 20px 20px 20px 60px; /* 左边增加留白 */
-            text-align: center;
-            position: relative;
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            padding-bottom: 20px;
         }
 
+        /* 搜索区域样式 */
         .search-section {
             padding: 20px;
             border-bottom: 1px solid #eee;
+            background-color: #f8f9fa;
         }
+
         .search-box {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
         }
+
         .search-input {
             flex: 1;
-            padding: 10px;
+            min-width: 200px;
+            padding: 10px 12px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 14px;
+            color: #333;
+            background-color: #fff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
         .search-select {
-            padding: 10px;
+            padding: 10px 12px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 14px;
+            color: #333;
+            background-color: #fff;
+            cursor: pointer;
         }
-        .search-btn {
+
+        .search-btn, .play-all-btn, .push-btn {
             padding: 10px 20px;
-            background: #1976d2;
+            background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
-        .search-btn:hover {
-            background: #1565c0;
+
+        .search-btn:hover, .play-all-btn:hover, .push-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
         }
+
+        .search-btn:active, .play-all-btn:active, .push-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 结果区域样式 */
         .results-section {
             padding: 20px;
         }
+
         .music-item {
             display: flex;
             align-items: center;
             padding: 15px;
             border-bottom: 1px solid #eee;
+            background-color: #fff;
+            transition: box-shadow 0.3s ease;
         }
+
+        .music-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            background-color: #f8f9fa;
+        }
+
         .music-item:last-child {
             border-bottom: none;
         }
+
         .music-cover {
             width: 60px;
             height: 60px;
-            border-radius: 4px;
+            border-radius: 6px;
             margin-right: 15px;
             background: #f0f0f0;
             display: flex;
@@ -102,105 +203,134 @@
             justify-content: center;
             font-size: 12px;
             color: #999;
+            overflow: hidden;
+            flex-shrink: 0;
         }
+
+        .music-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .music-info {
             flex: 1;
+            min-width: 0;
         }
+
         .music-title {
-            font-weight: bold;
+            font-weight: 600;
             margin-bottom: 5px;
+            color: #333;
+            font-size: 15px;
         }
+
         .music-artist {
-            color: #666;
+            color: #6c757d;
             font-size: 14px;
             margin-bottom: 3px;
         }
+
         .music-meta {
             color: #999;
             font-size: 12px;
         }
+
         .music-actions {
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-shrink: 0;
         }
+
         .push-btn {
             padding: 8px 15px;
-            background: #fff;/*31c27c*/
-            color: #31c27c;
-            border: 1px solid #31c27c;
-            border-radius: 4px;
+            background-color: #fff;
+            color: #007bff;
+            border: 1px solid #007bff;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
+            font-weight: 500;
         }
+
         .push-btn:hover {
-            background: #f0f0f0;/*28a869*/
+            background-color: #f0f0f0;
         }
+
         .web-play-btn {
             padding: 8px 15px;
-            background: #31c27c;
+            background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
+            font-weight: 500;
         }
+
         .web-play-btn:hover {
-            background: #28a869;
+            background-color: #0056b3;
         }
+
         .source-tag {
             padding: 2px 8px;
             background: #e3f2fd;
-            color: #1976d2;
+            color: #007bff;
             border-radius: 12px;
             font-size: 11px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            font-weight: 500;
         }
-        .loading {
+
+        .loading, .error, .empty {
             text-align: center;
             padding: 40px;
-            color: #666;
+            color: #6c757d;
+            font-size: 14px;
         }
+
         .error {
-            text-align: center;
-            padding: 40px;
             color: #d32f2f;
         }
-        .empty {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-        /* 顶部按钮的样式 */
+
+        /* 顶部按钮样式 */
         .header-buttons {
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 10px;
             margin-top: 15px;
             flex-wrap: wrap;
         }
+
         .header-btn {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             padding: 8px 16px;
-            background: #fff;
-            color: #31c27c;
-            border: 1px solid #31c27c;/*31c27c*/
-            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
             text-decoration: none;
             transition: all 0.2s ease;
+            font-weight: 500;
         }
+
         .header-btn:hover {
-            background: #f0f0f0;
+            background-color: #0056b3;
+            transform: translateY(-1px);
         }
-        .material-icons {
-            font-size: 20px;
+
+        .header-btn svg {
+            width: 18px;
+            height: 18px;
         }
+
         /* 音乐播放器样式 */
         .music-player {
             position: fixed;
@@ -213,71 +343,55 @@
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
             z-index: 1000;
             display: none;
-            border-bottom: 1px solid #f0f0f0;
         }
+
         .player-content {
             display: flex;
             align-items: center;
             gap: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
+
         audio {
-            width: 100%;
+            flex: 1;
             outline: none;
-            margin-right: 10px;
+            min-width: 0;
         }
+
         audio::-webkit-media-controls-panel {
             background: white;
         }
-        /* 优化播放/暂停按钮样式 */
+
         .player-play-pause {
-            background: #31c27c;
+            background-color: #007bff;
             border: none;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: all 0.2s ease;
-            box-sizing: border-box; /* 添加此行确保padding/border不影响尺寸 */
-            flex-shrink: 0; /* 防止在flex容器中被压缩 */
+            flex-shrink: 0;
         }
 
         .player-play-pause:hover {
-            background: #28a869;/*1565c0*/
+            background-color: #0056b3;
             transform: scale(1.05);
         }
 
-        /* 调整播放按钮内 SVG 图标大小 */
         .player-play-pause svg {
-            width: 24px;
-            height: 24px;
-            fill: white; /* 添加此行将图标颜色设为白色 */
+            width: 20px;
+            height: 20px;
+            fill: white;
         }
 
-        /* 优化播放器整体样式 */
-        .music-player {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            border-top: 1px solid #eee;
-            padding: 12px 20px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-            display: none;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        /* 优化播放器封面图样式 */
         .player-cover {
             width: 50px;
             height: 50px;
-            border-radius: 4px;
+            border-radius: 6px;
             background: #f0f0f0;
             display: flex;
             align-items: center;
@@ -285,26 +399,23 @@
             font-size: 12px;
             color: #999;
             margin-right: 15px;
-            border: 1px solid #eee;
+            overflow: hidden;
+            flex-shrink: 0;
         }
 
         .player-cover img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 4px;
         }
 
-        /* 优化播放器信息显示 */
         .player-info {
+            flex: 1;
             min-width: 0;
-            /* 限制最大宽度 */
-            max-width: 20%;
-            overflow: hidden;
         }
 
         .player-info .title {
-            font-weight: bold;
+            font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -314,22 +425,21 @@
 
         .player-info .artist {
             font-size: 12px;
-            color: #666;
+            color: #6c757d;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        /* 优化播放器控制区域 */
         .player-controls {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
+            flex-shrink: 0;
         }
 
-        /* 优化关闭按钮 */
         .player-close {
-            background: #f5f5f5;
+            background-color: #f5f5f5;
             border: none;
             border-radius: 50%;
             width: 32px;
@@ -342,23 +452,28 @@
         }
 
         .player-close:hover {
-            background: #e0e0e0;
+            background-color: #e0e0e0;
             transform: scale(1.05);
+        }
+
+        .player-close svg {
+            width: 16px;
+            height: 16px;
+            fill: #6c757d;
         }
 
         /* 歌词展示区域样式 */
         .lyric-container {
             flex: 1;
-            height: 46px; /* 改为只显示两行的高度 */
+            height: 46px;
             overflow: hidden;
-            margin-top: 10px;
-            padding: 0 20px;
+            margin-left: 15px;
             position: relative;
         }
 
         .lyric-content {
             text-align: center;
-            color: #666;
+            color: #6c757d;
             font-size: 14px;
             line-height: 20px;
             transition: transform 0.3s ease-out;
@@ -373,7 +488,7 @@
         }
 
         .lyric-line.active {
-            color: #31c27c;
+            color: #007bff;
             font-weight: bold;
             font-size: 16px;
         }
@@ -385,7 +500,7 @@
             right: 20px;
             width: 40px;
             height: 40px;
-            background: #31c27c;
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 50%;
@@ -406,7 +521,7 @@
         }
 
         .back-to-top:hover {
-            background: #28a869;
+            background-color: #0056b3;
             transform: translateY(-2px);
         }
 
@@ -415,25 +530,11 @@
             height: 20px;
             fill: white;
         }
-        /*播放全部*/
-        .play-all-btn {
-            padding: 10px 20px;
-            background: #31c27c; /* 与播放按钮颜色一致 31c27c*/
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .play-all-btn:hover {
-            background: #28a869; /* 悬停效果 28a869*/
-        }
 
         /* 移动端适配 */
         @media (max-width: 768px) {
             body {
-                padding: 10px;
+                padding: 0;
             }
 
             .container {
@@ -444,77 +545,49 @@
             }
 
             .header {
-                padding: 15px 10px;
+                padding: 15px;
             }
 
             .header h1 {
-                font-size: 1.5rem;
+                font-size: 20px;
             }
 
             .header p {
-                font-size: 0.9rem;
+                font-size: 13px;
+            }
+
+            .version-info {
+                position: static;
+                display: inline-block;
+                margin-bottom: 10px;
             }
 
             .header-buttons {
                 flex-direction: row;
                 flex-wrap: wrap;
-                justify-content: center;
                 gap: 8px;
-                margin-top: 10px;
-                margin-bottom: 10px;
+                justify-content: center;
             }
 
             .header-btn {
                 padding: 8px 12px;
-                font-size: 12px;
+                font-size: 13px;
                 flex: 0 0 auto;
-                min-width: 90px;
-                max-width: 120px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                justify-content: center; /* 文字居中对齐 */
-            }
-
-            /* 在特别窄的屏幕上调整按钮尺寸 */
-            @media (max-width: 375px) {
-                .header-btn {
-                    min-width: 80px;
-                    max-width: 100px;
-                    padding: 7px 10px;
-                    font-size: 11px;
-                }
             }
 
             .search-section {
-                padding: 15px 10px;
+                padding: 15px;
             }
 
             .search-box {
-                display: flex;
                 flex-direction: column;
                 gap: 10px;
             }
 
-            .search-input {
+            .search-input, .search-select {
                 width: 100%;
                 padding: 12px;
                 font-size: 16px;
-                box-sizing: border-box;
-                max-width: 100%;
-                flex: 0 0 auto;
-                min-width: 0;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .search-select {
-                width: 100%;
-                padding: 12px;
-                font-size: 16px;
-                background: white;
-                border: 1px solid #ddd;
-                border-radius: 4px;
             }
 
             .search-actions {
@@ -527,153 +600,49 @@
                 flex: 1;
                 padding: 12px;
                 font-size: 14px;
-                white-space: nowrap;
             }
 
             .music-item {
                 padding: 12px;
                 flex-direction: row;
-                align-items: center;
                 gap: 12px;
-                border-bottom: 1px solid #eee;
             }
 
             .music-cover {
                 width: 50px;
                 height: 50px;
-                border-radius: 4px;
-                flex-shrink: 0;
-                background: #f8f8f8;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 12px;
-                color: #999;
-                overflow: hidden;
-            }
-
-            .music-cover img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
-
-            .music-info {
-                flex: 1;
-                min-width: 0;
-                overflow: hidden;
-            }
-
-            .music-title {
-                font-weight: 600;
-                font-size: 15px;
-                margin-bottom: 4px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .music-artist {
-                font-size: 13px;
-                color: #666;
-                margin-bottom: 4px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .music-meta {
-                font-size: 11px;
-                color: #999;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
             }
 
             .music-actions {
-                display: flex;
                 flex-direction: column;
                 gap: 8px;
-                flex-shrink: 0;
             }
 
-            .push-btn, .web-play-btn {
-                padding: 8px 12px;
-                font-size: 12px;
-                border-radius: 4px;
-                white-space: nowrap;
-            }
-
-            .source-tag {
-                font-size: 10px;
-                padding: 3px 6px;
-                border-radius: 10px;
-            }
-
-            .results-section {
-                padding: 10px;
-            }
-
-            /* 播放器适配 */
             .music-player {
                 padding: 10px;
-                height: 70px; /* 减小播放器高度 */
+                height: 70px;
             }
 
             .player-content {
                 flex-direction: row;
                 align-items: center;
-                justify-content: center; /* 水平居中 */
+                justify-content: center;
                 gap: 8px;
-                height: 100%; /* 占满父容器高度 */
+                height: 100%;
             }
 
             .player-cover {
                 width: 44px;
                 height: 44px;
-                margin-right: 8px;
-                border-radius: 3px;
-            }
-
-            .player-info {
-                flex: 1;
-                min-width: 0;
-                overflow: hidden;
-            }
-
-            .player-info .title {
-                font-size: 14px;
-                font-weight: 500;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                margin-bottom: 2px;
-            }
-
-            .player-info .artist {
-                font-size: 12px;
-                color: #666;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
             }
 
             .lyric-container {
-                display: none; /* 移动端隐藏歌词 */
-            }
-
-            .player-controls {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                flex-shrink: 0;
-                margin-left: auto; /* 推向右侧 */
+                display: none;
             }
 
             .player-play-pause {
                 width: 40px;
                 height: 40px;
-                margin-right: 0;
             }
 
             .player-play-pause svg {
@@ -682,8 +651,7 @@
             }
 
             audio {
-                display: none; /* 移动端隐藏原生音频控件 */
-                max-width: 100px;
+                display: none;
             }
 
             .player-close {
@@ -697,75 +665,67 @@
             }
         }
 
-        /* 小屏设备进一步优化 */
         @media (max-width: 480px) {
             .header-buttons {
-                flex-wrap: wrap;
                 gap: 6px;
             }
 
             .header-btn {
                 flex: 1 1 calc(50% - 6px);
                 min-width: 100px;
-                padding: 8px 10px;
-                font-size: 11px;
-            }
-
-            .music-meta {
-                font-size: 11px;
-            }
-
-            .player-play-pause {
-                width: 40px;
-                height: 40px;
-            }
-
-            .player-play-pause svg {
-                width: 18px;
-                height: 18px;
-            }
-
-            .lyric-container {
-                display: none; /* 确保小屏设备也隐藏歌词 */
             }
         }
 
-        /* 防止动画影响性能 */
         @media (prefers-reduced-motion: reduce) {
             * {
                 transition: none !important;
                 animation: none !important;
             }
         }
+
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
+<body>
 <!-- 返回顶部按钮 -->
 <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
         <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
     </svg>
 </button>
-<body>
 <div class="container">
     <div class="header">
         <h1>在线音乐搜索</h1>
         <div class="version-info">
             <span id="versionSpan"></span>
         </div>
-        <p>通过 MusicFree音源插件、开放音乐接口 搜索在线音乐</p>
+        <p>通过 MusicFree 音源插件搜索在线音乐</p>
         <!-- 顶部居中按钮 -->
         <div class="header-buttons">
             <a href="/" class="header-btn">
-                返回首页
+                <span class="material-icons">home</span>
+                <span>返回首页</span>
             </a>
-            <a href="./setting.html" target="_blank" class="header-btn">
-                后台配置
+            <a href="./setting.html" class="header-btn">
+                <span class="material-icons">settings</span>
+                <span>插件配置</span>
             </a>
             <a href="https://github.com/maotoumao/MusicFreePlugins" target="_blank" class="header-btn">
-                MusicFreePlugins
+                <span class="material-icons">extension</span>
+                <span>MusicFreePlugins</span>
             </a>
             <a href="https://github.com/boluofan/xiaomusic-online" target="_blank" class="header-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                 </svg>
             </a>
@@ -783,16 +743,25 @@
                 <option value="all">所有插件</option>
             </select>
             <div class="search-actions">
-                <button class="search-btn" id="searchBtn">搜索</button>
-                <button class="play-all-btn" id="playAllBtn">播放全部</button>
-                <button class="push-btn" id="pushAllBtn">推送全部</button>
+                <button class="search-btn" id="searchBtn">
+                    <span class="material-icons">search</span>
+                    <span>搜索</span>
+                </button>
+                <button class="play-all-btn" id="playAllBtn">
+                    <span class="material-icons">play_arrow</span>
+                    <span>播放全部</span>
+                </button>
+                <button class="push-btn" id="pushAllBtn">
+                    <span class="material-icons">cast</span>
+                    <span>推送全部</span>
+                </button>
             </div>
         </div>
     </div>
 
     <div class="results-section" id="results">
         <div class="empty">
-            输入关键词，支持 '歌曲名-艺术家名' 格式搜索！
+            输入关键词，支持 '歌曲名 - 艺术家名' 格式搜索！
         </div>
     </div>
 </div>
@@ -802,7 +771,7 @@
     <div class="player-content">
         <!-- 增加封面图展示 -->
         <div class="player-cover" id="playerCover">
-            <img src="" alt="专辑封面" referrerpolicy="no-referrer" id="coverImage" style="width: 50px; height: 50px; border-radius: 4px; object-fit: cover; display: none;">
+            <img src="" alt="专辑封面" referrerpolicy="no-referrer" id="coverImage" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; display: none;">
             <div id="coverPlaceholder" style="font-size: 12px; color: #999;"></div>
         </div>
         <div class="player-info">
@@ -815,29 +784,29 @@
         </div>
         <div class="player-controls">
             <!-- 上一曲按钮 -->
-            <button class="player-play-pause" id="prevBtn" onclick="playPrevInWeb()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <button class="player-play-pause" id="prevBtn" onclick="playPrevInWeb()" title="上一曲">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
                 </svg>
             </button>
             <!-- 增加播放/暂停按钮 -->
-            <button class="player-play-pause" id="playPauseBtn" onclick="togglePlayPause()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" id="playIcon">
+            <button class="player-play-pause" id="playPauseBtn" onclick="togglePlayPause()" title="播放/暂停">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" id="playIcon">
                     <path d="M8 5v14l11-7z"/>
                 </svg>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" id="pauseIcon" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" id="pauseIcon" style="display: none;">
                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
                 </svg>
             </button>
             <!-- 下一曲按钮 -->
-            <button class="player-play-pause" id="nextBtn" onclick="playNextInWeb()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <button class="player-play-pause" id="nextBtn" onclick="playNextInWeb()" title="下一曲">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
                 </svg>
             </button>
             <audio id="audioPlayer" controls></audio>
-            <button class="player-close" onclick="closePlayer()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <button class="player-close" onclick="closePlayer()" title="关闭">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                 </svg>
             </button>
@@ -845,11 +814,10 @@
     </div>
 </div>
 
-
 <script>
     // 全局变量
     let currentLyrics = []; // 存储解析后的歌词
-    let lyricLines = []; // 存储歌词DOM元素
+    let lyricLines = []; // 存储歌词 DOM 元素
     let songList = []; // 存储搜索到的歌曲列表
 
     // 页面加载时获取插件列表
@@ -889,6 +857,11 @@
             if (e.key === 'Enter') {
                 searchMusic();
             }
+        });
+
+        // 添加字体加载完成后的处理
+        document.fonts.ready.then(function() {
+            document.body.classList.add('fonts-loaded');
         });
     });
 
@@ -980,10 +953,10 @@
             if (data.success) {
                 displayResults(data.data);
             } else {
-                resultsDiv.innerHTML = `<div class="error">搜索失败: ${data.error}</div>`;
+                resultsDiv.innerHTML = `<div class="error">搜索失败：${data.error}</div>`;
             }
         } catch (error) {
-            resultsDiv.innerHTML = `<div class="error">搜索出错: ${error.message}</div>`;
+            resultsDiv.innerHTML = `<div class="error">搜索出错：${error.message}</div>`;
         }
     }
 
@@ -998,7 +971,7 @@
                 <div class="music-item">
                     <div class="music-cover">
                         ${item.artwork ?
-            `<img src="${item.artwork}" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">` :
+            `<img src="${item.artwork}" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">` :
             '暂无封面'
         }
                     </div>
@@ -1008,13 +981,13 @@
                         ${(() => {
             const metaItems = [];
             if (item.album) {
-                metaItems.push(`专辑: ${item.album}`);
+                metaItems.push(`专辑：${item.album}`);
             }
             if (item.duration) {
-                metaItems.push(`时长: ${formatDuration(item.duration)}`);
+                metaItems.push(`时长：${formatDuration(item.duration)}`);
             }
             if (item.quality) {
-                metaItems.push(`音质: ${item.quality}`);
+                metaItems.push(`音质：${item.quality}`);
             }
             return metaItems.length > 0
                 ? `<div class="music-meta">${metaItems.join(' | ')}</div>`
@@ -1033,9 +1006,9 @@
         resultsDiv.innerHTML = html;
     }
 
-    // 获取当前选中的设备ID
+    // 获取当前选中的设备 ID
     function getCurrentDeviceId() {
-        // 从 localStorage 获取当前设备ID
+        // 从 localStorage 获取当前设备 ID
         return localStorage.getItem('cur_did') || '';
     }
 
@@ -1056,7 +1029,7 @@
             // 批量推送音乐到设备
             await pushList(playlistName, deviceId, mediaItemList);
         } catch (error) {
-            alert('播放出错: ' + error.message);
+            alert('播放出错：' + error.message);
         }
     }
 
@@ -1073,12 +1046,12 @@
                 return;
             }
             console.log("songList",songList)
-            // 格式化musicList
+            // 格式化 musicList
             let playlistName = '_online_webPush';
             // 批量推送音乐到设备
             await pushList(playlistName, deviceId, songList);
         } catch (error) {
-            alert('播放出错: ' + error.message);
+            alert('播放出错：' + error.message);
         }
     }
 
@@ -1100,10 +1073,10 @@
                 // 显示服务端返回的具体消息而不是通用提示
                 alert('推送成功！');
             } else {
-                alert('推送失败: '+data.error);
+                alert('推送失败：'+data.error);
             }
         } else {
-            alert('播放失败: ' + ('未知错误'));
+            alert('播放失败：' + ('未知错误'));
         }
     }
 
@@ -1172,7 +1145,7 @@
                 // 监听元数据加载完成，获取时长信息
                 audio.onloadedmetadata = function() {
                     console.log('音频时长:', audio.duration + '秒');
-                    // 可以在这里更新UI显示时长信息
+                    // 可以在这里更新 UI 显示时长信息
                 };
                 // 开始播放
                 await audio.play();
@@ -1180,7 +1153,7 @@
                 alert('插件获取播放链接失败');
             }
         } catch (error) {
-            alert('获取播放链接出错: ' + error.message);
+            alert('获取播放链接出错：' + error.message);
         }
     }
 
@@ -1206,7 +1179,7 @@
 
     // 格式化时长 - 兼容秒和毫秒单位
     function formatDuration(duration) {
-        // 如果时长超过10000，认为是毫秒单位，需要转换为秒
+        // 如果时长超过 10000，认为是毫秒单位，需要转换为秒
         let seconds = duration;
         if (duration > 10000) {
             seconds = Math.floor(duration / 1000);
@@ -1245,7 +1218,7 @@
         try {
             let lrcText
             if (mediaItem && mediaItem.isOpenAPI) {//在线接口
-                // 调用OpenApi接口 GET获取歌词
+                // 调用 OpenApi 接口 GET 获取歌词
                 const response = await fetch(mediaItem.lrc, {
                     method: 'GET',
                     headers: {
@@ -1280,20 +1253,20 @@
         }
     }
 
-    // 获取真实音乐URL的函数
+    // 获取真实音乐 URL 的函数
     async function sniffRealMusicUrl(downloadUrl) {
         try {
-            // 通过服务端代理获取真实URL
+            // 通过服务端代理获取真实 URL
             const response = await fetch(`/api/proxy/real-music-url?url=${encodeURIComponent(downloadUrl)}`);
             const data = await response.json();
             if (data.success) {
                 return data.url;
             } else {
-                return downloadUrl; // 返回原始URL
+                return downloadUrl; // 返回原始 URL
             }
         } catch (error) {
-            console.error("服务端代理获取URL失败:", error);
-            return downloadUrl; // 失败时返回原始URL
+            console.error("服务端代理获取 URL 失败:", error);
+            return downloadUrl; // 失败时返回原始 URL
         }
     }
 
@@ -1303,7 +1276,7 @@
         const lyricContainer = document.getElementById('lyricContent');
         lyricContainer.innerHTML = ''; // 清空现有歌词
 
-        // 解析LRC歌词
+        // 解析 LRC 歌词
         const lines = lrcText.split('\n');
         currentLyrics = [];
 
@@ -1329,7 +1302,7 @@
         // 按时间排序
         currentLyrics.sort((a, b) => a.time - b.time);
 
-        // 创建歌词DOM元素
+        // 创建歌词 DOM 元素
         lyricLines = [];
         currentLyrics.forEach((lyric, index) => {
             const lineElement = document.createElement('div');

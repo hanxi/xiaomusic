@@ -4,363 +4,425 @@
     <meta charset="UTF-8">
     <link rel="icon" href="./favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>在线搜索配置</title>
-    <!-- ... 公共配置 ... -->
+    <title>插件配置</title>
     <script src="./config.js"></script>
+    <link rel="preload" href="../default/materialicons.woff2" as="font" type="font/woff2" crossorigin>
     <style>
-        body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        margin: 0;
-        padding: 20px;
-        background-color: #f5f5f5;
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: none;
-    }
-    .container {
-        max-width: 800px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        overflow: hidden;
-    }
-    .version-info {
-        position: absolute;
-        top: 10px;
-        left: 20px;
-        color: white;
-        font-size: 14px;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 4px 8px;
-        border-radius: 4px;
-        z-index: 10;
-    }
-
-    /* 调整 header 内容的 padding，避免与版本信息重叠 */
-    .header {
-        background: #31c27c;
-        color: white;
-        padding: 20px 20px 20px 60px; /* 左边增加留白 */
-        text-align: center;
-        position: relative;
-    }
-
-    .loading {
-        text-align: center;
-        padding: 40px;
-        color: #666;
-    }
-    .error {
-        text-align: center;
-        padding: 40px;
-        color: #d32f2f;
-    }
-    .empty {
-        text-align: center;
-        padding: 40px;
-        color: #999;
-    }
-    /* 插件设置专用样式 */
-    .plugins-section {
-        padding: 20px;
-    }
-    .section-title {
-        font-size: 18px;
-        font-weight: bold;
-        margin-top: 15px;
-        margin-bottom: 15px;
-        color: #333;
-        padding-bottom: 10px;
-    }
-
-    .border-bottom {
-        margin-top: 15px;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #e0e0e0;
-        /*加粗*/
-        padding-bottom: 10px;
-    }
-    .plugin-list {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-    .plugin-item {
-        display: flex;
-        align-items: center;
-        padding: 15px;
-        border: 1px solid #eee;
-        border-radius: 6px;
-        background: #fafafa;
-    }
-    .plugin-info {
-        flex: 1;
-    }
-    .plugin-name {
-        font-weight: bold;
-        font-size: 16px;
-        margin-bottom: 5px;
-    }
-    .plugin-status {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: bold;
-        margin-top: 5px; /* 添加上边距 */
-    }
-    .status-enabled {
-        background: #e8f5e9;
-        color: #4caf50;
-    }
-    .status-disabled {
-        background: #ffebee;
-        color: #f44336;
-    }
-    .plugin-details {
-        font-size: 13px;
-        color: #666;
-    }
-    .plugin-actions {
-        display: flex;
-        gap: 10px;
-    }
-    .action-btn {
-        padding: 6px 12px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 13px;
-        transition: background 0.2s;
-    }
-    .enable-btn {
-        background: #4caf50;
-        color: white;
-    }
-    .enable-btn:hover {
-        background: #45a049;
-    }
-    .disable-btn {
-        background: #f44336;
-        color: white;
-    }
-    .disable-btn:hover {
-        background: #da190b;
-    }
-    .uninstall-btn {
-        background: gray;
-        color: white;
-    }
-    .uninstall-btn:hover {
-        background: dimgray;
-    }
-    .refresh-btn {
-        display: block;
-        margin: 20px auto;
-        padding: 10px 20px;
-        background: #31c27c;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-    }
-    .refresh-btn:hover {
-        background: #28a869;
-    }
-    /* 顶部按钮的样式 */
-    .header-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 15px;
-        flex-wrap: wrap;
-        width: 100%; /* 确保容器占满可用宽度 */
-    }
-    .header-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        background: #fff;
-        color: #31c27c;
-        border: 1px solid #31c27c;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        text-decoration: none;
-        transition: all 0.2s ease;
-    }
-    .header-btn:hover {
-        background: #f0f0f0;
-    }
-    .material-icons {
-        font-size: 20px;
-    }
-    .edit-btn {
-        background: #2196f3;
-        color: white;
-    }
-
-    .edit-btn:hover {
-        background: #1976d2;
-    }
-    /* 移动端适配 */
-    @media (max-width: 768px) {
-        body {
-            padding: 10px;
+        /* ==================== Material Icons 字体定义 ==================== */
+        @font-face {
+            font-family: 'Material Icons';
+            font-style: normal;
+            font-weight: 400;
+            font-display: block;
+            src: url(../default/materialicons.woff2) format('woff2');
         }
 
-        .container {
-            max-width: 100%;
+        .material-icons {
+            font-family: 'Material Icons';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+            visibility: hidden;
+        }
+
+        .fonts-loaded .material-icons {
+            visibility: visible;
+        }
+
+        /* 全局样式 */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             margin: 0;
-            border-radius: 0;
-            min-height: 100vh;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: none;
         }
+
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        /* 页面头部样式 */
+        .header {
+            background: #fff;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .header p {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
         .version-info {
             position: absolute;
             top: 10px;
             left: 20px;
-            color: white;
+            color: #6c757d;
             font-size: 14px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 123, 255, 0.1);
             padding: 4px 8px;
             border-radius: 4px;
             z-index: 10;
         }
 
-        /* 调整 header 内容的 padding，避免与版本信息重叠 */
-        .header {
-            background: #31c27c;
-            color: white;
-            padding: 20px 20px 20px 60px; /* 左边增加留白 */
-            text-align: center;
-            position: relative;
+        /* 顶部按钮样式 */
+        .header-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
         }
 
-        .loading {
+        .header-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .header-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .header-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* 插件设置区域样式 */
+        .plugins-section {
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            color: #333;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .border-bottom {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .plugin-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .plugin-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #f8f9fa;
+            transition: all 0.2s ease;
+        }
+
+        .plugin-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            background: #fff;
+        }
+
+        .plugin-info {
+            flex: 1;
+        }
+
+        .plugin-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .plugin-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .status-enabled {
+            background: #e3f2fd;
+            color: #007bff;
+        }
+
+        .status-disabled {
+            background: #ffebee;
+            color: #f44336;
+        }
+
+        .plugin-details {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .plugin-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .enable-btn {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .enable-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .disable-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .disable-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .uninstall-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .uninstall-btn:hover {
+            background-color: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .edit-btn {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background-color: #138496;
+            transform: translateY(-1px);
+        }
+
+        /* 状态消息样式 */
+        .loading, .error, .empty {
             text-align: center;
             padding: 40px;
-            color: #666;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+
+        .empty {
+            color: #6c757d;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                max-width: 100%;
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+            }
 
             .header {
-                padding: 15px 10px;
+                padding: 15px;
             }
 
             .header h1 {
-                font-size: 1.5rem;
+                font-size: 20px;
             }
 
             .header p {
-                font-size: 0.9rem;
+                font-size: 13px;
+            }
+
+            .version-info {
+                position: static;
+                display: inline-block;
+                margin-bottom: 10px;
             }
 
             .header-buttons {
                 flex-direction: row;
                 flex-wrap: wrap;
-                justify-content: center;
                 gap: 8px;
-                margin-top: 10px;
-                margin-bottom: 10px;
+                justify-content: center;
             }
 
             .header-btn {
                 padding: 8px 12px;
+                font-size: 13px;
+                flex: 0 0 auto;
+            }
+
+            .plugin-item {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 12px;
+            }
+
+            .plugin-info {
+                margin-bottom: 10px;
+            }
+
+            .plugin-actions {
+                flex-direction: row;
+                justify-content: flex-end;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .action-btn {
+                padding: 6px 12px;
                 font-size: 12px;
-                flex: 0 0 calc(50% - 4px); /* 与首页的flex: 0 0 auto不同，这里强制每行2个 */
-                min-width: 90px;
-                max-width: 120px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                justify-content: center;
-                text-align: center;
-            }
-
-            /* 在特别窄的屏幕上调整按钮尺寸 */
-            @media (max-width: 375px) {
-                .header-btn {
-                    min-width: 80px;
-                    max-width: 100px;
-                    padding: 7px 10px;
-                    font-size: 11px;
-                }
             }
         }
-        .plugin-item {
-            flex-direction: column;
-            align-items: stretch;
-            padding: 12px;
+
+        @media (max-width: 480px) {
+            .header-buttons {
+                gap: 6px;
+            }
+
+            .header-btn {
+                flex: 1 1 calc(50% - 6px);
+                min-width: 100px;
+                padding: 8px 10px;
+                font-size: 12px;
+            }
         }
 
-        .plugin-info {
-            margin-bottom: 10px;
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
         }
 
-        .plugin-actions {
-            flex-direction: row;
-            justify-content: flex-end;
-            gap: 8px;
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-
-        .action-btn {
-            padding: 6px 10px;
-            font-size: 12px;
-            min-width: auto;
-        }
-    }
-
-    /* 小屏设备进一步优化 */
-    @media (max-width: 480px) {
-        .header-buttons {
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .header-btn {
-            flex: 0 0 calc(50% - 3px); /* 每行2个按钮 */
-            min-width: 90px;
-            max-width: 120px;
-            padding: 8px 10px;
-            font-size: 11px;
-        }
-    }
-
-    /* 防止动画影响性能 */
-    @media (prefers-reduced-motion: reduce) {
-        * {
-            transition: none !important;
-            animation: none !important;
-        }
-    }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>插件&接口设置</h1>
+        <h1>插件配置</h1>
         <div class="version-info">
             <span id="versionSpan"></span>
         </div>
-        <p>管理您的插件和在线接口</p>
+        <p>管理你的在线插件</p>
         <!-- 顶部居中按钮 -->
         <div class="header-buttons">
             <a href="./index.html" class="header-btn">
-                返回搜索
+                <span class="material-icons">arrow_back</span>
+                <span>返回搜索</span>
             </a>
             <!-- 插件导入 -->
             <button class="header-btn" onclick="uploadPlugins()">
-                导入插件
+                <span class="material-icons">file_upload</span>
+                <span>手动导入</span>
             </button>
-            <!-- 修改为刷新插件按钮 -->
+            <!-- 刷新插件按钮 -->
             <button class="header-btn" onclick="loadPlugins()">
-                刷新插件
+                <span class="material-icons">refresh</span>
+                <span>刷新插件</span>
             </button>
-            <a href="https://github.com/maotoumao/MusicFreePlugins" target="_blank" class="header-btn">
-                MusicFreePlugins
+            <a href="https://pd.qq.com/s/3tkfauiqe?b=9" target="_blank" class="header-btn">
+                <!-- 自定义 SVG 图标 -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" style="display: block;">
+                    <g fill="none" fill-rule="evenodd">
+                        <!-- 移除了背景矩形 path，只保留图标主体 -->
+                        <path d="M15.9998867 0l-.3175962.00373031c-6.8340705.16105657-10.59798873 5.52198001-10.62328209 13.09956699l.00099159.2727027-.86256398 2.1053645c-.34339269.8459887-.59479858 1.4918602-.8236549 2.1249911-.16246446.4494579-.31092035.8862129-.4515632 1.3302912-1.41043336 4.4529342-1.46997142 7.7313526 1.14979123 8.0424546l.19586827.0182568c.69853306.0462522 1.18775172-.1357889 1.69345756-.5695745l.04666502-.0427837.10703497.1859114.16295747.2641667.09000756.1369219-.10203891.0725127c-1.18457469.8599516-1.78515849 2.0422997-.8749963 3.5478041.72014893 1.1919865 1.68579016 1.3851809 4.67654251 1.4059241h1.2781117l.7210113-.0101194c1.4578857-.0287327 2.9764342-.1065736 3.9343697-.2001215l.2555297.0243167c1.1291243.09698 2.8606159.1735357 4.3993902.1859242h1.2781118c2.9907546-.0207471 3.95642-.2139816 4.6768437-1.4064227l.0983227-.1723424c.764361-1.4241985.1648309-2.548721-.9747412-3.3755348l-.1034569-.072941.0912293-.1362605.1629318-.2641511.1068389-.1855884.0466679.0427821c.5516504.4732059 1.0836451.6468525 1.8890001.5513616 2.6200145-.3116105 2.5604594-3.5895097 1.1502083-8.0424822-.136678-.4315245-.2810058-.8567817-.4385987-1.2939849l-.1781698-.4846461c-.0923296-.2464665-.1903348-.5013359-.2976536-.7744519l-.3954267-.9868956-.8290275-2.020683.0009399-.279262c-.038761-7.60576089-3.8169423-12.93053326-10.6187985-13.09291824zm.0001023 2c6.339972.00032813 9.0947051 5.25726658 8.9334981 11.7557738l.8516442 2.0748544c.5606846 1.3708665.9939584 2.4718584 1.3860782 3.7098724 1.2134003 3.8314013.8203049 5.4169539.5209683 5.4525554-.6424867.0761796-2.5006035-2.8842697-2.5006035-2.8842697 0 1.7141775-.8994592 3.9510027-2.8457046 5.5664147l.3377045.1073023c1.0249215.341207 2.6653848 1.0302704 2.2154641 1.7750936-.4078113.675007-6.9962271.4309917-8.8982689.2207732l-.4753503.0452169c-2.33636.195172-8.04423656.3608021-8.42291849-.2659901-.50418989-.8339832 1.61195836-1.5976385 2.55205373-1.8820678-1.94652419-1.615412-2.84615056-3.852456-2.84615056-5.5667428l-.32111727.4924567c-.56063792.838483-1.70355568 2.4482423-2.17943051 2.391813-.29933663-.0355468-.69254342-1.6211541.52102408-5.4525554l.21887662-.6654718c.52220361-1.5311231 1.13363576-2.9515889 2.01884579-5.1193097-.17029299-6.39290578 2.5220086-11.75539097 8.93338651-11.7557191z" fill="currentColor" fill-rule="nonzero"/>
+                    </g>
+                </svg>
+                <span>MusicFree频道</span>
             </a>
             <a href="https://github.com/boluofan/xiaomusic-online" target="_blank" class="header-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                 </svg>
             </a>
@@ -374,13 +436,19 @@
             <div class="plugin-item">
                 <div class="plugin-info">
                     <div class="plugin-details">
-                        <div><strong>插件源地址: </strong> <span id="source-url"></span></div>
+                        <div><strong>插件源地址：</strong> <span id="source-url"></span></div>
                     </div>
                 </div>
                 <div class="plugin-actions">
-                    <button class="action-btn enable-btn" id="refresh-source-btn" onclick="refreshPluginSource()">更新订阅</button>
-                    <!-- 新增编辑按钮 -->
-                    <button class="action-btn edit-btn" id="edit-source-btn" onclick="editPluginSource()" style="display: inline-block;">编辑</button>
+                    <button class="action-btn enable-btn" id="refresh-source-btn" onclick="refreshPluginSource()">
+                        <span class="material-icons">refresh</span>
+                        <span>更新订阅</span>
+                    </button>
+                    <!-- 编辑按钮 -->
+                    <button class="action-btn edit-btn" id="edit-source-btn" onclick="editPluginSource()" style="display: inline-block;">
+                        <span class="material-icons">edit</span>
+                        <span>编辑</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -408,6 +476,11 @@
         loadPlugins();
         loadOpenApiConfig();
         loadPluginSource();
+
+        // 添加字体加载完成后的处理
+        document.fonts.ready.then(function() {
+            document.body.classList.add('fonts-loaded');
+        });
     });
 
     /*============================插件源相关函数=================================*/
@@ -420,10 +493,10 @@
             if (data.success) {
                 displayPluginSource(data.data);
             } else {
-                container.innerHTML = `<div class="error">加载失败: ${data.error}</div>`;
+                container.innerHTML = `<div class="error">加载失败：${data.error}</div>`;
             }
         } catch (error) {
-            container.innerHTML = `<div class="error">加载出错: ${error.message}</div>`;
+            container.innerHTML = `<div class="error">加载出错：${error.message}</div>`;
         }
     }
 
@@ -432,7 +505,7 @@
         document.getElementById('source-url').textContent = config.source_url || '';
         const editButtonElement = document.getElementById('edit-source-btn');
         if (config.source_url && config.source_url.length > 0) {
-            editButtonElement.style.display = 'inline-block';
+            editButtonElement.style.display = 'inline-flex';
         }
     }
 
@@ -458,10 +531,10 @@
                 // 操作成功，重新加载插件列表
                 await loadPlugins();
             } else {
-                alert(`切换失败: ${data.error}`);
+                alert(`切换失败：${data.error}`);
             }
         } catch (error) {
-            alert(`操作出错: ${error.message}`);
+            alert(`操作出错：${error.message}`);
         }
     }
 
@@ -483,7 +556,7 @@
             return;
         }
 
-        // 校验URL格式
+        // 校验 URL 格式
         const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
         if (urlPattern.test(newUrl)) {
             // 更新地址
@@ -493,7 +566,7 @@
         }
     }
 
-    // 更新OpenAPI地址
+    // 更新 OpenAPI 地址
     async function updatePluginSource(newUrl) {
         try {
             const response = await fetch('/api/plugin-source/updateUrl', {
@@ -509,10 +582,10 @@
                 // 更新成功，重新加载插件列表
                 await loadPluginSource();
             } else {
-                alert(`更新失败: ${data.error}`);
+                alert(`更新失败：${data.error}`);
             }
         } catch (error) {
-            alert(`更新出错: ${error.message}`);
+            alert(`更新出错：${error.message}`);
         }
     }
     /*============================开放接口函数=================================*/
@@ -525,10 +598,10 @@
             if (data.success) {
                 displayOpenApiConfig(data.data);
             } else {
-                container.innerHTML = `<div class="error">加载失败: ${data.error}</div>`;
+                container.innerHTML = `<div class="error">加载失败：${data.error}</div>`;
             }
         } catch (error) {
-            container.innerHTML = `<div class="error">加载出错: ${error.message}</div>`;
+            container.innerHTML = `<div class="error">加载出错：${error.message}</div>`;
         }
     }
 
@@ -553,7 +626,7 @@
             buttonElement.className = 'action-btn enable-btn';
             buttonElement.textContent = '启用';
             // 禁用时显示编辑按钮
-            editButtonElement.style.display = 'inline-block';
+            editButtonElement.style.display = 'inline-flex';
         }
     }
 
@@ -576,14 +649,14 @@
                 // 操作成功，重新加载配置
                 await loadOpenApiConfig();
             } else {
-                alert(`切换失败: ${data.error}`);
+                alert(`切换失败：${data.error}`);
             }
         } catch (error) {
-            alert(`操作出错: ${error.message}`);
+            alert(`操作出错：${error.message}`);
         }
     }
 
-    // 编辑OpenAPI地址功能
+    // 编辑 OpenAPI 地址功能
     function editOpenApiUrl() {
         const urlElement = document.getElementById('openapi-url');
         const currentUrl = urlElement.textContent;
@@ -601,7 +674,7 @@
             return;
         }
 
-        // 校验URL格式
+        // 校验 URL 格式
         const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
         if (urlPattern.test(newUrl)) {
             // 更新接口地址
@@ -612,7 +685,7 @@
     }
 
 
-    // 更新OpenAPI地址
+    // 更新 OpenAPI 地址
     async function updateOpenApiUrl(newUrl) {
         try {
             const response = await fetch('/api/openapi/updateUrl', {
@@ -628,10 +701,10 @@
                 // 更新成功，重新加载配置
                 await loadOpenApiConfig();
             } else {
-                alert(`更新失败: ${data.error}`);
+                alert(`更新失败：${data.error}`);
             }
         } catch (error) {
-            alert(`更新出错: ${error.message}`);
+            alert(`更新出错：${error.message}`);
         }
     }
 
@@ -650,10 +723,10 @@
             if (data.success) {
                 displayPlugins(data.data);
             } else {
-                container.innerHTML = `<div class="error">加载失败: ${data.error}</div>`;
+                container.innerHTML = `<div class="error">加载失败：${data.error}</div>`;
             }
         } catch (error) {
-            container.innerHTML = `<div class="error">加载出错: ${error.message}</div>`;
+            container.innerHTML = `<div class="error">加载出错：${error.message}</div>`;
         }
     }
 
@@ -696,10 +769,10 @@
                     // 自动刷新插件列表
                     await loadPlugins();
                 } else {
-                    alert(`插件导入失败: ${data.error}`);
+                    alert(`插件导入失败：${data.error}`);
                 }
             } catch (error) {
-                alert(`插件导入出错: ${error.message}`);
+                alert(`插件导入出错：${error.message}`);
             }
         };
 
@@ -726,14 +799,23 @@
                         <span class="plugin-status ${plugin.enabled ? 'status-enabled' : 'status-disabled'}">
                             ${plugin.enabled ? '已启用' : '已禁用'}
                         </span>
-                        ${plugin.error ? ` | 错误: ${plugin.error}` : ''}
+                        ${plugin.error ? ` | 错误：${plugin.error}` : ''}
                     </div>
                 </div>
                 <div class="plugin-actions">
                     ${plugin.enabled ?
-            `<button class="action-btn disable-btn" onclick="togglePlugin('${plugin.name}', false)">禁用</button>` :
-            `<button class="action-btn enable-btn" onclick="togglePlugin('${plugin.name}', true)">启用</button>
-         <button class="action-btn uninstall-btn" onclick="uninstallPlugin('${plugin.name}')">卸载</button>`
+            `<button class="action-btn disable-btn" onclick="togglePlugin('${plugin.name}', false)">
+                <span class="material-icons">block</span>
+                <span>禁用</span>
+            </button>` :
+            `<button class="action-btn enable-btn" onclick="togglePlugin('${plugin.name}', true)">
+                <span class="material-icons">check_circle</span>
+                <span>启用</span>
+            </button>
+            <button class="action-btn uninstall-btn" onclick="uninstallPlugin('${plugin.name}')">
+                <span class="material-icons">delete</span>
+                <span>卸载</span>
+            </button>`
         }
                 </div>
             </div>
@@ -758,10 +840,10 @@
                 // 操作成功，重新加载插件列表
                 await loadPlugins();
             } else {
-                alert(`${enable ? '启用' : '禁用'}插件失败: ${data.error}`);
+                alert(`${enable ? '启用' : '禁用'}插件失败：${data.error}`);
             }
         } catch (error) {
-            alert(`${enable ? '启用' : '禁用'}插件出错: ${error.message}`);
+            alert(`${enable ? '启用' : '禁用'}插件出错：${error.message}`);
         }
     }
 
@@ -782,10 +864,10 @@
                 // 重新加载插件列表
                 await loadPlugins();
             } else {
-                alert(`插件卸载失败: ${data.error}`);
+                alert(`插件卸载失败：${data.error}`);
             }
         } catch (error) {
-            alert(`插件卸载出错: ${error.message}`);
+            alert(`插件卸载出错：${error.message}`);
         }
     }
 
