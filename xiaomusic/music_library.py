@@ -158,8 +158,9 @@ class MusicLibrary:
             self.music_list[dir_name] = list(musics.keys())
 
         # 歌单排序
-        for _, play_list in self.music_list.items():
-            play_list.sort(key=custom_sort_key)
+        for list_name, play_list in self.music_list.items():
+            if not self.is_online_music(list_name):
+                play_list.sort(key=custom_sort_key)
 
         # 非自定义歌单
         self.default_music_list_names = list(self.music_list.keys())

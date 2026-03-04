@@ -176,7 +176,9 @@ class XiaoMusicDevice:
                 f"随机打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
             )
         else:
-            self._play_list.sort(key=custom_sort_key)
+            is_online = self.xiaomusic.music_library.is_online_music(list_name)
+            if not is_online and len(self._play_list) > 0:
+                self._play_list.sort(key=custom_sort_key)
             self.log.info(
                 f"没打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
             )
@@ -532,6 +534,7 @@ class XiaoMusicDevice:
 
     def get_music(self, direction="next"):
         """获取下一首或上一首音乐"""
+        self.update_playlist()
         play_list_len = len(self._play_list)
         if play_list_len == 0:
             self.log.warning("当前播放列表没有歌曲")
