@@ -1,16 +1,16 @@
 """系统管理路由"""
 
 import asyncio
+import base64
+import io
 import json
 import os
-import io
-import base64
 import shutil
 import tempfile
 from dataclasses import (
     asdict,
 )
-from qrcode.main import QRCode
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -27,6 +27,7 @@ from fastapi.openapi.utils import (
 from fastapi.responses import (
     FileResponse,
 )
+from qrcode.main import QRCode
 from starlette.background import (
     BackgroundTask,
 )
@@ -40,13 +41,13 @@ from xiaomusic.api.dependencies import (
     verification,
     xiaomusic,
 )
+from xiaomusic.qrcode_login import MiJiaAPI
 from xiaomusic.utils.system_utils import (
     deepcopy_data_no_sensitive_info,
     get_latest_version,
     restart_xiaomusic,
     update_version,
 )
-from xiaomusic.qrcode_login import MiJiaAPI
 
 router = APIRouter(dependencies=[Depends(verification)])
 auth_data_path = config.conf_path if config.conf_path else None

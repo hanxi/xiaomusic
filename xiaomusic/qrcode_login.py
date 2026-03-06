@@ -1,23 +1,19 @@
-import asyncio
+import base64
+import hashlib
 import json
 import locale
+import random
+import time
 from datetime import datetime, timedelta
+from gzip import GzipFile
+from io import BytesIO
 from pathlib import Path
-from typing import Optional, Union
 from urllib import parse
 
 import requests
 import tzlocal
-from qrcode import QRCode
-
-import base64
-import hashlib
-import random
-import time
-from gzip import GzipFile
-from io import BytesIO
-
 from Crypto.Cipher import ARC4
+from qrcode import QRCode
 
 
 def gen_nonce():
@@ -90,7 +86,7 @@ def decrypt(ssecurity, nonce, payload):
 
 
 class MiJiaAPI:
-    def __init__(self, auth_data_path: Optional[str] = None):
+    def __init__(self, auth_data_path: str | None = None):
         self.locale = locale.getlocale()[0] if locale.getlocale()[0] else "zh_CN"
         if "_" not in self.locale:  # #57, make sure locale is in correct format
             self.locale = "zh_CN"
@@ -109,7 +105,7 @@ class MiJiaAPI:
         self._available_cache_time = 0
 
         if self.auth_data_path.exists():
-            with open(self.auth_data_path, "r") as f:
+            with open(self.auth_data_path) as f:
                 self.auth_data = json.load(f)
             self._init_session()
         else:
@@ -323,8 +319,8 @@ class MiJiaAPI:
         try:
             lp_ret = session.get(status_url, headers=headers, timeout=120)
             lp_data = self._handle_ret(lp_ret)
-        except requests.exceptions.Timeout:
-            raise ValueError("超时，请重试")
+        except requests.exceptions.Timeout as err:
+            raise ValueError("超时，请重试") from err
 
         # Step 4: 处理登录结果
         auth_keys = [
@@ -406,8 +402,8 @@ class MiJiaAPI:
         try:
             lp_ret = session.get(login_data["lp"], headers=headers, timeout=120)
             lp_data = self._handle_ret(lp_ret)
-        except requests.exceptions.Timeout:
-            raise ValueError("超时，请重试")
+        except requests.exceptions.Timeout as err:
+            raise ValueError("超时，请重试") from err
 
         # Step 4: 处理登录结果
         auth_keys = [
