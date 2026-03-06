@@ -187,6 +187,7 @@ class AuthManager:
             }
         else:
             return
+
     def get_cookie(self):
         """获取Cookie
 

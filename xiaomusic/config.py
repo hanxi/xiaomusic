@@ -230,6 +230,7 @@ class Config:
         os.getenv("XIAOMUSIC_ENABLE_AUTO_CLEAN_TEMP", "true").lower() == "true"
     )
     qrcode_timeout: int = os.getenv("QRCODE_TIMEOUT", 120)
+
     def append_keyword(self, keys, action):
         for key in keys.split(","):
             if key:

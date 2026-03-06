@@ -1,4 +1,5 @@
 """系统管理路由"""
+
 import asyncio
 import json
 import os
@@ -46,9 +47,11 @@ from xiaomusic.utils.system_utils import (
     update_version,
 )
 from xiaomusic.qrcode_login import MiJiaAPI
+
 router = APIRouter(dependencies=[Depends(verification)])
 auth_data_path = config.conf_path if config.conf_path else None
 mi_jia_api = MiJiaAPI(auth_data_path=auth_data_path)
+
 
 @router.get("/")
 async def read_index():
@@ -57,6 +60,7 @@ async def read_index():
         os.path.dirname(os.path.dirname(__file__))
     )  # xiaomusic 目录
     return FileResponse(f"{folder}/static/index.html")
+
 
 @router.get("/api/get_qrcode")
 async def get_qrcode():
@@ -106,6 +110,7 @@ async def get_logint_status(lp: str):
         await asyncio.to_thread(mi_jia_api.get_logint_status, lp)
     except ValueError as e:
         log.exception("get_logint_status failed: %s", e)
+
 
 @router.get("/getversion")
 def getversion():

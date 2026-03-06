@@ -22,7 +22,7 @@ from Crypto.Cipher import ARC4
 
 def gen_nonce():
     millis = int(round(time.time() * 1000))
-    b = (random.getrandbits(64) - 2 ** 63).to_bytes(8, "big", signed=True)
+    b = (random.getrandbits(64) - 2**63).to_bytes(8, "big", signed=True)
     part2 = int(millis / 60000)
     b += part2.to_bytes(((part2.bit_length() + 7) // 8), "big")
     return base64.b64encode(b).decode("utf-8")
@@ -126,16 +126,16 @@ class MiJiaAPI:
                 "miot-encrypt-algorithm": "ENCRYPT-RC4",
                 "x-xiaomi-protocal-flag-cli": "PROTOCAL-HTTP2",
                 "Cookie": f"cUserId={self.auth_data['cUserId']};"
-                          f"yetAnotherServiceToken={self.auth_data['serviceToken']};"
-                          f"serviceToken={self.auth_data['serviceToken']};"
-                          f"timezone_id={tzlocal.get_localzone_name()};"
-                          f"timezone=GMT{datetime.now().astimezone().strftime('%z')[:3]}:{datetime.now().astimezone().strftime('%z')[3:]};"
-                          f"is_daylight={time.daylight};"
-                          f"dst_offset={time.localtime().tm_isdst * 60 * 60 * 1000};"
-                          f"channel=MI_APP_STORE;"
-                          f"countryCode={self.locale.split('_')[1] if self.locale else 'CN'};"
-                          f"PassportDeviceId={self.device_id};"
-                          f"locale={self.locale}",
+                f"yetAnotherServiceToken={self.auth_data['serviceToken']};"
+                f"serviceToken={self.auth_data['serviceToken']};"
+                f"timezone_id={tzlocal.get_localzone_name()};"
+                f"timezone=GMT{datetime.now().astimezone().strftime('%z')[:3]}:{datetime.now().astimezone().strftime('%z')[3:]};"
+                f"is_daylight={time.daylight};"
+                f"dst_offset={time.localtime().tm_isdst * 60 * 60 * 1000};"
+                f"channel=MI_APP_STORE;"
+                f"countryCode={self.locale.split('_')[1] if self.locale else 'CN'};"
+                f"PassportDeviceId={self.device_id};"
+                f"locale={self.locale}",
             }
         )
 
@@ -144,8 +144,8 @@ class MiJiaAPI:
         if not self.auth_data:
             return False
         if any(
-                key not in self.auth_data
-                for key in ["ua", "ssecurity", "userId", "cUserId", "serviceToken"]
+            key not in self.auth_data
+            for key in ["ua", "ssecurity", "userId", "cUserId", "serviceToken"]
         ):
             return False
 
@@ -204,7 +204,7 @@ class MiJiaAPI:
         return service_data
 
     def _handle_ret(
-            self, fetch_ret: requests.Response, verify_code: bool = True
+        self, fetch_ret: requests.Response, verify_code: bool = True
     ) -> dict:
         if fetch_ret.status_code != 200:
             raise ValueError(
@@ -227,11 +227,7 @@ class MiJiaAPI:
             qr.print_ascii(invert=True, tty=True)
         except OSError:
             qr.print_ascii(invert=True, tty=False)
-            print(
-                "如果无法扫描二维码，"
-                "请更改终端字体，"
-                "如`Maple Mono`、`Fira Code`等。"
-            )
+            print("如果无法扫描二维码，请更改终端字体，如`Maple Mono`、`Fira Code`等。")
 
     def _save_auth_data(self):
         self.auth_data["saveTime"] = int(time.time() * 1000)
@@ -248,11 +244,11 @@ class MiJiaAPI:
             "Accept-Encoding": "gzip",
             "Content-Type": "application/x-www-form-urlencoded",
             "Cookie": f"deviceId={self.device_id};"
-                      f"pass_o={self.pass_o};"
-                      f"passToken={self.auth_data.get('passToken', '')};"
-                      f"userId={self.auth_data.get('userId', '')};"
-                      f"cUserId={self.auth_data.get('cUserId', '')};"
-                      f"uLocale={self.locale};",
+            f"pass_o={self.pass_o};"
+            f"passToken={self.auth_data.get('passToken', '')};"
+            f"userId={self.auth_data.get('userId', '')};"
+            f"cUserId={self.auth_data.get('cUserId', '')};"
+            f"uLocale={self.locale};",
         }
         service_ret = requests.get(self.service_login_url, headers=headers)
         service_data = self._handle_ret(service_ret, verify_code=False)
@@ -273,8 +269,8 @@ class MiJiaAPI:
             return self.auth_data
         location_data = self._get_location()
         if (
-                location_data.get("code", -1) == 0
-                and location_data.get("message", "") == "刷新Token成功"
+            location_data.get("code", -1) == 0
+            and location_data.get("message", "") == "刷新Token成功"
         ):
             self._save_auth_data()
             self._init_session()
@@ -287,8 +283,8 @@ class MiJiaAPI:
         # Step 1: 从 serviceLogin 获取登录链接参数
         location_data = self._get_location()
         if (
-                location_data.get("code", -1) == 0
-                and location_data.get("message", "") == "刷新Token成功"
+            location_data.get("code", -1) == 0
+            and location_data.get("message", "") == "刷新Token成功"
         ):
             self._save_auth_data()
             self._init_session()
@@ -375,8 +371,8 @@ class MiJiaAPI:
         # Step 1: 从 serviceLogin 获取登录链接参数
         location_data = self._get_location()
         if (
-                location_data.get("code", -1) == 0
-                and location_data.get("message", "") == "刷新Token成功"
+            location_data.get("code", -1) == 0
+            and location_data.get("message", "") == "刷新Token成功"
         ):
             self._save_auth_data()
             self._init_session()
@@ -465,7 +461,7 @@ class MiJiaAPI:
         return ret_data["result"]
 
     def check_new_msg(
-            self, begin_at: int = int(time.time()) - 3600, refresh_token: bool = True
+        self, begin_at: int = int(time.time()) - 3600, refresh_token: bool = True
     ) -> dict:
         uri = "/v2/message/v2/check_new_msg"
         data = {"begin_at": begin_at}
