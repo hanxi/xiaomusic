@@ -262,8 +262,12 @@
     @media (min-width: 600px) {
       html { background-color: #e5e7eb; overflow-y: scroll; scrollbar-gutter: stable; }
       @media (prefers-color-scheme: dark) { html { background-color: #050505; } }
-      body { width: 480px !important; margin: 0 auto !important; min-height: 100vh; box-shadow: 0 0 60px rgba(0,0,0,0.15); border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
-      .header, .player-bar, .full-player { width: 480px !important; left: 50% !important; margin-left: -240px !important; }
+      body {
+        width: 480px !important; margin: 0 auto !important; min-height: 100vh;
+        box-shadow: 0 0 60px rgba(0,0,0,0.15); border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+        overflow-x: visible;
+      }
+      .player-bar, .full-player { width: 480px !important; left: 50% !important; margin-left: -240px !important; }
       .about-modal-backdrop { left: 50%; width: 480px; margin-left: -240px; }
       #fp-lyrics-wrapper { cursor: grab; }
       #fp-lyrics-wrapper.dragging { cursor: grabbing; }
@@ -688,7 +692,7 @@
       currentIndex = index; currentSongName = songList[currentIndex];
 
       const currentEl = document.getElementById('song-' + currentIndex);
-      if (currentEl) { currentEl.classList.add('playing'); setTimeout(scrollToCurrentSong, 100); }
+      if (currentEl) { currentEl.classList.add('playing'); setTimeout(() => scrollToCurrentSong('smooth'), 100); }
 
       npTitle.innerText = currentSongName;
       fpCover.src = defaultCover; miniCoverImg.src = defaultCover;
@@ -696,10 +700,11 @@
       fpLyricsContainer.style.transform = `translateY(0px)`;
     }
 
-    function scrollToCurrentSong() {
+    function scrollToCurrentSong(behavior = 'smooth') {
       if (currentIndex !== -1) {
         const currentEl = document.getElementById('song-' + currentIndex);
-        if (currentEl) currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // behavior: 'smooth' 是平滑动画，'auto' 是瞬间跳转无动画
+        if (currentEl) currentEl.scrollIntoView({ behavior: behavior, block: 'center' });
       }
     }
 
@@ -785,7 +790,8 @@
           window.scrollTo(window.scrollX, window.scrollY + 1);
           window.scrollTo(window.scrollX, window.scrollY - 1);
           window.dispatchEvent(new Event('resize'));
-        }, 300);
+          scrollToCurrentSong('auto');
+        }, 500);
 
       } catch (err) { loadingEl.innerText = '加载失败，请检查网络或后端状态'; }
     }
@@ -817,7 +823,11 @@
             progressContainer.classList.add('remote-mode');
             fetch(API.setting).then(res => res.json()).then(data => {
               if (data && data.devices && data.devices[currentDid]) {
-                playMode = data.devices[currentDid].play_type !== undefined ? data.devices[currentDid].play_type : 1;
+                let pt = data.devices[currentDid].play_type;
+                playMode = pt !== undefined ? parseInt(pt) : 1;
+                if (isNaN(playMode) || playMode < 0 || playMode > 2) {
+                  playMode = 1;
+                }
                 updatePlayModeUI();
               }
             }).catch(()=>{});
@@ -904,9 +914,41 @@
       highlightSongUI(index);
       const targetSongName = currentSongName;
 
+      if (currentDid !== "" && autoPlay) {
+        // 记录发送指令的时间戳
+        window.lastRemoteCmdTime = Date.now();
+        sendRemoteCmd(`播放列表${currentPlaylist}|${targetSongName}`);
+      }
+
       try {
         const res = await fetch(API.info + encodeURIComponent(currentSongName));
         const info = await res.json();
+
+        if (currentDid === "" && info.url) {
+          localState.playlist = currentPlaylist;
+          localState.songName = currentSongName;
+          localStorage.setItem('local_state', JSON.stringify(localState));
+          audioEl.src = info.url;
+
+          if (!autoPlay) {
+            const restoreProgress = () => {
+              if (audioEl.duration) {
+                audioEl.currentTime = resumeTime;
+                timeCurrentEl.innerText = formatTime(resumeTime);
+                timeDurationEl.innerText = formatTime(audioEl.duration);
+                progressBar.style.width = (resumeTime / audioEl.duration * 100) + '%';
+                syncLyrics(resumeTime);
+              }
+              audioEl.removeEventListener('loadedmetadata', restoreProgress);
+            };
+            if (audioEl.readyState >= 1) restoreProgress();
+            else audioEl.addEventListener('loadedmetadata', restoreProgress);
+            updatePlayButtonUI(false);
+          } else {
+            const playPromise = audioEl.play();
+            if (playPromise !== undefined) playPromise.catch(error => {});
+          }
+        }
 
         let finalCover = info.tags && info.tags.picture ? info.tags.picture : null;
         let finalLrc = info.tags && info.tags.lyrics ? info.tags.lyrics : null;
@@ -1025,37 +1067,6 @@
 
         if (!finalLrc && targetSongName === currentSongName) {
           parseLyrics(null); // 传入 null 会触发“暂无歌词，请欣赏音乐吧”
-        }
-
-        if (currentDid !== "") {
-          if (autoPlay) sendRemoteCmd(`播放列表${currentPlaylist}|${currentSongName}`);
-          return;
-        }
-
-        if (info.url) {
-          localState.playlist = currentPlaylist;
-          localState.songName = currentSongName;
-          localStorage.setItem('local_state', JSON.stringify(localState));
-          audioEl.src = info.url;
-
-          if (!autoPlay) {
-            const restoreProgress = () => {
-              if (audioEl.duration) {
-                audioEl.currentTime = resumeTime;
-                timeCurrentEl.innerText = formatTime(resumeTime);
-                timeDurationEl.innerText = formatTime(audioEl.duration);
-                progressBar.style.width = (resumeTime / audioEl.duration * 100) + '%';
-                syncLyrics(resumeTime);
-              }
-              audioEl.removeEventListener('loadedmetadata', restoreProgress);
-            };
-            if (audioEl.readyState >= 1) restoreProgress();
-            else audioEl.addEventListener('loadedmetadata', restoreProgress);
-            updatePlayButtonUI(false);
-          } else {
-            const playPromise = audioEl.play();
-            if (playPromise !== undefined) playPromise.catch(error => {});
-          }
         }
       } catch (err) {
         console.error("播放歌曲时发生异常:", err);
@@ -1307,11 +1318,17 @@
             }
 
             if (data.cur_music && data.cur_music !== currentSongName) {
-              const idx = songList.indexOf(data.cur_music);
-              if (idx !== -1) {
-                playSong(idx, false);
+              // 👇 【关键修复 2】：检查是不是最近 5 秒内刚点过切歌
+              const timeSinceCmd = window.lastRemoteCmdTime ? (Date.now() - window.lastRemoteCmdTime) : 99999;
+
+              // 只有距离上次主动切歌超过 5 秒，才允许强制把网页同步回音箱的歌
+              if (timeSinceCmd > 5000) {
+                const idx = songList.indexOf(data.cur_music);
+                if (idx !== -1) {
+                  playSong(idx, false);
+                }
+                updateDevicePresence();
               }
-              updateDevicePresence();
             }
 
             if (data.is_playing) {
