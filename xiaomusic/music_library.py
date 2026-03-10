@@ -479,6 +479,32 @@ class MusicLibrary:
         # 保存更新后的配置
         self.config.music_list_json = json.dumps(music_list, ensure_ascii=False)
 
+    def _resolve_play_list(self, name, create_if_missing=False):
+        """获取歌单列表引用，同时返回是否需要持久化自定义歌单
+
+        系统/目录歌单直接返回 music_list 中的引用（无需持久化）；
+        自定义歌单返回 custom_play_list 中的引用（需要持久化）。
+
+        Args:
+            name: 歌单名称
+            create_if_missing: 自定义歌单不存在时是否自动新建
+
+        Returns:
+            tuple: (play_list, need_save) 或 (None, False) 表示失败
+        """
+        custom_play_list = self.get_custom_play_list()
+
+        # 系统/目录歌单（如"收藏"）：直接操作 music_list，无需持久化
+        if name in self.music_list and name not in custom_play_list:
+            return self.music_list[name], False
+
+        # 自定义歌单不存在时按需新建
+        if name not in custom_play_list:
+            if not create_if_missing or not self.play_list_add(name):
+                return None, False
+
+        return custom_play_list[name], True
+
     def play_list_add_music(self, name, music_list):
         """歌单新增歌曲
 
@@ -489,18 +515,16 @@ class MusicLibrary:
         Returns:
             bool: 是否成功
         """
-        custom_play_list = self.get_custom_play_list()
-        if name not in custom_play_list:
-            # 歌单不存在则新建
-            if not self.play_list_add(name):
-                return False
+        play_list, need_save = self._resolve_play_list(name, create_if_missing=True)
+        if play_list is None:
+            return False
 
-        play_list = custom_play_list[name]
         for music_name in music_list:
-            if (music_name in self.all_music) and (music_name not in play_list):
+            if music_name in self.all_music and music_name not in play_list:
                 play_list.append(music_name)
 
-        self.save_custom_play_list()
+        if need_save:
+            self.save_custom_play_list()
         return True
 
     def play_list_del_music(self, name, music_list):
@@ -513,16 +537,16 @@ class MusicLibrary:
         Returns:
             bool: 是否成功
         """
-        custom_play_list = self.get_custom_play_list()
-        if name not in custom_play_list:
+        play_list, need_save = self._resolve_play_list(name)
+        if play_list is None:
             return False
 
-        play_list = custom_play_list[name]
         for music_name in music_list:
             if music_name in play_list:
                 play_list.remove(music_name)
 
-        self.save_custom_play_list()
+        if need_save:
+            self.save_custom_play_list()
         return True
 
     # ==================== 音乐搜索 ====================
