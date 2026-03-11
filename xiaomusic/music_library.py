@@ -125,7 +125,6 @@ class MusicLibrary:
             {
                 "所有歌曲": [],
                 "所有电台": [],
-                "收藏": [],
                 "全部": [],  # 包含所有歌曲和所有电台
                 "下载": [],  # 下载目录下的
                 "其他": [],  # 主目录下的
@@ -494,7 +493,7 @@ class MusicLibrary:
         """
         custom_play_list = self.get_custom_play_list()
 
-        # 系统/目录歌单（如"收藏"）：直接操作 music_list，无需持久化
+        # 系统/目录歌单：直接操作 music_list，无需持久化
         if name in self.music_list and name not in custom_play_list:
             return self.music_list[name], False
 
