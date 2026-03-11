@@ -291,36 +291,9 @@ const WebPlayer = {
     localStorage.setItem("web_volume", volume.toString());
   },
 
-  // 获取收藏列表
-  getFavorites: function () {
-    const favorites = localStorage.getItem("web_favorites");
-    return favorites ? JSON.parse(favorites) : [];
-  },
-
-  // 设置收藏列表
-  setFavorites: function (favorites) {
-    localStorage.setItem("web_favorites", JSON.stringify(favorites));
-  },
-
-  // 添加到收藏
-  addToFavorites: function (music) {
-    const favorites = this.getFavorites();
-    if (!favorites.includes(music)) {
-      favorites.push(music);
-      this.setFavorites(favorites);
-    }
-  },
-
-  // 从收藏移除
-  removeFromFavorites: function (music) {
-    let favorites = this.getFavorites();
-    favorites = favorites.filter((item) => item !== music);
-    this.setFavorites(favorites);
-  },
-
-  // 检查是否已收藏
+  // 检查是否已收藏（直接使用全局 favoritelist，数据来源于服务器）
   isFavorited: function (music) {
-    return this.getFavorites().includes(music);
+    return favoritelist.includes(music);
   },
 };
 
@@ -617,51 +590,59 @@ function togglePlayMode(isSend = true) {
   }
 }
 
+// 调用后端接口将歌曲加入指定歌单
+function playlistAddMusic(playlistName, musicName) {
+  return $.ajax({
+    type: "POST",
+    url: "/playlistaddmusic",
+    contentType: "application/json; charset=utf-8",
+    data: JSON.stringify({ name: playlistName, music_list: [musicName] }),
+  });
+}
+
+// 调用后端接口将歌曲从指定歌单移除
+function playlistDelMusic(playlistName, musicName) {
+  return $.ajax({
+    type: "POST",
+    url: "/playlistdelmusic",
+    contentType: "application/json; charset=utf-8",
+    data: JSON.stringify({ name: playlistName, music_list: [musicName] }),
+  });
+}
+
 function addToFavorites() {
-  var did = $("#did").val();
   const isLiked = $(".favorite").hasClass("favorite-active");
+  const musicName = WebPlayer.getCurrentMusic() || $("#music_name").val();
 
-  if (did == "web_device") {
-    // 本机播放：使用 localStorage 管理收藏
-    const musicName = WebPlayer.getCurrentMusic() || $("#music_name").val();
+  if (!musicName) {
+    alert("请先选择或播放一首歌曲");
+    return;
+  }
 
-    if (!musicName) {
-      alert("请先选择或播放一首歌曲");
-      return;
-    }
-
-    if (isLiked) {
-      $(".favorite").removeClass("favorite-active");
-      // 取消收藏
-      WebPlayer.removeFromFavorites(musicName);
-      updateFavoriteAria(false);
-      announceToScreenReader(`已取消收藏 ${musicName}`);
-    } else {
-      $(".favorite").addClass("favorite-active");
-      // 加入收藏
-      WebPlayer.addToFavorites(musicName);
-      updateFavoriteAria(true);
-      announceToScreenReader(`已收藏 ${musicName}`);
-    }
+  if (isLiked) {
+    $(".favorite").removeClass("favorite-active");
+    favoritelist = favoritelist.filter((item) => item !== musicName);
+    updateFavoriteAria(false);
+    announceToScreenReader(`已取消收藏 ${musicName}`);
+    playlistDelMusic("收藏", musicName)
+      .done((data) => {
+        console.log("取消收藏成功:", musicName, data);
+      })
+      .fail(() => {
+        console.error("取消收藏失败:", musicName);
+      });
   } else {
-    // 设备播放：使用原有逻辑
-    const cmd = isLiked ? "取消收藏" : "加入收藏";
-    const musicName = $("#music_name").val();
-
-    if (isLiked) {
-      $(".favorite").removeClass("favorite-active");
-      // 取消收藏
-      favoritelist = favoritelist.filter((item) => item != musicName);
-      updateFavoriteAria(false);
-      announceToScreenReader(`已取消收藏 ${musicName}`);
-    } else {
-      $(".favorite").addClass("favorite-active");
-      // 加入收藏
-      favoritelist.push(musicName);
-      updateFavoriteAria(true);
-      announceToScreenReader(`已收藏 ${musicName}`);
-    }
-    sendcmd(cmd);
+    $(".favorite").addClass("favorite-active");
+    favoritelist.push(musicName);
+    updateFavoriteAria(true);
+    announceToScreenReader(`已收藏 ${musicName}`);
+    playlistAddMusic("收藏", musicName)
+      .done((data) => {
+        console.log("收藏成功:", musicName, data);
+      })
+      .fail(() => {
+        console.error("收藏失败:", musicName);
+      });
   }
 }
 
@@ -1744,7 +1725,8 @@ function updateWebFavoriteButton() {
 
   if (!currentMusic) return;
 
-  const isFavorited = WebPlayer.isFavorited(currentMusic);
+  // 直接使用全局 favoritelist，数据来源于服务器
+  const isFavorited = favoritelist.includes(currentMusic);
 
   if (isFavorited) {
     $(".favorite").addClass("favorite-active");
