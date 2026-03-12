@@ -101,11 +101,13 @@
     .song-item {
       background: var(--card-bg); margin-bottom: 10px; padding: 15px; border-radius: 12px;
       display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s;
+      user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
     }
     .song-item:active { transform: scale(0.98); }
     .song-item.playing { border: 2px solid var(--primary); }
     .song-info { flex: 1; overflow: hidden; }
     .song-name { font-size: 16px; font-weight: 500; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+    .song-fav-icon { margin-left: 10px; display: flex; align-items: center; } /* 收藏图标容器 */
     #loading { text-align: center; padding: 20px; color: var(--text-sub); }
 
     /* ==========================================
@@ -282,10 +284,7 @@
       .header { padding: 10px 8px; }
       .header-logo-group { flex: 0 0 auto; margin-right: 4px; }
       .header-controls { gap: 4px; }
-      .select-value {
-        padding: 6px 18px 6px 6px; /* 减少内边距 */
-        font-size: 13px;
-      }
+      .select-value { padding: 6px 18px 6px 6px; font-size: 13px; }
       #device-val { max-width: 75px; }
       #playlist-val { max-width: 115px; }
       .settings-btn { flex: 0 0 28px; }
@@ -360,7 +359,7 @@
           <img id="mini-cover-img" src="" alt="cover">
         </div>
         <div class="np-text-group">
-          <div class="now-playing-title" id="np-title">暂无播放</div>
+          <div class="now-playing-title" id="np-title"><span class="np-title-text">暂无播放</span></div>
         </div>
         <div class="up-arrow">
           <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
@@ -472,7 +471,7 @@
       cmdStatus: '/cmdstatus'
     };
 
-    let APP_VERSION = 'v0.6';
+    let APP_VERSION = 'v0.7';
     let APP_LOGO = document.getElementById('app-logo')?.content || '';
     const defaultCover = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23ec4899' /%3E%3Cstop offset='100%25' stop-color='%238b5cf6' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='50' fill='%231f2937' /%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='%23374151' stroke-width='1' /%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='%23374151' stroke-width='1' /%3E%3Ccircle cx='50' cy='50' r='20' fill='url(%23grad)' /%3E%3Ccircle cx='50' cy='50' r='5' fill='%23111827' /%3E%3Cpath d='M50 15 A35 35 0 0 1 85 50' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' opacity='0.3' /%3E%3C/svg%3E";
     const eqHtml = `<div class="playing-eq"><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span></div>`;
@@ -482,6 +481,7 @@
     // 播放状态与队列
     let allPlaylists = {};
     let songList = [];
+    let favoriteList = []; // 全局同步的收藏列表
     let currentIndex = -1;
     let currentSongName = "";
     let isPlaying = false;
@@ -631,14 +631,12 @@
     }
 
     function updateVolumeIcon(vol) {
-      // 👇 如果是 iPhone 且播放本机音乐，强制锁定为普通音量图标
+      // 如果是 iPhone 且播放本机音乐，强制锁定为普通音量图标
       if (currentDid === "" && isIOS) {
         iconVolNormal.style.display = 'block';
         iconVolMute.style.display = 'none';
         return;
       }
-
-      // 电脑或远程设备，正常根据数值切换图标
       if (parseInt(vol) === 0) {
         iconVolNormal.style.display = 'none';
         iconVolMute.style.display = 'block';
@@ -687,6 +685,18 @@
       }
     }
 
+    // 用于动态渲染底部播放标题（带红心判定）
+    function updateNpTitleUI(text, checkFav = true) {
+      if (!text) return;
+      if (!checkFav) {
+        npTitle.innerHTML = `<span class="np-title-text">${text}</span>`;
+        return;
+      }
+      const isFav = favoriteList.includes(text);
+      const favSvg = isFav ? `<svg style="flex-shrink: 0; position: relative; top: 2px;" viewBox="0 0 24 24" width="18" height="18" fill="var(--primary)" color="var(--primary)"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` : '';
+      npTitle.innerHTML = `<span class="np-title-text">${text}</span>${favSvg}`;
+    }
+
     function highlightSongUI(index) {
       if (currentIndex !== -1) document.getElementById('song-' + currentIndex)?.classList.remove('playing');
       currentIndex = index; currentSongName = songList[currentIndex];
@@ -694,7 +704,7 @@
       const currentEl = document.getElementById('song-' + currentIndex);
       if (currentEl) { currentEl.classList.add('playing'); setTimeout(() => scrollToCurrentSong('smooth'), 100); }
 
-      npTitle.innerText = currentSongName;
+      updateNpTitleUI(currentSongName);
       fpCover.src = defaultCover; miniCoverImg.src = defaultCover;
       fpLyricsContainer.innerHTML = '<div class="no-lyrics">加载中...</div>';
       fpLyricsContainer.style.transform = `translateY(0px)`;
@@ -703,7 +713,6 @@
     function scrollToCurrentSong(behavior = 'smooth') {
       if (currentIndex !== -1) {
         const currentEl = document.getElementById('song-' + currentIndex);
-        // behavior: 'smooth' 是平滑动画，'auto' 是瞬间跳转无动画
         if (currentEl) currentEl.scrollIntoView({ behavior: behavior, block: 'center' });
       }
     }
@@ -721,6 +730,56 @@
       }
     }
 
+    // ==========================================
+    // 3.5. 收藏功能控制逻辑
+    // ==========================================
+    function toggleFavorite(songName, index) {
+      if (navigator.vibrate) navigator.vibrate(50); // 触觉反馈
+      const isFav = favoriteList.includes(songName);
+      const favIcon = document.getElementById(`fav-${index}`);
+
+      if (isFav) {
+        // 取消收藏
+        favoriteList = favoriteList.filter(s => s !== songName);
+        if (favIcon) favIcon.style.display = 'none';
+        showToast(`已取消收藏: ${songName}`);
+      } else {
+        // 加入收藏
+        favoriteList.push(songName);
+        if (favIcon) favIcon.style.display = 'block';
+        showToast(`已收藏: ${songName}`);
+      }
+
+      // 实时更新当前内存字典
+      allPlaylists["收藏"] = favoriteList;
+
+      // 更新下拉框的文本（数量变化）
+      const favOpt = Array.from(document.querySelectorAll('#playlist-opts .select-option')).find(opt => opt.textContent.startsWith('收藏'));
+      if (favOpt) favOpt.textContent = `收藏 (${favoriteList.length})`;
+      if (currentPlaylist === '收藏') playlistVal.textContent = `收藏 (${favoriteList.length})`;
+
+      if (songName === currentSongName) {
+        updateNpTitleUI(currentSongName);
+        updateMediaSession(currentSongName, document.getElementById('fp-cover').src);
+      }
+      // 向所有的设备并发提交状态，确保所有小爱音箱的后端保持一致
+      const allDids = Array.from(document.querySelectorAll('#device-opts .select-option'))
+        .map(opt => opt.dataset.did)
+        .filter(d => d && d !== "");
+
+      // 使用歌名进行精确收藏，兼容XiaoMusic后台指令
+      const cmdStr = (isFav ? "取消收藏" : "加入收藏") + songName;
+
+      if (allDids.length > 0) {
+        allDids.forEach(did => {
+          fetch(API.cmd, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ did: did, cmd: cmdStr })
+          }).catch(()=>{});
+        });
+      }
+    }
 
     // ==========================================
     // 4. 核心逻辑 (加载、构建列表、获取封面等)
@@ -745,6 +804,12 @@
         ]);
         const settingData = await settingRes.json();
         allPlaylists = await listRes.json();
+
+        // 应对新版本的兜底逻辑：如果后端没有传"收藏"（比如没有文件），我们强制为其创建一个空列表以占位
+        if (!allPlaylists["收藏"]) {
+          allPlaylists["收藏"] = [];
+        }
+        favoriteList = allPlaylists["收藏"]; // 将后端的收藏列表同步到全局管理
 
         initDeviceDropdown(settingData.devices || {});
         initPlaylistDropdown();
@@ -873,8 +938,10 @@
 
     function initPlaylistDropdown() {
       playlistOpts.innerHTML = ''; let defaultKey = '';
-      for (const key in allPlaylists) { if (!defaultKey && (key === '全部' || key === '所有歌曲')) defaultKey = key; }
-      if (!defaultKey && Object.keys(allPlaylists).length > 0) defaultKey = Object.keys(allPlaylists).find(k => k !== '收藏') || Object.keys(allPlaylists)[0];
+
+      // 稍微修改默认选中逻辑：优先选“所有歌曲”，避开“全部”和“其他”
+      for (const key in allPlaylists) { if (!defaultKey && key === '所有歌曲') defaultKey = key; }
+      if (!defaultKey && Object.keys(allPlaylists).length > 0) defaultKey = Object.keys(allPlaylists).find(k => k !== '收藏' && k !== '全部' && k !== '其他') || Object.keys(allPlaylists)[0];
 
       const createOpt = (key) => {
         const li = document.createElement('li');
@@ -884,10 +951,34 @@
           currentPlaylist = key; playlistVal.textContent = li.textContent; playlistOpts.classList.remove('show');
           playlistOpts.querySelectorAll('.select-option').forEach(el => el.classList.remove('active'));
           li.classList.add('active'); songList = allPlaylists[key] || []; renderPlaylist();
+
+          // 当选中的歌单是“收藏”时，给予用户提示
+          if (key === '收藏') {
+             showToast("提示：长按歌曲可添加/取消收藏");
+          }
         });
         playlistOpts.appendChild(li);
       };
-      for (const key in allPlaylists) createOpt(key);
+
+      // 核心修改：定义排序规矩，并加入“黑名单”隐藏机制
+      const predefinedOrder = ['所有歌曲', '所有电台', '收藏', '下载', '最近新增'];
+      const hiddenPlaylists = ['全部', '其他']; // 要隐藏的歌单名单
+
+      // 先把黑名单里的歌单从总列表里剔除掉
+      const allKeys = Object.keys(allPlaylists).filter(k => !hiddenPlaylists.includes(k));
+
+      const customKeys = allKeys
+        .filter(k => !predefinedOrder.includes(k))
+        .sort((a, b) => a.localeCompare(b, 'zh-CN'));
+
+      // 筛选并合并排序
+      const sortedKeys = [
+        ...predefinedOrder.filter(k => allKeys.includes(k)),
+        ...customKeys
+      ];
+
+      // 按照排序并过滤后的结果生成下拉列表
+      sortedKeys.forEach(key => createOpt(key));
 
       if (defaultKey) {
         currentPlaylist = defaultKey; playlistVal.textContent = `${defaultKey} (${allPlaylists[defaultKey].length})`;
@@ -902,8 +993,71 @@
       songList.forEach((songName, index) => {
         const li = document.createElement('li'); li.className = 'song-item'; li.id = 'song-' + index;
         if (songName === currentSongName) { li.classList.add('playing'); currentIndex = index; isCurrentSongInNewList = true; }
-        li.innerHTML = `<div class="song-info"><div class="song-name">${songName}</div></div>`;
-        li.addEventListener('click', () => playSong(index));
+
+        li.innerHTML = `
+          <div class="song-info"><div class="song-name">${songName}</div></div>
+          <div class="song-fav-icon" id="fav-${index}" style="display: ${favoriteList.includes(songName) ? 'block' : 'none'};">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--primary)" color="var(--primary)"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          </div>
+        `;
+
+        // 完美长按逻辑（防幽灵事件、防滑动误触）
+        let pressTimer;
+        let isLongPress = false;
+        let startY = 0;
+        let touchHandled = false; // 记录是否是触屏操作
+
+        const startPress = (e) => {
+          if (e.type.startsWith('touch')) touchHandled = true;
+          // 核心防御：如果是手机模拟出来的 mousedown，直接抛弃，防止偷偷重置状态
+          if (e.type === 'mousedown' && touchHandled) return;
+          if (e.type === 'mousedown' && e.button !== 0) return;
+
+          isLongPress = false;
+          startY = e.touches ? e.touches[0].clientY : e.clientY;
+
+          pressTimer = setTimeout(() => {
+            isLongPress = true;
+            toggleFavorite(songName, index); // 触发收藏
+          }, 500); // 调短到500ms，手感更敏捷
+        };
+
+        const cancelPress = () => {
+          if (pressTimer) clearTimeout(pressTimer);
+        };
+
+        const movePress = (e) => {
+          if (!pressTimer) return;
+          const y = e.touches ? e.touches[0].clientY : e.clientY;
+          // 如果手指滑动距离超过 10px (说明在滚动歌单)，立刻取消长按判定
+          if (Math.abs(y - startY) > 10) {
+            cancelPress();
+          }
+        };
+
+        // 绑定各种原生事件
+        li.addEventListener('mousedown', startPress);
+        li.addEventListener('touchstart', startPress, {passive: true});
+
+        li.addEventListener('mousemove', movePress, {passive: true});
+        li.addEventListener('touchmove', movePress, {passive: true});
+
+        li.addEventListener('mouseup', cancelPress);
+        li.addEventListener('mouseleave', cancelPress);
+        li.addEventListener('touchend', cancelPress);
+        li.addEventListener('touchcancel', cancelPress);
+
+        li.addEventListener('click', (e) => {
+          if (isLongPress) {
+            // 如果已经被判定为长按，彻底杀掉后续的点击播放行为
+            e.preventDefault();
+            e.stopPropagation();
+            isLongPress = false; // 消耗掉状态，不影响下一次
+            return;
+          }
+          playSong(index); // 正常轻触点击则播放
+        });
+
         playlistEl.appendChild(li);
       });
       if (!isCurrentSongInNewList) currentIndex = -1;
@@ -915,7 +1069,6 @@
       const targetSongName = currentSongName;
 
       if (currentDid !== "" && autoPlay) {
-        // 记录发送指令的时间戳
         window.lastRemoteCmdTime = Date.now();
         sendRemoteCmd(`播放列表${currentPlaylist}|${targetSongName}`);
       }
@@ -975,8 +1128,6 @@
         if (finalCover || finalLrc) applyUI();
 
         if (!finalCover || !finalLrc) {
-
-          // --- 阶段1：ID3标签精准刮削 ---
           if (info.tags && info.tags.title && info.tags.artist) {
             const res1 = await fetchFromLrcCx(info.tags.title, info.tags.artist, true);
             if (!finalCover && res1.cover) finalCover = res1.cover;
@@ -984,7 +1135,6 @@
             applyUI();
           }
 
-          // --- 阶段2：智能文件名刮削 ---
           if (!finalCover || !finalLrc) {
             const filename = currentSongName.replace(/\.[a-zA-Z0-9]+$/, '');
 
@@ -1020,19 +1170,15 @@
               applyUI();
             }
           }
-          //console.log(finalCover)
-          //console.log(finalLrc)
-          // --- 阶段3：iTunes & LRCLIB 兜底 ---
+
           if (!finalCover || !finalLrc) {
             const filename = currentSongName.replace(/\.[a-zA-Z0-9]+$/, '');
             const qTerm = encodeURIComponent(filename);
 
             if (!finalCover) {
-              //console.log("fetching from iTunes")
                try {
                   const itunesUrl = `https://itunes.apple.com/search?term=${qTerm}&media=music&entity=song&limit=1`;
                   const data = await fetchProxyJSON(itunesUrl);
-                  //console.log(data)
                   if (data && data.results && data.results.length > 0) {
                      finalCover = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
                      applyUI();
@@ -1041,12 +1187,10 @@
             }
 
             if (!finalLrc) {
-              //console.log("fetching from LRCLIB")
                try {
                   const res3 = await fetch(`https://lrclib.net/api/search?q=${qTerm}`);
                   if (res3.ok) {
                      const data = await res3.json();
-                     //console.log(data)
                      if (targetSongName === currentSongName && data && data.length > 0) {
                         const fetchedLyrics = data[0].syncedLyrics || data[0].plainLyrics;
                         if (fetchedLyrics) {
@@ -1066,7 +1210,7 @@
         }
 
         if (!finalLrc && targetSongName === currentSongName) {
-          parseLyrics(null); // 传入 null 会触发“暂无歌词，请欣赏音乐吧”
+          parseLyrics(null);
         }
       } catch (err) {
         console.error("播放歌曲时发生异常:", err);
@@ -1077,59 +1221,50 @@
     // 5. 刮削工具函数 (字符串净化、智能匹配)
     // ==========================================
 
-    // 1. 字符串洗澡：去括号及内部内容、去所有空格、转小写
     function cleanStr(str) {
       if (!str) return "";
       return str.replace(/[\(（].*?[\)）]/g, '').replace(/\s+/g, '').toLowerCase().trim();
     }
 
-    // 2. 歌手切片：按常见连接词分割，清洗后返回数组
     function parseArtists(str) {
       if (!str) return [];
       return str.split(/&|、|,|，|\/|\||和|与|feat\.|ft\./i)
                 .map(a => a.replace(/\s+/g, '').toLowerCase().trim())
-                .filter(a => a); // 过滤掉空字符串
+                .filter(a => a);
     }
 
-    // 3. 数组交集法：判断歌手是否匹配（只要有一个歌手对得上就算成功）
     function isArtistMatch(localArtists, apiArtists) {
       if (localArtists.length === 0 || apiArtists.length === 0) return false;
       return localArtists.some(la => apiArtists.includes(la));
     }
 
-    // 4. 通用代理请求包装器 (增加 3 秒超时控制)
     async function fetchProxyJSON(targetUrl, timeoutMs = 3000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
         const proxyUrl = `${workingProxyPath}?urlb64=${btoa(targetUrl)}`;
-        // 把 signal 传给 fetch
         const res = await fetch(proxyUrl, { signal: controller.signal });
-        clearTimeout(timeoutId); // 请求成功，清除定时器
+        clearTimeout(timeoutId);
 
         if (res.ok) return await res.json();
       } catch (e) {
-        // 如果是因为超时被 abort 的，可以在控制台悄悄记录一下
         if (e.name === 'AbortError') {
            console.warn(`代理请求超时 (${timeoutMs}ms):`, targetUrl);
         }
       } finally {
-        clearTimeout(timeoutId); // 确保定时器被清理
+        clearTimeout(timeoutId);
       }
       return null;
     }
 
-    // 5. 核心 LrcCx 获取逻辑，返回 { cover, lrc }
     async function fetchFromLrcCx(title, artist, isStrict) {
-      //console.log(`LrcCx 刮削开始：${title} ${artist}`);
       let resCover = null;
       let resLrc = null;
       if (!title) return { cover: null, lrc: null };
 
       const targetUrl = `https://api.lrc.cx/jsonapi?title=${encodeURIComponent(title)}` + (artist ? `&artist=${encodeURIComponent(artist)}` : "");
       const data = await fetchProxyJSON(targetUrl);
-      //console.log("LrcCx 刮削结果：", data)
       if (Array.isArray(data) && data.length > 0) {
         const cLocalTitle = cleanStr(title);
         const localArtists = parseArtists(artist);
@@ -1139,28 +1274,23 @@
           const cApiTitle = cleanStr(item.title);
 
           if (isStrict) {
-            // 严格匹配：歌名完全一致，且歌手有交集
             const apiArtists = parseArtists(item.artist);
             if (cLocalTitle === cApiTitle && isArtistMatch(localArtists, apiArtists)) {
               isMatch = true;
             }
           } else {
-            // 宽松匹配：标题互相包含即可
             if (cLocalTitle && cApiTitle && (cApiTitle.includes(cLocalTitle) || cLocalTitle.includes(cApiTitle))) {
               isMatch = true;
             }
           }
 
           if (isMatch) {
-            // 校验封面
             if (!resCover && typeof item.cover === 'string' && item.cover.endsWith('.jpg') && await isCoverAcceptable(item.cover, 3000)) {
               resCover = item.cover;
             }
-            // 校验歌词
             if (!resLrc && typeof item.lrc === 'string' && /\[(\d{1,2}):(\d{2})(?:\.\d{1,3})?\]/m.test(item.lrc)) {
               resLrc = item.lrc;
             }
-            // 如果都找齐了，直接跳出循环，不再往下找
             if (resCover && resLrc) break;
           }
         }
@@ -1256,8 +1386,14 @@
 
     function updateMediaSession(songName, coverUrl) {
       if ('mediaSession' in navigator) {
+        // 判断是否收藏，如果是则在歌名后面拼接一个红心 Emoji
+        const isFav = favoriteList.includes(songName);
+        const displayTitle = isFav ? `${songName} ♡︎` : songName;
+
         navigator.mediaSession.metadata = new MediaMetadata({
-          title: songName, artist: 'iWebPlayer (XiaoMusic播放器)', album: '我的曲库',
+          title: displayTitle, // 用带红心的名字替换原名字
+          artist: 'iWebPlayer (XiaoMusic播放器)',
+          album: '我的曲库',
           artwork: [ { src: coverUrl || APP_LOGO } ]
         });
       }
@@ -1273,15 +1409,15 @@
               if (dev.presence === 'offline') {
                 updateDeviceStatusUI(li, dev.name, 'offline');
                 if (currentDid !== "" && li.classList.contains('active')) {
-                  if (npTitle.innerText !== "设备已离线") {
-                    npTitle.innerText = "设备已离线"; progressBar.style.width = '0%';
+                  if (npTitle.textContent.trim() !== "设备已离线") {
+                    updateNpTitleUI("设备已离线", false); progressBar.style.width = '0%';
                     timeCurrentEl.innerText = "00:00"; timeDurationEl.innerText = "00:00"; updatePlayButtonUI(false);
                   }
                 }
               } else {
                 if (li.classList.contains('device-offline')) {
                   updateDeviceStatusUI(li, dev.name, 'normal');
-                  if (currentDid !== "" && li.classList.contains('active')) npTitle.innerText = "暂无播放";
+                  if (currentDid !== "" && li.classList.contains('active')) updateNpTitleUI("暂无播放", false);
                 }
               }
             }
@@ -1318,10 +1454,7 @@
             }
 
             if (data.cur_music && data.cur_music !== currentSongName) {
-              // 👇 【关键修复 2】：检查是不是最近 5 秒内刚点过切歌
               const timeSinceCmd = window.lastRemoteCmdTime ? (Date.now() - window.lastRemoteCmdTime) : 99999;
-
-              // 只有距离上次主动切歌超过 5 秒，才允许强制把网页同步回音箱的歌
               if (timeSinceCmd > 5000) {
                 const idx = songList.indexOf(data.cur_music);
                 if (idx !== -1) {
