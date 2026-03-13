@@ -128,6 +128,10 @@
                     <span class="material-icons" aria-hidden="true">settings</span>
                     <p>设置</p>
                 </div>
+                <div onclick="goOnlineSearch()" class="icon-item device-enable" role="button" aria-label="在线音乐搜索" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">music_note</span>
+                    <p>在线搜索</p>
+                </div>
             </div>
         </div>
     </div>
@@ -164,7 +168,7 @@
     <!-- 播放链接组件 -->
     <div class="component" id="playlink-component" role="dialog" aria-modal="true" aria-labelledby="playlink-title">
         <h2 id="playlink-title">播放测试</h2>
-        
+
         <!-- 播放链接卡片 -->
         <div class="card-section">
             <h3 class="card-title">🔗 播放链接</h3>
@@ -238,6 +242,11 @@
     <div id="sr-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <script src="./md.js?version=1771327223">
+    </script>
+    <script>
+        function goOnlineSearch() {
+            window.location.href = "/static/onlineSearch/index.html";
+        }
     </script>
 </body>
 
