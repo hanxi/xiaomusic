@@ -283,7 +283,7 @@ async def upload_music(playlist: str = Form(...), file: UploadFile = File(...)):
             dest_dir = config.music_path
         else:
             # 如果播放列表中存在歌曲，从其中任意一首推断目录
-            musics = xiaomusic.music_list.get(playlist, [])
+            musics = xiaomusic.music_library.music_list.get(playlist, [])
             if musics and len(musics) > 0:
                 first = musics[0]
                 filepath = xiaomusic.music_library.all_music.get(first, "")
