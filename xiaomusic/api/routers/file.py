@@ -50,6 +50,11 @@ from xiaomusic.utils.network_utils import (
     downloadfile,
 )
 from xiaomusic.utils.system_utils import try_add_access_control_param
+import secrets as _secrets
+
+# 短 token 缓存：避免长 URL 超出小爱音箱等设备固件的 URL 长度限制
+# key: token (str), value: (origin_url, is_radio)
+_proxy_token_cache: dict = {}
 
 router = APIRouter()
 
@@ -552,16 +557,30 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
 
 
 @router.get("/proxy/{type}", summary="类型化代理接口")
-async def proxy_with_type(type: str, urlb64: str):
+async def proxy_with_type(type: str, urlb64: str = "", token: str = ""):
     """支持路径参数的代理接口
+
+    支持两种模式：
+    - token 模式（推荐）：?token=<短token>，避免 URL 过长超出设备固件限制
+    - urlb64 模式（兼容）：?urlb64=<base64编码URL>，向后兼容
 
     Args:
         type: 类型，music 或 radio
-        urlb64: Base64编码的URL
+        urlb64: Base64编码的URL（兼容旧版）
+        token: 短token（推荐，避免URL超长）
     """
     if type not in ("music", "radio"):
         raise HTTPException(status_code=400, detail="type 参数必须是 music 或 radio")
 
+    # token 短链模式
+    if token:
+        if token not in _proxy_token_cache:
+            raise HTTPException(status_code=404, detail="token 不存在或已过期，请重新播放")
+        real_url, is_radio = _proxy_token_cache[token]
+        # 不删除 token，允许音箱和 ffprobe 多次请求同一首歌
+        return await _proxy_handler(real_url, is_radio=is_radio)
+
+    # urlb64 兼容模式
     is_radio = type == "radio"
     return await _proxy_handler(urlb64, is_radio=is_radio)
 

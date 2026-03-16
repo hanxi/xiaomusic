@@ -1108,6 +1108,9 @@ class MusicLibrary:
     def _get_proxy_url(self, origin_url, is_radio=None):
         """获取代理URL
 
+        使用短 token 替代完整 base64 URL，避免 URL 过长超出小爱音箱等设备固件的
+        HTTP 客户端 URL 长度限制（通常约 1024 字节），导致请求被截断返回 400。
+
         Args:
             origin_url: 原始URL
             is_radio: 是否为电台直播流
@@ -1115,13 +1118,23 @@ class MusicLibrary:
         Returns:
             str: 代理URL
         """
-        urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
-
-        # 使用路径参数方式，避免查询参数转义问题
-        proxy_type = "radio" if is_radio else "music"
-        proxy_url = f"{self.config.hostname}:{self.config.public_port}/proxy/{proxy_type}?urlb64={urlb64}"
-        self.log.info(f"Using proxy url: {proxy_url}")
-        return proxy_url
+        import secrets
+        try:
+            from xiaomusic.api.routers.file import _proxy_token_cache
+            proxy_type = "radio" if is_radio else "music"
+            token = secrets.token_urlsafe(8)
+            _proxy_token_cache[token] = (origin_url, bool(is_radio))
+            proxy_url = f"{self.config.hostname}:{self.config.public_port}/proxy/{proxy_type}?token={token}"
+            self.log.info(f"Using token proxy url: {proxy_url}")
+            return proxy_url
+        except Exception as e:
+            # fallback: 兼容旧方式
+            self.log.warning(f"token proxy failed, fallback to urlb64: {e}")
+            urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
+            proxy_type = "radio" if is_radio else "music"
+            proxy_url = f"{self.config.hostname}:{self.config.public_port}/proxy/{proxy_type}?urlb64={urlb64}"
+            self.log.info(f"Using proxy url: {proxy_url}")
+            return proxy_url
 
     def _get_local_music_url(self, name):
         """获取本地音乐播放地址
