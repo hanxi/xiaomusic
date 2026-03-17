@@ -29,6 +29,9 @@ from xiaomusic.utils.music_utils import (
 from xiaomusic.utils.network_utils import MusicUrlCache
 from xiaomusic.utils.system_utils import try_add_access_control_param
 from xiaomusic.utils.text_utils import custom_sort_key, find_best_match, fuzzyfinder
+# 短 token 缓存，避免长 URL 超出小爱音箱固件限制（与 api/routers/file.py 共享）
+_proxy_token_cache: dict = {}  # token -> (origin_url, is_radio)
+
 
 
 class MusicLibrary:
@@ -1120,7 +1123,6 @@ class MusicLibrary:
         """
         import secrets
         try:
-            from xiaomusic.api.routers.file import _proxy_token_cache
             proxy_type = "radio" if is_radio else "music"
             token = secrets.token_urlsafe(8)
             _proxy_token_cache[token] = (origin_url, bool(is_radio))

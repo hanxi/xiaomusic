@@ -54,7 +54,7 @@ import secrets as _secrets
 
 # 短 token 缓存：避免长 URL 超出小爱音箱等设备固件的 URL 长度限制
 # key: token (str), value: (origin_url, is_radio)
-_proxy_token_cache: dict = {}
+from xiaomusic.music_library import _proxy_token_cache  # avoid circular import
 
 router = APIRouter()
 
