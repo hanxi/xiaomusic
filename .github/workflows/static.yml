@@ -1,0 +1,113 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.github/workflows/static.yml'
+  # Runs on issue events
+  issues:
+    types: [opened, edited, reopened]  # Specify events you're interested in
+
+  release:
+    types:
+      - uploaded
+
+  workflow_run:
+    workflows:
+      - CI Workflow
+    types:
+      - completed
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        working-directory: ./docs  # 指定工作目录为 docs
+        run: |
+          npm install
+
+      - name: Build VitePress
+        env:
+          VITE_GITHUB_ISSUES_TOKEN: ${{ secrets.VITE_GITHUB_ISSUES_TOKEN }}
+        working-directory: ./docs  # 指定工作目录为 docs
+        run: | # 有点小问题，得执行2次
+          npm run docs:build
+          npm run docs:build
+
+      - uses: pdm-project/setup-pdm@v3
+
+      - name: pdm
+        run: pdm install --prod --frozen-lockfile
+
+      - name: generate versions.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pdm run get_release.py
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [ -n "$(git diff docs)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      # Optionally, customize the user name and commit message, and can add an email as well such as Github Actions' email
+      - name: Set up Git and Commit Changes
+        run: |
+          if [ "${{ steps.check_changes.outputs.changed }}" == "true" ]; then
+            git config --local user.name "Issues Docs [BOT]"
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "Auto-Generate docs 🤖"
+            git push
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload entire repository
+          path: './docs/.vitepress/dist'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
