@@ -49,14 +49,7 @@ from xiaomusic.utils.network_utils import (
     downloadfile,
 )
 from xiaomusic.utils.system_utils import try_add_access_control_param
-import secrets as _secrets
-
-# 短 token 缓存，避免长 URL 超出小爱音箱固件限制
-import time as _time
-_proxy_token_cache: dict = {}  # token -> (origin_url, is_radio)
-
-def _cleanup_token_cache():
-    pass  # token 在重启时自动清空，无需持久化清理
+from xiaomusic.music_library import get_proxy_token
 
 router = APIRouter()
 
@@ -668,9 +661,10 @@ async def proxy_with_type(type: str, urlb64: str = "", token: str = ""):
 
     # token 短链模式
     if token:
-        if token not in _proxy_token_cache:
+        cached = get_proxy_token(token)
+        if cached is None:
             raise HTTPException(status_code=404, detail="token 已过期或不存在")
-        real_url, is_radio = _proxy_token_cache[token]
+        real_url, is_radio = cached
         # 不删除 token，允许音箱和 ffprobe 多次请求同一首歌
         import base64 as _b64
         urlb64 = _b64.b64encode(real_url.encode("utf-8")).decode("utf-8")
