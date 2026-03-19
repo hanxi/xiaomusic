@@ -1,4 +1,3 @@
-
 import asyncio
 import base64
 import os
@@ -35,6 +34,7 @@ from xiaomusic.api.models import (
     DownloadPlayList,
     UrlInfo,
 )
+from xiaomusic.music_library import get_proxy_token
 from xiaomusic.utils.file_utils import (
     chmoddir,
     clean_temp_dir,
@@ -49,7 +49,6 @@ from xiaomusic.utils.network_utils import (
     downloadfile,
 )
 from xiaomusic.utils.system_utils import try_add_access_control_param
-from xiaomusic.music_library import get_proxy_token
 
 router = APIRouter()
 
@@ -404,23 +403,28 @@ async def get_picture(request: Request, file_path: str, key: str = "", code: str
     return FileResponse(absolute_file_path)
 
 
-
 async def _bilibili_ffmpeg_stream(url: str):
     """aiohttp 下载 bilibili MP4 流，pipe 给 FFmpeg stdin 转码为 MP3，避免 CDN IP 鉴权问题"""
     import asyncio as _asyncio
+
     headers = {
         "referer": "https://www.bilibili.com",
         "origin": "https://www.bilibili.com",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     }
     cmd = [
-        'ffmpeg', '-y',
-        '-i', 'pipe:0',
-        '-vn',
-        '-acodec', 'libmp3lame',
-        '-b:a', '128k',
-        '-f', 'mp3',
-        'pipe:1',
+        "ffmpeg",
+        "-y",
+        "-i",
+        "pipe:0",
+        "-vn",
+        "-acodec",
+        "libmp3lame",
+        "-b:a",
+        "128k",
+        "-f",
+        "mp3",
+        "pipe:1",
     ]
     proc = await _asyncio.create_subprocess_exec(
         *cmd,
@@ -553,21 +557,31 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
         resp = await session.get(url, headers=headers, allow_redirects=False)
         max_redirects = 5
         redirect_count = 0
-        while resp.status in (301, 302, 303, 307, 308) and redirect_count < max_redirects:
+        while (
+            resp.status in (301, 302, 303, 307, 308) and redirect_count < max_redirects
+        ):
             redirect_url = resp.headers.get("Location", "")
             if not redirect_url:
                 break
             await resp.release()
             redirect_count += 1
             import urllib.parse as _urlparse
+
             redirect_parsed = _urlparse.urlparse(redirect_url)
             redirect_headers = gen_headers(redirect_parsed)
             # bilibili CDN 防盗链；LX06 固件不兼容 MP4/AAC，切换 FFmpeg 转码
-            if any(x in redirect_parsed.netloc for x in ["bilivideo", "mcdn", "hdslb", "bilibili"]):
-                log.info(f"[bili-ffmpeg] redirect to bilibili CDN detected: {redirect_url[:80]}")
+            if any(
+                x in redirect_parsed.netloc
+                for x in ["bilivideo", "mcdn", "hdslb", "bilibili"]
+            ):
+                log.info(
+                    f"[bili-ffmpeg] redirect to bilibili CDN detected: {redirect_url[:80]}"
+                )
                 await close_session()
                 return await _bilibili_ffmpeg_stream(redirect_url)
-            resp = await session.get(redirect_url, headers=redirect_headers, allow_redirects=False)
+            resp = await session.get(
+                redirect_url, headers=redirect_headers, allow_redirects=False
+            )
 
         log.info(f"proxy status: {resp.status}")
         if resp.status not in (200, 206):
@@ -667,6 +681,7 @@ async def proxy_with_type(type: str, urlb64: str = "", token: str = ""):
         real_url, is_radio = cached
         # 不删除 token，允许音箱和 ffprobe 多次请求同一首歌
         import base64 as _b64
+
         urlb64 = _b64.b64encode(real_url.encode("utf-8")).decode("utf-8")
 
     return await _proxy_handler(urlb64, is_radio=is_radio)

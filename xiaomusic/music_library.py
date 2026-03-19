@@ -29,6 +29,7 @@ from xiaomusic.utils.music_utils import (
 from xiaomusic.utils.network_utils import MusicUrlCache
 from xiaomusic.utils.system_utils import try_add_access_control_param
 from xiaomusic.utils.text_utils import custom_sort_key, find_best_match, fuzzyfinder
+
 # 短 token 缓存，避免长 URL 超出小爱音箱固件限制
 _proxy_token_cache: dict = {}  # token -> (origin_url, is_radio)
 
@@ -41,7 +42,6 @@ def set_proxy_token(token: str, origin_url: str, is_radio: bool) -> None:
 def get_proxy_token(token: str):
     """查询 token 对应的 (origin_url, is_radio)，不存在返回 None"""
     return _proxy_token_cache.get(token)
-
 
 
 class MusicLibrary:
@@ -1132,6 +1132,7 @@ class MusicLibrary:
             str: 代理URL
         """
         import secrets
+
         try:
             proxy_type = "radio" if is_radio else "music"
             token = secrets.token_urlsafe(8)
