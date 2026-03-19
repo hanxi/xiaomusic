@@ -29,6 +29,19 @@ from xiaomusic.utils.music_utils import (
 from xiaomusic.utils.network_utils import MusicUrlCache
 from xiaomusic.utils.system_utils import try_add_access_control_param
 from xiaomusic.utils.text_utils import custom_sort_key, find_best_match, fuzzyfinder
+# 短 token 缓存，避免长 URL 超出小爱音箱固件限制
+_proxy_token_cache: dict = {}  # token -> (origin_url, is_radio)
+
+
+def set_proxy_token(token: str, origin_url: str, is_radio: bool) -> None:
+    """存储 token -> (origin_url, is_radio) 映射"""
+    _proxy_token_cache[token] = (origin_url, bool(is_radio))
+
+
+def get_proxy_token(token: str):
+    """查询 token 对应的 (origin_url, is_radio)，不存在返回 None"""
+    return _proxy_token_cache.get(token)
+
 
 
 class MusicLibrary:
@@ -1108,6 +1121,9 @@ class MusicLibrary:
     def _get_proxy_url(self, origin_url, is_radio=None):
         """获取代理URL
 
+        使用短 token 替代完整 base64 URL，避免 URL 过长超出小爱音箱等设备固件的
+        HTTP 客户端 URL 长度限制（通常约 1024 字节），导致请求被截断返回 400。
+
         Args:
             origin_url: 原始URL
             is_radio: 是否为电台直播流
@@ -1115,13 +1131,22 @@ class MusicLibrary:
         Returns:
             str: 代理URL
         """
-        urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
-
-        # 使用路径参数方式，避免查询参数转义问题
-        proxy_type = "radio" if is_radio else "music"
-        proxy_url = f"{self.config.hostname}:{self.config.public_port}/proxy/{proxy_type}?urlb64={urlb64}"
-        self.log.info(f"Using proxy url: {proxy_url}")
-        return proxy_url
+        import secrets
+        try:
+            proxy_type = "radio" if is_radio else "music"
+            token = secrets.token_urlsafe(8)
+            set_proxy_token(token, origin_url, bool(is_radio))
+            proxy_url = f"{self.config.hostname}:{self.config.public_port}/proxy/{proxy_type}?token={token}"
+            self.log.info(f"Using token proxy url: {proxy_url}")
+            return proxy_url
+        except Exception as e:
+            # fallback: 兼容旧方式
+            self.log.warning(f"token proxy failed, fallback to urlb64: {e}")
+            urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
+            proxy_type = "radio" if is_radio else "music"
+            proxy_url = f"{self.config.hostname}:{self.config.public_port}/proxy/{proxy_type}?urlb64={urlb64}"
+            self.log.info(f"Using proxy url: {proxy_url}")
+            return proxy_url
 
     def _get_local_music_url(self, name):
         """获取本地音乐播放地址

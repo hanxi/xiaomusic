@@ -1,4 +1,3 @@
-"""文件操作路由"""
 
 import asyncio
 import base64
@@ -50,6 +49,7 @@ from xiaomusic.utils.network_utils import (
     downloadfile,
 )
 from xiaomusic.utils.system_utils import try_add_access_control_param
+from xiaomusic.music_library import get_proxy_token
 
 router = APIRouter()
 
@@ -283,7 +283,7 @@ async def upload_music(playlist: str = Form(...), file: UploadFile = File(...)):
             dest_dir = config.music_path
         else:
             # 如果播放列表中存在歌曲，从其中任意一首推断目录
-            musics = xiaomusic.music_library.music_list.get(playlist, [])
+            musics = xiaomusic.music_list.get(playlist, [])
             if musics and len(musics) > 0:
                 first = musics[0]
                 filepath = xiaomusic.music_library.all_music.get(first, "")
@@ -404,6 +404,74 @@ async def get_picture(request: Request, file_path: str, key: str = "", code: str
     return FileResponse(absolute_file_path)
 
 
+
+async def _bilibili_ffmpeg_stream(url: str):
+    """aiohttp 下载 bilibili MP4 流，pipe 给 FFmpeg stdin 转码为 MP3，避免 CDN IP 鉴权问题"""
+    import asyncio as _asyncio
+    headers = {
+        "referer": "https://www.bilibili.com",
+        "origin": "https://www.bilibili.com",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    }
+    cmd = [
+        'ffmpeg', '-y',
+        '-i', 'pipe:0',
+        '-vn',
+        '-acodec', 'libmp3lame',
+        '-b:a', '128k',
+        '-f', 'mp3',
+        'pipe:1',
+    ]
+    proc = await _asyncio.create_subprocess_exec(
+        *cmd,
+        stdin=_asyncio.subprocess.PIPE,
+        stdout=_asyncio.subprocess.PIPE,
+        stderr=_asyncio.subprocess.DEVNULL,
+    )
+
+    async def _feed_ffmpeg():
+        try:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=600, sock_read=60),
+                connector=aiohttp.TCPConnector(ssl=True),
+            ) as session:
+                async with session.get(url, headers=headers) as resp:
+                    async for chunk in resp.content.iter_chunked(65536):
+                        if proc.stdin.is_closing():
+                            break
+                        proc.stdin.write(chunk)
+                        await proc.stdin.drain()
+        except Exception as _fe:
+            log.exception(f"[bili-ffmpeg] _feed_ffmpeg error: {_fe}")
+        finally:
+            try:
+                proc.stdin.close()
+            except Exception:
+                pass
+
+    _asyncio.create_task(_feed_ffmpeg())
+
+    async def _gen():
+        try:
+            while True:
+                chunk = await proc.stdout.read(4096)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+            await proc.wait()
+
+    return StreamingResponse(
+        _gen(),
+        media_type="audio/mpeg",
+        headers={"Content-Disposition": 'inline; filename="output.mp3"'},
+    )
+
+
 async def _proxy_handler(urlb64: str, is_radio: bool):
     """代理处理核心逻辑
 
@@ -431,6 +499,11 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
         raise HTTPException(
             status_code=400, detail="无效的URL格式"
         ) from invalid_url_exc
+
+    # bilibili CDN URL → FFmpeg 转码为 MP3，避免 LX06 固件格式不兼容
+    if any(x in parsed_url.netloc for x in ["bilivideo", "mcdn", "hdslb"]):
+        log.info(f"bilibili URL 检测到，使用 FFmpeg 转码: {url}")
+        return await _bilibili_ffmpeg_stream(url)
 
     # 直播流使用更长的超时时间（24小时），普通文件使用10分钟
     timeout_seconds = 86400 if is_radio else 600
@@ -463,6 +536,10 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
         }
         if parsed_url.netloc == config.get_self_netloc():
             headers["Authorization"] = config.get_basic_auth()
+        # bilibili CDN 防盗链需要 Referer
+        if any(x in parsed_url.netloc for x in ["bilivideo", "mcdn", "hdslb"]):
+            headers["referer"] = "https://www.bilibili.com"
+            headers["origin"] = "https://www.bilibili.com"
         return headers
 
     async def close_session():
@@ -472,7 +549,25 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
     try:
         # 复用download_file中的请求逻辑
         headers = gen_headers(parsed_url)
-        resp = await session.get(url, headers=headers, allow_redirects=True)
+        # 手动处理重定向，确保 bilibili CDN 重定向后仍携带 Referer
+        resp = await session.get(url, headers=headers, allow_redirects=False)
+        max_redirects = 5
+        redirect_count = 0
+        while resp.status in (301, 302, 303, 307, 308) and redirect_count < max_redirects:
+            redirect_url = resp.headers.get("Location", "")
+            if not redirect_url:
+                break
+            await resp.release()
+            redirect_count += 1
+            import urllib.parse as _urlparse
+            redirect_parsed = _urlparse.urlparse(redirect_url)
+            redirect_headers = gen_headers(redirect_parsed)
+            # bilibili CDN 防盗链；LX06 固件不兼容 MP4/AAC，切换 FFmpeg 转码
+            if any(x in redirect_parsed.netloc for x in ["bilivideo", "mcdn", "hdslb", "bilibili"]):
+                log.info(f"[bili-ffmpeg] redirect to bilibili CDN detected: {redirect_url[:80]}")
+                await close_session()
+                return await _bilibili_ffmpeg_stream(redirect_url)
+            resp = await session.get(redirect_url, headers=redirect_headers, allow_redirects=False)
 
         log.info(f"proxy status: {resp.status}")
         if resp.status not in (200, 206):
@@ -552,7 +647,7 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
 
 
 @router.get("/proxy/{type}", summary="类型化代理接口")
-async def proxy_with_type(type: str, urlb64: str):
+async def proxy_with_type(type: str, urlb64: str = "", token: str = ""):
     """支持路径参数的代理接口
 
     Args:
@@ -563,6 +658,17 @@ async def proxy_with_type(type: str, urlb64: str):
         raise HTTPException(status_code=400, detail="type 参数必须是 music 或 radio")
 
     is_radio = type == "radio"
+
+    # token 短链模式
+    if token:
+        cached = get_proxy_token(token)
+        if cached is None:
+            raise HTTPException(status_code=404, detail="token 已过期或不存在")
+        real_url, is_radio = cached
+        # 不删除 token，允许音箱和 ffprobe 多次请求同一首歌
+        import base64 as _b64
+        urlb64 = _b64.b64encode(real_url.encode("utf-8")).decode("utf-8")
+
     return await _proxy_handler(urlb64, is_radio=is_radio)
 
 
