@@ -1,5 +1,23 @@
 # 版本日志
 
+## v0.4.25 (2026-03-19)
+
+### Fix
+
+- proxy url too long for xiaomi speaker (#786)
+- 无法上传音乐 close #783
+
+## v0.4.24 (2026-03-13)
+
+### Feat
+
+- 新增适配iPhone主题 (#775)
+- Add 肉肉音乐TV link to index.html (#773)
+
+### Fix
+
+- 修复无法收藏歌曲的问题
+
 ## v0.4.23 (2026-02-17)
 
 ### Feat
