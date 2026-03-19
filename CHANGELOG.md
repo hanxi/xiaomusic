@@ -1,3 +1,10 @@
+## v0.4.25 (2026-03-19)
+
+### Fix
+
+- proxy url too long for xiaomi speaker (#786)
+- 无法上传音乐 close #783
+
 ## v0.4.24 (2026-03-13)
 
 ### Feat
