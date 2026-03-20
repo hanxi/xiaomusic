@@ -409,8 +409,12 @@ _BILI_CDN_SUFFIXES = ("bilivideo.com", "bilivideo.cn", "hdslb.com")
 
 
 def _is_bili_cdn(netloc: str) -> bool:
-    """精确匹配 bilibili CDN 域名（含子域名），不做宽泛子串匹配"""
-    return any(netloc == s or netloc.endswith("." + s) for s in _BILI_CDN_SUFFIXES)
+    """精确匹配 bilibili CDN 域名（含子域名），不做宽泛子串匹配。
+
+    注意 netloc 可能带端口（如 xy123.mcdn.bilivideo.cn:8082），匹配前需去掉端口。
+    """
+    host = (netloc or '').split(':', 1)[0].lower()
+    return any(host == s or host.endswith("." + s) for s in _BILI_CDN_SUFFIXES)
 
 
 async def _ffmpeg_mp3_stream(url: str, extra_headers: dict = None):
@@ -610,31 +614,32 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
             redirect_count += 1
             import urllib.parse as _urlparse
 
-            redirect_parsed = _urlparse.urlparse(redirect_url)
+            resolved_redirect_url = _urlparse.urljoin(str(resp.url), redirect_url)
+            redirect_parsed = _urlparse.urlparse(resolved_redirect_url)
             redirect_headers = gen_headers(redirect_parsed)
             safe_redirect_headers = {
                 k: ("***" if k.lower() == "authorization" else v)
                 for k, v in redirect_headers.items()
             }
             log.info(
-                f"[proxy:{request_id}] redirect target netloc={redirect_parsed.netloc} headers={safe_redirect_headers}"
+                f"[proxy:{request_id}] redirect target resolved={resolved_redirect_url[:500]} netloc={redirect_parsed.netloc} headers={safe_redirect_headers}"
             )
             # bilibili CDN 防盗链；LX06 固件不兼容 MP4/AAC，切换 FFmpeg 转码
             # 精确匹配域名后缀，电台流不走 FFmpeg
             if not is_radio and _is_bili_cdn(redirect_parsed.netloc):
                 log.info(
-                    f"[proxy:{request_id}] redirect to bili cdn detected -> ffmpeg redirect_url={redirect_url[:500]}"
+                    f"[proxy:{request_id}] redirect to bili cdn detected -> ffmpeg redirect_url={resolved_redirect_url[:500]}"
                 )
                 await close_session()
                 return await _ffmpeg_mp3_stream(
-                    redirect_url,
+                    resolved_redirect_url,
                     extra_headers={
                         "referer": "https://www.bilibili.com",
                         "origin": "https://www.bilibili.com",
                     },
                 )
             resp = await session.get(
-                redirect_url, headers=redirect_headers, allow_redirects=False
+                resolved_redirect_url, headers=redirect_headers, allow_redirects=False
             )
 
         log.info(
@@ -646,6 +651,11 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
             raise HTTPException(
                 status_code=resp.status, detail=f"下载失败，状态码: {resp.status}"
             ) from status_exc
+
+        # 后续逻辑以实际最终响应 URL 为准，避免相对跳转后仍沿用初始 URL
+        import urllib.parse
+        parsed_url = urllib.parse.urlparse(str(resp.url))
+        url = str(resp.url)
 
         # 提取文件名，根据URL扩展名智能判断
         filename = parsed_url.path.split("/")[-1].split("?")[0]
