@@ -669,11 +669,25 @@
 
                 const loadSongs = async (songNames) => {
                     try {
+                        const normalizeSongItem = (song) => {
+                            if (typeof song === 'string') {
+                                return { raw: song, name: song };
+                            }
+                            if (song && typeof song === 'object') {
+                                const name = song.name || song.title || song.id || JSON.stringify(song);
+                                return { raw: song, name };
+                            }
+                            return { raw: song, name: String(song) };
+                        };
+
+                        const normalizedSongs = songNames.map(normalizeSongItem);
+
                         // 使用 getMusicInfos 批量获取歌曲信息
-                        const songsInfo = await API.getMusicInfos(songNames);
+                        const songsInfo = await API.getMusicInfos(normalizedSongs.map(song => song.name));
 
                         // 更新歌曲信息
-                        songs.value = songNames.map(songName => {
+                        songs.value = normalizedSongs.map(song => {
+                            const songName = song.name;
                             const info = songsInfo.find(s => s.name === songName);
                             if (!info) {
                                 console.error(`No info found for song ${songName}`);

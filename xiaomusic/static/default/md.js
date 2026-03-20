@@ -927,9 +927,15 @@ function _refresh_music_list(callback) {
       // 收集所有歌曲选项
       var songOptions = [];
       $.each(data[selectedValue], function (index, item) {
+        const songValue =
+          typeof item === "string"
+            ? item
+            : item && typeof item === "object"
+              ? item.name || item.title || item.id || JSON.stringify(item)
+              : String(item);
         songOptions.push({
-          value: item,
-          text: item,
+          value: songValue,
+          text: songValue,
         });
       });
 

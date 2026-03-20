@@ -178,7 +178,11 @@ class XiaoMusicDevice:
         else:
             is_online = self.xiaomusic.music_library.is_online_music(list_name)
             if not is_online and len(self._play_list) > 0:
-                self._play_list.sort(key=custom_sort_key)
+                has_non_str_item = any(
+                    not isinstance(item, str) for item in self._play_list
+                )
+                if not has_non_str_item:
+                    self._play_list.sort(key=custom_sort_key)
             self.log.info(
                 f"没打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
             )
