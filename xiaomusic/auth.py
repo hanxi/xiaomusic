@@ -206,7 +206,7 @@ class AuthManager:
 
         with open(self.mi_token_home, encoding="utf-8") as f:
             user_data = json.loads(f.read())
-        self.log.info(f"get_cookie user_data:{user_data}")
+        self.log.info("get_cookie user_data loaded")
         user_id = user_data.get("userId")
         service_token = user_data.get("micoapi")[1]
         device_id = self.config.get_one_device_id()
