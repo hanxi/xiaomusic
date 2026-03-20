@@ -1,3 +1,9 @@
+## v0.4.26 (2026-03-20)
+
+### Fix
+
+- proxy handler CDN safeguard & content-type based FFmpeg routing (#791)
+
 ## v0.4.25 (2026-03-19)
 
 ### Fix
