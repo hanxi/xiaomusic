@@ -740,7 +740,7 @@
                    placeholder="请输入关键词进行搜索！"
                    enterkeyhint="search">
             <select class="search-select" id="pluginSelect">
-                <option value="all">所有插件</option>
+                <option value="all">聚合搜索</option>
             </select>
             <div class="search-actions">
                 <button class="search-btn" id="searchBtn">
@@ -914,15 +914,21 @@
     // 加载插件列表
     async function loadPlugins() {
         try {
-            const response = await fetch('/api/js-plugins?enabled_only=true');
+            const response = await fetch('/api/platforms');
             const data = await response.json();
 
             if (data.success) {
                 const select = document.getElementById('pluginSelect');
-                data.data.forEach(plugin => {
+                if (!select) {
+                    console.error('Plugin select element not found');
+                    return;
+                }
+
+                // 统一处理对象格式：{"key": "value"}
+                Object.entries(data.data).forEach(([key, value]) => {
                     const option = document.createElement('option');
-                    option.value = plugin;
-                    option.textContent = plugin;
+                    option.value = key;
+                    option.textContent = value;
                     select.appendChild(option);
                 });
             }
@@ -1086,20 +1092,15 @@
     async function webPlayMusic(mediaItem) {
         try {
             let playUrl;
-            if (mediaItem && mediaItem.isOpenAPI) {
-                // playUrl = await sniffRealMusicUrl(mediaItem.url);
-                playUrl = mediaItem.url;
-            } else {
-                const response = await fetch('/api/play/getMediaSource', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(mediaItem)
-                });
-                const data = await response.json();
-                playUrl = data.url;
-            }
+            const response = await fetch('/api/play/getMediaSource', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(mediaItem)
+            });
+            const data = await response.json();
+            playUrl = data.url;
 
             if (playUrl) {
                 // 显示播放器
@@ -1179,6 +1180,9 @@
 
     // 格式化时长 - 兼容秒和毫秒单位
     function formatDuration(duration) {
+        if (typeof duration === 'string' && duration.includes(':')) {
+            return duration;
+        }
         // 如果时长超过 10000，认为是毫秒单位，需要转换为秒
         let seconds = duration;
         if (duration > 10000) {
@@ -1217,7 +1221,7 @@
         }
         try {
             let lrcText
-            if (mediaItem && mediaItem.isOpenAPI) {//在线接口
+            if (mediaItem && mediaItem.isOpenAPI) {//LX Server接口
                 // 调用 OpenApi 接口 GET 获取歌词
                 const response = await fetch(mediaItem.lrc, {
                     method: 'GET',

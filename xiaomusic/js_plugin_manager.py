@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import threading
 import time
-from typing import Any
+from typing import Any, Dict
 
 
 class JSPluginManager:
@@ -259,8 +259,6 @@ class JSPluginManager:
         if message_id:
             self.response_handlers[message_id] = response
 
-    """------------------------------开放接口相关函数----------------------------------------"""
-
     def get_aiapi_info(self) -> dict[str, Any]:
         """获取AI接口配置信息
         Returns:
@@ -274,24 +272,43 @@ class JSPluginManager:
             else:
                 return {"enabled": False}
         except Exception as e:
-            self.log.error(f"Failed to read OpenAPI info from config: {e}")
+            self.log.error(f"Failed to read AI info from config: {e}")
             return {}
 
-    def get_openapi_info(self) -> dict[str, Any]:
-        """获取开放接口配置信息
+    def get_back_conf_info(self) -> dict[str, Any]:
+        """获取lxServer接口配置信息
         Returns:
-            Dict[str, Any]: 包含 OpenAPI 配置信息的字典，包括启用状态和搜索 URL
+            Dict[str, Any]: 包含 lxServer接口 配置信息的字典，包括启用状态和搜索 URL
         """
         try:
-            # 读取配置文件中的 OpenAPI 配置信息
+            # 读取配置文件中的 LX Server 配置信息
             config_data = self._get_config_data()
             if config_data:
-                # 返回 openapi_info 配置项
-                return config_data.get("openapi_info", {})
+                # 返回 back_conf_info 配置项
+                return config_data.get("back_conf_info", {})
             else:
                 return {"enabled": False}
         except Exception as e:
-            self.log.error(f"Failed to read OpenAPI info from config: {e}")
+            self.log.error(f"Failed to read LX Server info from config: {e}")
+            return {}
+
+    """------------------------------LX Server接口相关函数----------------------------------------"""
+
+    def get_lx_server_info(self) -> dict[str, Any]:
+        """获取lxServer接口配置信息
+        Returns:
+            Dict[str, Any]: 包含 lxServer接口 配置信息的字典，包括启用状态和搜索 URL
+        """
+        try:
+            # 读取配置文件中的 LX Server 配置信息
+            config_data = self._get_config_data()
+            if config_data:
+                # 返回 LX Server_info 配置项
+                return config_data.get("lx_server_info", {})
+            else:
+                return {"enabled": False}
+        except Exception as e:
+            self.log.error(f"Failed to read LX Server info from config: {e}")
             return {}
 
     def toggle_openapi(self) -> dict[str, Any]:
@@ -301,10 +318,10 @@ class JSPluginManager:
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
-                openapi_info = config_data.get("openapi_info", {})
+                openapi_info = config_data.get("lx_server_info", {})
                 current_enabled = openapi_info.get("enabled", False)
                 openapi_info["enabled"] = not current_enabled
-                config_data["openapi_info"] = openapi_info
+                config_data["lx_server_info"] = openapi_info
 
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
@@ -324,9 +341,9 @@ class JSPluginManager:
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
-                openapi_info = config_data.get("openapi_info", {})
-                openapi_info["search_url"] = openapi_url
-                config_data["openapi_info"] = openapi_info
+                openapi_info = config_data.get("lx_server_info", {})
+                openapi_info["base_url"] = openapi_url
+                config_data["lx_server_info"] = openapi_info
 
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
@@ -564,8 +581,29 @@ class JSPluginManager:
                     "password": "",
                     "auto_add_song": True,
                     "aiapi_info": {"enabled": False, "api_key": ""},
+                    "api_type": 1,
+                    "api_options": [
+                        {
+                            "name": "MusicFree插件",
+                            "type": 1
+                        },
+                        {
+                            "name": "LXServer接口",
+                            "type": 2
+                        }
+                    ],
+                    "lx_server_info": {
+                                        "enabled": False,
+                                        "base_url": "",
+                                        "platforms":  {
+                                            "tx": "QQ音乐",
+                                            "kg": "酷狗音乐",
+                                            "kw": "酷我音乐",
+                                            "wy": "网易云音乐",
+                                            "mg": "咪咕音乐"
+                                        }
+                                       },
                     "enabled_plugins": [],
-                    "openapi_info": {"enabled": False, "search_url": ""},
                     "plugin_source": {"source_url": ""},
                     "plugins_info": [],
                 }
@@ -692,6 +730,53 @@ class JSPluginManager:
             self.log.error(f"Failed to read enabled plugins from config: {e}")
         return result
 
+    def is_lx_server(self) -> bool:
+        """判定是否使用lx_server接口"""
+        try:
+            # 读取配置文件中的启用插件列表
+            config_data = self._get_config_data()
+            if config_data:
+                back_conf_info = config_data.get("back_conf_info", {})
+                # 1：mf_plugins，2：lx_server
+                api_type = back_conf_info.get("api_type", 1)
+                # lx Server是否启用并配置
+                lx_server_info = config_data.get("lx_server_info", {})
+                enabled_lx_server = lx_server_info.get("enabled", False)
+                if enabled_lx_server and api_type == 2:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        except Exception as e:
+            self.log.error(f"Failed to read platforms from config: {e}")
+            return False
+
+    def get_platforms(self) -> dict[Any, Any]:
+        """获取音乐平台列表"""
+        try:
+            # 读取配置文件中的启用插件列表
+            config_data = self._get_config_data()
+            if config_data:
+                back_conf_info = config_data.get("back_conf_info", {})
+                # 1：mf_plugins，2：lx_server
+                api_type = back_conf_info.get("api_type", 1)
+                # lx Server是否启用并配置
+                lx_server_info = config_data.get("lx_server_info", {})
+                enabled_lx_server = lx_server_info.get("enabled", False)
+                if enabled_lx_server and api_type == 2:
+                    platforms = lx_server_info.get("platforms", {})
+                else:
+                    enabled_plugins = config_data.get("enabled_plugins", [])
+                    # 转换为对象格式：{"key": "value"}
+                    platforms = {plugin: plugin for plugin in enabled_plugins}
+                return platforms
+            else:
+                return {}
+        except Exception as e:
+            self.log.error(f"Failed to read platforms from config: {e}")
+            return {}
+
     def get_enabled_plugins(self) -> list[str]:
         """获取启用的插件列表"""
         try:
@@ -773,16 +858,18 @@ class JSPluginManager:
                 )
         return result_data
 
-    async def openapi_search(
-        self, url: str, keyword: str, artist: str, limit: int = 20
+    async def lx_server_search(
+        self, url: str, keyword: str, artist: str, source: str = "tx", limit: int = 20, page: int = 1
     ):
-        """直接调用在线接口进行音乐搜索
+        """直接调用LX Server接口进行音乐搜索
 
         Args:
+            source (str): 搜索平台code,默认为tx
             url (str): 在线搜索接口地址
             keyword (str): 搜索关键词，歌名/歌手名
             artist (str): 搜索的歌手名，可能为空
-            limit (int): 每页数量，默认为5
+            limit (int): 每页数量，默认为20
+            page (int): 页码，默认为1
         Returns:
             Dict[str, Any]: 搜索结果，数据结构与search函数一致
         """
@@ -792,7 +879,8 @@ class JSPluginManager:
 
         try:
             # 构造请求参数
-            params = {"type": "aggregateSearch", "keyword": keyword, "limit": limit}
+            params = {"source": source, "name": keyword, "limit": limit, "page": page}
+            self.log.info(f"Calling LX Server API: {url} with params: {params}")
             # 使用aiohttp发起异步HTTP GET请求
             connector = aiohttp.TCPConnector(ssl=False)  # 跳过 SSL 验证
             async with aiohttp.ClientSession(connector=connector) as session:
@@ -803,33 +891,30 @@ class JSPluginManager:
                     # 解析响应数据
                     raw_data = await response.json()
 
-            self.log.info(f"在线接口返回Json: {raw_data}")
+            self.log.info(f"LX Server接口 - {source} 返回原始Json: {raw_data}")
 
             # 检查API调用是否成功
-            if raw_data.get("code") != 200:
+            if not isinstance(raw_data, list):
                 raise Exception(
-                    f"API request failed with code: {raw_data.get('code', 'unknown')}"
+                    f"API request failed : {raw_data}"
                 )
 
             # 提取实际的搜索结果
-            api_data = raw_data.get("data", {})
-            results = api_data.get("results", [])
-
+            results = raw_data
             # 转换数据格式以匹配插件系统的期望格式
             converted_data = []
             for item in results:
-                url = item.get("url", "")
-                self.log.info(f"openapi_search url: {url}")
                 converted_item = {
-                    "id": item.get("id", ""),
+                    "_raw": item,
+                    "id": item.get("songmid", ""),
                     "title": item.get("name", ""),
-                    "artist": item.get("artist", ""),
-                    "album": item.get("album", ""),
-                    "platform": "OpenAPI-" + item.get("platform"),
-                    "isOpenAPI": True,
-                    "url": url,
-                    "artwork": item.get("pic", ""),
+                    "duration": item.get("interval", ""),
+                    "artist": item.get("singer", ""),
+                    "album": item.get("albumName", ""),
+                    "platform": source,
+                    "artwork": item.get("img", ""),
                     "lrc": item.get("lrc", ""),
+                    "lrcUrl": item.get("lrcUrl", ""),
                 }
                 converted_data.append(converted_item)
             # 排序筛选
@@ -845,11 +930,9 @@ class JSPluginManager:
             # 返回统一格式的数据
             return {
                 "success": True,
-                "isOpenAPI": True,
                 "data": results,
                 "total": len(results),
-                "sources": {"OpenAPI": len(results)},
-                "page": 1,
+                "page": page,
                 "limit": limit,
             }
 
@@ -857,11 +940,9 @@ class JSPluginManager:
             self.log.error(f"OpenAPI search timeout at URL {url}: {e}")
             return {
                 "success": False,
-                "isOpenAPI": True,
                 "error": f"OpenAPI search timeout: {str(e)}",
                 "data": [],
                 "total": 0,
-                "sources": {},
                 "page": 1,
                 "limit": limit,
             }
@@ -869,13 +950,73 @@ class JSPluginManager:
             self.log.error(f"OpenAPI search error at URL {url}: {e}")
             return {
                 "success": False,
-                "isOpenAPI": True,
                 "error": f"OpenAPI search error: {str(e)}",
                 "data": [],
                 "total": 0,
-                "sources": {},
                 "page": 1,
                 "limit": limit,
+            }
+
+    async def lx_server_music_url(
+            self, url: str, song_info: dict[str, Any], quality: str = "320k"
+    ):
+        """直接调用LX Server接口进行音乐搜索
+
+        Args:
+            url (str): 在线搜索接口地址
+            song_info (dict[str, Any]): 搜索的歌手名，可能为空
+            quality (str): 每页数量，默认为20
+        Returns:
+            Dict[str, Any]:
+        """
+        import asyncio
+        import json
+
+        import aiohttp
+
+        try:
+            # 构造请求参数
+            params = {"songInfo": song_info, "quality": quality}
+            # 使用aiohttp发起异步HTTP POST请求
+            connector = aiohttp.TCPConnector(ssl=False)  # 跳过 SSL 验证
+            async with aiohttp.ClientSession(connector=connector) as session:
+                async with session.post(
+                        url,
+                        json=params,  # 自动序列化为 JSON 并设置 Content-Type
+                        timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    response.raise_for_status()  # 抛出 HTTP 错误
+                    # 解析响应数据
+                    raw_data = await response.json()
+
+            self.log.info(f"LX Server接口返回原始Json: {raw_data}")
+
+            # 检查API调用是否成功
+            if not isinstance(raw_data, dict):
+                raise Exception(
+                    f"API request failed : {raw_data}"
+                )
+            return raw_data
+        except asyncio.TimeoutError as e:
+            self.log.error(f"LX Server search timeout at URL {url}: {e}")
+            return {
+                "success": False,
+                "error": f"LX Server search timeout: {str(e)}",
+                "data": {}
+            }
+        except json.JSONDecodeError as e:
+            self.log.error(f"LX Server invalid JSON response at URL {url}: {e}")
+            return {
+                "success": False,
+                "error": f"LX Server invalid JSON response: {str(e)}",
+                "data": {}
+            }
+        except Exception as e:
+            self.log.error(f"LX Server search error at URL {url}: {e}")
+            return {
+                "success": False,
+                "error": f"LX Server search error: {str(e)}",
+                "data": {}
             }
 
     def optimize_search_results(
@@ -948,11 +1089,7 @@ class JSPluginManager:
                     artist_score = 800
                 elif ar in artist:
                     artist_score = 600
-            # 开放接口的平台权重最高 20
-            if platform.startswith("OpenAPI-"):
-                platform_bonus = 20
-            else:
-                platform_bonus = plugin_weights.get(platform, 0)
+            platform_bonus = plugin_weights.get(platform, 0)
             return title_score + artist_score + platform_bonus
 
         sorted_data = sorted(data_list, key=calculate_match_score, reverse=True)

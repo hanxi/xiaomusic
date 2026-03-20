@@ -593,7 +593,7 @@
     async function loadOpenApiConfig() {
         const container = document.getElementById('openapi-info');
         try {
-            const response = await fetch('/api/openapi/load');
+            const response = await fetch('/api/lxServer/load');
             const data = await response.json();
             if (data.success) {
                 displayOpenApiConfig(data.data);

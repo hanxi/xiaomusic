@@ -21,6 +21,23 @@ from xiaomusic.api.dependencies import (
 router = APIRouter(dependencies=[Depends(verification)])
 
 
+@router.get("/api/platforms")
+def get_js_plugins():
+    """获取平台列表"""
+    try:
+        if (
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
+        ):
+            return {"success": False, "error": "JS Plugin Manager not available"}
+
+        platforms = xiaomusic.js_plugin_manager.get_platforms()
+        return {"success": True, "data": platforms}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 @router.get("/api/js-plugins")
 def get_js_plugins(
     enabled_only: bool = Query(False, description="是否只返回启用的插件"),
@@ -147,10 +164,10 @@ async def upload_js_plugin(file: UploadFile = File(...)):
         return {"success": False, "error": str(e)}
 
 
-# ----------------------------开放接口相关函数---------------------------------------
+# ----------------------------LX Server接口相关函数---------------------------------------
 
 
-@router.get("/api/openapi/load")
+@router.get("/api/lxServer/load")
 def get_openapi_info():
     """获取开放接口配置信息"""
     try:
@@ -160,7 +177,7 @@ def get_openapi_info():
         return {"success": False, "error": str(e)}
 
 
-@router.post("/api/openapi/toggle")
+@router.post("/api/lxServer/toggle")
 def toggle_openapi():
     """开放接口状态切换"""
     try:
@@ -169,7 +186,7 @@ def toggle_openapi():
         return {"success": False, "error": str(e)}
 
 
-@router.post("/api/openapi/updateUrl")
+@router.post("/api/lxServer/updateUrl")
 async def update_openapi_url(request: Request):
     """更新开放接口地址"""
     try:
