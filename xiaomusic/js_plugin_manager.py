@@ -292,6 +292,32 @@ class JSPluginManager:
             self.log.error(f"Failed to read LX Server info from config: {e}")
             return {}
 
+    def update_back_conf_api_type(self, api_type: int) -> dict[str, Any]:
+        """更新后台类型配置
+        Args:
+            api_type: API类型，1=MusicFree插件，2=LXServer接口
+        Returns:
+            更新结果字典
+        """
+        try:
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, encoding="utf-8") as f:
+                    config_data = json.load(f)
+
+                back_conf_info = config_data.get("back_conf_info", {})
+                back_conf_info["api_type"] = api_type
+                config_data["back_conf_info"] = back_conf_info
+
+                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+                self._invalidate_config_cache()
+                return {"success": True}
+            else:
+                return {"success": False, "error": "Config file not found"}
+        except Exception as e:
+            self.log.error(f"Failed to update back_conf_api_type: {e}")
+            return {"success": False, "error": str(e)}
+
     """------------------------------LX Server接口相关函数----------------------------------------"""
 
     def get_lx_server_info(self) -> dict[str, Any]:
@@ -355,6 +381,33 @@ class JSPluginManager:
                 return {"success": False}
         except Exception as e:
             self.log.error(f"Failed to update OpenAPI config: {e}")
+            return {"success": False, "error": str(e)}
+
+    def update_lxserver_platforms(self, platforms: dict[str, str]) -> dict[str, Any]:
+        """更新LXServer平台配置
+        Args:
+            platforms: 平台字典，格式 {key: name}，如 {"tx": "QQ音乐"}
+        Returns:
+            更新结果字典
+        """
+        try:
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, encoding="utf-8") as f:
+                    config_data = json.load(f)
+
+                lx_server_info = config_data.get("lx_server_info", {})
+                lx_server_info["platforms"] = platforms
+                config_data["lx_server_info"] = lx_server_info
+
+                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+                self._invalidate_config_cache()
+                return {"success": True}
+            else:
+                return {"success": False, "error": "Config file not found"}
+        except Exception as e:
+            self.log.error(f"Failed to update LXServer platforms: {e}")
             return {"success": False, "error": str(e)}
 
     def get_plugin_source(self) -> dict[str, Any]:
@@ -581,28 +634,24 @@ class JSPluginManager:
                     "password": "",
                     "auto_add_song": True,
                     "aiapi_info": {"enabled": False, "api_key": ""},
-                    "api_type": 1,
-                    "api_options": [
-                        {
-                            "name": "MusicFree插件",
-                            "type": 1
-                        },
-                        {
-                            "name": "LXServer接口",
-                            "type": 2
-                        }
-                    ],
+                    "back_conf_info": {
+                        "api_type": 2,
+                        "api_options": [
+                            {"name": "MusicFree插件", "type": 1},
+                            {"name": "LXServer接口", "type": 2},
+                        ],
+                    },
                     "lx_server_info": {
-                                        "enabled": False,
-                                        "base_url": "",
-                                        "platforms":  {
-                                            "tx": "QQ音乐",
-                                            "kg": "酷狗音乐",
-                                            "kw": "酷我音乐",
-                                            "wy": "网易云音乐",
-                                            "mg": "咪咕音乐"
-                                        }
-                                       },
+                        "enabled": False,
+                        "base_url": "",
+                        "platforms": {
+                            "tx": "QQ音乐",
+                            "kg": "酷狗音乐",
+                            "kw": "酷我音乐",
+                            "wy": "网易云音乐",
+                            "mg": "咪咕音乐",
+                        },
+                    },
                     "enabled_plugins": [],
                     "plugin_source": {"source_url": ""},
                     "plugins_info": [],
@@ -733,19 +782,12 @@ class JSPluginManager:
     def is_lx_server(self) -> bool:
         """判定是否使用lx_server接口"""
         try:
-            # 读取配置文件中的启用插件列表
             config_data = self._get_config_data()
             if config_data:
                 back_conf_info = config_data.get("back_conf_info", {})
                 # 1：mf_plugins，2：lx_server
                 api_type = back_conf_info.get("api_type", 1)
-                # lx Server是否启用并配置
-                lx_server_info = config_data.get("lx_server_info", {})
-                enabled_lx_server = lx_server_info.get("enabled", False)
-                if enabled_lx_server and api_type == 2:
-                    return True
-                else:
-                    return False
+                return api_type == 2
             else:
                 return False
         except Exception as e:
@@ -755,20 +797,17 @@ class JSPluginManager:
     def get_platforms(self) -> dict[Any, Any]:
         """获取音乐平台列表"""
         try:
-            # 读取配置文件中的启用插件列表
+            self._invalidate_config_cache()
             config_data = self._get_config_data()
             if config_data:
                 back_conf_info = config_data.get("back_conf_info", {})
                 # 1：mf_plugins，2：lx_server
                 api_type = back_conf_info.get("api_type", 1)
-                # lx Server是否启用并配置
-                lx_server_info = config_data.get("lx_server_info", {})
-                enabled_lx_server = lx_server_info.get("enabled", False)
-                if enabled_lx_server and api_type == 2:
+                if api_type == 2:
+                    lx_server_info = config_data.get("lx_server_info", {})
                     platforms = lx_server_info.get("platforms", {})
                 else:
                     enabled_plugins = config_data.get("enabled_plugins", [])
-                    # 转换为对象格式：{"key": "value"}
                     platforms = {plugin: plugin for plugin in enabled_plugins}
                 return platforms
             else:
@@ -859,7 +898,13 @@ class JSPluginManager:
         return result_data
 
     async def lx_server_search(
-        self, url: str, keyword: str, artist: str, source: str = "tx", limit: int = 20, page: int = 1
+        self,
+        url: str,
+        keyword: str,
+        artist: str,
+        source: str = "tx",
+        limit: int = 20,
+        page: int = 1,
     ):
         """直接调用LX Server接口进行音乐搜索
 
@@ -895,9 +940,7 @@ class JSPluginManager:
 
             # 检查API调用是否成功
             if not isinstance(raw_data, list):
-                raise Exception(
-                    f"API request failed : {raw_data}"
-                )
+                raise Exception(f"API request failed : {raw_data}")
 
             # 提取实际的搜索结果
             results = raw_data
@@ -958,7 +1001,7 @@ class JSPluginManager:
             }
 
     async def lx_server_music_url(
-            self, url: str, song_info: dict[str, Any], quality: str = "320k"
+        self, url: str, song_info: dict[str, Any], quality: str = "320k"
     ):
         """直接调用LX Server接口进行音乐搜索
 
@@ -981,9 +1024,9 @@ class JSPluginManager:
             connector = aiohttp.TCPConnector(ssl=False)  # 跳过 SSL 验证
             async with aiohttp.ClientSession(connector=connector) as session:
                 async with session.post(
-                        url,
-                        json=params,  # 自动序列化为 JSON 并设置 Content-Type
-                        timeout=aiohttp.ClientTimeout(total=10)
+                    url,
+                    json=params,  # 自动序列化为 JSON 并设置 Content-Type
+                    timeout=aiohttp.ClientTimeout(total=10),
                 ) as response:
                     response.raise_for_status()  # 抛出 HTTP 错误
                     # 解析响应数据
@@ -993,30 +1036,28 @@ class JSPluginManager:
 
             # 检查API调用是否成功
             if not isinstance(raw_data, dict):
-                raise Exception(
-                    f"API request failed : {raw_data}"
-                )
+                raise Exception(f"API request failed : {raw_data}")
             return raw_data
         except asyncio.TimeoutError as e:
             self.log.error(f"LX Server search timeout at URL {url}: {e}")
             return {
                 "success": False,
                 "error": f"LX Server search timeout: {str(e)}",
-                "data": {}
+                "data": {},
             }
         except json.JSONDecodeError as e:
             self.log.error(f"LX Server invalid JSON response at URL {url}: {e}")
             return {
                 "success": False,
                 "error": f"LX Server invalid JSON response: {str(e)}",
-                "data": {}
+                "data": {},
             }
         except Exception as e:
             self.log.error(f"LX Server search error at URL {url}: {e}")
             return {
                 "success": False,
                 "error": f"LX Server search error: {str(e)}",
-                "data": {}
+                "data": {},
             }
 
     def optimize_search_results(

@@ -271,6 +271,169 @@
             transform: translateY(-1px);
         }
 
+        /* 后台类型选择器样式 */
+        .backend-selector {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+
+        .backend-selector .section-title {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .backend-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .backend-option {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .backend-option:hover {
+            border-color: #007bff;
+            background: #f0f7ff;
+        }
+
+        .backend-option.selected {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+
+        .backend-option-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .backend-option-desc {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .backend-option .radio-circle {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+            position: relative;
+        }
+
+        .backend-option.selected .radio-circle {
+            border-color: #007bff;
+        }
+
+        .backend-option.selected .radio-circle::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: #007bff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* LXServer 配置样式 */
+        .lxserver-section {
+            padding: 20px;
+            background: white;
+        }
+
+        .config-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #f8f9fa;
+            margin-bottom: 15px;
+        }
+
+        .config-item-info {
+            flex: 1;
+        }
+
+        .config-item-label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .config-item-value {
+            font-size: 13px;
+            color: #6c757d;
+            word-break: break-all;
+        }
+
+        .config-item-value:empty::before {
+            content: '未配置';
+            color: #999;
+        }
+
+        /* 平台列表样式 */
+        .platforms-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .platform-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            gap: 10px;
+        }
+
+        .platform-item input {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .platform-item .platform-key {
+            width: 80px;
+            font-weight: 600;
+        }
+
+        .platform-item .platform-name {
+            flex: 1;
+        }
+
+        .platform-item .delete-platform-btn {
+            padding: 6px 12px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .platform-item .delete-platform-btn:hover {
+            background-color: #c82333;
+        }
+
         /* 状态消息样式 */
         .loading, .error, .empty {
             text-align: center;
@@ -430,8 +593,23 @@
     </div>
 
     <div class="plugins-section">
-        <!-- 插件源配置 -->
-        <div class="section-title">插件源配置</div>
+        <!-- 后台类型选择 -->
+        <div class="backend-selector">
+            <div class="section-title">后台接口类型</div>
+            <div class="backend-options" id="backend-options">
+                <!-- 动态加载后台类型选项 -->
+            </div>
+            <div class="plugin-actions" style="margin-top: 15px;">
+                <button class="action-btn enable-btn" id="save-backend-btn" onclick="saveBackendType()">
+                    <span class="material-icons">save</span>
+                    <span>保存设置</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- MusicFree插件配置区域 -->
+        <div id="plugin-config-area">
+            <div class="section-title">插件源配置</div>
         <div id="plugin-source">
             <div class="plugin-item">
                 <div class="plugin-info">
@@ -457,6 +635,32 @@
             <div class="loading">加载中...</div>
         </div>
     </div>
+
+        <!-- LXServer配置区域 -->
+        <div class="lxserver-section" id="lxserver-config-area" style="display: none;">
+            <div class="section-title">LXServer 接口配置</div>
+            <div class="config-item">
+                <div class="config-item-info">
+                    <div class="config-item-label">LXServer 地址</div>
+                    <div class="config-item-value" id="lxserver-url"></div>
+                </div>
+                <div class="plugin-actions">
+                    <button class="action-btn edit-btn" id="edit-lxserver-btn" onclick="editLxServerUrl()">
+                        <span class="material-icons">edit</span>
+                        <span>编辑</span>
+                    </button>
+                </div>
+            </div>
+            <div class="section-title" style="margin-top: 20px;">平台配置</div>
+            <div id="platforms-list" class="platforms-list"></div>
+            <div class="plugin-actions" style="margin-top: 10px;">
+                <button class="action-btn enable-btn" onclick="addPlatform()">
+                    <span class="material-icons">add</span>
+                    <span>添加平台</span>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -464,7 +668,7 @@
     window.onload = function() {
     };
     // 页面加载时执行
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
         // 获取版本号
         if (window.appConfig && window.appConfig.version) {
             const versionSpan = document.getElementById('versionSpan');
@@ -472,10 +676,17 @@
                 versionSpan.textContent = `v${window.appConfig.version}`;
             }
         }
-        //加载数据
-        loadPlugins();
-        loadOpenApiConfig();
-        loadPluginSource();
+        // 初始化全局变量
+        window.currentBackendType = 1;
+        // 首先加载后台配置
+        await loadBackConfInfo();
+        // 根据后台类型加载对应配置
+        if (window.currentBackendType === 1) {
+            loadPlugins();
+            loadPluginSource();
+        } else {
+            loadLxServerConfig();
+        }
 
         // 添加字体加载完成后的处理
         document.fonts.ready.then(function() {
@@ -483,10 +694,257 @@
         });
     });
 
+    /*============================后台类型配置函数=================================*/
+    async function loadBackConfInfo() {
+        try {
+            const response = await fetch('/api/back-conf/load');
+            const data = await response.json();
+            if (data.success) {
+                displayBackConfInfo(data.data);
+            }
+        } catch (error) {
+            console.error('加载后台配置失败:', error);
+        }
+    }
+
+    function displayBackConfInfo(config) {
+        const container = document.getElementById('backend-options');
+        const apiOptions = config.api_options || [];
+        const currentType = config.api_type || 1;
+        // 保存当前类型到全局变量
+        window.currentBackendType = currentType;
+        window.selectedBackendType = currentType;
+
+        const html = apiOptions.map(opt => `
+            <div class="backend-option ${opt.type === currentType ? 'selected' : ''}" 
+                 data-type="${opt.type}" onclick="selectBackendType(${opt.type})">
+                <div class="backend-option-title">
+                    <span class="radio-circle"></span>
+                    ${opt.name}
+                </div>
+                <div class="backend-option-desc">
+                    ${opt.type === 1 ? '使用 MusicFree 插件搜索音乐' : '使用 LXServer 接口搜索音乐'}
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = html;
+
+        // 根据当前选择显示/隐藏配置区域，并加载对应数据
+        updateConfigAreas(currentType);
+        // 加载对应类型的数据
+        if (currentType === 1) {
+            loadPlugins();
+            loadPluginSource();
+        } else {
+            loadLxServerConfig();
+        }
+    }
+
+    function selectBackendType(apiType) {
+        // 更新选中状态（只是UI变化，不调用API）
+        document.querySelectorAll('.backend-option').forEach(el => {
+            el.classList.remove('selected');
+            if (parseInt(el.dataset.type) === apiType) {
+                el.classList.add('selected');
+            }
+        });
+        window.selectedBackendType = apiType;
+    }
+
+    async function saveBackendType() {
+        const newType = window.selectedBackendType;
+        const currentType = window.currentBackendType;
+        
+        if (newType === currentType) {
+            alert('未做任何修改');
+            return;
+        }
+        
+        if (!confirm(`确定要切换后台接口类型吗？`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/back-conf/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ api_type: newType })
+            });
+            const data = await response.json();
+            if (data.success) {
+                // 更新全局变量
+                window.currentBackendType = newType;
+                alert('保存成功');
+                // 根据新类型更新配置区域
+                updateConfigAreas(newType);
+                // 加载对应类型的数据
+                if (newType === 1) {
+                    loadPlugins();
+                    loadPluginSource();
+                } else {
+                    loadLxServerConfig();
+                }
+            } else {
+                alert(`保存失败：${data.error}`);
+            }
+        } catch (error) {
+            alert(`保存出错：${error.message}`);
+        }
+    }
+
+    function updateConfigAreas(apiType) {
+        const pluginArea = document.getElementById('plugin-config-area');
+        const lxserverArea = document.getElementById('lxserver-config-area');
+
+        if (apiType === 1) {
+            pluginArea.style.display = 'block';
+            lxserverArea.style.display = 'none';
+        } else {
+            pluginArea.style.display = 'none';
+            lxserverArea.style.display = 'block';
+        }
+    }
+
+    /*============================LXServer配置函数=================================*/
+    async function loadLxServerConfig() {
+        try {
+            const response = await fetch('/api/lxServer/load');
+            const data = await response.json();
+            if (data.success) {
+                displayLxServerConfig(data.data);
+            }
+        } catch (error) {
+            console.error('加载LXServer配置失败:', error);
+        }
+    }
+
+    function displayLxServerConfig(config) {
+        document.getElementById('lxserver-url').textContent = config.base_url || '';
+
+        // 显示可编辑的平台列表
+        window.currentPlatforms = config.platforms || {};
+        renderPlatformsList();
+    }
+
+    function renderPlatformsList() {
+        const container = document.getElementById('platforms-list');
+        const platforms = window.currentPlatforms || {};
+        const entries = Object.entries(platforms);
+
+        if (entries.length === 0) {
+            container.innerHTML = '<div class="empty">暂无配置平台</div>';
+            return;
+        }
+
+        const html = entries.map(([key, name]) => `
+            <div class="platform-item">
+                <input type="text" class="platform-key" value="${key}" placeholder="缩写" disabled>
+                <input type="text" class="platform-name" value="${name}" placeholder="平台名称" disabled>
+                <button class="delete-platform-btn" onclick="deletePlatform('${key}')">删除</button>
+            </div>
+        `).join('');
+
+        container.innerHTML = html;
+    }
+
+    function addPlatform() {
+        const newKey = prompt('请输入平台缩写（如：tx, kg, kw）:');
+        if (!newKey || newKey.trim() === '') return;
+        
+        const newName = prompt('请输入平台名称（如：QQ音乐）:');
+        if (!newName || newName.trim() === '') return;
+
+        window.currentPlatforms[newKey.trim()] = newName.trim();
+        renderPlatformsList();
+        savePlatforms();
+    }
+
+    function deletePlatform(key) {
+        if (!confirm(`确定要删除平台 "${key}" 吗？`)) return;
+        delete window.currentPlatforms[key];
+        renderPlatformsList();
+        savePlatforms();
+    }
+
+    function updatePlatformKey(oldKey, newKey) {
+        if (oldKey === newKey) return;
+        if (window.currentPlatforms[newKey]) {
+            alert('该缩写已存在！');
+            renderPlatformsList();
+            return;
+        }
+        const name = window.currentPlatforms[oldKey];
+        delete window.currentPlatforms[oldKey];
+        window.currentPlatforms[newKey] = name;
+        renderPlatformsList();
+        savePlatforms();
+    }
+
+    function updatePlatformName(key, newName) {
+        window.currentPlatforms[key] = newName;
+        savePlatforms();
+    }
+
+    async function savePlatforms() {
+        try {
+            const response = await fetch('/api/lxServer/updatePlatforms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ platforms: window.currentPlatforms })
+            });
+            const data = await response.json();
+            if (!data.success) {
+                alert(`保存失败：${data.error}`);
+            }
+        } catch (error) {
+            console.error('保存平台配置失败:', error);
+        }
+    }
+
+    function editLxServerUrl() {
+        const urlElement = document.getElementById('lxserver-url');
+        const currentUrl = urlElement.textContent;
+        const newUrl = prompt('请输入新的LXServer地址:', currentUrl);
+
+        if (newUrl === null) return;
+
+        if (newUrl.trim() === '') {
+            alert('LXServer地址不能为空！');
+            return;
+        }
+
+        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+        if (urlPattern.test(newUrl)) {
+            updateLxServerUrl(newUrl);
+        } else {
+            alert('请输入有效的地址！');
+        }
+    }
+
+    async function updateLxServerUrl(newUrl) {
+        try {
+            const response = await fetch('/api/lxServer/updateUrl', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ search_url: newUrl })
+            });
+            const data = await response.json();
+            if (data.success) {
+                await loadLxServerConfig();
+            } else {
+                alert(`更新失败：${data.error}`);
+            }
+        } catch (error) {
+            alert(`更新出错：${error.message}`);
+        }
+    }
+
     /*============================插件源相关函数=================================*/
     // 加载 OpenAPI 配置
     async function loadPluginSource() {
         const container = document.getElementById('plugin-source');
+        if (!container) return;
         try {
             const response = await fetch('/api/plugin-source/load');
             const data = await response.json();
@@ -588,126 +1046,6 @@
             alert(`更新出错：${error.message}`);
         }
     }
-    /*============================开放接口函数=================================*/
-    // 加载 OpenAPI 配置
-    async function loadOpenApiConfig() {
-        const container = document.getElementById('openapi-info');
-        try {
-            const response = await fetch('/api/lxServer/load');
-            const data = await response.json();
-            if (data.success) {
-                displayOpenApiConfig(data.data);
-            } else {
-                container.innerHTML = `<div class="error">加载失败：${data.error}</div>`;
-            }
-        } catch (error) {
-            container.innerHTML = `<div class="error">加载出错：${error.message}</div>`;
-        }
-    }
-
-    // 显示 OpenAPI 配置
-    function displayOpenApiConfig(config) {
-        document.getElementById('openapi-url').textContent = config.search_url || '';
-
-        const statusElement = document.getElementById('openapi-status');
-        const buttonElement = document.getElementById('toggle-openapi-btn');
-        const editButtonElement = document.getElementById('edit-openapi-btn'); // 新增编辑按钮引用
-
-        if (config.enabled) {
-            statusElement.className = 'plugin-status status-enabled';
-            statusElement.textContent = '已启用';
-            buttonElement.className = 'action-btn disable-btn';
-            buttonElement.textContent = '禁用';
-            // 启用时隐藏编辑按钮
-            editButtonElement.style.display = 'none';
-        } else {
-            statusElement.className = 'plugin-status status-disabled';
-            statusElement.textContent = '已禁用';
-            buttonElement.className = 'action-btn enable-btn';
-            buttonElement.textContent = '启用';
-            // 禁用时显示编辑按钮
-            editButtonElement.style.display = 'inline-flex';
-        }
-    }
-
-
-    // 切换 OpenAPI 状态
-    async function toggleOpenApi() {
-        try {
-            const urlElement = document.getElementById('openapi-url');
-            const currentUrl = urlElement.textContent;
-            if (!currentUrl) {
-                alert('请先设置接口地址！');
-                return;
-            }
-            const response = await fetch('/api/openapi/toggle', {
-                method: 'POST'
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                // 操作成功，重新加载配置
-                await loadOpenApiConfig();
-            } else {
-                alert(`切换失败：${data.error}`);
-            }
-        } catch (error) {
-            alert(`操作出错：${error.message}`);
-        }
-    }
-
-    // 编辑 OpenAPI 地址功能
-    function editOpenApiUrl() {
-        const urlElement = document.getElementById('openapi-url');
-        const currentUrl = urlElement.textContent;
-        const newUrl = prompt('请输入新的接口地址:', currentUrl);
-
-        // 检查用户是否点击了取消
-        if (newUrl === null) {
-            // 用户点击了取消，不执行任何操作
-            return;
-        }
-
-        // 检查用户是否输入了空字符串
-        if (newUrl.trim() === '') {
-            alert('接口地址不能为空！');
-            return;
-        }
-
-        // 校验 URL 格式
-        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-        if (urlPattern.test(newUrl)) {
-            // 更新接口地址
-            updateOpenApiUrl(newUrl);
-        } else {
-            alert('请输入有效的接口地址！');
-        }
-    }
-
-
-    // 更新 OpenAPI 地址
-    async function updateOpenApiUrl(newUrl) {
-        try {
-            const response = await fetch('/api/openapi/updateUrl', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ search_url: newUrl })
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                // 更新成功，重新加载配置
-                await loadOpenApiConfig();
-            } else {
-                alert(`更新失败：${data.error}`);
-            }
-        } catch (error) {
-            alert(`更新出错：${error.message}`);
-        }
-    }
-
 
     /*============================插件函数=================================*/
 

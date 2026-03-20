@@ -171,8 +171,8 @@ async def upload_js_plugin(file: UploadFile = File(...)):
 def get_openapi_info():
     """获取开放接口配置信息"""
     try:
-        openapi_info = xiaomusic.js_plugin_manager.get_openapi_info()
-        return {"success": True, "data": openapi_info}
+        lx_server_info = xiaomusic.js_plugin_manager.get_lx_server_info()
+        return {"success": True, "data": lx_server_info}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -195,6 +195,19 @@ async def update_openapi_url(request: Request):
         if not request_json or "search_url" not in request_json:
             return {"success": False, "error": "Missing 'search_url' in request body"}
         return xiaomusic.js_plugin_manager.update_openapi_url(search_url)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/lxServer/updatePlatforms")
+async def update_lxserver_platforms(request: Request):
+    """更新LXServer平台配置"""
+    try:
+        request_json = await request.json()
+        platforms = request_json.get("platforms")
+        if platforms is None:
+            return {"success": False, "error": "Missing 'platforms' in request body"}
+        return xiaomusic.js_plugin_manager.update_lxserver_platforms(platforms)
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -230,5 +243,29 @@ async def update_plugin_source(request: Request):
         if not request_json or "source_url" not in request_json:
             return {"success": False, "error": "Missing 'search_url' in request body"}
         return xiaomusic.js_plugin_manager.update_plugin_source_url(source_url)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ----------------------------后台类型配置接口---------------------------------------
+@router.get("/api/back-conf/load")
+def get_back_conf_info():
+    """获取后台类型配置信息"""
+    try:
+        back_conf_info = xiaomusic.js_plugin_manager.get_back_conf_info()
+        return {"success": True, "data": back_conf_info}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/back-conf/update")
+async def update_back_conf(request: Request):
+    """更新后台类型配置"""
+    try:
+        request_json = await request.json()
+        api_type = request_json.get("api_type")
+        if api_type is None:
+            return {"success": False, "error": "Missing 'api_type' in request body"}
+        return xiaomusic.js_plugin_manager.update_back_conf_api_type(api_type)
     except Exception as e:
         return {"success": False, "error": str(e)}
