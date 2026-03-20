@@ -403,15 +403,29 @@ async def get_picture(request: Request, file_path: str, key: str = "", code: str
     return FileResponse(absolute_file_path)
 
 
-async def _bilibili_ffmpeg_stream(url: str):
-    """aiohttp 下载 bilibili MP4 流，pipe 给 FFmpeg stdin 转码为 MP3，避免 CDN IP 鉴权问题"""
+# bilibili CDN 精确域名后缀列表，避免 mcdn 等子串误伤其他插件
+_BILI_CDN_SUFFIXES = ("bilivideo.com", "bilivideo.cn", "hdslb.com")
+
+
+def _is_bili_cdn(netloc: str) -> bool:
+    """精确匹配 bilibili CDN 域名（含子域名），不做宽泛子串匹配"""
+    return any(netloc == s or netloc.endswith("." + s) for s in _BILI_CDN_SUFFIXES)
+
+
+async def _ffmpeg_mp3_stream(url: str, extra_headers: dict = None):
+    """下载音视频流，pipe 给 FFmpeg stdin 转码为 MP3
+
+    Args:
+        url: 音视频直链 URL
+        extra_headers: 附加请求头（如 bilibili 需要的 Referer/Origin）
+    """
     import asyncio as _asyncio
 
     headers = {
-        "referer": "https://www.bilibili.com",
-        "origin": "https://www.bilibili.com",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     }
+    if extra_headers:
+        headers.update(extra_headers)
     cmd = [
         "ffmpeg",
         "-y",
@@ -505,9 +519,16 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
         ) from invalid_url_exc
 
     # bilibili CDN URL → FFmpeg 转码为 MP3，避免 LX06 固件格式不兼容
-    if any(x in parsed_url.netloc for x in ["bilivideo", "mcdn", "hdslb"]):
-        log.info(f"bilibili URL 检测到，使用 FFmpeg 转码: {url}")
-        return await _bilibili_ffmpeg_stream(url)
+    # 使用精确域名后缀匹配，避免 mcdn 等子串误伤其他插件；电台流不走 FFmpeg
+    if not is_radio and _is_bili_cdn(parsed_url.netloc):
+        log.info(f"bilibili CDN URL 检测到，使用 FFmpeg 转码: {url}")
+        return await _ffmpeg_mp3_stream(
+            url,
+            extra_headers={
+                "referer": "https://www.bilibili.com",
+                "origin": "https://www.bilibili.com",
+            },
+        )
 
     # 直播流使用更长的超时时间（24小时），普通文件使用10分钟
     timeout_seconds = 86400 if is_radio else 600
@@ -540,8 +561,8 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
         }
         if parsed_url.netloc == config.get_self_netloc():
             headers["Authorization"] = config.get_basic_auth()
-        # bilibili CDN 防盗链需要 Referer
-        if any(x in parsed_url.netloc for x in ["bilivideo", "mcdn", "hdslb"]):
+        # bilibili CDN 防盗链需要 Referer（精确匹配，避免误伤其他插件）
+        if _is_bili_cdn(parsed_url.netloc):
             headers["referer"] = "https://www.bilibili.com"
             headers["origin"] = "https://www.bilibili.com"
         return headers
@@ -570,15 +591,19 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
             redirect_parsed = _urlparse.urlparse(redirect_url)
             redirect_headers = gen_headers(redirect_parsed)
             # bilibili CDN 防盗链；LX06 固件不兼容 MP4/AAC，切换 FFmpeg 转码
-            if any(
-                x in redirect_parsed.netloc
-                for x in ["bilivideo", "mcdn", "hdslb", "bilibili"]
-            ):
+            # 精确匹配域名后缀，电台流不走 FFmpeg
+            if not is_radio and _is_bili_cdn(redirect_parsed.netloc):
                 log.info(
                     f"[bili-ffmpeg] redirect to bilibili CDN detected: {redirect_url[:80]}"
                 )
                 await close_session()
-                return await _bilibili_ffmpeg_stream(redirect_url)
+                return await _ffmpeg_mp3_stream(
+                    redirect_url,
+                    extra_headers={
+                        "referer": "https://www.bilibili.com",
+                        "origin": "https://www.bilibili.com",
+                    },
+                )
             resp = await session.get(
                 redirect_url, headers=redirect_headers, allow_redirects=False
             )
@@ -594,6 +619,17 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
         # 提取文件名，根据URL扩展名智能判断
         filename = parsed_url.path.split("/")[-1].split("?")[0]
         content_type = resp.headers.get("Content-Type", "").lower()
+
+        # Content-Type 兜底：非 bilibili CDN 的 MP4/AAC 响应同样需要 FFmpeg 转码
+        # （LX06 固件不支持 MP4/AAC 容器，需转为 MP3；电台流不转码）
+        if not is_radio and not _is_bili_cdn(parsed_url.netloc):
+            if any(ct in content_type for ct in ("video/mp4", "audio/mp4", "audio/aac")):
+                final_url = str(resp.url)
+                await close_session()
+                log.info(
+                    f"[content-type] 检测到 {content_type}，切换 FFmpeg 转码: {final_url[:80]}"
+                )
+                return await _ffmpeg_mp3_stream(final_url)
 
         # 判断是否为 m3u8 文件
         is_m3u8 = (
