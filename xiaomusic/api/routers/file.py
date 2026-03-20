@@ -623,7 +623,9 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
         # Content-Type 兜底：非 bilibili CDN 的 MP4/AAC 响应同样需要 FFmpeg 转码
         # （LX06 固件不支持 MP4/AAC 容器，需转为 MP3；电台流不转码）
         if not is_radio and not _is_bili_cdn(parsed_url.netloc):
-            if any(ct in content_type for ct in ("video/mp4", "audio/mp4", "audio/aac")):
+            if any(
+                ct in content_type for ct in ("video/mp4", "audio/mp4", "audio/aac")
+            ):
                 final_url = str(resp.url)
                 await close_session()
                 log.info(
