@@ -102,10 +102,7 @@ class OnlineMusicService:
     async def _execute_lx_server_search(self, plugin, keyword, artist, page, limit):
         """执行LX Server搜索"""
         lx_server_info = self.js_plugin_manager.get_lx_server_info()
-        if (
-                lx_server_info.get("enabled", False)
-                and lx_server_info.get("base_url", "") != ""
-        ):
+        if lx_server_info.get("base_url", "") != "":
             if plugin == "all":
                 # 搜索所有启用的插件
                 return await self._search_all_platform_lx(lx_server_info, keyword, artist, page, limit)
@@ -116,7 +113,7 @@ class OnlineMusicService:
                     keyword=keyword, artist=artist, page=page, limit=limit, source=plugin
                 )
         else:
-            return {"success": False, "error": "LX Server未启用或配置错误"}
+            return {"success": False, "error": "LX Server接口未配置！"}
 
         result_data["artist"] = artist or "佚名"
         return result_data
@@ -124,16 +121,13 @@ class OnlineMusicService:
     async def _execute_lx_server_music_url(self, song_info):
         """执行LX Server获取音乐播放直链"""
         lx_server_info = self.js_plugin_manager.get_lx_server_info()
-        if (
-                lx_server_info.get("enabled", False)
-                and lx_server_info.get("base_url", "") != ""
-        ):
+        if lx_server_info.get("base_url", "") != "":
             # LX Server接口获取
             result_data = await self.js_plugin_manager.lx_server_music_url(
                 url=lx_server_info.get("base_url") + "/music/url", song_info=song_info
             )
         else:
-            return {"success": False, "error": "LX Server未启用或配置错误"}
+            return {"success": False, "error": "LX Server接口未配置！"}
 
         return result_data
 
@@ -603,7 +597,7 @@ class OnlineMusicService:
         """
         enabled_plugins = self.js_plugin_manager.get_enabled_plugins()
         if not enabled_plugins:
-            return {"success": False, "error": "没有可用的接口和插件，请先进行配置！"}
+            return {"success": False, "error": "没找到可用的插件，请先进行配置！"}
 
         results = []
         sources = {}

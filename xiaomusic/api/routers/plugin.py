@@ -269,3 +269,28 @@ async def update_back_conf(request: Request):
         return xiaomusic.js_plugin_manager.update_back_conf_api_type(api_type)
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+# ----------------------------高级配置接口---------------------------------------
+@router.get("/api/advanced-config/load")
+def get_advanced_config():
+    """获取高级配置信息"""
+    try:
+        advanced_config = xiaomusic.js_plugin_manager.get_advanced_config()
+        return {"success": True, "data": advanced_config}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/advanced-config/update")
+async def update_advanced_config(request: Request):
+    """更新高级配置信息"""
+    try:
+        request_json = await request.json()
+        auto_add_song = request_json.get("auto_add_song")
+        aiapi_info = request_json.get("aiapi_info")
+        return xiaomusic.js_plugin_manager.update_advanced_config(
+            auto_add_song, aiapi_info
+        )
+    except Exception as e:
+        return {"success": False, "error": str(e)}

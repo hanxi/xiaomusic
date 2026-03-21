@@ -296,6 +296,55 @@
             color: #d32f2f;
         }
 
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            background-color: #f8f9fa;
+        }
+
+        .pagination-btn {
+            padding: 8px 16px;
+            background-color: #fff;
+            color: #007bff;
+            border: 1px solid #007bff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #6c757d;
+            font-size: 14px;
+            padding: 0 15px;
+        }
+
+        .results-count {
+            text-align: center;
+            padding: 10px;
+            color: #6c757d;
+            font-size: 13px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+
         /* 顶部按钮样式 */
         .header-buttons {
             display: flex;
@@ -663,6 +712,26 @@
                 width: 14px;
                 height: 14px;
             }
+
+            .pagination {
+                padding: 15px 10px;
+                gap: 8px;
+            }
+
+            .pagination-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .pagination-info {
+                font-size: 13px;
+                padding: 0 10px;
+            }
+
+            .results-count {
+                font-size: 12px;
+                padding: 8px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -718,7 +787,7 @@
             </a>
             <a href="./setting.html" class="header-btn">
                 <span class="material-icons">settings</span>
-                <span>插件配置</span>
+                <span>后台配置</span>
             </a>
             <a href="https://github.com/maotoumao/MusicFreePlugins" target="_blank" class="header-btn">
                 <span class="material-icons">extension</span>
@@ -819,6 +888,14 @@
     let currentLyrics = []; // 存储解析后的歌词
     let lyricLines = []; // 存储歌词 DOM 元素
     let songList = []; // 存储搜索到的歌曲列表
+
+    // 分页相关变量
+    let currentPage = 1;
+    const pageSize = 20;
+    let totalResults = 0;
+    let currentKeyword = '';
+    let currentPlugin = 'all';
+    let hasMore = true; // 是否还有更多数据
 
     // 页面加载时获取插件列表
     window.onload = function() {
@@ -950,13 +1027,20 @@
             return;
         }
 
+        // 保存搜索参数
+        currentKeyword = keyword;
+        currentPlugin = plugin;
+        currentPage = 1;
+
         // 显示加载状态
         resultsDiv.innerHTML = '<div class="loading">搜索中...</div>';
         songList = [];
         try {
-            const response = await fetch(`/api/search/online?keyword=${encodeURIComponent(keyword)}&plugin=${plugin}`);
+            const response = await fetch(`/api/search/online?keyword=${encodeURIComponent(keyword)}&plugin=${plugin}&page=${currentPage}&limit=${pageSize}`);
             const data = await response.json();
             if (data.success) {
+                totalResults = data.total || data.data.length;
+                hasMore = data.data.length === pageSize;
                 displayResults(data.data);
             } else {
                 resultsDiv.innerHTML = `<div class="error">搜索失败：${data.error}</div>`;
@@ -966,39 +1050,42 @@
         }
     }
 
-    // 显示搜索结果
+    // 显示搜索结果（服务端分页版本）
     function displayResults(results) {
         const resultsDiv = document.getElementById('results');
         if (!results || results.length === 0) {
             resultsDiv.innerHTML = '<div class="empty">没有找到相关音乐</div>';
             return;
         }
+
+        songList = results;
+
         const html = results.map(item => `
                 <div class="music-item">
                     <div class="music-cover">
                         ${item.artwork ?
-            `<img src="${item.artwork}" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">` :
-            '暂无封面'
-        }
+                `<img src="${item.artwork}" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">` :
+                '暂无封面'
+            }
                     </div>
                     <div class="music-info">
                         <div class="music-title">${item.title}</div>
                         <div class="music-artist">${item.artist}</div>
                         ${(() => {
-            const metaItems = [];
-            if (item.album) {
-                metaItems.push(`专辑：${item.album}`);
-            }
-            if (item.duration) {
-                metaItems.push(`时长：${formatDuration(item.duration)}`);
-            }
-            if (item.quality) {
-                metaItems.push(`音质：${item.quality}`);
-            }
-            return metaItems.length > 0
-                ? `<div class="music-meta">${metaItems.join(' | ')}</div>`
-                : '';
-        })()}
+                const metaItems = [];
+                if (item.album) {
+                    metaItems.push(`专辑：${item.album}`);
+                }
+                if (item.duration) {
+                    metaItems.push(`时长：${formatDuration(item.duration)}`);
+                }
+                if (item.quality) {
+                    metaItems.push(`音质：${item.quality}`);
+                }
+                return metaItems.length > 0
+                    ? `<div class="music-meta">${metaItems.join(' | ')}</div>`
+                    : '';
+            })()}
                     </div>
                     <div class="music-actions">
                         <span class="source-tag">${item.platform || 'online'}</span>
@@ -1007,9 +1094,67 @@
                     </div>
                 </div>
             `).join('');
-        songList = results;
 
-        resultsDiv.innerHTML = html;
+        const paginationHtml = `
+            ${html}
+            <div class="pagination">
+                <button class="pagination-btn" onclick="prevPage()" ${currentPage <= 1 ? 'disabled' : ''}>
+                    <span class="material-icons">chevron_left</span>
+                    上一页
+                </button>
+                <span class="pagination-info">第 ${currentPage} 页</span>
+                <button class="pagination-btn" onclick="nextPage()" ${!hasMore || results.length === 0 ? 'disabled' : ''}>
+                    下一页
+                    <span class="material-icons">chevron_right</span>
+                </button>
+            </div>
+        `;
+
+        resultsDiv.innerHTML = paginationHtml;
+    }
+
+    // 上一页（服务端分页）
+    async function prevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            await loadPage();
+        }
+    }
+
+    // 下一页（服务端分页）
+    async function nextPage() {
+        if (hasMore) {
+            currentPage++;
+            await loadPage();
+        }
+    }
+
+    // 加载指定页的数据（服务端分页）
+    async function loadPage() {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '<div class="loading">加载中...</div>';
+
+        try {
+            const response = await fetch(`/api/search/online?keyword=${encodeURIComponent(currentKeyword)}&plugin=${currentPlugin}&page=${currentPage}&limit=${pageSize}`);
+            const data = await response.json();
+            if (data.success) {
+                hasMore = data.data.length === pageSize;
+                totalResults = data.total || (currentPage * pageSize);
+                displayResults(data.data);
+            } else {
+                resultsDiv.innerHTML = `<div class="error">加载失败：${data.error}</div>`;
+            }
+        } catch (error) {
+            resultsDiv.innerHTML = `<div class="error">加载出错：${error.message}</div>`;
+        }
+    }
+
+    // 滚动到结果区域
+    function scrollToResults() {
+        const resultsSection = document.getElementById('results');
+        if (resultsSection) {
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     // 获取当前选中的设备 ID
@@ -1173,6 +1318,8 @@
         currentLyrics = [];
         lyricLines = [];
         songList = [];
+        currentPage = 1;
+        totalResults = 0;
 
         // 移除音频时间更新监听器
         audio.removeEventListener('timeupdate', updateLyricHighlight);

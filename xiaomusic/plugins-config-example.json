@@ -1,10 +1,26 @@
 {
   "account": "",
   "password": "",
-  "openapi_info": {
-    "search_url": "",
-    "enabled": false
+  "auto_add_song": true,
+  "aiapi_info": {"enabled": false, "api_key": ""},
+  "back_conf_info": {
+    "api_type": 1,
+    "api_options": [
+      {"name": "MusicFree插件", "type": 1},
+      {"name": "LXServer接口", "type": 2}
+    ]
+  },
+  "lx_server_info": {
+    "base_url": "",
+    "platforms": {
+      "tx": "QQ音乐",
+      "kg": "酷狗音乐",
+      "kw": "酷我音乐",
+      "wy": "网易云音乐",
+      "mg": "咪咕音乐"
+    }
   },
   "enabled_plugins": [],
+  "plugin_source": {"source_url": ""},
   "plugins_info": []
 }

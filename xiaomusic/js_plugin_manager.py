@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import threading
 import time
-from typing import Any, Dict
+from typing import Any
 
 
 class JSPluginManager:
@@ -274,6 +274,61 @@ class JSPluginManager:
         except Exception as e:
             self.log.error(f"Failed to read AI info from config: {e}")
             return {}
+
+    def get_advanced_config(self) -> dict[str, Any]:
+        """获取高级配置信息
+        Returns:
+            Dict[str, Any]: 包含高级配置信息的字典
+        """
+        try:
+            config_data = self._get_config_data()
+            if config_data:
+                return {
+                    "auto_add_song": config_data.get("auto_add_song", False),
+                    "aiapi_info": config_data.get("aiapi_info", {}),
+                }
+            else:
+                return {
+                    "auto_add_song": False,
+                    "aiapi_info": {"enabled": False, "api_key": ""},
+                }
+        except Exception as e:
+            self.log.error(f"Failed to read advanced config: {e}")
+            return {
+                "auto_add_song": False,
+                "aiapi_info": {"enabled": False, "api_key": ""},
+            }
+
+    def update_advanced_config(
+        self, auto_add_song: bool = None, aiapi_info: dict = None
+    ) -> dict[str, Any]:
+        """更新高级配置信息
+        Args:
+            auto_add_song: 自动添加歌曲开关
+            aiapi_info: AI接口配置信息
+        Returns:
+            更新结果字典
+        """
+        try:
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, encoding="utf-8") as f:
+                    config_data = json.load(f)
+
+                if auto_add_song is not None:
+                    config_data["auto_add_song"] = auto_add_song
+
+                if aiapi_info is not None:
+                    config_data["aiapi_info"] = aiapi_info
+
+                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+                self._invalidate_config_cache()
+                return {"success": True}
+            else:
+                return {"success": False, "error": "Config file not found"}
+        except Exception as e:
+            self.log.error(f"Failed to update advanced config: {e}")
+            return {"success": False, "error": str(e)}
 
     def get_back_conf_info(self) -> dict[str, Any]:
         """获取lxServer接口配置信息
@@ -635,14 +690,13 @@ class JSPluginManager:
                     "auto_add_song": True,
                     "aiapi_info": {"enabled": False, "api_key": ""},
                     "back_conf_info": {
-                        "api_type": 2,
+                        "api_type": 1,
                         "api_options": [
                             {"name": "MusicFree插件", "type": 1},
-                            {"name": "LXServer接口", "type": 2},
-                        ],
+                            {"name": "LXServer接口", "type": 2}
+                        ]
                     },
                     "lx_server_info": {
-                        "enabled": False,
                         "base_url": "",
                         "platforms": {
                             "tx": "QQ音乐",
@@ -650,11 +704,11 @@ class JSPluginManager:
                             "kw": "酷我音乐",
                             "wy": "网易云音乐",
                             "mg": "咪咕音乐",
-                        },
+                        }
                     },
                     "enabled_plugins": [],
                     "plugin_source": {"source_url": ""},
-                    "plugins_info": [],
+                    "plugins_info": []
                 }
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(base_config, f, ensure_ascii=False, indent=2)

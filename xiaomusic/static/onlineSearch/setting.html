@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link rel="icon" href="./favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>插件配置</title>
+    <title>后台配置</title>
     <script src="./config.js"></script>
     <link rel="preload" href="../default/materialicons.woff2" as="font" type="font/woff2" crossorigin>
     <style>
@@ -133,6 +133,177 @@
         .header-btn svg {
             width: 18px;
             height: 18px;
+        }
+
+        /* 高级设置模态框样式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .config-section {
+            margin-bottom: 20px;
+        }
+
+        .config-section-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .modal-body .config-card {
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .modal-body .config-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .modal-body .config-card-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: none;
+        }
+
+        .config-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .config-row:last-child {
+            border-bottom: none;
+        }
+
+        .config-label {
+            flex: 0 0 150px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .config-value {
+            flex: 1;
+        }
+
+        .config-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .config-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .config-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .modal-btn-secondary {
+            background-color: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .modal-btn-secondary:hover {
+            background-color: #e9ecef;
         }
 
         /* 插件设置区域样式 */
@@ -528,6 +699,95 @@
                 padding: 8px 10px;
                 font-size: 12px;
             }
+
+            /* 平台列表移动端适配 */
+            .platforms-list {
+                gap: 8px;
+            }
+
+            .platform-item {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 12px;
+                gap: 8px;
+            }
+
+            .platform-item .platform-key {
+                width: 100%;
+            }
+
+            .platform-item .platform-name {
+                width: 100%;
+            }
+
+            .platform-item .delete-platform-btn {
+                width: 100%;
+                padding: 8px;
+            }
+
+            /* 模态框移动端适配 */
+            .modal-content {
+                padding: 15px;
+                width: 95%;
+            }
+
+            .modal-header h2 {
+                font-size: 18px;
+            }
+
+            .modal-body {
+                padding: 0;
+            }
+
+            .modal-body .config-card {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+
+            .modal-body .config-card-title {
+                font-size: 14px;
+                padding-bottom: 8px;
+                margin-bottom: 10px;
+            }
+
+            .config-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 10px 0;
+            }
+
+            .config-label {
+                flex: none;
+                width: 100%;
+                font-size: 13px;
+            }
+
+            .config-value {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .config-value a {
+                margin-left: 0 !important;
+                margin-top: 4px;
+            }
+
+            .config-input {
+                width: 100%;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .modal-btn {
+                width: 100%;
+                padding: 12px;
+            }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -553,11 +813,11 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>插件配置</h1>
+        <h1>后台配置</h1>
         <div class="version-info">
             <span id="versionSpan"></span>
         </div>
-        <p>管理你的在线插件</p>
+        <p>在线搜索后台配置</p>
         <!-- 顶部居中按钮 -->
         <div class="header-buttons">
             <a href="./index.html" class="header-btn">
@@ -565,16 +825,16 @@
                 <span>返回搜索</span>
             </a>
             <!-- 插件导入 -->
-            <button class="header-btn" onclick="uploadPlugins()">
+            <button class="header-btn" id="plugin-upload-btn" onclick="uploadPlugins()">
                 <span class="material-icons">file_upload</span>
                 <span>手动导入</span>
             </button>
             <!-- 刷新插件按钮 -->
-            <button class="header-btn" onclick="loadPlugins()">
+            <button class="header-btn" id="plugin-refresh-btn" onclick="loadPlugins()">
                 <span class="material-icons">refresh</span>
                 <span>刷新插件</span>
             </button>
-            <a href="https://pd.qq.com/s/3tkfauiqe?b=9" target="_blank" class="header-btn">
+            <a href="https://pd.qq.com/s/3tkfauiqe?b=9" target="_blank" class="header-btn" id="plugin-channel-btn">
                 <!-- 自定义 SVG 图标 -->
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" style="display: block;">
                     <g fill="none" fill-rule="evenodd">
@@ -584,6 +844,18 @@
                 </svg>
                 <span>MusicFree频道</span>
             </a>
+            <!-- LX Server 项目 -->
+            <a href="https://github.com/XCQ0607/lxserver" target="_blank" class="header-btn" id="lxserver-project-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                <span>LX Server项目</span>
+            </a>
+            <!-- 高级设置按钮 -->
+            <button class="header-btn" onclick="openAdvancedConfig()">
+                <span class="material-icons">settings</span>
+                <span>高级设置</span>
+            </button>
             <a href="https://github.com/boluofan/xiaomusic-online" target="_blank" class="header-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
@@ -595,15 +867,9 @@
     <div class="plugins-section">
         <!-- 后台类型选择 -->
         <div class="backend-selector">
-            <div class="section-title">后台接口类型</div>
+            <div class="section-title">接口生态</div>
             <div class="backend-options" id="backend-options">
                 <!-- 动态加载后台类型选项 -->
-            </div>
-            <div class="plugin-actions" style="margin-top: 15px;">
-                <button class="action-btn enable-btn" id="save-backend-btn" onclick="saveBackendType()">
-                    <span class="material-icons">save</span>
-                    <span>保存设置</span>
-                </button>
             </div>
         </div>
 
@@ -638,7 +904,10 @@
 
         <!-- LXServer配置区域 -->
         <div class="lxserver-section" id="lxserver-config-area" style="display: none;">
-            <div class="section-title">LXServer 接口配置</div>
+            <div class="section-title">
+                LXServer 接口配置
+                <a href="https://xcq0607.github.io/lxserver/api/reference.html" target="_blank" style="margin-left: 10px; font-size: 13px; color: #007bff;">官方文档 ↗</a>
+            </div>
             <div class="config-item">
                 <div class="config-item-info">
                     <div class="config-item-label">LXServer 地址</div>
@@ -659,6 +928,89 @@
                     <span>添加平台</span>
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- LXServer URL 输入模态框 -->
+<div class="modal-overlay" id="lxserverUrlModal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h2>修改LXServer地址</h2>
+            <button class="modal-close" onclick="closeLxServerUrlModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="config-row" style="border-bottom: none;">
+                <div class="config-label">新地址</div>
+                <div class="config-value">
+                    <input type="text" class="config-input" id="lxserver-url-input" placeholder="127.0.0.1:9527/api" style="background-color: #f8f9fa;">
+                    <span style="color: #999; font-size: 12px; margin-top: 4px; display: inline-block;">输入示例: 127.0.0.1:9527/api</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-secondary" onclick="closeLxServerUrlModal()">取消</button>
+            <button class="modal-btn modal-btn-primary" onclick="confirmLxServerUrl()">确定</button>
+        </div>
+    </div>
+</div>
+
+<!-- 高级设置模态框 -->
+<div class="modal-overlay" id="advancedConfigModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>高级设置</h2>
+            <button class="modal-close" onclick="closeAdvancedConfig()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- 播放设置卡片 -->
+            <div class="config-card">
+                <div class="config-card-title">播放设置</div>
+                <div class="config-row">
+                    <div class="config-label">自动追加歌曲</div>
+                    <div class="config-value">
+                        <input type="checkbox" class="config-checkbox" id="autoAddSongCheckbox">
+                        <span style="margin-left: 8px; color: #6c757d; font-size: 13px;">小爱播放完最后一首时自动添加同歌手歌曲</span>
+                    </div>
+                </div>
+            </div>
+            <!-- AI大模型配置卡片 -->
+            <div class="config-card">
+                <div class="config-card-title">
+                    AI 大模型配置
+                    <span style="font-weight: normal; font-size: 12px; color: #999; margin-left: 8px;">用于AI提取关键字，默认qwen-flash</span>
+                </div>
+                <div class="config-row">
+                    <div class="config-label">启用 AI 提取</div>
+                    <div class="config-value">
+                        <input type="checkbox" class="config-checkbox" id="aiApiEnabledCheckbox">
+                    </div>
+                </div>
+                <div class="config-row">
+                    <div class="config-label">接口地址</div>
+                    <div class="config-value">
+                        <input type="text" class="config-input" id="aiBaseUrlInput" placeholder="符合OpenAI API 规范的大模型接口，非必填">
+                        <span style="color: #999; font-size: 12px; margin-top: 4px; display: inline-block;">留空则使用阿里百炼默认地址</span>
+                        <a href="https://bailian.console.aliyun.com/cn-beijing?spm=5176.12818093_47.overview_recent.1.7d4316d0so6Vx4&tab=api#/api" target="_blank" style="margin-left: 10px; font-size: 13px; color: #007bff;">阿里百炼官方 ↗</a>
+                    </div>
+                </div>
+                <div class="config-row">
+                    <div class="config-label">API Key</div>
+                    <div class="config-value">
+                        <input type="text" class="config-input" id="aiApiKeyInput" placeholder="请输入 API Key">
+                    </div>
+                </div>
+                <div class="config-row">
+                    <div class="config-label">模型</div>
+                    <div class="config-value">
+                        <input type="text" class="config-input" id="aiModelInput" placeholder="例如：qwen-plus">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-secondary" onclick="closeAdvancedConfig()">取消</button>
+            <button class="modal-btn modal-btn-primary" onclick="saveAdvancedConfig()">保存</button>
         </div>
     </div>
 </div>
@@ -716,7 +1068,7 @@
         window.selectedBackendType = currentType;
 
         const html = apiOptions.map(opt => `
-            <div class="backend-option ${opt.type === currentType ? 'selected' : ''}" 
+            <div class="backend-option ${opt.type === currentType ? 'selected' : ''}"
                  data-type="${opt.type}" onclick="selectBackendType(${opt.type})">
                 <div class="backend-option-title">
                     <span class="radio-circle"></span>
@@ -742,29 +1094,24 @@
     }
 
     function selectBackendType(apiType) {
-        // 更新选中状态（只是UI变化，不调用API）
-        document.querySelectorAll('.backend-option').forEach(el => {
-            el.classList.remove('selected');
-            if (parseInt(el.dataset.type) === apiType) {
-                el.classList.add('selected');
-            }
-        });
+        const currentType = window.currentBackendType;
+
+        if (parseInt(apiType) === currentType) {
+            return;
+        }
+
+        if (!confirm('确定要切换接口生态吗？')) {
+            return;
+        }
+
         window.selectedBackendType = apiType;
+        saveBackendType();
     }
 
     async function saveBackendType() {
         const newType = window.selectedBackendType;
         const currentType = window.currentBackendType;
-        
-        if (newType === currentType) {
-            alert('未做任何修改');
-            return;
-        }
-        
-        if (!confirm(`确定要切换后台接口类型吗？`)) {
-            return;
-        }
-        
+
         try {
             const response = await fetch('/api/back-conf/update', {
                 method: 'POST',
@@ -775,9 +1122,16 @@
             if (data.success) {
                 // 更新全局变量
                 window.currentBackendType = newType;
-                alert('保存成功');
+                alert('切换成功');
                 // 根据新类型更新配置区域
                 updateConfigAreas(newType);
+                // 更新选项卡选中状态
+                document.querySelectorAll('.backend-option').forEach(el => {
+                    el.classList.remove('selected');
+                    if (parseInt(el.dataset.type) === newType) {
+                        el.classList.add('selected');
+                    }
+                });
                 // 加载对应类型的数据
                 if (newType === 1) {
                     loadPlugins();
@@ -797,12 +1151,30 @@
         const pluginArea = document.getElementById('plugin-config-area');
         const lxserverArea = document.getElementById('lxserver-config-area');
 
+        // 获取需要控制显示的按钮
+        const pluginUploadBtn = document.getElementById('plugin-upload-btn');
+        const pluginRefreshBtn = document.getElementById('plugin-refresh-btn');
+        const pluginChannelBtn = document.getElementById('plugin-channel-btn');
+        const lxserverProjectBtn = document.getElementById('lxserver-project-btn');
+
         if (apiType === 1) {
+            // MusicFree 模式：显示插件相关按钮，隐藏 LX Server 按钮
             pluginArea.style.display = 'block';
             lxserverArea.style.display = 'none';
+
+            pluginUploadBtn.style.display = 'inline-flex';
+            pluginRefreshBtn.style.display = 'inline-flex';
+            pluginChannelBtn.style.display = 'inline-flex';
+            lxserverProjectBtn.style.display = 'none';
         } else {
+            // LXServer 模式：显示 LX Server 按钮，隐藏插件相关按钮
             pluginArea.style.display = 'none';
             lxserverArea.style.display = 'block';
+
+            pluginUploadBtn.style.display = 'none';
+            pluginRefreshBtn.style.display = 'none';
+            pluginChannelBtn.style.display = 'none';
+            lxserverProjectBtn.style.display = 'inline-flex';
         }
     }
 
@@ -851,7 +1223,7 @@
     function addPlatform() {
         const newKey = prompt('请输入平台缩写（如：tx, kg, kw）:');
         if (!newKey || newKey.trim() === '') return;
-        
+
         const newName = prompt('请输入平台名称（如：QQ音乐）:');
         if (!newName || newName.trim() === '') return;
 
@@ -905,7 +1277,8 @@
     function editLxServerUrl() {
         const urlElement = document.getElementById('lxserver-url');
         const currentUrl = urlElement.textContent;
-        const newUrl = prompt('请输入新的LXServer地址:', currentUrl);
+        const defaultUrl = currentUrl || '127.0.0.1:9527/api';
+        const newUrl = prompt('请输入新的LXServer地址:', defaultUrl);
 
         if (newUrl === null) return;
 
@@ -914,7 +1287,7 @@
             return;
         }
 
-        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)(\.([a-z.]{2,6}))?(:\d{1,5})?(\/[\w .-]*)*\/?$/i;
         if (urlPattern.test(newUrl)) {
             updateLxServerUrl(newUrl);
         } else {
@@ -1069,6 +1442,92 @@
     }
 
     /// 在现有的 script 标签中添加以下函数
+
+    /*============================高级设置函数=================================*/
+    // 打开高级设置模态框
+    async function openAdvancedConfig() {
+        const modal = document.getElementById('advancedConfigModal');
+        modal.classList.add('show');
+        // 加载当前配置
+        await loadAdvancedConfig();
+    }
+
+    // 关闭高级设置模态框
+    function closeAdvancedConfig() {
+        const modal = document.getElementById('advancedConfigModal');
+        modal.classList.remove('show');
+    }
+
+    // 加载高级配置
+    async function loadAdvancedConfig() {
+        try {
+            const response = await fetch('/api/advanced-config/load');
+            const data = await response.json();
+            if (data.success) {
+                displayAdvancedConfig(data.data);
+            } else {
+                alert(`加载失败：${data.error}`);
+            }
+        } catch (error) {
+            alert(`加载出错：${error.message}`);
+        }
+    }
+
+    // 显示高级配置
+    function displayAdvancedConfig(config) {
+        // 自动添加歌曲
+        const autoAddSongCheckbox = document.getElementById('autoAddSongCheckbox');
+        autoAddSongCheckbox.checked = config.auto_add_song === true;
+
+        // AI 接口配置
+        const aiapiInfo = config.aiapi_info || {};
+        const aiApiEnabledCheckbox = document.getElementById('aiApiEnabledCheckbox');
+        const aiBaseUrlInput = document.getElementById('aiBaseUrlInput');
+        const aiApiKeyInput = document.getElementById('aiApiKeyInput');
+        const aiModelInput = document.getElementById('aiModelInput');
+
+        aiApiEnabledCheckbox.checked = aiapiInfo.enabled === true;
+        aiBaseUrlInput.value = aiapiInfo.base_url || '';
+        aiApiKeyInput.value = aiapiInfo.api_key || '';
+        aiModelInput.value = aiapiInfo.model || '';
+    }
+
+    // 保存高级配置
+    async function saveAdvancedConfig() {
+        try {
+            const autoAddSong = document.getElementById('autoAddSongCheckbox').checked;
+            const aiApiEnabled = document.getElementById('aiApiEnabledCheckbox').checked;
+            const aiBaseUrl = document.getElementById('aiBaseUrlInput').value.trim();
+            const aiApiKey = document.getElementById('aiApiKeyInput').value.trim();
+            const aiModel = document.getElementById('aiModelInput').value.trim();
+
+            const aiapiInfo = {
+                enabled: aiApiEnabled,
+                base_url: aiBaseUrl || undefined,
+                api_key: aiApiKey,
+                model: aiModel
+            };
+
+            const response = await fetch('/api/advanced-config/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    auto_add_song: autoAddSong,
+                    aiapi_info: aiapiInfo
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('保存成功');
+                closeAdvancedConfig();
+            } else {
+                alert(`保存失败：${data.error}`);
+            }
+        } catch (error) {
+            alert(`保存出错：${error.message}`);
+        }
+    }
 
     // 插件导入功能
     function uploadPlugins() {
