@@ -58,9 +58,10 @@ class OnlineMusicService:
         self.log = log
         self.js_plugin_manager = js_plugin_manager
         self.xiaomusic = xiaomusic_instance
+        self._singer_add_page = 1
 
     async def get_music_list_online(
-            self, plugin="all", keyword="", page=1, limit=20, **kwargs
+        self, plugin="all", keyword="", page=1, limit=20, **kwargs
     ):
         """在线获取歌曲列表
 
@@ -85,10 +86,14 @@ class OnlineMusicService:
         is_lx_server = self.js_plugin_manager.is_lx_server()
         if is_lx_server:
             # LX Server在线搜索
-            return await self._execute_lx_server_search(plugin, keyword, artist, page, limit)
+            return await self._execute_lx_server_search(
+                plugin, keyword, artist, page, limit
+            )
         else:
             # 插件在线搜索
-            return await self._execute_plugin_search(plugin, keyword, artist, page, limit)
+            return await self._execute_plugin_search(
+                plugin, keyword, artist, page, limit
+            )
 
     async def _parse_keyword_and_artist(self, keyword):
         """解析关键词和艺术家"""
@@ -105,12 +110,18 @@ class OnlineMusicService:
         if lx_server_info.get("base_url", "") != "":
             if plugin == "all":
                 # 搜索所有启用的插件
-                return await self._search_all_platform_lx(lx_server_info, keyword, artist, page, limit)
+                return await self._search_all_platform_lx(
+                    lx_server_info, keyword, artist, page, limit
+                )
             else:
                 # LX Server接口获取
                 result_data = await self.js_plugin_manager.lx_server_search(
                     url=lx_server_info.get("base_url") + "/music/search",
-                    keyword=keyword, artist=artist, page=page, limit=limit, source=plugin
+                    keyword=keyword,
+                    artist=artist,
+                    page=page,
+                    limit=limit,
+                    source=plugin,
                 )
         else:
             return {"success": False, "error": "LX Server接口未配置！"}
@@ -131,7 +142,9 @@ class OnlineMusicService:
 
         return result_data
 
-    async def _search_all_platform_lx(self, lx_server_info, keyword, artist, page, limit):
+    async def _search_all_platform_lx(
+        self, lx_server_info, keyword, artist, page, limit
+    ):
         """聚合搜索所有LXServer平台
 
         Args:
@@ -146,7 +159,10 @@ class OnlineMusicService:
         platforms = lx_server_info.get("platforms")
         # 检查 platforms 是否为字典类型，并提取所有 key
         if not platforms or not isinstance(platforms, dict):
-            return {"success": False, "error": "LX Server未配置platfroms，请先进行配置！"}
+            return {
+                "success": False,
+                "error": "LX Server未配置platfroms，请先进行配置！",
+            }
         # 从 platforms 字典中提取所有 key（平台标识）
         platform_keys = list(platforms.keys())
         self.log.info(f"LX Server 可用平台：{platform_keys}")
@@ -162,7 +178,11 @@ class OnlineMusicService:
         search_tasks = [
             self.js_plugin_manager.lx_server_search(
                 url=lx_server_info.get("base_url") + "/music/search",
-                keyword=keyword, artist=artist, page=page, limit=limit, source=platform
+                keyword=keyword,
+                artist=artist,
+                page=page,
+                limit=limit,
+                source=platform,
             )
             for platform in platform_keys
         ]
@@ -228,7 +248,7 @@ class OnlineMusicService:
         return result_data
 
     def _merge_search_results(
-            self, plugin_result, openapi_result, keyword, artist, limit
+        self, plugin_result, openapi_result, keyword, artist, limit
     ):
         merged_data = []
         sources = {}
@@ -254,7 +274,7 @@ class OnlineMusicService:
 
         # 如果都没有成功结果，返回错误
         if not plugin_result.get("success") and not (
-                openapi_result and openapi_result.get("success")
+            openapi_result and openapi_result.get("success")
         ):
             # 优先返回第一个错误
             error_result = (
@@ -279,7 +299,7 @@ class OnlineMusicService:
         }
 
     async def get_music_list_mf(
-            self, plugin="all", keyword="", artist="", page=1, limit=20, **kwargs
+        self, plugin="all", keyword="", artist="", page=1, limit=20, **kwargs
     ):
         self.log.info("通过MusicFree插件搜索音乐列表!")
         """
@@ -345,18 +365,23 @@ class OnlineMusicService:
             self.log.error(f"searchKey {search_key} get media source failed: {e}")
             return {"success": False, "error": str(e)}
 
-    # 调用在线搜索歌手，追加歌手歌曲
     async def add_singer_song(self, list_name, name):
         try:
-            # 获取歌曲列表
-            result = await self.get_music_list_online(keyword=name, limit=10)
+            self.log.info(f"追加歌手歌曲，当前页码: {self._singer_add_page}")
+            result = await self.get_music_list_online(
+                keyword=name, page=self._singer_add_page, limit=10
+            )
             if result.get("success") and result.get("total") > 0:
                 self._handle_music_list(result.get("data"), list_name, True)
+                self._singer_add_page += 1
             else:
                 return {"success": False, "error": "未找到歌曲"}
         except Exception as e:
-            # 记录错误日志
             return {"success": False, "error": str(e)}
+
+    def reset_singer_add_page(self):
+        self._singer_add_page = 1
+        self.log.info("已重置追加歌曲页码")
 
     """------------------------私有--------------------------"""
 
@@ -404,7 +429,7 @@ class OnlineMusicService:
 
     # 处理推送的歌单
     def _handle_music_list(
-            self, song_list=None, list_name="_online_play", append=False
+        self, song_list=None, list_name="_online_play", append=False
     ):
         """
         数据转换：将外部歌单格式转换为后端支持的格式
@@ -439,30 +464,29 @@ class OnlineMusicService:
     # 在线播放：在线搜索、播放
     async def online_play(self, did="", arg1="", **kwargs):
         await self._before_play()
-        # 获取搜索关键词
         parts = arg1.split("|")
         search_key = parts[0]
         name = parts[1] if len(parts) > 1 else search_key
         if not name:
             name = search_key
+        self.reset_singer_add_page()
         self.log.info(f"搜索关键字{search_key},提取的歌名{name}")
         await self.search_top_one_play(did, search_key, name)
 
-    # 播放歌手：在线搜索歌手并存为列表播放
     async def singer_play(self, did="", arg1="", **kwargs):
         await self._before_play()
-        # 获取搜索关键词
         parts = arg1.split("|")
         search_key = parts[0]
         name = parts[1] if len(parts) > 1 else search_key
         if not name:
             name = search_key
+        self.reset_singer_add_page()
         self.log.info(f"搜索关键字{search_key},搜索歌手名{name}")
         await self.search_singer_play(did, search_key, name)
 
     # 处理推送的歌单并播放
     async def push_music_list_play(
-            self, did="web_device", song_list=None, list_name="_online_play", **kwargs
+        self, did="web_device", song_list=None, list_name="_online_play", **kwargs
     ):
         """
         处理推送的歌单信息 -> 添加歌单 -> 播放歌单
@@ -485,6 +509,7 @@ class OnlineMusicService:
         if not song_list and len(song_list) > 0:
             return {"success": False, "error": "歌曲列表不能为空"}
         try:
+            self.reset_singer_add_page()
             self._handle_music_list(song_list, list_name)
             # 如果指定了特定设备，播放歌单
             if did != "web_device" and self.xiaomusic.did_exist(did):
@@ -718,7 +743,9 @@ class OnlineMusicService:
         is_lx_server = self.js_plugin_manager.is_lx_server()
         if is_lx_server:
             # LX Server在线搜索
-            return await self._execute_lx_server_music_url(song_info=music_item.get("_raw"),)
+            return await self._execute_lx_server_music_url(
+                song_info=music_item.get("_raw"),
+            )
         else:
             # kwargs可追加
             kwargs = {"quality": quality}
@@ -848,13 +875,13 @@ class OnlineMusicService:
             return [music_items[0]] if music_items else []
 
     async def _call_plugin_method(
-            self,
-            plugin_name: str,
-            method_name: str,
-            music_item: dict,
-            result_key: str,
-            required_field: str = None,
-            **kwargs,
+        self,
+        plugin_name: str,
+        method_name: str,
+        music_item: dict,
+        result_key: str,
+        required_field: str = None,
+        **kwargs,
     ):
         """通用方法：调用 JS 插件的方法并返回结果
 
@@ -886,9 +913,9 @@ class OnlineMusicService:
                 plugin_name, music_item, **kwargs
             )
             if (
-                    not result
-                    or not result.get(result_key)
-                    or result.get(result_key) == "None"
+                not result
+                or not result.get(result_key)
+                or result.get(result_key) == "None"
             ):
                 return {"success": False, "error": f"Failed to get {result_key}"}
 
@@ -908,7 +935,7 @@ class OnlineMusicService:
 
     @staticmethod
     async def _make_request_with_validation(
-            url: str, timeout: int, convert_m4s: bool = False
+        url: str, timeout: int, convert_m4s: bool = False
     ) -> str:
         """
         通用的URL请求和验证方法
@@ -943,11 +970,11 @@ class OnlineMusicService:
                     return False
                 # 拒绝内网、回环、链路本地、多播和保留地址
                 if (
-                        ip_obj.is_private
-                        or ip_obj.is_loopback
-                        or ip_obj.is_link_local
-                        or ip_obj.is_multicast
-                        or ip_obj.is_reserved
+                    ip_obj.is_private
+                    or ip_obj.is_loopback
+                    or ip_obj.is_link_local
+                    or ip_obj.is_multicast
+                    or ip_obj.is_reserved
                 ):
                     return False
             return True
@@ -968,9 +995,9 @@ class OnlineMusicService:
             async with aiohttp.ClientSession() as session:
                 # 发送HEAD请求跟随重定向
                 async with session.head(
-                        url,
-                        allow_redirects=True,
-                        timeout=aiohttp.ClientTimeout(total=timeout),
+                    url,
+                    allow_redirects=True,
+                    timeout=aiohttp.ClientTimeout(total=timeout),
                 ) as response:
                     # 获取最终重定向后的URL
                     final_url = str(response.url)
