@@ -1,59 +1,62 @@
 <!DOCTYPE html>
 <html lang="zh">
-	<head>
-		<meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width">
-		<title>歌曲下载工具</title>
-    <link rel="stylesheet" type="text/css" href="./main.css?version=1773981675">
-    <script src="./jquery-3.7.1.min.js?version=1773981675"></script>
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments)};
-    gtag('js', new Date());
-    gtag('config', 'G-Z09NC1K7ZW');
-    </script>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<title>歌曲下载工具</title>
+	<link rel="stylesheet" type="text/css" href="./main.css?version=1773981675">
+	<script src="./jquery-3.7.1.min.js?version=1773981675"></script>
 
-    <!-- umami -->
-    <script async defer src="https://umami.hanxi.cc/script.js" data-website-id="7bfb0890-4115-4260-8892-b391513e7e99"></script>
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments) };
+		gtag('js', new Date());
+		gtag('config', 'G-Z09NC1K7ZW');
+	</script>
 
-	</head>
-	<body>
+	<!-- umami -->
+	<script async defer src="https://umami.hanxi.cc/script.js"
+		data-website-id="7bfb0890-4115-4260-8892-b391513e7e99"></script>
 
-		<h1>歌曲下载工具</h1>
+</head>
 
-		<div class="rows">
-			<!-- 歌单的输入 -->
-			<label for="playlistUrl">输入歌单 URL:</label>
-			<input type="text" id="playlistUrl" value="https://m.bilibili.com/video/BV1WUsDezE88">
+<body>
 
-			<label for="dirname">输入歌单名字:</label>
-			<input type="text" id="dirname" placeholder="流行歌曲">
+	<h1>歌曲下载工具</h1>
 
-			<button id="downloadPlaylistBtn">下载歌单</button>
+	<div class="rows">
+		<!-- 歌单的输入 -->
+		<label for="playlistUrl">输入歌单 URL:</label>
+		<input type="text" id="playlistUrl" value="https://m.bilibili.com/video/BV1WUsDezE88">
 
-    </div>
+		<label for="dirname">输入歌单名字:</label>
+		<input type="text" id="dirname" placeholder="流行歌曲">
 
-		<hr>
+		<button id="downloadPlaylistBtn">下载歌单</button>
 
-		<div class="rows">
+	</div>
 
-			<!-- 单曲的输入 -->
-			<label for="songUrl">输入歌曲 URL:</label>
-			<input type="text" id="songUrl" value="https://m.bilibili.com/video/BV1qD4y1U7fs">
+	<hr>
 
-			<label for="songName">输入歌曲名字:</label>
-			<input type="text" id="songName" placeholder="歌曲名">
+	<div class="rows">
 
-			<button id="downloadSongBtn">下载单曲</button>
-		</div>
+		<!-- 单曲的输入 -->
+		<label for="songUrl">输入歌曲 URL:</label>
+		<input type="text" id="songUrl" value="https://m.bilibili.com/video/BV1qD4y1U7fs">
+
+		<label for="songName">输入歌曲名字:</label>
+		<input type="text" id="songName" placeholder="歌曲名">
+
+		<button id="downloadSongBtn">下载单曲</button>
+	</div>
 
 
-		<script>
+	<script>
 		// 下载歌单
-		$('#downloadPlaylistBtn').click(function() {
+		$('#downloadPlaylistBtn').click(function () {
 			var playlistUrl = $('#playlistUrl').val();
 			var dirname = $('#dirname').val();
 
@@ -62,27 +65,27 @@
 				return;
 			}
 
-      var data = {
+			var data = {
 				dirname: dirname,
 				url: playlistUrl
 			};
-      $.ajax({
-        type: "POST",
-        url: "/downloadplaylist",
-        contentType: "application/json",
-        data: JSON.stringify(data),
-        success: (msg) => {
+			$.ajax({
+				type: "POST",
+				url: "/downloadplaylist",
+				contentType: "application/json",
+				data: JSON.stringify(data),
+				success: (msg) => {
 					alert('歌单下载请求已发送!');
 					console.log(response);
-        },
-        error: (msg) => {
+				},
+				error: (msg) => {
 					alert('歌单下载请求失败，请重试。');
-        }
-      });
-    });
+				}
+			});
+		});
 
 		// 下载单曲
-		$('#downloadSongBtn').click(function() {
+		$('#downloadSongBtn').click(function () {
 			var songName = $('#songName').val();
 			var songUrl = $('#songUrl').val();
 
@@ -91,26 +94,62 @@
 				return;
 			}
 
-      var data = {
+			var data = {
 				name: songName,
 				url: songUrl
 			};
-      $.ajax({
-        type: "POST",
-        url: "/downloadonemusic",
-        contentType: "application/json",
-        data: JSON.stringify(data),
-        success: (msg) => {
+			$.ajax({
+				type: "POST",
+				url: "/downloadonemusic",
+				contentType: "application/json",
+				data: JSON.stringify(data),
+				success: (msg) => {
 					alert('单曲下载请求已发送!');
-					console.log(response);
-        },
-        error: (msg) => {
+					console.log(msg);
+				},
+				error: (msg) => {
 					alert('单曲下载请求失败，请重试。');
-        }
-      });
+				}
+			});
 		});
-		</script>
+		function parseClipboardText(text) {
+			const match = text.match(/(https?:\/\/\S+)/);
+			if (!match) return null;
 
-	</body>
+			const url = match[1];
+			const name = text
+				.replace(url, '')
+				.replace(/[【】]/g, '')
+				.trim();
+
+			return { name, url };
+		}
+
+		$('#songUrl, #songName').on('paste', function (e) {
+			const pastedText = (e.originalEvent || e).clipboardData.getData('text');
+
+			const parsed = parseClipboardText(pastedText);
+			if (!parsed) return;
+
+			e.preventDefault();
+
+			$('#songUrl').val(parsed.url);
+			$('#songName').val(parsed.name);
+		});
+
+		$('#playlistUrl, #dirname').on('paste', function (e) {
+			const pastedText = (e.originalEvent || e).clipboardData.getData('text');
+
+			const parsed = parseClipboardText(pastedText);
+			if (!parsed) return;
+
+			e.preventDefault();
+
+			$('#playlistUrl').val(parsed.url);
+			$('#dirname').val(parsed.name);
+		});
+	</script>
+
+</body>
+
 </html>
-
