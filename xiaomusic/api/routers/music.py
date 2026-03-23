@@ -129,7 +129,7 @@ async def device_push_url(request: Request):
         # 获取请求数据
         data = await request.json()
         did = data.get("did")
-        openapi_info = xiaomusic.js_plugin_manager.get_openapi_info()
+        openapi_info = xiaomusic.js_plugin_manager.get_lx_server_info()
         if openapi_info.get("enabled", False):
             url = data.get("url")
         else:

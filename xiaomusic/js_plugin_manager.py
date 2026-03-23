@@ -259,8 +259,6 @@ class JSPluginManager:
         if message_id:
             self.response_handlers[message_id] = response
 
-    """------------------------------开放接口相关函数----------------------------------------"""
-
     def get_aiapi_info(self) -> dict[str, Any]:
         """获取AI接口配置信息
         Returns:
@@ -274,24 +272,124 @@ class JSPluginManager:
             else:
                 return {"enabled": False}
         except Exception as e:
-            self.log.error(f"Failed to read OpenAPI info from config: {e}")
+            self.log.error(f"Failed to read AI info from config: {e}")
             return {}
 
-    def get_openapi_info(self) -> dict[str, Any]:
-        """获取开放接口配置信息
+    def get_advanced_config(self) -> dict[str, Any]:
+        """获取高级配置信息
         Returns:
-            Dict[str, Any]: 包含 OpenAPI 配置信息的字典，包括启用状态和搜索 URL
+            Dict[str, Any]: 包含高级配置信息的字典
         """
         try:
-            # 读取配置文件中的 OpenAPI 配置信息
             config_data = self._get_config_data()
             if config_data:
-                # 返回 openapi_info 配置项
-                return config_data.get("openapi_info", {})
+                return {
+                    "auto_add_song": config_data.get("auto_add_song", False),
+                    "aiapi_info": config_data.get("aiapi_info", {}),
+                }
+            else:
+                return {
+                    "auto_add_song": False,
+                    "aiapi_info": {"enabled": False, "api_key": ""},
+                }
+        except Exception as e:
+            self.log.error(f"Failed to read advanced config: {e}")
+            return {
+                "auto_add_song": False,
+                "aiapi_info": {"enabled": False, "api_key": ""},
+            }
+
+    def update_advanced_config(
+        self, auto_add_song: bool = None, aiapi_info: dict = None
+    ) -> dict[str, Any]:
+        """更新高级配置信息
+        Args:
+            auto_add_song: 自动添加歌曲开关
+            aiapi_info: AI接口配置信息
+        Returns:
+            更新结果字典
+        """
+        try:
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, encoding="utf-8") as f:
+                    config_data = json.load(f)
+
+                if auto_add_song is not None:
+                    config_data["auto_add_song"] = auto_add_song
+
+                if aiapi_info is not None:
+                    config_data["aiapi_info"] = aiapi_info
+
+                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+                self._invalidate_config_cache()
+                return {"success": True}
+            else:
+                return {"success": False, "error": "Config file not found"}
+        except Exception as e:
+            self.log.error(f"Failed to update advanced config: {e}")
+            return {"success": False, "error": str(e)}
+
+    def get_back_conf_info(self) -> dict[str, Any]:
+        """获取lxServer接口配置信息
+        Returns:
+            Dict[str, Any]: 包含 lxServer接口 配置信息的字典，包括启用状态和搜索 URL
+        """
+        try:
+            # 读取配置文件中的 LX Server 配置信息
+            config_data = self._get_config_data()
+            if config_data:
+                # 返回 back_conf_info 配置项
+                return config_data.get("back_conf_info", {})
             else:
                 return {"enabled": False}
         except Exception as e:
-            self.log.error(f"Failed to read OpenAPI info from config: {e}")
+            self.log.error(f"Failed to read LX Server info from config: {e}")
+            return {}
+
+    def update_back_conf_api_type(self, api_type: int) -> dict[str, Any]:
+        """更新后台类型配置
+        Args:
+            api_type: API类型，1=MusicFree插件，2=LXServer接口
+        Returns:
+            更新结果字典
+        """
+        try:
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, encoding="utf-8") as f:
+                    config_data = json.load(f)
+
+                back_conf_info = config_data.get("back_conf_info", {})
+                back_conf_info["api_type"] = api_type
+                config_data["back_conf_info"] = back_conf_info
+
+                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+                self._invalidate_config_cache()
+                return {"success": True}
+            else:
+                return {"success": False, "error": "Config file not found"}
+        except Exception as e:
+            self.log.error(f"Failed to update back_conf_api_type: {e}")
+            return {"success": False, "error": str(e)}
+
+    """------------------------------LX Server接口相关函数----------------------------------------"""
+
+    def get_lx_server_info(self) -> dict[str, Any]:
+        """获取lxServer接口配置信息
+        Returns:
+            Dict[str, Any]: 包含 lxServer接口 配置信息的字典，包括启用状态和搜索 URL
+        """
+        try:
+            # 读取配置文件中的 LX Server 配置信息
+            config_data = self._get_config_data()
+            if config_data:
+                # 返回 LX Server_info 配置项
+                return config_data.get("lx_server_info", {})
+            else:
+                return {"enabled": False}
+        except Exception as e:
+            self.log.error(f"Failed to read LX Server info from config: {e}")
             return {}
 
     def toggle_openapi(self) -> dict[str, Any]:
@@ -301,10 +399,10 @@ class JSPluginManager:
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
-                openapi_info = config_data.get("openapi_info", {})
+                openapi_info = config_data.get("lx_server_info", {})
                 current_enabled = openapi_info.get("enabled", False)
                 openapi_info["enabled"] = not current_enabled
-                config_data["openapi_info"] = openapi_info
+                config_data["lx_server_info"] = openapi_info
 
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
@@ -324,9 +422,9 @@ class JSPluginManager:
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
-                openapi_info = config_data.get("openapi_info", {})
-                openapi_info["search_url"] = openapi_url
-                config_data["openapi_info"] = openapi_info
+                openapi_info = config_data.get("lx_server_info", {})
+                openapi_info["base_url"] = openapi_url
+                config_data["lx_server_info"] = openapi_info
 
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
@@ -340,6 +438,33 @@ class JSPluginManager:
             self.log.error(f"Failed to update OpenAPI config: {e}")
             return {"success": False, "error": str(e)}
 
+    def update_lxserver_platforms(self, platforms: dict[str, str]) -> dict[str, Any]:
+        """更新LXServer平台配置
+        Args:
+            platforms: 平台字典，格式 {key: name}，如 {"tx": "QQ音乐"}
+        Returns:
+            更新结果字典
+        """
+        try:
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, encoding="utf-8") as f:
+                    config_data = json.load(f)
+
+                lx_server_info = config_data.get("lx_server_info", {})
+                lx_server_info["platforms"] = platforms
+                config_data["lx_server_info"] = lx_server_info
+
+                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+                self._invalidate_config_cache()
+                return {"success": True}
+            else:
+                return {"success": False, "error": "Config file not found"}
+        except Exception as e:
+            self.log.error(f"Failed to update LXServer platforms: {e}")
+            return {"success": False, "error": str(e)}
+
     def get_plugin_source(self) -> dict[str, Any]:
         """获取插件源配置信息
         Returns:
@@ -350,7 +475,8 @@ class JSPluginManager:
             config_data = self._get_config_data()
             if config_data:
                 # 返回 openapi_info 配置项
-                return config_data.get("plugin_source", {})
+                music_free_info = config_data.get("music_free_info", {})
+                return music_free_info.get("plugin_source", {})
             else:
                 return {"enabled": False}
         except Exception as e:
@@ -363,7 +489,8 @@ class JSPluginManager:
             if os.path.exists(self.plugins_config_path):
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
-                plugin_source = config_data.get("plugin_source", {})
+                music_free_info = config_data.get("music_free_info", {})
+                plugin_source = music_free_info.get("plugin_source", {})
                 source_url = plugin_source.get("source_url", "")
                 if source_url:
                     import requests
@@ -500,9 +627,13 @@ class JSPluginManager:
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
-                plugin_source = config_data.get("plugin_source", {})
+                if "music_free_info" not in config_data:
+                    config_data["music_free_info"] = {}
+                music_free_info = config_data["music_free_info"]
+                plugin_source = music_free_info.get("plugin_source", {})
                 plugin_source["source_url"] = source_url
-                config_data["plugin_source"] = plugin_source
+                music_free_info["plugin_source"] = plugin_source
+                config_data["music_free_info"] = music_free_info
 
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
@@ -545,33 +676,60 @@ class JSPluginManager:
         self._config_cache = None
         self._config_cache_time = 0
 
+    def _merge_config_with_template(self):
+        """合并模板配置到当前配置文件"""
+        example_config_path = os.path.join(
+            os.path.dirname(__file__), "plugins-config-example.json"
+        )
+
+        if not os.path.exists(example_config_path):
+            self.log.error("找不到 plugins-config-example.json 配置文件！")
+            return False
+
+        try:
+            with open(example_config_path, encoding="utf-8") as f:
+                template_config = json.load(f)
+
+            with open(self.plugins_config_path, encoding="utf-8") as f:
+                current_config = json.load(f)
+
+            merged = False
+            for key, value in template_config.items():
+                if key not in current_config:
+                    current_config[key] = value
+                    merged = True
+                    self.log.info(f"从模板追加配置项: {key}")
+
+            if merged:
+                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                    json.dump(current_config, f, ensure_ascii=False, indent=2)
+                self.log.info("配置文件已更新，追加了新的配置项")
+            else:
+                self.log.debug("配置文件已是最新，无需更新")
+
+            return True
+        except Exception as e:
+            self.log.error(f"合并配置失败: {e}")
+            return False
+
     def _load_plugins(self):
         """加载所有插件"""
         if not os.path.exists(self.plugins_dir):
             os.makedirs(self.plugins_dir)
 
-        # 读取、加载插件配置Json
+        example_config_path = os.path.join(
+            os.path.dirname(__file__), "plugins-config-example.json"
+        )
+
         if not os.path.exists(self.plugins_config_path):
-            # 复制 plugins-config-example.json 模板，创建插件配置Json文件
-            example_config_path = os.path.join(
-                os.path.dirname(__file__), "plugins-config-example.json"
-            )
             if os.path.exists(example_config_path):
                 shutil.copy2(example_config_path, self.plugins_config_path)
+                self.log.info(f"从模板复制创建配置文件: {self.plugins_config_path}")
             else:
-                base_config = {
-                    "account": "",
-                    "password": "",
-                    "auto_add_song": True,
-                    "aiapi_info": {"enabled": False, "api_key": ""},
-                    "enabled_plugins": [],
-                    "openapi_info": {"enabled": False, "search_url": ""},
-                    "plugin_source": {"source_url": ""},
-                    "plugins_info": [],
-                }
-                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
-                    json.dump(base_config, f, ensure_ascii=False, indent=2)
-        # 输出文件夹、配置文件地址
+                self.log.error("找不到 plugins-config-example.json 配置文件！")
+        else:
+            self._merge_config_with_template()
+
         self.log.info(f"Plugins directory: {self.plugins_dir}")
         self.log.info(f"Plugins config file: {self.plugins_config_path}")
         # 只加载指定的插件，避免加载所有插件导致超时
@@ -667,8 +825,9 @@ class JSPluginManager:
             # 读取配置文件中的启用插件列表
             config_data = self._get_config_data()
             if config_data:
-                plugin_infos = config_data.get("plugins_info", [])
-                enabled_plugins = config_data.get("enabled_plugins", [])
+                music_free_info = config_data.get("music_free_info", {})
+                plugin_infos = music_free_info.get("plugins_info", [])
+                enabled_plugins = music_free_info.get("enabled_plugins", [])
 
                 # 创建一个映射，用于快速查找插件在 enabled_plugins 中的位置
                 enabled_order = {name: i for i, name in enumerate(enabled_plugins)}
@@ -692,13 +851,52 @@ class JSPluginManager:
             self.log.error(f"Failed to read enabled plugins from config: {e}")
         return result
 
+    def is_lx_server(self) -> bool:
+        """判定是否使用lx_server接口"""
+        try:
+            config_data = self._get_config_data()
+            if config_data:
+                back_conf_info = config_data.get("back_conf_info", {})
+                # 1：mf_plugins，2：lx_server
+                api_type = back_conf_info.get("api_type", 1)
+                return api_type == 2
+            else:
+                return False
+        except Exception as e:
+            self.log.error(f"Failed to read platforms from config: {e}")
+            return False
+
+    def get_platforms(self) -> dict[Any, Any]:
+        """获取音乐平台列表"""
+        try:
+            self._invalidate_config_cache()
+            config_data = self._get_config_data()
+            if config_data:
+                back_conf_info = config_data.get("back_conf_info", {})
+                # 1：mf_plugins，2：lx_server
+                api_type = back_conf_info.get("api_type", 1)
+                if api_type == 2:
+                    lx_server_info = config_data.get("lx_server_info", {})
+                    platforms = lx_server_info.get("platforms", {})
+                else:
+                    music_free_info = config_data.get("music_free_info", {})
+                    enabled_plugins = music_free_info.get("enabled_plugins", [])
+                    platforms = {plugin: plugin for plugin in enabled_plugins}
+                return platforms
+            else:
+                return {}
+        except Exception as e:
+            self.log.error(f"Failed to read platforms from config: {e}")
+            return {}
+
     def get_enabled_plugins(self) -> list[str]:
         """获取启用的插件列表"""
         try:
             # 读取配置文件中的启用插件列表
             config_data = self._get_config_data()
             if config_data:
-                enabled_plugins = config_data.get("enabled_plugins", [])
+                music_free_info = config_data.get("music_free_info", {})
+                enabled_plugins = music_free_info.get("enabled_plugins", [])
                 # 追加开放接口名称
                 openapi_info = config_data.get("openapi_info", {})
                 enabled_openapi = openapi_info.get("enabled", False)
@@ -773,16 +971,24 @@ class JSPluginManager:
                 )
         return result_data
 
-    async def openapi_search(
-        self, url: str, keyword: str, artist: str, limit: int = 20
+    async def lx_server_search(
+        self,
+        url: str,
+        keyword: str,
+        artist: str,
+        source: str = "tx",
+        limit: int = 20,
+        page: int = 1,
     ):
-        """直接调用在线接口进行音乐搜索
+        """直接调用LX Server接口进行音乐搜索
 
         Args:
+            source (str): 搜索平台code,默认为tx
             url (str): 在线搜索接口地址
             keyword (str): 搜索关键词，歌名/歌手名
             artist (str): 搜索的歌手名，可能为空
-            limit (int): 每页数量，默认为5
+            limit (int): 每页数量，默认为20
+            page (int): 页码，默认为1
         Returns:
             Dict[str, Any]: 搜索结果，数据结构与search函数一致
         """
@@ -792,7 +998,8 @@ class JSPluginManager:
 
         try:
             # 构造请求参数
-            params = {"type": "aggregateSearch", "keyword": keyword, "limit": limit}
+            params = {"source": source, "name": keyword, "limit": limit, "page": page}
+            self.log.info(f"Calling LX Server API: {url} with params: {params}")
             # 使用aiohttp发起异步HTTP GET请求
             connector = aiohttp.TCPConnector(ssl=False)  # 跳过 SSL 验证
             async with aiohttp.ClientSession(connector=connector) as session:
@@ -803,33 +1010,28 @@ class JSPluginManager:
                     # 解析响应数据
                     raw_data = await response.json()
 
-            self.log.info(f"在线接口返回Json: {raw_data}")
+            self.log.info(f"LX Server接口 - {source} 返回原始Json: {raw_data}")
 
             # 检查API调用是否成功
-            if raw_data.get("code") != 200:
-                raise Exception(
-                    f"API request failed with code: {raw_data.get('code', 'unknown')}"
-                )
+            if not isinstance(raw_data, list):
+                raise Exception(f"API request failed : {raw_data}")
 
             # 提取实际的搜索结果
-            api_data = raw_data.get("data", {})
-            results = api_data.get("results", [])
-
+            results = raw_data
             # 转换数据格式以匹配插件系统的期望格式
             converted_data = []
             for item in results:
-                url = item.get("url", "")
-                self.log.info(f"openapi_search url: {url}")
                 converted_item = {
-                    "id": item.get("id", ""),
+                    "_raw": item,
+                    "id": item.get("songmid", ""),
                     "title": item.get("name", ""),
-                    "artist": item.get("artist", ""),
-                    "album": item.get("album", ""),
-                    "platform": "OpenAPI-" + item.get("platform"),
-                    "isOpenAPI": True,
-                    "url": url,
-                    "artwork": item.get("pic", ""),
+                    "duration": item.get("interval", ""),
+                    "artist": item.get("singer", ""),
+                    "album": item.get("albumName", ""),
+                    "platform": source,
+                    "artwork": item.get("img", ""),
                     "lrc": item.get("lrc", ""),
+                    "lrcUrl": item.get("lrcUrl", ""),
                 }
                 converted_data.append(converted_item)
             # 排序筛选
@@ -845,11 +1047,9 @@ class JSPluginManager:
             # 返回统一格式的数据
             return {
                 "success": True,
-                "isOpenAPI": True,
                 "data": results,
                 "total": len(results),
-                "sources": {"OpenAPI": len(results)},
-                "page": 1,
+                "page": page,
                 "limit": limit,
             }
 
@@ -857,11 +1057,9 @@ class JSPluginManager:
             self.log.error(f"OpenAPI search timeout at URL {url}: {e}")
             return {
                 "success": False,
-                "isOpenAPI": True,
                 "error": f"OpenAPI search timeout: {str(e)}",
                 "data": [],
                 "total": 0,
-                "sources": {},
                 "page": 1,
                 "limit": limit,
             }
@@ -869,13 +1067,71 @@ class JSPluginManager:
             self.log.error(f"OpenAPI search error at URL {url}: {e}")
             return {
                 "success": False,
-                "isOpenAPI": True,
                 "error": f"OpenAPI search error: {str(e)}",
                 "data": [],
                 "total": 0,
-                "sources": {},
                 "page": 1,
                 "limit": limit,
+            }
+
+    async def lx_server_music_url(
+        self, url: str, song_info: dict[str, Any], quality: str = "320k"
+    ):
+        """直接调用LX Server接口进行音乐搜索
+
+        Args:
+            url (str): 在线搜索接口地址
+            song_info (dict[str, Any]): 搜索的歌手名，可能为空
+            quality (str): 每页数量，默认为20
+        Returns:
+            Dict[str, Any]:
+        """
+        import asyncio
+        import json
+
+        import aiohttp
+
+        try:
+            # 构造请求参数
+            params = {"songInfo": song_info, "quality": quality}
+            # 使用aiohttp发起异步HTTP POST请求
+            connector = aiohttp.TCPConnector(ssl=False)  # 跳过 SSL 验证
+            async with aiohttp.ClientSession(connector=connector) as session:
+                async with session.post(
+                    url,
+                    json=params,  # 自动序列化为 JSON 并设置 Content-Type
+                    timeout=aiohttp.ClientTimeout(total=10),
+                ) as response:
+                    response.raise_for_status()  # 抛出 HTTP 错误
+                    # 解析响应数据
+                    raw_data = await response.json()
+
+            self.log.info(f"LX Server接口返回原始Json: {raw_data}")
+
+            # 检查API调用是否成功
+            if not isinstance(raw_data, dict):
+                raise Exception(f"API request failed : {raw_data}")
+            return raw_data
+        except asyncio.TimeoutError as e:
+            self.log.error(f"LX Server search timeout at URL {url}: {e}")
+            return {
+                "success": False,
+                "error": f"LX Server search timeout: {str(e)}",
+                "data": {},
+            }
+        except json.JSONDecodeError as e:
+            self.log.error(f"LX Server invalid JSON response at URL {url}: {e}")
+            return {
+                "success": False,
+                "error": f"LX Server invalid JSON response: {str(e)}",
+                "data": {},
+            }
+        except Exception as e:
+            self.log.error(f"LX Server search error at URL {url}: {e}")
+            return {
+                "success": False,
+                "error": f"LX Server search error: {str(e)}",
+                "data": {},
             }
 
     def optimize_search_results(
@@ -948,11 +1204,7 @@ class JSPluginManager:
                     artist_score = 800
                 elif ar in artist:
                     artist_score = 600
-            # 开放接口的平台权重最高 20
-            if platform.startswith("OpenAPI-"):
-                platform_bonus = 20
-            else:
-                platform_bonus = plugin_weights.get(platform, 0)
+            platform_bonus = plugin_weights.get(platform, 0)
             return title_score + artist_score + platform_bonus
 
         sorted_data = sorted(data_list, key=calculate_match_score, reverse=True)
@@ -1227,18 +1479,27 @@ class JSPluginManager:
                     with open(config_file_path, encoding="utf-8") as f:
                         config_data = json.load(f)
 
+                    # 确保 music_free_info 存在
+                    if "music_free_info" not in config_data:
+                        config_data["music_free_info"] = {}
+                    music_free_info = config_data["music_free_info"]
+
                     # 更新plugins_info中对应插件的状态
-                    for plugin_info in config_data.get("plugins_info", []):
+                    plugins_info = music_free_info.get("plugins_info", [])
+                    for plugin_info in plugins_info:
                         if plugin_info.get("name") == plugin_name:
                             plugin_info["enabled"] = True
 
                     # 添加到enabled_plugins中（如果不存在）
-                    if "enabled_plugins" not in config_data:
-                        config_data["enabled_plugins"] = []
+                    if "enabled_plugins" not in music_free_info:
+                        music_free_info["enabled_plugins"] = []
 
-                    if plugin_name not in config_data["enabled_plugins"]:
+                    if plugin_name not in music_free_info["enabled_plugins"]:
                         # 追加到list的第一个
-                        config_data["enabled_plugins"].insert(0, plugin_name)
+                        music_free_info["enabled_plugins"].insert(0, plugin_name)
+
+                    # 更新回 config_data
+                    config_data["music_free_info"] = music_free_info
 
                     # 写回配置文件
                     with open(config_file_path, "w", encoding="utf-8") as f:
@@ -1274,18 +1535,27 @@ class JSPluginManager:
                 with open(config_file_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
+                # 确保 music_free_info 存在
+                if "music_free_info" not in config_data:
+                    config_data["music_free_info"] = {}
+                music_free_info = config_data["music_free_info"]
+
                 # 更新plugins_info中对应插件的状态
-                for plugin_info in config_data.get("plugins_info", []):
+                plugins_info = music_free_info.get("plugins_info", [])
+                for plugin_info in plugins_info:
                     if plugin_info.get("name") == plugin_name:
                         plugin_info["enabled"] = False
 
                 # 添加到enabled_plugins中（如果不存在）
-                if "enabled_plugins" not in config_data:
-                    config_data["enabled_plugins"] = []
+                if "enabled_plugins" not in music_free_info:
+                    music_free_info["enabled_plugins"] = []
 
-                if plugin_name in config_data["enabled_plugins"]:
+                if plugin_name in music_free_info["enabled_plugins"]:
                     # 移除对应的插件名
-                    config_data["enabled_plugins"].remove(plugin_name)
+                    music_free_info["enabled_plugins"].remove(plugin_name)
+
+                # 更新回 config_data
+                config_data["music_free_info"] = music_free_info
 
                 # 写回配置文件
                 with open(config_file_path, "w", encoding="utf-8") as f:
@@ -1318,20 +1588,28 @@ class JSPluginManager:
                     with open(config_file_path, encoding="utf-8") as f:
                         config_data = json.load(f)
 
+                    # 确保 music_free_info 存在
+                    if "music_free_info" not in config_data:
+                        config_data["music_free_info"] = {}
+                    music_free_info = config_data["music_free_info"]
+
                     # 移除plugins_info属性中对应的插件项目
-                    if "plugins_info" in config_data:
-                        config_data["plugins_info"] = [
+                    if "plugins_info" in music_free_info:
+                        music_free_info["plugins_info"] = [
                             plugin_info
-                            for plugin_info in config_data["plugins_info"]
+                            for plugin_info in music_free_info["plugins_info"]
                             if plugin_info.get("name") != plugin_name
                         ]
 
                     # 从enabled_plugins中移除插件（如果存在）
                     if (
-                        "enabled_plugins" in config_data
-                        and plugin_name in config_data["enabled_plugins"]
+                        "enabled_plugins" in music_free_info
+                        and plugin_name in music_free_info["enabled_plugins"]
                     ):
-                        config_data["enabled_plugins"].remove(plugin_name)
+                        music_free_info["enabled_plugins"].remove(plugin_name)
+
+                    # 更新回 config_data
+                    config_data["music_free_info"] = music_free_info
 
                     # 回写配置文件
                     with open(config_file_path, "w", encoding="utf-8") as f:
@@ -1375,8 +1653,10 @@ class JSPluginManager:
                 base_config = {
                     "account": "",
                     "password": "",
-                    "enabled_plugins": [],
-                    "plugins_info": [],
+                    "music_free_info": {
+                        "enabled_plugins": [],
+                        "plugins_info": [],
+                    },
                 }
                 with open(config_file_path, "w", encoding="utf-8") as f:
                     json.dump(base_config, f, ensure_ascii=False, indent=2)
@@ -1385,9 +1665,14 @@ class JSPluginManager:
             with open(config_file_path, encoding="utf-8") as f:
                 config_data = json.load(f)
 
+            # 确保 music_free_info 存在
+            if "music_free_info" not in config_data:
+                config_data["music_free_info"] = {}
+            music_free_info = config_data["music_free_info"]
+
             # 检查是否已存在该插件信息
             plugin_exists = False
-            for plugin_info in config_data.get("plugins_info", []):
+            for plugin_info in music_free_info.get("plugins_info", []):
                 if plugin_info.get("name") == plugin_name:
                     plugin_exists = True
                     break
@@ -1399,9 +1684,11 @@ class JSPluginManager:
                     "file": plugin_file,
                     "enabled": False,  # 默认不启用
                 }
-                if "plugins_info" not in config_data:
-                    config_data["plugins_info"] = []
-                config_data["plugins_info"].append(new_plugin_info)
+                if "plugins_info" not in music_free_info:
+                    music_free_info["plugins_info"] = []
+                music_free_info["plugins_info"].append(new_plugin_info)
+                # 更新回 config_data
+                config_data["music_free_info"] = music_free_info
                 # 写回配置文件
                 with open(config_file_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)

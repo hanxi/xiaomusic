@@ -58,6 +58,7 @@ class OnlineMusicService:
         self.log = log
         self.js_plugin_manager = js_plugin_manager
         self.xiaomusic = xiaomusic_instance
+        self._singer_add_page = 1
 
     async def get_music_list_online(
         self, plugin="all", keyword="", page=1, limit=20, **kwargs
@@ -65,7 +66,7 @@ class OnlineMusicService:
         """在线获取歌曲列表
 
         Args:
-            plugin: 插件名称，"OpenAPI"表示通过开放接口获取，其他为插件在线搜索
+            plugin: 插件名称、对于LX Server接口，这个是平台类型
             keyword: 搜索关键词
             page: 页码
             limit: 每页数量
@@ -82,16 +83,12 @@ class OnlineMusicService:
         keyword, artist = await self._parse_keyword_and_artist(keyword)
 
         # 获取API配置信息
-        openapi_info = self.js_plugin_manager.get_openapi_info()
-
-        if plugin == "all":
-            # 并发执行插件搜索和OpenAPI搜索
-            return await self._execute_concurrent_searches(
-                keyword, artist, page, limit, openapi_info
+        is_lx_server = self.js_plugin_manager.is_lx_server()
+        if is_lx_server:
+            # LX Server在线搜索
+            return await self._execute_lx_server_search(
+                plugin, keyword, artist, page, limit
             )
-        elif plugin == "OpenAPI":
-            # OpenAPI搜索
-            return await self._execute_openapi_search(openapi_info, keyword, artist)
         else:
             # 插件在线搜索
             return await self._execute_plugin_search(
@@ -105,71 +102,142 @@ class OnlineMusicService:
         artist = parsed_artist or ""
         return keyword, artist
 
-    async def _execute_concurrent_searches(
-        self, keyword, artist, page, limit, openapi_info
-    ):
-        """执行并发搜索 - 插件和OpenAPI"""
-        tasks = []
+    # ---------------------------- LX Server 相关函数 ----------------------------
 
-        # 插件在线搜索任务
-        plugin_task = asyncio.create_task(
-            self.get_music_list_mf(
-                "all", keyword=keyword, artist=artist, page=page, limit=limit
-            )
-        )
-        tasks.append(plugin_task)
-
-        # OpenAPI搜索任务（只有在配置正确时才创建）
-        if (
-            openapi_info.get("enabled", False)
-            and openapi_info.get("search_url", "") != ""
-        ):
-            openapi_task = asyncio.create_task(
-                self.js_plugin_manager.openapi_search(
-                    url=openapi_info.get("search_url"), keyword=keyword, artist=artist
+    async def _execute_lx_server_search(self, plugin, keyword, artist, page, limit):
+        """执行LX Server搜索"""
+        lx_server_info = self.js_plugin_manager.get_lx_server_info()
+        if lx_server_info.get("base_url", "") != "":
+            if plugin == "all":
+                # 搜索所有启用的插件
+                return await self._search_all_platform_lx(
+                    lx_server_info, keyword, artist, page, limit
                 )
-            )
-            tasks.append(openapi_task)
-
-        # 并发执行任务
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        plugin_result = results[0]
-        openapi_result = results[1] if len(results) > 1 else None
-
-        # 处理异常情况
-        plugin_result = self._handle_search_exception(plugin_result, "插件")
-        openapi_result = self._handle_search_exception(openapi_result, "OpenAPI")
-
-        # 合并结果
-        combined_result = self._merge_search_results(
-            plugin_result, openapi_result, keyword, artist, limit
-        )
-        combined_result["artist"] = artist or "佚名"
-        return combined_result
-
-    def _handle_search_exception(self, result, source_name):
-        """处理搜索异常"""
-        if result and isinstance(result, Exception):
-            self.log.error(f"{source_name}搜索发生异常: {result}")
-            return {"success": False, "error": str(result)}
-        return result
-
-    async def _execute_openapi_search(self, openapi_info, keyword, artist):
-        """执行OpenAPI搜索"""
-        if (
-            openapi_info.get("enabled", False)
-            and openapi_info.get("search_url", "") != ""
-        ):
-            # 开放接口获取
-            result_data = await self.js_plugin_manager.openapi_search(
-                url=openapi_info.get("search_url"), keyword=keyword, artist=artist
-            )
+            else:
+                # LX Server接口获取
+                result_data = await self.js_plugin_manager.lx_server_search(
+                    url=lx_server_info.get("base_url") + "/music/search",
+                    keyword=keyword,
+                    artist=artist,
+                    page=page,
+                    limit=limit,
+                    source=plugin,
+                )
         else:
-            return {"success": False, "error": "OpenAPI未启用或配置错误"}
+            return {"success": False, "error": "LX Server接口未配置！"}
 
         result_data["artist"] = artist or "佚名"
         return result_data
+
+    async def _execute_lx_server_music_url(self, song_info):
+        """执行LX Server获取音乐播放直链"""
+        lx_server_info = self.js_plugin_manager.get_lx_server_info()
+        if lx_server_info.get("base_url", "") != "":
+            # LX Server接口获取
+            result_data = await self.js_plugin_manager.lx_server_music_url(
+                url=lx_server_info.get("base_url") + "/music/url", song_info=song_info
+            )
+        else:
+            return {"success": False, "error": "LX Server接口未配置！"}
+
+        return result_data
+
+    async def _search_all_platform_lx(
+        self, lx_server_info, keyword, artist, page, limit
+    ):
+        """聚合搜索所有LXServer平台
+
+        Args:
+            keyword: 搜索关键词
+            artist: 艺术家名称
+            page: 页码
+            limit: 每页数量
+
+        Returns:
+            dict: 搜索结果
+        """
+        platforms = lx_server_info.get("platforms")
+        # 检查 platforms 是否为字典类型，并提取所有 key
+        if not platforms or not isinstance(platforms, dict):
+            return {
+                "success": False,
+                "error": "LX Server未配置platfroms，请先进行配置！",
+            }
+        # 从 platforms 字典中提取所有 key（平台标识）
+        platform_keys = list(platforms.keys())
+        self.log.info(f"LX Server 可用平台：{platform_keys}")
+
+        results = []
+        sources = {}
+
+        # 计算每个platform的限制数量
+        platform_count = len(platform_keys)
+        item_limit = max(1, limit // platform_count) if platform_count > 0 else limit
+
+        # 并行搜索所有插件
+        search_tasks = [
+            self.js_plugin_manager.lx_server_search(
+                url=lx_server_info.get("base_url") + "/music/search",
+                keyword=keyword,
+                artist=artist,
+                page=page,
+                limit=limit,
+                source=platform,
+            )
+            for platform in platform_keys
+        ]
+
+        platform_results = await asyncio.gather(*search_tasks, return_exceptions=True)
+
+        # 处理搜索结果
+        for i, result in enumerate(platform_results):
+            plugin_name = list(platform_keys)[i]
+
+            # 检查是否为异常对象
+            if isinstance(result, Exception):
+                self.log.error(f"插件 {plugin_name} 搜索失败: {result}")
+                continue
+
+            # 检查是否为有效的搜索结果
+            if result and isinstance(result, dict):
+                # 检查是否有错误信息
+                if "error" in result:
+                    self.log.error(
+                        f"插件 {plugin_name} 搜索失败: {result.get('error', '未知错误')}"
+                    )
+                    continue
+
+                # 处理成功的搜索结果
+                data_list = result.get("data", [])
+                if data_list:
+                    results.extend(data_list)
+                    sources[plugin_name] = len(data_list)
+                # 如果没有data字段但有其他数据，也认为是成功的结果
+                elif result:  # 非空字典
+                    results.append(result)
+                    sources[plugin_name] = 1
+
+        # 统一排序并提取前limit条数据
+        if results:
+            unified_result = {"data": results}
+            optimized_result = self.js_plugin_manager.optimize_search_results(
+                unified_result,
+                search_keyword=keyword,
+                limit=limit,
+                search_artist=artist,
+            )
+            results = optimized_result.get("data", [])
+
+        return {
+            "success": True,
+            "data": results,
+            "total": len(results),
+            "sources": sources,
+            "page": page,
+            "limit": limit,
+        }
+
+    # ---------------------------- MFplugins 相关函数 ----------------------------
 
     async def _execute_plugin_search(self, plugin, keyword, artist, page, limit):
         """执行插件搜索"""
@@ -297,18 +365,23 @@ class OnlineMusicService:
             self.log.error(f"searchKey {search_key} get media source failed: {e}")
             return {"success": False, "error": str(e)}
 
-    # 调用在线搜索歌手，追加歌手歌曲
     async def add_singer_song(self, list_name, name):
         try:
-            # 获取歌曲列表
-            result = await self.get_music_list_online(keyword=name, limit=10)
+            self.log.info(f"追加歌手歌曲，当前页码: {self._singer_add_page}")
+            result = await self.get_music_list_online(
+                keyword=name, page=self._singer_add_page, limit=10
+            )
             if result.get("success") and result.get("total") > 0:
                 self._handle_music_list(result.get("data"), list_name, True)
+                self._singer_add_page += 1
             else:
                 return {"success": False, "error": "未找到歌曲"}
         except Exception as e:
-            # 记录错误日志
             return {"success": False, "error": str(e)}
+
+    def reset_singer_add_page(self):
+        self._singer_add_page = 1
+        self.log.info("已重置追加歌曲页码")
 
     """------------------------私有--------------------------"""
 
@@ -391,24 +464,23 @@ class OnlineMusicService:
     # 在线播放：在线搜索、播放
     async def online_play(self, did="", arg1="", **kwargs):
         await self._before_play()
-        # 获取搜索关键词
         parts = arg1.split("|")
         search_key = parts[0]
         name = parts[1] if len(parts) > 1 else search_key
         if not name:
             name = search_key
+        self.reset_singer_add_page()
         self.log.info(f"搜索关键字{search_key},提取的歌名{name}")
         await self.search_top_one_play(did, search_key, name)
 
-    # 播放歌手：在线搜索歌手并存为列表播放
     async def singer_play(self, did="", arg1="", **kwargs):
         await self._before_play()
-        # 获取搜索关键词
         parts = arg1.split("|")
         search_key = parts[0]
         name = parts[1] if len(parts) > 1 else search_key
         if not name:
             name = search_key
+        self.reset_singer_add_page()
         self.log.info(f"搜索关键字{search_key},搜索歌手名{name}")
         await self.search_singer_play(did, search_key, name)
 
@@ -437,6 +509,7 @@ class OnlineMusicService:
         if not song_list and len(song_list) > 0:
             return {"success": False, "error": "歌曲列表不能为空"}
         try:
+            self.reset_singer_add_page()
             self._handle_music_list(song_list, list_name)
             # 如果指定了特定设备，播放歌单
             if did != "web_device" and self.xiaomusic.did_exist(did):
@@ -549,7 +622,7 @@ class OnlineMusicService:
         """
         enabled_plugins = self.js_plugin_manager.get_enabled_plugins()
         if not enabled_plugins:
-            return {"success": False, "error": "没有可用的接口和插件，请先进行配置！"}
+            return {"success": False, "error": "没找到可用的插件，请先进行配置！"}
 
         results = []
         sources = {}
@@ -657,7 +730,7 @@ class OnlineMusicService:
             # 直接抛出异常，让 asyncio.gather 处理
             raise e
 
-    # 调用MusicFree插件获取真实播放url
+    # 调用MusicFree插件、LXServer API获取真实播放url
     async def get_media_source_url(self, music_item, quality: str = "standard"):
         """获取音乐项的媒体源URL
         Args:
@@ -666,16 +739,24 @@ class OnlineMusicService:
         Returns:
             dict: 包含成功状态和URL信息的字典
         """
-        # kwargs可追加
-        kwargs = {"quality": quality}
-        return await self._call_plugin_method(
-            plugin_name=music_item.get("platform"),
-            method_name="get_media_source",
-            music_item=music_item,
-            result_key="url",
-            required_field="url",
-            **kwargs,
-        )
+        # 判断接口类型
+        is_lx_server = self.js_plugin_manager.is_lx_server()
+        if is_lx_server:
+            # LX Server在线搜索
+            return await self._execute_lx_server_music_url(
+                song_info=music_item.get("_raw"),
+            )
+        else:
+            # kwargs可追加
+            kwargs = {"quality": quality}
+            return await self._call_plugin_method(
+                plugin_name=music_item.get("platform"),
+                method_name="get_media_source",
+                music_item=music_item,
+                result_key="url",
+                required_field="url",
+                **kwargs,
+            )
 
     async def get_media_lyric(self, music_item):
         """获取音乐项的歌词 Lyric
