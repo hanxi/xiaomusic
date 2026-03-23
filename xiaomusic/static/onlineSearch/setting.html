@@ -257,6 +257,10 @@
             font-size: 14px;
         }
 
+        .config-input::placeholder {
+            color: #999;
+        }
+
         .config-input:focus {
             outline: none;
             border-color: #007bff;
@@ -522,8 +526,7 @@
 
         /* LXServer 配置样式 */
         .lxserver-section {
-            padding: 20px;
-            background: white;
+            padding: 0;
         }
 
         .config-item {
@@ -824,6 +827,11 @@
                 <span class="material-icons">arrow_back</span>
                 <span>返回搜索</span>
             </a>
+            <!-- 高级设置按钮 -->
+            <button class="header-btn" onclick="openAdvancedConfig()">
+                <span class="material-icons">settings</span>
+                <span>高级设置</span>
+            </button>
             <!-- 插件导入 -->
             <button class="header-btn" id="plugin-upload-btn" onclick="uploadPlugins()">
                 <span class="material-icons">file_upload</span>
@@ -846,16 +854,11 @@
             </a>
             <!-- LX Server 项目 -->
             <a href="https://github.com/XCQ0607/lxserver" target="_blank" class="header-btn" id="lxserver-project-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 18V5l12-2v13M6 15v8m6-8v8" />
                 </svg>
                 <span>LX Server项目</span>
             </a>
-            <!-- 高级设置按钮 -->
-            <button class="header-btn" onclick="openAdvancedConfig()">
-                <span class="material-icons">settings</span>
-                <span>高级设置</span>
-            </button>
             <a href="https://github.com/boluofan/xiaomusic-online" target="_blank" class="header-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
@@ -906,12 +909,13 @@
         <div class="lxserver-section" id="lxserver-config-area" style="display: none;">
             <div class="section-title">
                 LXServer 接口配置
-                <a href="https://xcq0607.github.io/lxserver/api/reference.html" target="_blank" style="margin-left: 10px; font-size: 13px; color: #007bff;">官方文档 ↗</a>
+                <a href="https://xcq0607.github.io/lxserver/api/reference.html" target="_blank" style="margin-left: 10px; font-size: 13px; color: #007bff;">API说明文档 ↗</a>
             </div>
-            <div class="config-item">
-                <div class="config-item-info">
-                    <div class="config-item-label">LXServer 地址</div>
-                    <div class="config-item-value" id="lxserver-url"></div>
+            <div class="plugin-item">
+                <div class="plugin-info">
+                    <div class="plugin-details">
+                        <div><strong>LXServer 地址：</strong> <span id="lxserver-url"></span></div>
+                    </div>
                 </div>
                 <div class="plugin-actions">
                     <button class="action-btn edit-btn" id="edit-lxserver-btn" onclick="editLxServerUrl()">
@@ -936,15 +940,15 @@
 <div class="modal-overlay" id="lxserverUrlModal">
     <div class="modal-content" style="max-width: 450px;">
         <div class="modal-header">
-            <h2>修改LXServer地址</h2>
+            <h2>修改LXServer 接口地址</h2>
             <button class="modal-close" onclick="closeLxServerUrlModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div class="config-row" style="border-bottom: none;">
                 <div class="config-label">新地址</div>
                 <div class="config-value">
-                    <input type="text" class="config-input" id="lxserver-url-input" placeholder="127.0.0.1:9527/api" style="background-color: #f8f9fa;">
-                    <span style="color: #999; font-size: 12px; margin-top: 4px; display: inline-block;">输入示例: 127.0.0.1:9527/api</span>
+                    <input type="text" class="config-input" id="lxserver-url-input" placeholder="http://127.0.0.1:9527/api" style="background-color: #f8f9fa;">
+                    <span style="color: #999; font-size: 12px; margin-top: 4px; display: inline-block;">输入示例: http://127.0.0.1:9527/api</span>
                 </div>
             </div>
         </div>
@@ -978,7 +982,7 @@
             <div class="config-card">
                 <div class="config-card-title">
                     AI 大模型配置
-                    <span style="font-weight: normal; font-size: 12px; color: #999; margin-left: 8px;">用于AI提取关键字，默认qwen-flash</span>
+                    <span style="font-weight: normal; font-size: 12px; color: #999; margin-left: 8px;">用于AI提取用户口令关键字</span>
                 </div>
                 <div class="config-row">
                     <div class="config-label">启用 AI 提取</div>
@@ -989,9 +993,11 @@
                 <div class="config-row">
                     <div class="config-label">接口地址</div>
                     <div class="config-value">
-                        <input type="text" class="config-input" id="aiBaseUrlInput" placeholder="符合OpenAI API 规范的大模型接口，非必填">
-                        <span style="color: #999; font-size: 12px; margin-top: 4px; display: inline-block;">留空则使用阿里百炼默认地址</span>
-                        <a href="https://bailian.console.aliyun.com/cn-beijing?spm=5176.12818093_47.overview_recent.1.7d4316d0so6Vx4&tab=api#/api" target="_blank" style="margin-left: 10px; font-size: 13px; color: #007bff;">阿里百炼官方 ↗</a>
+                        <input type="text" class="config-input" id="aiBaseUrlInput" placeholder="符合OpenAI API 规范的大模型接口">
+                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 4px;">
+                            <span style="color: #999; font-size: 12px;">留空则使用阿里百炼接口地址。</span>
+                            <a href="https://bailian.console.aliyun.com/cn-beijing?spm=5176.12818093_47.overview_recent.1.7d4316d0so6Vx4&tab=api#/api" target="_blank" style="font-size: 13px; color: #007bff;">阿里百炼官方 ↗</a>
+                        </div>
                     </div>
                 </div>
                 <div class="config-row">
@@ -1003,7 +1009,7 @@
                 <div class="config-row">
                     <div class="config-label">模型</div>
                     <div class="config-value">
-                        <input type="text" class="config-input" id="aiModelInput" placeholder="例如：qwen-plus">
+                        <input type="text" class="config-input" id="aiModelInput" placeholder="非必填，默认为：qwen-flash">
                     </div>
                 </div>
             </div>
@@ -1277,13 +1283,12 @@
     function editLxServerUrl() {
         const urlElement = document.getElementById('lxserver-url');
         const currentUrl = urlElement.textContent;
-        const defaultUrl = currentUrl || '127.0.0.1:9527/api';
-        const newUrl = prompt('请输入新的LXServer地址:', defaultUrl);
+        const newUrl = prompt('示例接口: http://127.0.0.1:9527/api', currentUrl);
 
         if (newUrl === null) return;
 
         if (newUrl.trim() === '') {
-            alert('LXServer地址不能为空！');
+            alert('LXServer 接口地址不能为空！');
             return;
         }
 

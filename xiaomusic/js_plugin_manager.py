@@ -670,49 +670,60 @@ class JSPluginManager:
         self._config_cache = None
         self._config_cache_time = 0
 
+    def _merge_config_with_template(self):
+        """合并模板配置到当前配置文件"""
+        example_config_path = os.path.join(
+            os.path.dirname(__file__), "plugins-config-example.json"
+        )
+
+        if not os.path.exists(example_config_path):
+            self.log.error("找不到 plugins-config-example.json 配置文件！")
+            return False
+
+        try:
+            with open(example_config_path, encoding="utf-8") as f:
+                template_config = json.load(f)
+
+            with open(self.plugins_config_path, encoding="utf-8") as f:
+                current_config = json.load(f)
+
+            merged = False
+            for key, value in template_config.items():
+                if key not in current_config:
+                    current_config[key] = value
+                    merged = True
+                    self.log.info(f"从模板追加配置项: {key}")
+
+            if merged:
+                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                    json.dump(current_config, f, ensure_ascii=False, indent=2)
+                self.log.info("配置文件已更新，追加了新的配置项")
+            else:
+                self.log.debug("配置文件已是最新，无需更新")
+
+            return True
+        except Exception as e:
+            self.log.error(f"合并配置失败: {e}")
+            return False
+
     def _load_plugins(self):
         """加载所有插件"""
         if not os.path.exists(self.plugins_dir):
             os.makedirs(self.plugins_dir)
 
-        # 读取、加载插件配置Json
+        example_config_path = os.path.join(
+            os.path.dirname(__file__), "plugins-config-example.json"
+        )
+
         if not os.path.exists(self.plugins_config_path):
-            # 复制 plugins-config-example.json 模板，创建插件配置Json文件
-            example_config_path = os.path.join(
-                os.path.dirname(__file__), "plugins-config-example.json"
-            )
             if os.path.exists(example_config_path):
                 shutil.copy2(example_config_path, self.plugins_config_path)
+                self.log.info(f"从模板复制创建配置文件: {self.plugins_config_path}")
             else:
-                base_config = {
-                    "account": "",
-                    "password": "",
-                    "auto_add_song": True,
-                    "aiapi_info": {"enabled": False, "api_key": ""},
-                    "back_conf_info": {
-                        "api_type": 1,
-                        "api_options": [
-                            {"name": "MusicFree插件", "type": 1},
-                            {"name": "LXServer接口", "type": 2}
-                        ]
-                    },
-                    "lx_server_info": {
-                        "base_url": "",
-                        "platforms": {
-                            "tx": "QQ音乐",
-                            "kg": "酷狗音乐",
-                            "kw": "酷我音乐",
-                            "wy": "网易云音乐",
-                            "mg": "咪咕音乐",
-                        }
-                    },
-                    "enabled_plugins": [],
-                    "plugin_source": {"source_url": ""},
-                    "plugins_info": []
-                }
-                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
-                    json.dump(base_config, f, ensure_ascii=False, indent=2)
-        # 输出文件夹、配置文件地址
+                self.log.error("找不到 plugins-config-example.json 配置文件！")
+        else:
+            self._merge_config_with_template()
+
         self.log.info(f"Plugins directory: {self.plugins_dir}")
         self.log.info(f"Plugins config file: {self.plugins_config_path}")
         # 只加载指定的插件，避免加载所有插件导致超时
