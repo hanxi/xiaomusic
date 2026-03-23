@@ -475,7 +475,8 @@ class JSPluginManager:
             config_data = self._get_config_data()
             if config_data:
                 # 返回 openapi_info 配置项
-                return config_data.get("plugin_source", {})
+                music_free_info = config_data.get("music_free_info", {})
+                return music_free_info.get("plugin_source", {})
             else:
                 return {"enabled": False}
         except Exception as e:
@@ -488,7 +489,8 @@ class JSPluginManager:
             if os.path.exists(self.plugins_config_path):
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
-                plugin_source = config_data.get("plugin_source", {})
+                music_free_info = config_data.get("music_free_info", {})
+                plugin_source = music_free_info.get("plugin_source", {})
                 source_url = plugin_source.get("source_url", "")
                 if source_url:
                     import requests
@@ -625,9 +627,13 @@ class JSPluginManager:
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
-                plugin_source = config_data.get("plugin_source", {})
+                if "music_free_info" not in config_data:
+                    config_data["music_free_info"] = {}
+                music_free_info = config_data["music_free_info"]
+                plugin_source = music_free_info.get("plugin_source", {})
                 plugin_source["source_url"] = source_url
-                config_data["plugin_source"] = plugin_source
+                music_free_info["plugin_source"] = plugin_source
+                config_data["music_free_info"] = music_free_info
 
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
@@ -819,8 +825,9 @@ class JSPluginManager:
             # 读取配置文件中的启用插件列表
             config_data = self._get_config_data()
             if config_data:
-                plugin_infos = config_data.get("plugins_info", [])
-                enabled_plugins = config_data.get("enabled_plugins", [])
+                music_free_info = config_data.get("music_free_info", {})
+                plugin_infos = music_free_info.get("plugins_info", [])
+                enabled_plugins = music_free_info.get("enabled_plugins", [])
 
                 # 创建一个映射，用于快速查找插件在 enabled_plugins 中的位置
                 enabled_order = {name: i for i, name in enumerate(enabled_plugins)}
@@ -872,7 +879,8 @@ class JSPluginManager:
                     lx_server_info = config_data.get("lx_server_info", {})
                     platforms = lx_server_info.get("platforms", {})
                 else:
-                    enabled_plugins = config_data.get("enabled_plugins", [])
+                    music_free_info = config_data.get("music_free_info", {})
+                    enabled_plugins = music_free_info.get("enabled_plugins", [])
                     platforms = {plugin: plugin for plugin in enabled_plugins}
                 return platforms
             else:
@@ -887,7 +895,8 @@ class JSPluginManager:
             # 读取配置文件中的启用插件列表
             config_data = self._get_config_data()
             if config_data:
-                enabled_plugins = config_data.get("enabled_plugins", [])
+                music_free_info = config_data.get("music_free_info", {})
+                enabled_plugins = music_free_info.get("enabled_plugins", [])
                 # 追加开放接口名称
                 openapi_info = config_data.get("openapi_info", {})
                 enabled_openapi = openapi_info.get("enabled", False)
@@ -1470,18 +1479,27 @@ class JSPluginManager:
                     with open(config_file_path, encoding="utf-8") as f:
                         config_data = json.load(f)
 
+                    # 确保 music_free_info 存在
+                    if "music_free_info" not in config_data:
+                        config_data["music_free_info"] = {}
+                    music_free_info = config_data["music_free_info"]
+
                     # 更新plugins_info中对应插件的状态
-                    for plugin_info in config_data.get("plugins_info", []):
+                    plugins_info = music_free_info.get("plugins_info", [])
+                    for plugin_info in plugins_info:
                         if plugin_info.get("name") == plugin_name:
                             plugin_info["enabled"] = True
 
                     # 添加到enabled_plugins中（如果不存在）
-                    if "enabled_plugins" not in config_data:
-                        config_data["enabled_plugins"] = []
+                    if "enabled_plugins" not in music_free_info:
+                        music_free_info["enabled_plugins"] = []
 
-                    if plugin_name not in config_data["enabled_plugins"]:
+                    if plugin_name not in music_free_info["enabled_plugins"]:
                         # 追加到list的第一个
-                        config_data["enabled_plugins"].insert(0, plugin_name)
+                        music_free_info["enabled_plugins"].insert(0, plugin_name)
+
+                    # 更新回 config_data
+                    config_data["music_free_info"] = music_free_info
 
                     # 写回配置文件
                     with open(config_file_path, "w", encoding="utf-8") as f:
@@ -1517,18 +1535,27 @@ class JSPluginManager:
                 with open(config_file_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
+                # 确保 music_free_info 存在
+                if "music_free_info" not in config_data:
+                    config_data["music_free_info"] = {}
+                music_free_info = config_data["music_free_info"]
+
                 # 更新plugins_info中对应插件的状态
-                for plugin_info in config_data.get("plugins_info", []):
+                plugins_info = music_free_info.get("plugins_info", [])
+                for plugin_info in plugins_info:
                     if plugin_info.get("name") == plugin_name:
                         plugin_info["enabled"] = False
 
                 # 添加到enabled_plugins中（如果不存在）
-                if "enabled_plugins" not in config_data:
-                    config_data["enabled_plugins"] = []
+                if "enabled_plugins" not in music_free_info:
+                    music_free_info["enabled_plugins"] = []
 
-                if plugin_name in config_data["enabled_plugins"]:
+                if plugin_name in music_free_info["enabled_plugins"]:
                     # 移除对应的插件名
-                    config_data["enabled_plugins"].remove(plugin_name)
+                    music_free_info["enabled_plugins"].remove(plugin_name)
+
+                # 更新回 config_data
+                config_data["music_free_info"] = music_free_info
 
                 # 写回配置文件
                 with open(config_file_path, "w", encoding="utf-8") as f:
@@ -1561,20 +1588,28 @@ class JSPluginManager:
                     with open(config_file_path, encoding="utf-8") as f:
                         config_data = json.load(f)
 
+                    # 确保 music_free_info 存在
+                    if "music_free_info" not in config_data:
+                        config_data["music_free_info"] = {}
+                    music_free_info = config_data["music_free_info"]
+
                     # 移除plugins_info属性中对应的插件项目
-                    if "plugins_info" in config_data:
-                        config_data["plugins_info"] = [
+                    if "plugins_info" in music_free_info:
+                        music_free_info["plugins_info"] = [
                             plugin_info
-                            for plugin_info in config_data["plugins_info"]
+                            for plugin_info in music_free_info["plugins_info"]
                             if plugin_info.get("name") != plugin_name
                         ]
 
                     # 从enabled_plugins中移除插件（如果存在）
                     if (
-                        "enabled_plugins" in config_data
-                        and plugin_name in config_data["enabled_plugins"]
+                        "enabled_plugins" in music_free_info
+                        and plugin_name in music_free_info["enabled_plugins"]
                     ):
-                        config_data["enabled_plugins"].remove(plugin_name)
+                        music_free_info["enabled_plugins"].remove(plugin_name)
+
+                    # 更新回 config_data
+                    config_data["music_free_info"] = music_free_info
 
                     # 回写配置文件
                     with open(config_file_path, "w", encoding="utf-8") as f:
@@ -1618,8 +1653,10 @@ class JSPluginManager:
                 base_config = {
                     "account": "",
                     "password": "",
-                    "enabled_plugins": [],
-                    "plugins_info": [],
+                    "music_free_info": {
+                        "enabled_plugins": [],
+                        "plugins_info": [],
+                    },
                 }
                 with open(config_file_path, "w", encoding="utf-8") as f:
                     json.dump(base_config, f, ensure_ascii=False, indent=2)
@@ -1628,9 +1665,14 @@ class JSPluginManager:
             with open(config_file_path, encoding="utf-8") as f:
                 config_data = json.load(f)
 
+            # 确保 music_free_info 存在
+            if "music_free_info" not in config_data:
+                config_data["music_free_info"] = {}
+            music_free_info = config_data["music_free_info"]
+
             # 检查是否已存在该插件信息
             plugin_exists = False
-            for plugin_info in config_data.get("plugins_info", []):
+            for plugin_info in music_free_info.get("plugins_info", []):
                 if plugin_info.get("name") == plugin_name:
                     plugin_exists = True
                     break
@@ -1642,9 +1684,11 @@ class JSPluginManager:
                     "file": plugin_file,
                     "enabled": False,  # 默认不启用
                 }
-                if "plugins_info" not in config_data:
-                    config_data["plugins_info"] = []
-                config_data["plugins_info"].append(new_plugin_info)
+                if "plugins_info" not in music_free_info:
+                    music_free_info["plugins_info"] = []
+                music_free_info["plugins_info"].append(new_plugin_info)
+                # 更新回 config_data
+                config_data["music_free_info"] = music_free_info
                 # 写回配置文件
                 with open(config_file_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)

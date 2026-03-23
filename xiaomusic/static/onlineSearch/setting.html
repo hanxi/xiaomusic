@@ -914,7 +914,7 @@
             <div class="plugin-item">
                 <div class="plugin-info">
                     <div class="plugin-details">
-                        <div><strong>LXServer 地址：</strong> <span id="lxserver-url"></span></div>
+                        <div><strong>LXServer 接口地址：</strong> <span id="lxserver-url"></span></div>
                     </div>
                 </div>
                 <div class="plugin-actions">
@@ -1283,7 +1283,7 @@
     function editLxServerUrl() {
         const urlElement = document.getElementById('lxserver-url');
         const currentUrl = urlElement.textContent;
-        const newUrl = prompt('示例接口: http://127.0.0.1:9527/api', currentUrl);
+        const newUrl = prompt('请输入LXServer 接口地址（如: http://127.0.0.1:9527/api）', currentUrl);
 
         if (newUrl === null) return;
 
@@ -1291,12 +1291,27 @@
             alert('LXServer 接口地址不能为空！');
             return;
         }
-
-        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)(\.([a-z.]{2,6}))?(:\d{1,5})?(\/[\w .-]*)*\/?$/i;
-        if (urlPattern.test(newUrl)) {
+        const flag = isValidUrl(newUrl);
+        if (flag) {
             updateLxServerUrl(newUrl);
         } else {
-            alert('请输入有效的地址！');
+            alert('请输入有效的接口地址！');
+        }
+    }
+
+    function isValidUrl(url) {
+        try {
+            if (!url.match(/^https?:\/\//i)) {
+                url = 'http://' + url;
+            }
+            const urlObj = new URL(url);
+            const hostname = urlObj.hostname;
+            const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+            const domainPattern = /^([\da-z-]+\.)+[a-z]{2,6}$/i;
+            return !(!ipPattern.test(hostname) && !domainPattern.test(hostname));
+
+        } catch (e) {
+            return false;
         }
     }
 

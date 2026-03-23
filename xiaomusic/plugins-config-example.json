@@ -20,7 +20,9 @@
       "mg": "咪咕音乐"
     }
   },
-  "enabled_plugins": [],
-  "plugin_source": {"source_url": ""},
-  "plugins_info": []
+  "music_free_info": {
+    "enabled_plugins": [],
+    "plugin_source": {"source_url": ""},
+    "plugins_info": []
+  }
 }
