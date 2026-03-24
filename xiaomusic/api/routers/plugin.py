@@ -167,6 +167,15 @@ async def upload_js_plugin(file: UploadFile = File(...)):
 # ----------------------------LX Server接口相关函数---------------------------------------
 
 
+@router.get("/api/lxServer/test")
+async def get_openapi_info():
+    """测试lxServer接口"""
+    try:
+        return await xiaomusic.js_plugin_manager.test_lx_server()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 @router.get("/api/lxServer/load")
 def get_openapi_info():
     """获取开放接口配置信息"""

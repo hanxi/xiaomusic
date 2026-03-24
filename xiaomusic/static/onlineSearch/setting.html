@@ -446,6 +446,22 @@
             transform: translateY(-1px);
         }
 
+        .test-btn {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .test-btn:hover {
+            background-color: #218838;
+            transform: translateY(-1px);
+        }
+
+        .test-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* 后台类型选择器样式 */
         .backend-selector {
             padding: 20px;
@@ -926,6 +942,10 @@
                         <span class="material-icons">edit</span>
                         <span>编辑</span>
                     </button>
+                    <button class="action-btn test-btn" id="test-lxserver-btn" onclick="testLxServer()">
+                        <span class="material-icons">play_arrow</span>
+                        <span>接口测试</span>
+                    </button>
                 </div>
             </div>
             <div class="section-title" style="margin-top: 20px;">平台配置</div>
@@ -1334,6 +1354,35 @@
             }
         } catch (error) {
             alert(`更新出错：${error.message}`);
+        }
+    }
+
+    async function testLxServer() {
+        const urlElement = document.getElementById('lxserver-url');
+        const baseUrl = urlElement.textContent;
+
+        if (!baseUrl) {
+            alert('请先配置 LXServer 接口地址！');
+            return;
+        }
+
+        const testBtn = document.getElementById('test-lxserver-btn');
+        const originalContent = testBtn.innerHTML;
+        testBtn.innerHTML = '<span class="material-icons">sync</span><span>测试中...</span>';
+        testBtn.disabled = true;
+        try {
+            const response = await fetch('/api/lxServer/test');
+            const data = await response.json();
+            if (data.success) {
+                alert(`✅ 测试成功，可正常调用！`);
+            } else {
+                alert(`❌ 测试失败：${data.error || '未知错误'}`);
+            }
+        } catch (error) {
+            alert(`❌ 连接失败：${error.message}\n请检查服务器是否开启或地址是否正确。`);
+        } finally {
+            testBtn.innerHTML = originalContent;
+            testBtn.disabled = false;
         }
     }
 
