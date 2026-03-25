@@ -305,6 +305,38 @@ async def update_advanced_config(request: Request):
         return {"success": False, "error": str(e)}
 
 
+@router.get("/api/box-play-platform/load")
+def get_box_play_platform():
+    """获取音响口令搜索平台偏好"""
+    try:
+        platform = xiaomusic.js_plugin_manager.get_box_play_platform_preference()
+        platforms = xiaomusic.js_plugin_manager.get_platforms()
+        return {
+            "success": True,
+            "data": {
+                "platform": platform,
+                "platforms": platforms,
+            },
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/box-play-platform/update")
+async def update_box_play_platform(request: Request):
+    """更新口令搜索平台偏好"""
+    try:
+        request_json = await request.json()
+        platform = request_json.get("platform")
+
+        if platform is None:
+            return {"success": False, "error": "Missing parameters"}
+
+        return xiaomusic.js_plugin_manager.update_box_play_platform( platform)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # ----------------------------密码验证接口---------------------------------------
 @router.get("/api/password/check")
 def check_password_required():

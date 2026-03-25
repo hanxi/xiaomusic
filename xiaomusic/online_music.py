@@ -358,8 +358,10 @@ class OnlineMusicService:
                 song_name = artist_song_list[0]
                 await self.xiaomusic.do_play_music_list(did, list_name, song_name)
             else:
+                # 获取用户配置的平台偏好
+                user_preference = self.js_plugin_manager.get_box_play_platform_preference()
                 # 获取歌曲列表
-                result = await self.get_music_list_online(keyword=name, limit=10)
+                result = await self.get_music_list_online(plugin=user_preference, keyword=name, limit=10)
                 self.log.info(f"在线搜索歌手的歌曲列表: {result}")
 
                 if result.get("success") and result.get("total") > 0:
@@ -380,9 +382,11 @@ class OnlineMusicService:
 
     async def add_singer_song(self, list_name, name):
         try:
+            # 获取用户配置的平台偏好
+            user_preference = self.js_plugin_manager.get_box_play_platform_preference()
             self.log.info(f"追加歌手歌曲，当前页码: {self._singer_add_page}")
             result = await self.get_music_list_online(
-                keyword=name, page=self._singer_add_page, limit=10
+                plugin=user_preference, keyword=name, page=self._singer_add_page, limit=10
             )
             if result.get("success") and result.get("total") > 0:
                 self._handle_music_list(result.get("data"), list_name, True)
@@ -545,8 +549,9 @@ class OnlineMusicService:
     # 在线搜索搜索最符合的一首歌并播放
     async def search_top_one_play(self, did, search_key, name):
         try:
+            user_preference = self.js_plugin_manager.get_box_play_platform_preference()
             # 获取歌曲列表
-            result = await self.get_music_list_online(keyword=name, limit=10)
+            result = await self.get_music_list_online(plugin=user_preference, keyword=name, limit=10)
 
             if result.get("success") and result.get("total") > 0:
                 # 打印输出 result.data

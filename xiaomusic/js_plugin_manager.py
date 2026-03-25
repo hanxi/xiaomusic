@@ -387,10 +387,17 @@ class JSPluginManager:
                 result_data = await self.simple_async_get(
                     url=lx_server_info.get("base_url") + "/music/config"
                 )
-                if result_data and "player.enableAuth" in result_data and "user.enablePublicRestriction" in result_data:
+                if (
+                    result_data
+                    and "player.enableAuth" in result_data
+                    and "user.enablePublicRestriction" in result_data
+                ):
                     return {"success": True, "data": "LX Server接口正常！"}
                 else:
-                    return {"success": False, "error": "不是合法的LX Server接口，请确认后重新配置！"}
+                    return {
+                        "success": False,
+                        "error": "不是合法的LX Server接口，请确认后重新配置！",
+                    }
             else:
                 return {"success": False, "error": "LX Server接口未配置！"}
         except Exception as e:
@@ -484,6 +491,51 @@ class JSPluginManager:
                 return {"success": False, "error": "Config file not found"}
         except Exception as e:
             self.log.error(f"Failed to update LXServer platforms: {e}")
+            return {"success": False, "error": str(e)}
+
+    def get_box_play_platform_preference(self) -> str:
+        """获取用户配置的口令搜索偏好"""
+        try:
+            config_data = self._get_config_data()
+            if self.is_lx_server():
+                lx_server_info = config_data.get("lx_server_info", {})
+                return lx_server_info.get("box_play_platform", "all")
+            else:
+                music_free_info = config_data.get("music_free_info", {})
+                return music_free_info.get("box_play_platform", "all")
+        except Exception:
+            return "all"
+
+    def update_box_play_platform(self, platform: str) -> dict[str, Any]:
+        """更新平台偏好设置
+        Args:
+            platform: 偏好的平台标识，"all"表示聚合搜索
+        Returns:
+            dict: 更新结果字典
+        """
+        try:
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, encoding="utf-8") as f:
+                    config_data = json.load(f)
+
+                if self.is_lx_server():
+                    lx_server_info = config_data.get("lx_server_info", {})
+                    lx_server_info["box_play_platform"] = platform
+                    config_data["lx_server_info"] = lx_server_info
+                else:
+                    music_free_info = config_data.get("music_free_info", {})
+                    music_free_info["box_play_platform"] = platform
+                    config_data["music_free_info"] = music_free_info
+
+                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+                self._invalidate_config_cache()
+                return {"success": True}
+            else:
+                return {"success": False, "error": "Config file not found"}
+        except Exception as e:
+            self.log.error(f"Failed to update box play platform: {e}")
             return {"success": False, "error": str(e)}
 
     def get_plugin_source(self) -> dict[str, Any]:
@@ -872,30 +924,28 @@ class JSPluginManager:
             self.log.error(f"Failed to read enabled plugins from config: {e}")
         return result
 
-    def is_lx_server(self) -> bool:
-        """判定是否使用lx_server接口"""
+    def _get_api_type(self) -> int:
+        """获取接口类型：1=mf_plugins，2=lx_server"""
         try:
             config_data = self._get_config_data()
             if config_data:
                 back_conf_info = config_data.get("back_conf_info", {})
-                # 1：mf_plugins，2：lx_server
-                api_type = back_conf_info.get("api_type", 1)
-                return api_type == 2
-            else:
-                return False
-        except Exception as e:
-            self.log.error(f"Failed to read platforms from config: {e}")
-            return False
+                return back_conf_info.get("api_type", 1)
+            return 1
+        except Exception:
+            return 1
+
+    def is_lx_server(self) -> bool:
+        """判定是否使用lx_server接口"""
+        return self._get_api_type() == 2
 
     def get_platforms(self) -> dict[Any, Any]:
         """获取音乐平台列表"""
         try:
             self._invalidate_config_cache()
+            api_type = self._get_api_type()
             config_data = self._get_config_data()
             if config_data:
-                back_conf_info = config_data.get("back_conf_info", {})
-                # 1：mf_plugins，2：lx_server
-                api_type = back_conf_info.get("api_type", 1)
                 if api_type == 2:
                     lx_server_info = config_data.get("lx_server_info", {})
                     platforms = lx_server_info.get("platforms", {})
