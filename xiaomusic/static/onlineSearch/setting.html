@@ -446,6 +446,22 @@
             transform: translateY(-1px);
         }
 
+        .test-btn {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .test-btn:hover {
+            background-color: #218838;
+            transform: translateY(-1px);
+        }
+
+        .test-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* 后台类型选择器样式 */
         .backend-selector {
             padding: 20px;
@@ -926,6 +942,10 @@
                         <span class="material-icons">edit</span>
                         <span>编辑</span>
                     </button>
+                    <button class="action-btn test-btn" id="test-lxserver-btn" onclick="testLxServer()">
+                        <span class="material-icons">play_arrow</span>
+                        <span>接口测试</span>
+                    </button>
                 </div>
             </div>
             <div class="section-title" style="margin-top: 20px;">平台配置</div>
@@ -1031,29 +1051,17 @@
     };
     // 页面加载时执行
     document.addEventListener('DOMContentLoaded', async function() {
-        // 获取版本号
-        if (window.appConfig && window.appConfig.version) {
-            const versionSpan = document.getElementById('versionSpan');
-            if (versionSpan) {
-                versionSpan.textContent = `v${window.appConfig.version}`;
-            }
-        }
-        // 初始化全局变量
-        window.currentBackendType = 1;
-        // 首先加载后台配置
-        await loadBackConfInfo();
-        // 根据后台类型加载对应配置
-        if (window.currentBackendType === 1) {
-            loadPlugins();
-            loadPluginSource();
-        } else {
-            loadLxServerConfig();
+        // 首先检查是否需要密码验证
+        await checkPasswordRequired();
+
+        // 检查是否已验证，如果需要密码但未验证，则不加载配置
+        const passwordModal = document.getElementById('passwordModal');
+        if (passwordModal.classList.contains('show')) {
+            return;
         }
 
-        // 添加字体加载完成后的处理
-        document.fonts.ready.then(function() {
-            document.body.classList.add('fonts-loaded');
-        });
+        // 不需要密码或已验证，加载页面数据
+        await initPageData();
     });
 
     /*============================后台类型配置函数=================================*/
@@ -1337,6 +1345,35 @@
         }
     }
 
+    async function testLxServer() {
+        const urlElement = document.getElementById('lxserver-url');
+        const baseUrl = urlElement.textContent;
+
+        if (!baseUrl) {
+            alert('请先配置 LXServer 接口地址！');
+            return;
+        }
+
+        const testBtn = document.getElementById('test-lxserver-btn');
+        const originalContent = testBtn.innerHTML;
+        testBtn.innerHTML = '<span class="material-icons">sync</span><span>测试中...</span>';
+        testBtn.disabled = true;
+        try {
+            const response = await fetch('/api/lxServer/test');
+            const data = await response.json();
+            if (data.success) {
+                alert(`✅ 测试成功，可正常调用！`);
+            } else {
+                alert(`❌ 测试失败：${data.error || '未知错误'}`);
+            }
+        } catch (error) {
+            alert(`❌ 连接失败：${error.message}\n请检查服务器是否开启或地址是否正确。`);
+        } finally {
+            testBtn.innerHTML = originalContent;
+            testBtn.disabled = false;
+        }
+    }
+
     /*============================插件源相关函数=================================*/
     // 加载 OpenAPI 配置
     async function loadPluginSource() {
@@ -1470,6 +1507,21 @@
     /*============================高级设置函数=================================*/
     // 打开高级设置模态框
     async function openAdvancedConfig() {
+        // 检查密码是否需要验证
+        try {
+            const response = await fetch('/api/password/check');
+            const data = await response.json();
+            if (data.success && data.data.required) {
+                const isVerified = sessionStorage.getItem('setting_verified');
+                if (isVerified !== 'true') {
+                    showPasswordModal();
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error('检查密码配置失败:', error);
+        }
+
         const modal = document.getElementById('advancedConfigModal');
         modal.classList.add('show');
         // 加载当前配置
@@ -1692,6 +1744,122 @@
         }
     }
 
+    /*============================密码验证函数=================================*/
+    async function checkPasswordRequired() {
+        try {
+            const response = await fetch('/api/password/check');
+            const data = await response.json();
+            if (data.success && data.data.required) {
+                // 需要密码验证，检查是否已验证
+                const isVerified = sessionStorage.getItem('setting_verified');
+                if (isVerified !== 'true') {
+                    showPasswordModal();
+                }
+            }
+        } catch (error) {
+            console.error('检查密码配置失败:', error);
+        }
+    }
+
+    // 初始化页面数据
+    async function initPageData() {
+        // 获取版本号
+        if (window.appConfig && window.appConfig.version) {
+            const versionSpan = document.getElementById('versionSpan');
+            if (versionSpan) {
+                versionSpan.textContent = `v${window.appConfig.version}`;
+            }
+        }
+        // 初始化全局变量
+        window.currentBackendType = 1;
+        // 首先加载后台配置
+        await loadBackConfInfo();
+        // 根据后台类型加载对应配置
+        if (window.currentBackendType === 1) {
+            await loadPlugins();
+            await loadPluginSource();
+        } else {
+            loadLxServerConfig();
+        }
+
+        // 添加字体加载完成后的处理
+        document.fonts.ready.then(function() {
+            document.body.classList.add('fonts-loaded');
+        });
+    }
+
+    function showPasswordModal() {
+        const modal = document.getElementById('passwordModal');
+        modal.classList.add('show');
+    }
+
+    function hidePasswordModal() {
+        const modal = document.getElementById('passwordModal');
+        modal.classList.remove('show');
+    }
+
+    async function verifyPassword() {
+        const passwordInput = document.getElementById('password-input');
+        const password = passwordInput.value;
+
+        if (!password) {
+            alert('请输入密码');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/password/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: password })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                sessionStorage.setItem('setting_verified', 'true');
+                hidePasswordModal();
+                passwordInput.value = '';
+                // 密码验证成功后加载页面数据
+                await initPageData();
+            } else {
+                alert(data.error || '密码错误');
+                returnToIndex();
+            }
+        } catch (error) {
+            alert('验证失败：' + error.message);
+        }
+    }
+
+    function handlePasswordKeyPress(event) {
+        if (event.key === 'Enter') {
+            verifyPassword();
+        }
+    }
+
+    function returnToIndex() {
+        window.location.href = './index.html';
+    }
+
 </script>
+<!-- 密码验证模态框 -->
+<div class="modal-overlay" id="passwordModal">
+    <div class="modal-content" style="max-width: 350px; text-align: center;">
+        <div class="modal-header">
+            <h2>请输入密码</h2>
+        </div>
+        <div class="modal-body" style="padding: 20px 0;">
+            <input type="password" id="password-input" class="config-input"
+                   placeholder="请输入访问密码"
+                   style="width: 100%; padding: 12px; font-size: 16px;"
+                   onkeypress="handlePasswordKeyPress(event)">
+            <p style="text-align: left; color: #999; font-size: 13px; margin-top: 25px;">1. 忘记密码，请在`conf/plugins-config.json`下重置！</p>
+            <p style="text-align: left; color: #999; font-size: 13px; margin-top: 10px;">2. 置空密码则关闭密码锁！</p>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button class="modal-btn modal-btn-secondary" onclick="returnToIndex()">返回</button>
+            <button class="modal-btn modal-btn-primary" onclick="verifyPassword()">验证</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>

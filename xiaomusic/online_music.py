@@ -142,6 +142,19 @@ class OnlineMusicService:
 
         return result_data
 
+    async def _execute_lx_server_music_lyric(self, song_info):
+        """执行LX Server获取音乐歌词"""
+        lx_server_info = self.js_plugin_manager.get_lx_server_info()
+        if lx_server_info.get("base_url", "") != "":
+            # LX Server接口获取
+            result_data = await self.js_plugin_manager.lx_server_music_lyric(
+                url=lx_server_info.get("base_url") + "/music/lyric", song_info=song_info
+            )
+        else:
+            return {"success": False, "error": "LX Server接口未配置！"}
+
+        return result_data
+
     async def _search_all_platform_lx(
         self, lx_server_info, keyword, artist, page, limit
     ):
@@ -767,13 +780,21 @@ class OnlineMusicService:
         Returns:
             dict: 包含成功状态和歌词信息的字典
         """
-        return await self._call_plugin_method(
-            plugin_name=music_item.get("platform"),
-            method_name="get_lyric",
-            music_item=music_item,
-            result_key="rawLrc",
-            required_field="rawLrc",
-        )
+        # 判断接口类型
+        is_lx_server = self.js_plugin_manager.is_lx_server()
+        if is_lx_server:
+            # LX Server在线搜索
+            return await self._execute_lx_server_music_lyric(
+                song_info=music_item.get("_raw"),
+            )
+        else:
+            return await self._call_plugin_method(
+                plugin_name=music_item.get("platform"),
+                method_name="get_lyric",
+                music_item=music_item,
+                result_key="rawLrc",
+                required_field="rawLrc",
+            )
 
     def _deduplicate_song_list(self, song_list):
         """

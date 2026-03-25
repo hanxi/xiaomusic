@@ -4,6 +4,7 @@ JS 插件管理器
 负责加载、管理和运行 MusicFree JS 插件
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -374,6 +375,26 @@ class JSPluginManager:
             return {"success": False, "error": str(e)}
 
     """------------------------------LX Server接口相关函数----------------------------------------"""
+
+    async def test_lx_server(self) -> dict[str, Any]:
+        """测试lxServer接口
+        Returns:
+            Dict[str, Any]: 包含 lxServer接口 配置信息的字典，包括启用状态和搜索 URL
+        """
+        try:
+            lx_server_info = self.get_lx_server_info()
+            if lx_server_info.get("base_url", "") != "":
+                result_data = await self.simple_async_get(
+                    url=lx_server_info.get("base_url") + "/music/config"
+                )
+                if result_data and "player.enableAuth" in result_data and "user.enablePublicRestriction" in result_data:
+                    return {"success": True, "data": "LX Server接口正常！"}
+                else:
+                    return {"success": False, "error": "不是合法的LX Server接口，请确认后重新配置！"}
+            else:
+                return {"success": False, "error": "LX Server接口未配置！"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
     def get_lx_server_info(self) -> dict[str, Any]:
         """获取lxServer接口配置信息
@@ -971,6 +992,99 @@ class JSPluginManager:
                 )
         return result_data
 
+    async def _http_request(
+        self,
+        method: str,
+        url: str,
+        params: dict[str, Any] | None = None,
+        json_data: dict[str, Any] | None = None,
+        timeout: int = 10,
+    ) -> dict[str, Any]:
+        """统一的异步 HTTP 请求封装
+
+        Args:
+            method: HTTP 方法 (GET/POST)
+            url: 请求地址
+            params: URL 查询参数
+            json_data: JSON 请求体
+            timeout: 超时时间（秒）
+
+        Returns:
+            dict: 包含 success、data/status、error 字段的响应字典
+        """
+        import aiohttp
+
+        connector = aiohttp.TCPConnector(ssl=False)
+        client_timeout = aiohttp.ClientTimeout(total=timeout)
+
+        try:
+            async with aiohttp.ClientSession(connector=connector) as session:
+                if method.upper() == "GET":
+                    async with session.get(
+                        url, params=params, timeout=client_timeout
+                    ) as response:
+                        response.raise_for_status()
+                        return {
+                            "success": True,
+                            "status": response.status,
+                            "data": await response.json()
+                            if "application/json"
+                            in response.headers.get("Content-Type", "")
+                            else await response.text(),
+                        }
+                else:
+                    async with session.post(
+                        url, json=json_data, timeout=client_timeout
+                    ) as response:
+                        response.raise_for_status()
+                        return {
+                            "success": True,
+                            "status": response.status,
+                            "data": await response.json(),
+                        }
+
+        except aiohttp.ClientResponseError as e:
+            self.log.error(f"HTTP Error at {url}: {e.status} {e.message}")
+            return {"success": False, "error": f"HTTP {e.status}: {e.message}"}
+        except asyncio.TimeoutError:
+            self.log.error(f"Request timeout at {url}")
+            return {"success": False, "error": "Request timeout"}
+        except Exception as e:
+            self.log.error(f"Request error at {url}: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    async def simple_async_get(self, url: str):
+        """基础的异步 GET 请求封装
+
+        Args:
+            url (str): 请求地址
+
+        Returns:
+            Any: 如果响应是 JSON 则返回 dict/list，否则返回响应文本字符串。
+        """
+        import aiohttp
+
+        timeout = aiohttp.ClientTimeout(total=10)
+        connector = aiohttp.TCPConnector(ssl=False)
+        try:
+            async with aiohttp.ClientSession(connector=connector) as session:
+                async with session.get(url, timeout=timeout) as response:
+                    response.raise_for_status()
+                    content_type = response.headers.get("Content-Type", "")
+                    if "application/json" in content_type:
+                        return await response.json()
+                    else:
+                        return await response.text()
+
+        except aiohttp.ClientResponseError as e:
+            self.log.error(f"HTTP Error occurred at {url}: {e.status} {e.message}")
+            raise
+        except aiohttp.ClientError as e:
+            self.log.error(f"Client Error occurred at {url}: {str(e)}")
+            raise
+        except Exception as e:
+            self.log.error(f"Unexpected error occurred at {url}: {str(e)}")
+
     async def lx_server_search(
         self,
         url: str,
@@ -992,147 +1106,134 @@ class JSPluginManager:
         Returns:
             Dict[str, Any]: 搜索结果，数据结构与search函数一致
         """
-        import asyncio
+        params = {"source": source, "name": keyword, "limit": limit, "page": page}
+        self.log.info(f"Calling LX Server API: {url} with params: {params}")
 
-        import aiohttp
-
-        try:
-            # 构造请求参数
-            params = {"source": source, "name": keyword, "limit": limit, "page": page}
-            self.log.info(f"Calling LX Server API: {url} with params: {params}")
-            # 使用aiohttp发起异步HTTP GET请求
-            connector = aiohttp.TCPConnector(ssl=False)  # 跳过 SSL 验证
-            async with aiohttp.ClientSession(connector=connector) as session:
-                async with session.get(
-                    url, params=params, timeout=aiohttp.ClientTimeout(total=10)
-                ) as response:
-                    response.raise_for_status()  # 抛出HTTP错误
-                    # 解析响应数据
-                    raw_data = await response.json()
-
-            self.log.info(f"LX Server接口 - {source} 返回原始Json: {raw_data}")
-
-            # 检查API调用是否成功
-            if not isinstance(raw_data, list):
-                raise Exception(f"API request failed : {raw_data}")
-
-            # 提取实际的搜索结果
-            results = raw_data
-            # 转换数据格式以匹配插件系统的期望格式
-            converted_data = []
-            for item in results:
-                converted_item = {
-                    "_raw": item,
-                    "id": item.get("songmid", ""),
-                    "title": item.get("name", ""),
-                    "duration": item.get("interval", ""),
-                    "artist": item.get("singer", ""),
-                    "album": item.get("albumName", ""),
-                    "platform": source,
-                    "artwork": item.get("img", ""),
-                    "lrc": item.get("lrc", ""),
-                    "lrcUrl": item.get("lrcUrl", ""),
-                }
-                converted_data.append(converted_item)
-            # 排序筛选
-            unified_result = {"data": converted_data}
-            # 调用优化函数
-            optimized_result = self.optimize_search_results(
-                unified_result,
-                search_keyword=keyword,
-                limit=limit,
-                search_artist=artist,
-            )
-            results = optimized_result.get("data", [])
-            # 返回统一格式的数据
+        result = await self._http_request("GET", url, params=params)
+        if not result["success"]:
             return {
-                "success": True,
-                "data": results,
-                "total": len(results),
+                "success": False,
+                "error": result["error"],
+                "data": [],
+                "total": 0,
                 "page": page,
                 "limit": limit,
             }
 
-        except asyncio.TimeoutError as e:
-            self.log.error(f"OpenAPI search timeout at URL {url}: {e}")
+        raw_data = result["data"]
+        self.log.info(f"LX Server接口 - {source} 返回原始Json: {raw_data}")
+
+        if not isinstance(raw_data, list):
             return {
                 "success": False,
-                "error": f"OpenAPI search timeout: {str(e)}",
+                "error": f"API request failed: {raw_data}",
                 "data": [],
                 "total": 0,
-                "page": 1,
+                "page": page,
                 "limit": limit,
             }
-        except Exception as e:
-            self.log.error(f"OpenAPI search error at URL {url}: {e}")
-            return {
-                "success": False,
-                "error": f"OpenAPI search error: {str(e)}",
-                "data": [],
-                "total": 0,
-                "page": 1,
-                "limit": limit,
+
+        converted_data = [
+            {
+                "_raw": item,
+                "id": item.get("songmid", ""),
+                "title": item.get("name", ""),
+                "duration": item.get("interval", ""),
+                "artist": item.get("singer", ""),
+                "album": item.get("albumName", ""),
+                "platform": source,
+                "artwork": item.get("img", ""),
+                "lrc": item.get("lrc", ""),
+                "lrcUrl": item.get("lrcUrl", ""),
             }
+            for item in raw_data
+        ]
+
+        unified_result = {"data": converted_data}
+        optimized_result = self.optimize_search_results(
+            unified_result, search_keyword=keyword, limit=limit, search_artist=artist
+        )
+        results = optimized_result.get("data", [])
+
+        return {
+            "success": True,
+            "data": results,
+            "total": len(results),
+            "page": page,
+            "limit": limit,
+        }
 
     async def lx_server_music_url(
         self, url: str, song_info: dict[str, Any], quality: str = "320k"
     ):
-        """直接调用LX Server接口进行音乐搜索
+        """直接调用LX Server接口获取音乐URL
 
         Args:
             url (str): 在线搜索接口地址
-            song_info (dict[str, Any]): 搜索的歌手名，可能为空
-            quality (str): 每页数量，默认为20
+            song_info (dict[str, Any]): 歌曲信息
+            quality (str): 音质，默认为320k
+
         Returns:
-            Dict[str, Any]:
+            Dict[str, Any]: 包含音乐URL的响应
         """
-        import asyncio
-        import json
+        json_data = {"songInfo": song_info, "quality": quality}
+        result = await self._http_request("POST", url, json_data=json_data)
 
-        import aiohttp
+        if not result["success"]:
+            return {"success": False, "error": result["error"], "data": {}}
 
-        try:
-            # 构造请求参数
-            params = {"songInfo": song_info, "quality": quality}
-            # 使用aiohttp发起异步HTTP POST请求
-            connector = aiohttp.TCPConnector(ssl=False)  # 跳过 SSL 验证
-            async with aiohttp.ClientSession(connector=connector) as session:
-                async with session.post(
-                    url,
-                    json=params,  # 自动序列化为 JSON 并设置 Content-Type
-                    timeout=aiohttp.ClientTimeout(total=10),
-                ) as response:
-                    response.raise_for_status()  # 抛出 HTTP 错误
-                    # 解析响应数据
-                    raw_data = await response.json()
+        raw_data = result["data"]
+        self.log.info(f"LX Server接口返回原始Json: {raw_data}")
 
-            self.log.info(f"LX Server接口返回原始Json: {raw_data}")
+        if not isinstance(raw_data, dict):
+            return {
+                "success": False,
+                "error": f"API request failed: {raw_data}",
+                "data": {},
+            }
+        return raw_data
 
-            # 检查API调用是否成功
-            if not isinstance(raw_data, dict):
-                raise Exception(f"API request failed : {raw_data}")
+    async def lx_server_music_lyric(self, url: str, song_info: dict[str, Any]):
+        """直接调用 LX Server 接口获取歌词
+
+        Args:
+            url (str): 在线搜索接口地址
+            song_info (dict[str, Any]): 歌曲信息字典，包含 source、songmid、name 等字段
+
+        Returns:
+            Dict[str, Any]: 歌词数据
+        """
+        params = {**song_info}
+        params.pop("types", None)
+        params.pop("_types", None)
+        params = {
+            k: v
+            for k, v in params.items()
+            if v is not None and not (isinstance(v, (dict, list)) and not v)
+        }
+
+        self.log.info(f"LX Server 歌词接口请求参数：{params}")
+
+        result = await self._http_request("GET", url, params=params)
+        if not result["success"]:
+            return {"success": False, "error": result["error"], "data": {}}
+
+        raw_data = result["data"]
+        self.log.info(f"LX Server 接口返回原始 Json: {raw_data}")
+
+        if not isinstance(raw_data, dict):
+            return {
+                "success": False,
+                "error": f"API request failed: {raw_data}",
+                "data": {},
+            }
+
+        if "lyric" in raw_data:
+            raw_data["rawLrc"] = raw_data.pop("lyric")
+            raw_data["success"] = True
             return raw_data
-        except asyncio.TimeoutError as e:
-            self.log.error(f"LX Server search timeout at URL {url}: {e}")
-            return {
-                "success": False,
-                "error": f"LX Server search timeout: {str(e)}",
-                "data": {},
-            }
-        except json.JSONDecodeError as e:
-            self.log.error(f"LX Server invalid JSON response at URL {url}: {e}")
-            return {
-                "success": False,
-                "error": f"LX Server invalid JSON response: {str(e)}",
-                "data": {},
-            }
-        except Exception as e:
-            self.log.error(f"LX Server search error at URL {url}: {e}")
-            return {
-                "success": False,
-                "error": f"LX Server search error: {str(e)}",
-                "data": {},
-            }
+        else:
+            return {"success": False, "error": "Lyric field not found in response"}
 
     def optimize_search_results(
         self,

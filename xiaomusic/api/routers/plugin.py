@@ -167,6 +167,15 @@ async def upload_js_plugin(file: UploadFile = File(...)):
 # ----------------------------LX Server接口相关函数---------------------------------------
 
 
+@router.get("/api/lxServer/test")
+async def get_openapi_info():
+    """测试lxServer接口"""
+    try:
+        return await xiaomusic.js_plugin_manager.test_lx_server()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 @router.get("/api/lxServer/load")
 def get_openapi_info():
     """获取开放接口配置信息"""
@@ -292,5 +301,35 @@ async def update_advanced_config(request: Request):
         return xiaomusic.js_plugin_manager.update_advanced_config(
             auto_add_song, aiapi_info
         )
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ----------------------------密码验证接口---------------------------------------
+@router.get("/api/password/check")
+def check_password_required():
+    """检查是否需要密码验证"""
+    try:
+        config = xiaomusic.js_plugin_manager._get_config_data()
+        password = config.get("password", "")
+        return {"success": True, "data": {"required": bool(password)}}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/password/verify")
+async def verify_password(request: Request):
+    """验证密码"""
+    try:
+        request_json = await request.json()
+        password = request_json.get("password", "")
+
+        config = xiaomusic.js_plugin_manager._get_config_data()
+        stored_password = config.get("password", "")
+
+        if stored_password and password == stored_password:
+            return {"success": True}
+        else:
+            return {"success": False, "error": "密码错误"}
     except Exception as e:
         return {"success": False, "error": str(e)}
