@@ -1104,7 +1104,7 @@ class MusicLibrary:
             try:
                 import asyncio
                 cmd = [
-                    "/app/.venv/bin/yt-dlp",
+                    "yt-dlp",
                     "-f",
                     "ba",
                     "-g",
