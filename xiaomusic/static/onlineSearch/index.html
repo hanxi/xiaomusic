@@ -144,7 +144,7 @@
             cursor: pointer;
         }
 
-        .search-btn, .play-all-btn, .push-btn {
+        .search-btn, .play-all-btn {
             padding: 10px 20px;
             background-color: #007bff;
             color: white;
@@ -160,12 +160,12 @@
             gap: 6px;
         }
 
-        .search-btn:hover, .play-all-btn:hover, .push-btn:hover {
+        .search-btn:hover, .play-all-btn:hover {
             background-color: #0056b3;
             transform: translateY(-1px);
         }
 
-        .search-btn:active, .play-all-btn:active, .push-btn:active {
+        .search-btn:active, .play-all-btn:active {
             transform: translateY(0);
         }
 
@@ -294,6 +294,55 @@
 
         .error {
             color: #d32f2f;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            background-color: #f8f9fa;
+        }
+
+        .pagination-btn {
+            padding: 8px 16px;
+            background-color: #fff;
+            color: #007bff;
+            border: 1px solid #007bff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #6c757d;
+            font-size: 14px;
+            padding: 0 15px;
+        }
+
+        .results-count {
+            text-align: center;
+            padding: 10px;
+            color: #6c757d;
+            font-size: 13px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eee;
         }
 
         /* 顶部按钮样式 */
@@ -596,7 +645,7 @@
                 width: 100%;
             }
 
-            .search-btn, .push-btn, .play-all-btn {
+            .search-btn, .play-all-btn {
                 flex: 1;
                 padding: 12px;
                 font-size: 14px;
@@ -663,6 +712,26 @@
                 width: 14px;
                 height: 14px;
             }
+
+            .pagination {
+                padding: 15px 10px;
+                gap: 8px;
+            }
+
+            .pagination-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .pagination-info {
+                font-size: 13px;
+                padding: 0 10px;
+            }
+
+            .results-count {
+                font-size: 12px;
+                padding: 8px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -709,7 +778,7 @@
         <div class="version-info">
             <span id="versionSpan"></span>
         </div>
-        <p>通过 MusicFree 音源插件搜索在线音乐</p>
+        <p>通过 MusicFree插件、LX Server接口实现在线音乐搜索</p>
         <!-- 顶部居中按钮 -->
         <div class="header-buttons">
             <a onclick="location.href = '/static/default/index.html'" class="header-btn">
@@ -718,16 +787,26 @@
             </a>
             <a href="./setting.html" class="header-btn">
                 <span class="material-icons">settings</span>
-                <span>插件配置</span>
+                <span>后台配置</span>
             </a>
             <a href="https://github.com/maotoumao/MusicFreePlugins" target="_blank" class="header-btn">
                 <span class="material-icons">extension</span>
                 <span>MusicFreePlugins</span>
             </a>
+            <a href="https://xcq0607.github.io/lxserver/" target="_blank" class="header-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 18V5l12-2v13M6 15v8m6-8v8" />
+                </svg>
+                <span>LX Sync Server</span>
+            </a>
             <a href="https://github.com/boluofan/xiaomusic-online" target="_blank" class="header-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                 </svg>
+            </a>
+            <a href="https://xdocs.hanxi.cc/issues/655.html" target="_blank" class="header-btn">
+                <span class="material-icons">help_outline</span>
+                <span>使用说明</span>
             </a>
         </div>
     </div>
@@ -740,7 +819,10 @@
                    placeholder="请输入关键词进行搜索！"
                    enterkeyhint="search">
             <select class="search-select" id="pluginSelect">
-                <option value="all">所有插件</option>
+                <option value="all">聚合搜索</option>
+            </select>
+            <select class="search-select" id="deviceSelect">
+                <option value="web_device">网页端-本地</option>
             </select>
             <div class="search-actions">
                 <button class="search-btn" id="searchBtn">
@@ -750,10 +832,6 @@
                 <button class="play-all-btn" id="playAllBtn">
                     <span class="material-icons">play_arrow</span>
                     <span>播放全部</span>
-                </button>
-                <button class="push-btn" id="pushAllBtn">
-                    <span class="material-icons">cast</span>
-                    <span>推送全部</span>
                 </button>
             </div>
         </div>
@@ -819,6 +897,15 @@
     let currentLyrics = []; // 存储解析后的歌词
     let lyricLines = []; // 存储歌词 DOM 元素
     let songList = []; // 存储搜索到的歌曲列表
+    let currentDeviceId = localStorage.getItem('cur_did') || 'web_device'; // 当前选中的设备
+
+    // 分页相关变量
+    let currentPage = 1;
+    const pageSize = 20;
+    let totalResults = 0;
+    let currentKeyword = '';
+    let currentPlugin = 'all';
+    let hasMore = true; // 是否还有更多数据
 
     // 页面加载时获取插件列表
     window.onload = function() {
@@ -845,12 +932,13 @@
         }
         //加载插件
         loadPlugins();
+        // 加载设备列表
+        loadDevices();
         // 绑定搜索按钮事件
         document.getElementById('searchBtn').addEventListener('click', searchMusic);
 
         // 绑定其他按钮事件
-        document.getElementById('pushAllBtn').addEventListener('click', pushAllMusic);
-        document.getElementById('playAllBtn').addEventListener('click', webPlayAllMusic);
+        document.getElementById('playAllBtn').addEventListener('click', handlePlayAllMusic);
 
         // 绑定回车键事件
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
@@ -864,6 +952,61 @@
             document.body.classList.add('fonts-loaded');
         });
     });
+
+    // 加载设备列表
+    async function loadDevices() {
+        try {
+            const response = await fetch('/getsetting');
+            const data = await response.json();
+
+            const deviceSelect = document.getElementById('deviceSelect');
+            deviceSelect.innerHTML = '';
+
+            const dids = data.mi_did ? data.mi_did.split(',') : [];
+            const devices = data.devices || {};
+
+            dids.forEach(didValue => {
+                const device = Object.values(devices).find(d => d.did === didValue);
+                if (device) {
+                    const option = document.createElement('option');
+                    option.value = didValue;
+                    option.textContent = device.name;
+                    deviceSelect.appendChild(option);
+                }
+            });
+
+            // 添加网页端本地选项
+            const webOption = document.createElement('option');
+            webOption.value = 'web_device';
+            webOption.textContent = '网页端-本地';
+            deviceSelect.appendChild(webOption);
+
+            // 恢复上次选择的设备
+            if (currentDeviceId && dids.includes(currentDeviceId)) {
+                deviceSelect.value = currentDeviceId;
+            } else if (currentDeviceId === 'web_device') {
+                deviceSelect.value = 'web_device';
+            } else if (dids.length > 0) {
+                currentDeviceId = dids[0];
+                deviceSelect.value = currentDeviceId;
+            } else {
+                currentDeviceId = 'web_device';
+                deviceSelect.value = 'web_device';
+            }
+
+            // 设备选择变化时保存
+            deviceSelect.addEventListener('change', function() {
+                currentDeviceId = this.value;
+                localStorage.setItem('cur_did', currentDeviceId);
+            });
+        } catch (error) {
+            console.error('加载设备列表失败:', error);
+            // 出错时添加默认选项
+            const deviceSelect = document.getElementById('deviceSelect');
+            deviceSelect.innerHTML = '<option value="web_device">网页端-本地</option>';
+            currentDeviceId = 'web_device';
+        }
+    }
 
 
     // 平滑滚动到顶部
@@ -914,15 +1057,21 @@
     // 加载插件列表
     async function loadPlugins() {
         try {
-            const response = await fetch('/api/js-plugins?enabled_only=true');
+            const response = await fetch('/api/platforms');
             const data = await response.json();
 
             if (data.success) {
                 const select = document.getElementById('pluginSelect');
-                data.data.forEach(plugin => {
+                if (!select) {
+                    console.error('Plugin select element not found');
+                    return;
+                }
+
+                // 统一处理对象格式：{"key": "value"}
+                Object.entries(data.data).forEach(([key, value]) => {
                     const option = document.createElement('option');
-                    option.value = plugin;
-                    option.textContent = plugin;
+                    option.value = key;
+                    option.textContent = value;
                     select.appendChild(option);
                 });
             }
@@ -944,13 +1093,20 @@
             return;
         }
 
+        // 保存搜索参数
+        currentKeyword = keyword;
+        currentPlugin = plugin;
+        currentPage = 1;
+
         // 显示加载状态
         resultsDiv.innerHTML = '<div class="loading">搜索中...</div>';
         songList = [];
         try {
-            const response = await fetch(`/api/search/online?keyword=${encodeURIComponent(keyword)}&plugin=${plugin}`);
+            const response = await fetch(`/api/search/online?keyword=${encodeURIComponent(keyword)}&plugin=${plugin}&page=${currentPage}&limit=${pageSize}`);
             const data = await response.json();
             if (data.success) {
+                totalResults = data.total || data.data.length;
+                hasMore = data.data.length === pageSize;
                 displayResults(data.data);
             } else {
                 resultsDiv.innerHTML = `<div class="error">搜索失败：${data.error}</div>`;
@@ -960,73 +1116,151 @@
         }
     }
 
-    // 显示搜索结果
+    // 显示搜索结果（服务端分页版本）
     function displayResults(results) {
         const resultsDiv = document.getElementById('results');
         if (!results || results.length === 0) {
             resultsDiv.innerHTML = '<div class="empty">没有找到相关音乐</div>';
             return;
         }
+
+        songList = results;
+
         const html = results.map(item => `
                 <div class="music-item">
                     <div class="music-cover">
                         ${item.artwork ?
-            `<img src="${item.artwork}" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">` :
-            '暂无封面'
-        }
+                `<img src="${item.artwork}" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">` :
+                '暂无封面'
+            }
                     </div>
                     <div class="music-info">
                         <div class="music-title">${item.title}</div>
                         <div class="music-artist">${item.artist}</div>
                         ${(() => {
-            const metaItems = [];
-            if (item.album) {
-                metaItems.push(`专辑：${item.album}`);
-            }
-            if (item.duration) {
-                metaItems.push(`时长：${formatDuration(item.duration)}`);
-            }
-            if (item.quality) {
-                metaItems.push(`音质：${item.quality}`);
-            }
-            return metaItems.length > 0
-                ? `<div class="music-meta">${metaItems.join(' | ')}</div>`
-                : '';
-        })()}
+                const metaItems = [];
+                if (item.album) {
+                    metaItems.push(`专辑：${item.album}`);
+                }
+                if (item.duration) {
+                    metaItems.push(`时长：${formatDuration(item.duration)}`);
+                }
+                if (item.quality) {
+                    metaItems.push(`音质：${item.quality}`);
+                }
+                return metaItems.length > 0
+                    ? `<div class="music-meta">${metaItems.join(' | ')}</div>`
+                    : '';
+            })()}
                     </div>
                     <div class="music-actions">
                         <span class="source-tag">${item.platform || 'online'}</span>
-                        <button class="web-play-btn" onclick="webPlayMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">播放</button>
-                        <button class="push-btn" onclick="pushMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">推送</button>
+                        <button class="web-play-btn" onclick="handlePlayMusic(${JSON.stringify(item).replace(/"/g, '&quot;')})">播放</button>
                     </div>
                 </div>
             `).join('');
-        songList = results;
 
-        resultsDiv.innerHTML = html;
+        const paginationHtml = `
+            ${html}
+            <div class="pagination">
+                <button class="pagination-btn" onclick="prevPage()" ${currentPage <= 1 ? 'disabled' : ''}>
+                    <span class="material-icons">chevron_left</span>
+                    上一页
+                </button>
+                <span class="pagination-info">第 ${currentPage} 页</span>
+                <button class="pagination-btn" onclick="nextPage()" ${!hasMore || results.length === 0 ? 'disabled' : ''}>
+                    下一页
+                    <span class="material-icons">chevron_right</span>
+                </button>
+            </div>
+        `;
+
+        resultsDiv.innerHTML = paginationHtml;
+    }
+
+    // 上一页（服务端分页）
+    async function prevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            await loadPage();
+        }
+    }
+
+    // 下一页（服务端分页）
+    async function nextPage() {
+        if (hasMore) {
+            currentPage++;
+            await loadPage();
+        }
+    }
+
+    // 加载指定页的数据（服务端分页）
+    async function loadPage() {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '<div class="loading">加载中...</div>';
+
+        try {
+            const response = await fetch(`/api/search/online?keyword=${encodeURIComponent(currentKeyword)}&plugin=${currentPlugin}&page=${currentPage}&limit=${pageSize}`);
+            const data = await response.json();
+            if (data.success) {
+                hasMore = data.data.length === pageSize;
+                totalResults = data.total || (currentPage * pageSize);
+                displayResults(data.data);
+            } else {
+                resultsDiv.innerHTML = `<div class="error">加载失败：${data.error}</div>`;
+            }
+        } catch (error) {
+            resultsDiv.innerHTML = `<div class="error">加载出错：${error.message}</div>`;
+        }
+    }
+
+    // 滚动到结果区域
+    function scrollToResults() {
+        const resultsSection = document.getElementById('results');
+        if (resultsSection) {
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     // 获取当前选中的设备 ID
     function getCurrentDeviceId() {
-        // 从 localStorage 获取当前设备 ID
-        return localStorage.getItem('cur_did') || '';
+        return currentDeviceId || localStorage.getItem('cur_did') || 'web_device';
+    }
+
+    // 统一的播放处理函数
+    async function handlePlayMusic(mediaItem) {
+        const deviceId = getCurrentDeviceId();
+        if (deviceId === 'web_device') {
+            await webPlayMusic(mediaItem);
+        } else {
+            await pushMusic(mediaItem);
+        }
+    }
+
+    // 统一的播放全部处理函数
+    async function handlePlayAllMusic() {
+        const deviceId = getCurrentDeviceId();
+        if (songList.length === 0) {
+            alert('请先搜索歌曲！');
+            return;
+        }
+        if (deviceId === 'web_device') {
+            await webPlayAllMusic();
+        } else {
+            await pushAllMusic();
+        }
     }
 
     // 推送音乐（设备播放）
     async function pushMusic(mediaItem) {
         try {
             const deviceId = getCurrentDeviceId();
-            if (!deviceId || deviceId === '') {
-                alert('请先设置设备!');
-                return;
-            }
             if (!mediaItem) {
                 alert('歌曲不存在！');
                 return;
             }
             const mediaItemList = [mediaItem];
             let playlistName = '_online_webPush';
-            // 批量推送音乐到设备
             await pushList(playlistName, deviceId, mediaItemList);
         } catch (error) {
             alert('播放出错：' + error.message);
@@ -1037,18 +1271,12 @@
     async function pushAllMusic() {
         try {
             const deviceId = getCurrentDeviceId();
-            if (!deviceId || deviceId === '') {
-                alert('请先设置设备!');
-                return;
-            }
             if (songList.length === 0) {
                 alert('请先搜索歌曲！');
                 return;
             }
-            console.log("songList",songList)
-            // 格式化 musicList
+            console.log("songList", songList);
             let playlistName = '_online_webPush';
-            // 批量推送音乐到设备
             await pushList(playlistName, deviceId, songList);
         } catch (error) {
             alert('播放出错：' + error.message);
@@ -1056,27 +1284,25 @@
     }
 
     // 推送音乐列表到设备
-    async function pushList(playlistName, deviceId, songList){
+    async function pushList(playlistName, deviceId, musicList) {
         const response = await fetch('/api/device/pushList', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(
-                { playlistName: playlistName,did: deviceId, songList: songList}
+                { playlistName: playlistName, did: deviceId, songList: musicList }
             )
         });
         const data = await response.json();
-        // 根据新返回结构调整处理逻辑
         if (data) {
             if (data.success) {
-                // 显示服务端返回的具体消息而不是通用提示
                 alert('推送成功！');
             } else {
-                alert('推送失败：'+data.error);
+                alert('推送失败：' + data.error);
             }
         } else {
-            alert('播放失败：' + ('未知错误'));
+            alert('播放失败：未知错误');
         }
     }
 
@@ -1086,20 +1312,15 @@
     async function webPlayMusic(mediaItem) {
         try {
             let playUrl;
-            if (mediaItem && mediaItem.isOpenAPI) {
-                // playUrl = await sniffRealMusicUrl(mediaItem.url);
-                playUrl = mediaItem.url;
-            } else {
-                const response = await fetch('/api/play/getMediaSource', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(mediaItem)
-                });
-                const data = await response.json();
-                playUrl = data.url;
-            }
+            const response = await fetch('/api/play/getMediaSource', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(mediaItem)
+            });
+            const data = await response.json();
+            playUrl = data.url;
 
             if (playUrl) {
                 // 显示播放器
@@ -1172,6 +1393,8 @@
         currentLyrics = [];
         lyricLines = [];
         songList = [];
+        currentPage = 1;
+        totalResults = 0;
 
         // 移除音频时间更新监听器
         audio.removeEventListener('timeupdate', updateLyricHighlight);
@@ -1179,6 +1402,9 @@
 
     // 格式化时长 - 兼容秒和毫秒单位
     function formatDuration(duration) {
+        if (typeof duration === 'string' && duration.includes(':')) {
+            return duration;
+        }
         // 如果时长超过 10000，认为是毫秒单位，需要转换为秒
         let seconds = duration;
         if (duration > 10000) {
@@ -1217,7 +1443,7 @@
         }
         try {
             let lrcText
-            if (mediaItem && mediaItem.isOpenAPI) {//在线接口
+            if (mediaItem && mediaItem.isOpenAPI) {//LX Server接口
                 // 调用 OpenApi 接口 GET 获取歌词
                 const response = await fetch(mediaItem.lrc, {
                     method: 'GET',

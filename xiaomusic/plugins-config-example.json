@@ -1,10 +1,30 @@
 {
   "account": "",
   "password": "",
-  "openapi_info": {
-    "search_url": "",
-    "enabled": false
+  "auto_add_song": true,
+  "aiapi_info": {"enabled": false, "api_key": ""},
+  "back_conf_info": {
+    "api_type": 1,
+    "api_options": [
+      {"name": "MusicFree插件", "type": 1},
+      {"name": "LXServer接口", "type": 2}
+    ]
   },
-  "enabled_plugins": [],
-  "plugins_info": []
+  "lx_server_info": {
+    "base_url": "",
+    "platforms": {
+      "tx": "小秋音乐",
+      "kg": "小枸音乐",
+      "kw": "小蜗音乐",
+      "wy": "小芸音乐",
+      "mg": "小蜜音乐"
+    },
+    "box_play_platform": "all"
+  },
+  "music_free_info": {
+    "enabled_plugins": [],
+    "plugin_source": {"source_url": ""},
+    "plugins_info": [],
+    "box_play_platform": "all"
+  }
 }

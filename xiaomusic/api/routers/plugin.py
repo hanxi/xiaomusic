@@ -21,6 +21,23 @@ from xiaomusic.api.dependencies import (
 router = APIRouter(dependencies=[Depends(verification)])
 
 
+@router.get("/api/platforms")
+def get_js_plugins():
+    """获取平台列表"""
+    try:
+        if (
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
+        ):
+            return {"success": False, "error": "JS Plugin Manager not available"}
+
+        platforms = xiaomusic.js_plugin_manager.get_platforms()
+        return {"success": True, "data": platforms}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 @router.get("/api/js-plugins")
 def get_js_plugins(
     enabled_only: bool = Query(False, description="是否只返回启用的插件"),
@@ -147,20 +164,29 @@ async def upload_js_plugin(file: UploadFile = File(...)):
         return {"success": False, "error": str(e)}
 
 
-# ----------------------------开放接口相关函数---------------------------------------
+# ----------------------------LX Server接口相关函数---------------------------------------
 
 
-@router.get("/api/openapi/load")
-def get_openapi_info():
-    """获取开放接口配置信息"""
+@router.get("/api/lxServer/test")
+async def get_openapi_info():
+    """测试lxServer接口"""
     try:
-        openapi_info = xiaomusic.js_plugin_manager.get_openapi_info()
-        return {"success": True, "data": openapi_info}
+        return await xiaomusic.js_plugin_manager.test_lx_server()
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
-@router.post("/api/openapi/toggle")
+@router.get("/api/lxServer/load")
+def get_openapi_info():
+    """获取开放接口配置信息"""
+    try:
+        lx_server_info = xiaomusic.js_plugin_manager.get_lx_server_info()
+        return {"success": True, "data": lx_server_info}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/lxServer/toggle")
 def toggle_openapi():
     """开放接口状态切换"""
     try:
@@ -169,7 +195,7 @@ def toggle_openapi():
         return {"success": False, "error": str(e)}
 
 
-@router.post("/api/openapi/updateUrl")
+@router.post("/api/lxServer/updateUrl")
 async def update_openapi_url(request: Request):
     """更新开放接口地址"""
     try:
@@ -178,6 +204,19 @@ async def update_openapi_url(request: Request):
         if not request_json or "search_url" not in request_json:
             return {"success": False, "error": "Missing 'search_url' in request body"}
         return xiaomusic.js_plugin_manager.update_openapi_url(search_url)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/lxServer/updatePlatforms")
+async def update_lxserver_platforms(request: Request):
+    """更新LXServer平台配置"""
+    try:
+        request_json = await request.json()
+        platforms = request_json.get("platforms")
+        if platforms is None:
+            return {"success": False, "error": "Missing 'platforms' in request body"}
+        return xiaomusic.js_plugin_manager.update_lxserver_platforms(platforms)
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -213,5 +252,116 @@ async def update_plugin_source(request: Request):
         if not request_json or "source_url" not in request_json:
             return {"success": False, "error": "Missing 'search_url' in request body"}
         return xiaomusic.js_plugin_manager.update_plugin_source_url(source_url)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ----------------------------后台类型配置接口---------------------------------------
+@router.get("/api/back-conf/load")
+def get_back_conf_info():
+    """获取后台类型配置信息"""
+    try:
+        back_conf_info = xiaomusic.js_plugin_manager.get_back_conf_info()
+        return {"success": True, "data": back_conf_info}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/back-conf/update")
+async def update_back_conf(request: Request):
+    """更新后台类型配置"""
+    try:
+        request_json = await request.json()
+        api_type = request_json.get("api_type")
+        if api_type is None:
+            return {"success": False, "error": "Missing 'api_type' in request body"}
+        return xiaomusic.js_plugin_manager.update_back_conf_api_type(api_type)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ----------------------------高级配置接口---------------------------------------
+@router.get("/api/advanced-config/load")
+def get_advanced_config():
+    """获取高级配置信息"""
+    try:
+        advanced_config = xiaomusic.js_plugin_manager.get_advanced_config()
+        return {"success": True, "data": advanced_config}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/advanced-config/update")
+async def update_advanced_config(request: Request):
+    """更新高级配置信息"""
+    try:
+        request_json = await request.json()
+        auto_add_song = request_json.get("auto_add_song")
+        aiapi_info = request_json.get("aiapi_info")
+        return xiaomusic.js_plugin_manager.update_advanced_config(
+            auto_add_song, aiapi_info
+        )
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/box-play-platform/load")
+def get_box_play_platform():
+    """获取音响口令搜索平台偏好"""
+    try:
+        platform = xiaomusic.js_plugin_manager.get_box_play_platform_preference()
+        platforms = xiaomusic.js_plugin_manager.get_platforms()
+        return {
+            "success": True,
+            "data": {
+                "platform": platform,
+                "platforms": platforms,
+            },
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/box-play-platform/update")
+async def update_box_play_platform(request: Request):
+    """更新口令搜索平台偏好"""
+    try:
+        request_json = await request.json()
+        platform = request_json.get("platform")
+
+        if platform is None:
+            return {"success": False, "error": "Missing parameters"}
+
+        return xiaomusic.js_plugin_manager.update_box_play_platform( platform)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ----------------------------密码验证接口---------------------------------------
+@router.get("/api/password/check")
+def check_password_required():
+    """检查是否需要密码验证"""
+    try:
+        config = xiaomusic.js_plugin_manager._get_config_data()
+        password = config.get("password", "")
+        return {"success": True, "data": {"required": bool(password)}}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/password/verify")
+async def verify_password(request: Request):
+    """验证密码"""
+    try:
+        request_json = await request.json()
+        password = request_json.get("password", "")
+
+        config = xiaomusic.js_plugin_manager._get_config_data()
+        stored_password = config.get("password", "")
+
+        if stored_password and password == stored_password:
+            return {"success": True}
+        else:
+            return {"success": False, "error": "密码错误"}
     except Exception as e:
         return {"success": False, "error": str(e)}

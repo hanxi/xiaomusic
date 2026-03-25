@@ -2,6 +2,7 @@ import base64
 import hashlib
 import json
 import locale
+import os
 import random
 import time
 from datetime import datetime, timedelta
@@ -230,8 +231,8 @@ class MiJiaAPI:
         self.auth_data_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.auth_data_path, "w") as f:
             json.dump(self.auth_data, f, indent=2, ensure_ascii=False)
+        os.chmod(self.auth_data_path, 0o600)
         print(f"已保存认证数据到 {self.auth_data_path}")
-        print(f"认证数据: {self.auth_data}")
 
     def _get_location(self) -> dict:
         headers = {
@@ -433,7 +434,6 @@ class MiJiaAPI:
         return self.auth_data
 
     def _request(self, uri: str, data: dict, refresh_token: bool = True) -> dict:
-        print(f"请求 URI: {uri}，数据: {data}")
         if refresh_token:
             self._refresh_token()
         url = self.api_base_url + uri
@@ -449,7 +449,6 @@ class MiJiaAPI:
         except json.JSONDecodeError:
             dec_data = decrypt(self.auth_data["ssecurity"], nonce, ret.text)
             ret_data = json.loads(dec_data)
-        print(f"响应数据: {ret_data}")
         if ret_data.get("code", 0) != 0 or "result" not in ret_data:
             raise ValueError(
                 f"API错误，状态码: {ret_data['code']}, 响应: {ret_data.get('message', ret_data.get('desc', '未知错误'))}"

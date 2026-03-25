@@ -303,7 +303,7 @@ docker build -t xiaomusic .
 <p align="center">
   <a href="https://github.com/hanxi/xiaomusic/issues">💬 GitHub Issues</a> •
   <a href="https://pd.qq.com/s/e2jybz0ss">🎮 QQ频道</a> •
-  <a href="https://qm.qq.com/q/lxIhquqbza">👥 QQ交流群</a> •
+  <a href="https://qm.qq.com/q/vQtFRinceA">👥 QQ交流群</a> •
   <a href="https://github.com/hanxi/xiaomusic/issues/86">💬 微信群</a>
 </p>
 
