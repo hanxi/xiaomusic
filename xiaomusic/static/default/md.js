@@ -897,7 +897,7 @@ function _refresh_music_list(callback) {
   $("#music_list").empty();
   $.get("/musiclist", function (data, status) {
     console.log(data, status);
-    favoritelist = data["收藏"];
+    favoritelist = data["收藏"] || [];
 
     // 收集所有播放列表选项
     var playlistOptions = [];
@@ -1574,7 +1574,7 @@ function startWebSocket(did, token) {
       offset = data.offset || 0;
       duration = data.duration || 0;
 
-      if (favoritelist.includes(cur_music)) {
+      if (favoritelist && favoritelist.includes(cur_music)) {
         $(".favorite").addClass("favorite-active");
       } else {
         $(".favorite").removeClass("favorite-active");
