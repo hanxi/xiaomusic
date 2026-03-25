@@ -1,5 +1,20 @@
 # 版本日志
 
+## v0.5.0 (2026-03-25)
+
+### Feat
+
+- 高级设置增加：口令平台偏好设置，方便语音指令播放时指定平台。 (#804)
+- 优化界面：移除【推送】按钮，统一合并为【播放】 (#803)
+- lxserver适配 (#802)
+- 启用安全访问后，增加cookie (#801)
+- lxserver接口功能拓展 (#798)
+
+### Fix
+
+- added the function to parse the url copied from bilibili to the music download tool (#796)
+- 移除日志和控制台中敏感凭据的明文输出 (#793)
+
 ## v0.4.26 (2026-03-20)
 
 ### Fix
