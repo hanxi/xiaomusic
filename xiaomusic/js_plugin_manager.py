@@ -387,7 +387,10 @@ class JSPluginManager:
                 result_data = await self.simple_async_get(
                     url=lx_server_info.get("base_url") + "/music/config"
                 )
-                return {"success": True, "data": result_data}
+                if result_data and "player.enableAuth" in result_data and "user.enablePublicRestriction" in result_data:
+                    return {"success": True, "data": "LX Server接口正常！"}
+                else:
+                    return {"success": False, "error": "不是合法的LX Server接口，请确认后重新配置！"}
             else:
                 return {"success": False, "error": "LX Server接口未配置！"}
         except Exception as e:
