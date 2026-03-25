@@ -1094,13 +1094,66 @@ class MusicLibrary:
                 return "", None
 
         # 是否需要代理
-        if self.config.web_music_proxy or url.startswith("self://"):
+        # 对 bilibili 页面 URL，优先解析为真实音频/CDN URL；成功后再走 proxy，避免 /proxy 只拿到 HTML 页面。
+        is_bilibili_page = (
+            isinstance(url, str)
+            and ("bilibili.com/video/" in url or "b23.tv/" in url)
+        )
+        resolved_origin_url = url
+        if is_bilibili_page:
+            try:
+                import asyncio
+                cmd = [
+                    "yt-dlp",
+                    "-f",
+                    "ba",
+                    "-g",
+                    "--no-playlist",
+                    "--user-agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+                ]
+                if self.config.enable_yt_dlp_cookies:
+                    cmd += ["--cookies", f"{self.config.yt_dlp_cookies_path}"]
+                cmd += [url]
+                proc = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, stderr = await proc.communicate()
+                lines = [line.strip() for line in stdout.decode(errors="replace").splitlines() if line.strip()]
+                resolved = lines[0] if lines else ""
+                if proc.returncode == 0 and resolved:
+                    self.log.info(
+                        f"resolved bilibili page url via yt-dlp. name:{name}, page_url:{url}, resolved_url:{resolved}"
+                    )
+                    resolved_origin_url = resolved
+                else:
+                    self.log.warning(
+                        f"resolve bilibili page url via yt-dlp failed, code:{proc.returncode}, stderr:{stderr.decode(errors=replace)[:500]}, page_url:{url}"
+                    )
+                    resolved = await self.url_cache.get(url, {}, self.config)
+                    if resolved:
+                        self.log.info(
+                            f"resolved bilibili page url via api fallback. name:{name}, page_url:{url}, resolved_url:{resolved}"
+                        )
+                        resolved_origin_url = resolved
+                    else:
+                        self.log.warning(
+                            f"resolve bilibili page url failed, fallback to page url. name:{name}, page_url:{url}"
+                        )
+            except Exception as e:
+                self.log.exception(
+                    f"resolve bilibili page url exception. name:{name}, page_url:{url}, err:{e}"
+                )
+
+        if self.config.web_music_proxy or url.startswith("self://") or is_bilibili_page:
             # 判断是否为电台，传入 radio 参数
             is_radio = self.is_web_radio_music(name)
-            proxy_url = self._get_proxy_url(url, is_radio=is_radio)
-            return proxy_url, url
+            proxy_url = self._get_proxy_url(resolved_origin_url, is_radio=is_radio)
+            return proxy_url, resolved_origin_url
 
-        return url, None
+        return resolved_origin_url, None
 
     async def _get_url_from_api(self, name, url):
         """通过API获取真实播放地址

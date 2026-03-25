@@ -293,7 +293,7 @@ const WebPlayer = {
 
   // 检查是否已收藏（直接使用全局 favoritelist，数据来源于服务器）
   isFavorited: function (music) {
-    return favoritelist.includes(music);
+    return Array.isArray(favoritelist) && favoritelist.includes(music);
   },
 };
 
@@ -621,7 +621,7 @@ function addToFavorites() {
 
   if (isLiked) {
     $(".favorite").removeClass("favorite-active");
-    favoritelist = favoritelist.filter((item) => item !== musicName);
+    favoritelist = Array.isArray(favoritelist) ? favoritelist.filter((item) => item !== musicName) : [];
     updateFavoriteAria(false);
     announceToScreenReader(`已取消收藏 ${musicName}`);
     playlistDelMusic("收藏", musicName)
@@ -633,7 +633,7 @@ function addToFavorites() {
       });
   } else {
     $(".favorite").addClass("favorite-active");
-    favoritelist.push(musicName);
+    if (Array.isArray(favoritelist)) favoritelist.push(musicName);
     updateFavoriteAria(true);
     announceToScreenReader(`已收藏 ${musicName}`);
     playlistAddMusic("收藏", musicName)
@@ -897,7 +897,7 @@ function _refresh_music_list(callback) {
   $("#music_list").empty();
   $.get("/musiclist", function (data, status) {
     console.log(data, status);
-    favoritelist = data["收藏"] || [];
+    favoritelist = Array.isArray(data["收藏"]) ? data["收藏"] : [];
 
     // 收集所有播放列表选项
     var playlistOptions = [];
@@ -927,9 +927,15 @@ function _refresh_music_list(callback) {
       // 收集所有歌曲选项
       var songOptions = [];
       $.each(data[selectedValue], function (index, item) {
+        const songValue =
+          typeof item === "string"
+            ? item
+            : item && typeof item === "object"
+              ? item.name || item.title || item.id || JSON.stringify(item)
+              : String(item);
         songOptions.push({
-          value: item,
-          text: item,
+          value: songValue,
+          text: songValue,
         });
       });
 
@@ -1574,7 +1580,7 @@ function startWebSocket(did, token) {
       offset = data.offset || 0;
       duration = data.duration || 0;
 
-      if (favoritelist && favoritelist.includes(cur_music)) {
+      if (Array.isArray(favoritelist) && favoritelist.includes(cur_music)) {
         $(".favorite").addClass("favorite-active");
       } else {
         $(".favorite").removeClass("favorite-active");
@@ -1726,7 +1732,7 @@ function updateWebFavoriteButton() {
   if (!currentMusic) return;
 
   // 直接使用全局 favoritelist，数据来源于服务器
-  const isFavorited = favoritelist.includes(currentMusic);
+  const isFavorited = Array.isArray(favoritelist) && favoritelist.includes(currentMusic);
 
   if (isFavorited) {
     $(".favorite").addClass("favorite-active");
