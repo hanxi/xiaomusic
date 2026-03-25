@@ -222,7 +222,7 @@
 
         .modal-body .config-card-title {
             font-weight: 600;
-            font-size: 15px;
+            font-size: 18px;
             color: #333;
             margin-bottom: 12px;
             padding-bottom: 10px;
@@ -1031,9 +1031,24 @@
                     </div>
                 </div>
                 <div class="config-row">
-                    <div class="config-label">模型</div>
+                    <div class="config-label">模型名称</div>
                     <div class="config-value">
                         <input type="text" class="config-input" id="aiModelInput" placeholder="非必填，默认为：qwen-flash">
+                    </div>
+                </div>
+            </div>
+            <!-- 偏好设置卡片 -->
+            <div class="config-card" id="boxPlayPlatformCard">
+                <div class="config-card-title">偏好设置</div>
+                <div class="config-row">
+                    <div class="config-label">口令搜索偏好</div>
+                    <div class="config-value">
+                        <span style="color: #999; font-size: 12px; margin-top: 4px; display: inline-block;">
+                          口令搜索时的偏好平台，默认聚合搜索是搜索所有
+                        </span>
+                        <select class="config-input" id="boxPlayPlatformSelect">
+                            <option value="all">聚合搜索</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -1526,6 +1541,8 @@
         modal.classList.add('show');
         // 加载当前配置
         await loadAdvancedConfig();
+        // 加载平台偏好设置
+        await loadBoxPlayPlatform();
     }
 
     // 关闭高级设置模态框
@@ -1568,7 +1585,7 @@
         aiModelInput.value = aiapiInfo.model || '';
     }
 
-    // 保存高级配置
+    // 保存高级配置（包含平台偏好）
     async function saveAdvancedConfig() {
         try {
             const autoAddSong = document.getElementById('autoAddSongCheckbox').checked;
@@ -1584,6 +1601,7 @@
                 model: aiModel
             };
 
+            // 保存高级配置
             const response = await fetch('/api/advanced-config/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1595,6 +1613,8 @@
 
             const data = await response.json();
             if (data.success) {
+                // 同时保存平台偏好
+                await saveBoxPlayPlatform();
                 alert('保存成功');
                 closeAdvancedConfig();
             } else {
@@ -1602,6 +1622,60 @@
             }
         } catch (error) {
             alert(`保存出错：${error.message}`);
+        }
+    }
+
+    // 加载平台偏好设置
+    async function loadBoxPlayPlatform() {
+        try {
+            const response = await fetch('/api/box-play-platform/load');
+            const data = await response.json();
+            if (data.success) {
+                displayBoxPlayPlatform(data.data);
+            }
+        } catch (error) {
+            console.error('加载平台偏好设置失败:', error);
+        }
+    }
+
+    // 显示平台偏好设置
+    function displayBoxPlayPlatform(config) {
+        const platformSelect = document.getElementById('boxPlayPlatformSelect');
+
+        // 清空并填充平台选项
+        platformSelect.innerHTML = '<option value="all">聚合搜索</option>';
+        // 处理 platforms 为对象的情况
+        const platformsObj = config.platforms || {};
+        Object.entries(platformsObj).forEach(([key, name]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = name;
+            platformSelect.appendChild(option);
+        });
+
+        // 设置当前选中的平台
+        platformSelect.value = config.platform;
+    }
+
+    // 保存平台偏好设置
+    async function saveBoxPlayPlatform() {
+        try {
+            const platform = document.getElementById('boxPlayPlatformSelect').value;
+
+            const response = await fetch('/api/box-play-platform/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    platform: platform
+                })
+            });
+
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.error || '保存失败');
+            }
+        } catch (error) {
+            throw error;
         }
     }
 

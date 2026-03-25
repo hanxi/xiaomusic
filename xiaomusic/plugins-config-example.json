@@ -18,11 +18,13 @@
       "kw": "小蜗音乐",
       "wy": "小芸音乐",
       "mg": "小蜜音乐"
-    }
+    },
+    "box_play_platform": "all"
   },
   "music_free_info": {
     "enabled_plugins": [],
     "plugin_source": {"source_url": ""},
-    "plugins_info": []
+    "plugins_info": [],
+    "box_play_platform": "all"
   }
 }
