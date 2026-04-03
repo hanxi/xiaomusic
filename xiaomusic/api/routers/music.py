@@ -76,6 +76,13 @@ async def get_plugin_source_url(
 ):
     try:
         # 获取请求数据
+        # 容错处理1：将 URL 传输中可能被误转为空格的 '+' 还原回去（win平台）
+        data = data.replace(' ', '+')
+        # 2. 容错处理：自动补全 Base64 缺失的 '=' 填充符（Linux平台）
+        missing_padding = len(data) % 4
+        if missing_padding:
+            data += '=' * (4 - missing_padding)
+
         # 将Base64编码的URL解码为Json字符串
         json_str = base64.b64decode(data).decode("utf-8")
         # 将json字符串转换为json对象
