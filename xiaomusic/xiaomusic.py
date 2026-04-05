@@ -79,6 +79,7 @@ class XiaoMusic:
 
             self.js_plugin_manager = JSPluginManager(self)
             self.log.info("JS Plugin Manager initialized successfully")
+            self.js_plugin_manager.start_auto_convert()
         except Exception as e:
             self.log.error(f"Failed to initialize JS Plugin Manager: {e}")
             self.js_plugin_manager = None

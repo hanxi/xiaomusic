@@ -1,5 +1,6 @@
 """插件管理路由"""
 
+import asyncio
 import os
 
 import aiofiles
@@ -159,6 +160,53 @@ async def upload_js_plugin(file: UploadFile = File(...)):
         xiaomusic.js_plugin_manager.reload_plugins()
 
         return {"success": True, "message": "插件上传成功"}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/js-plugins/import-online")
+async def import_online_plugin(request: Request):
+    """在线导入 JS 插件"""
+    try:
+        request_json = await request.json()
+        url = request_json.get("url")
+
+        if not url:
+            return {"success": False, "error": "请输入插件地址"}
+
+        if not url.startswith(("http://", "https://")):
+            return {"success": False, "error": "请输入有效的HTTP地址"}
+
+        if (
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
+        ):
+            return {"success": False, "error": "JS Plugin Manager not available"}
+
+        import re
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        filename = os.path.basename(parsed.path)
+        if not filename.endswith(".js"):
+            filename = re.sub(r"[^\w\-]", "_", parsed.netloc) + ".js"
+
+        plugin_name = os.path.splitext(filename)[0]
+
+        sys_files = ["ALL", "all", "OpenAPI", "OPENAPI"]
+        if plugin_name in sys_files:
+            return {"success": False, "error": f"插件名非法，不能命名为：{sys_files}"}
+
+        success = await asyncio.to_thread(
+            xiaomusic.js_plugin_manager.download_single_plugin, plugin_name, url
+        )
+
+        if success:
+            xiaomusic.js_plugin_manager.reload_plugins()
+            return {"success": True, "message": f"插件 {filename} 导入成功"}
+        else:
+            return {"success": False, "error": "下载或保存插件失败"}
 
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -373,9 +421,10 @@ async def update_advanced_config(request: Request):
     try:
         request_json = await request.json()
         auto_add_song = request_json.get("auto_add_song")
+        auto_convert = request_json.get("auto_convert")
         aiapi_info = request_json.get("aiapi_info")
         return xiaomusic.js_plugin_manager.update_advanced_config(
-            auto_add_song, aiapi_info
+            auto_add_song, auto_convert, aiapi_info
         )
     except Exception as e:
         return {"success": False, "error": str(e)}

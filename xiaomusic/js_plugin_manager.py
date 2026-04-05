@@ -46,6 +46,10 @@ class JSPluginManager:
         self._config_cache_time = 0
         self._config_cache_ttl = 3 * 60  # 缓存有效期5秒，可根据需要调整
 
+        # 自动转换定时任务
+        self._auto_convert_task = None
+        self._auto_convert_interval = 30  # 定时任务间隔（秒）
+
         # 启动 Node.js 子进程
         self._start_node_process()
 
@@ -286,26 +290,33 @@ class JSPluginManager:
             if config_data:
                 return {
                     "auto_add_song": config_data.get("auto_add_song", False),
+                    "auto_convert": config_data.get("auto_convert", False),
                     "aiapi_info": config_data.get("aiapi_info", {}),
                 }
             else:
                 return {
                     "auto_add_song": False,
+                    "auto_convert": False,
                     "aiapi_info": {"enabled": False, "api_key": ""},
                 }
         except Exception as e:
             self.log.error(f"Failed to read advanced config: {e}")
             return {
                 "auto_add_song": False,
+                "auto_convert": False,
                 "aiapi_info": {"enabled": False, "api_key": ""},
             }
 
     def update_advanced_config(
-        self, auto_add_song: bool = None, aiapi_info: dict = None
+        self,
+        auto_add_song: bool = None,
+        auto_convert: bool = None,
+        aiapi_info: dict = None,
     ) -> dict[str, Any]:
         """更新高级配置信息
         Args:
             auto_add_song: 自动添加歌曲开关
+            auto_convert: 自动转换洛雪歌单开关
             aiapi_info: AI接口配置信息
         Returns:
             更新结果字典
@@ -318,12 +329,19 @@ class JSPluginManager:
                 if auto_add_song is not None:
                     config_data["auto_add_song"] = auto_add_song
 
+                if auto_convert is not None:
+                    config_data["auto_convert"] = auto_convert
+
                 if aiapi_info is not None:
                     config_data["aiapi_info"] = aiapi_info
 
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
                 self._invalidate_config_cache()
+
+                if auto_convert is not None:
+                    self.restart_auto_convert()
+
                 return {"success": True}
             else:
                 return {"success": False, "error": "Config file not found"}
@@ -557,6 +575,14 @@ class JSPluginManager:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
 
                 self._invalidate_config_cache()
+
+                config_data = self._get_config_data()
+                auto_convert = (
+                    config_data.get("auto_convert", False) if config_data else False
+                )
+                if auto_convert and username and token:
+                    self.restart_auto_convert()
+
                 return {"success": True}
             else:
                 return {"success": False, "error": "Config file not found"}
@@ -1442,7 +1468,6 @@ class JSPluginManager:
                 return {"success": False, "error": result["error"]}
 
             playlist_data = result["data"]
-            self.log.info(f"LXServer返回原始数据: {playlist_data}")
             if not isinstance(playlist_data, dict):
                 return {
                     "success": False,
@@ -1614,6 +1639,82 @@ class JSPluginManager:
         except Exception as e:
             self.log.error(f"转换LXServer歌单失败: {e}")
             return {"success": False, "error": str(e)}
+
+    async def _auto_convert_loop(self):
+        """自动转换定时任务循环"""
+        while True:
+            await asyncio.sleep(self._auto_convert_interval)
+            try:
+                config_data = self._get_config_data()
+                auto_convert = (
+                    config_data.get("auto_convert", False) if config_data else False
+                )
+
+                if not auto_convert:
+                    self.log.info("自动转换已关闭，停止定时任务")
+                    break
+
+                lx_server_info = self.get_lx_server_info()
+                user_name = lx_server_info.get("x-user-name", "")
+                user_token = lx_server_info.get("x-user-token", "")
+
+                if not user_name or not user_token:
+                    self.log.debug("LXServer认证信息未配置，跳过本次同步")
+                    continue
+
+                self.log.info("开始自动同步LXServer歌单...")
+                pull_result = await self.pull_lxserver_playlist()
+                if not pull_result.get("success"):
+                    self.log.warning(f"自动拉取歌单失败: {pull_result.get('error')}")
+                    continue
+
+                self.log.info("开始自动转换歌单...")
+                convert_result = self.convert_lxserver_playlist()
+                if convert_result.get("success"):
+                    self.log.info("自动转换完成")
+                else:
+                    self.log.warning(f"自动转换失败: {convert_result.get('error')}")
+
+            except asyncio.CancelledError:
+                self.log.info("自动转换任务已取消")
+                raise
+            except Exception as e:
+                self.log.error(f"自动转换任务异常: {e}")
+
+    def start_auto_convert(self):
+        """启动自动转换定时任务"""
+        if self._auto_convert_task is not None and not self._auto_convert_task.done():
+            self.log.info("自动转换任务已在运行中")
+            return
+
+        config_data = self._get_config_data()
+        auto_convert = config_data.get("auto_convert", False) if config_data else False
+
+        if not auto_convert:
+            self.log.info("自动转换未启用，不启动定时任务")
+            return
+
+        lx_server_info = self.get_lx_server_info()
+        user_name = lx_server_info.get("x-user-name", "")
+        user_token = lx_server_info.get("x-user-token", "")
+
+        if not user_name or not user_token:
+            self.log.info("LXServer认证信息未配置，不启动定时任务")
+            return
+
+        self.log.info("启动自动转换定时任务，每30秒拉取一次")
+        self._auto_convert_task = asyncio.create_task(self._auto_convert_loop())
+
+    def stop_auto_convert(self):
+        """停止自动转换定时任务"""
+        if self._auto_convert_task is not None and not self._auto_convert_task.done():
+            self._auto_convert_task.cancel()
+            self.log.info("已停止自动转换定时任务")
+
+    def restart_auto_convert(self):
+        """重启自动转换定时任务"""
+        self.stop_auto_convert()
+        self.start_auto_convert()
 
     def delete_lxserver_playlists(
         self, delete_list: list[str], user_list_indexes: list[int]

@@ -98,6 +98,7 @@ function updateConfigAreas(apiType) {
 
     // 获取需要控制显示的按钮
     const pluginUploadBtn = document.getElementById('plugin-upload-btn');
+    const pluginOnlineBtn = document.getElementById('plugin-online-btn');
     const pluginRefreshBtn = document.getElementById('plugin-refresh-btn');
     const pluginChannelBtn = document.getElementById('plugin-channel-btn');
     const lxserverProjectBtn = document.getElementById('lxserver-project-btn');
@@ -108,6 +109,7 @@ function updateConfigAreas(apiType) {
         lxserverArea.style.display = 'none';
 
         pluginUploadBtn.style.display = 'inline-flex';
+        pluginOnlineBtn.style.display = 'inline-flex';
         pluginRefreshBtn.style.display = 'inline-flex';
         pluginChannelBtn.style.display = 'inline-flex';
         lxserverProjectBtn.style.display = 'none';
@@ -117,8 +119,140 @@ function updateConfigAreas(apiType) {
         lxserverArea.style.display = 'block';
 
         pluginUploadBtn.style.display = 'none';
+        pluginOnlineBtn.style.display = 'none';
         pluginRefreshBtn.style.display = 'none';
         pluginChannelBtn.style.display = 'none';
         lxserverProjectBtn.style.display = 'inline-flex';
     }
+}
+
+/*============================高级配置函数=================================*/
+let boxPlayPlatform = 'all';
+let availablePlatforms = {};
+
+async function loadAdvancedConfig() {
+    try {
+        const [advancedRes, platformRes] = await Promise.all([
+            fetch('/api/advanced-config/load'),
+            fetch('/api/box-play-platform/load')
+        ]);
+
+        const advancedData = await advancedRes.json();
+        const platformData = await platformRes.json();
+
+        if (advancedData.success) {
+            displayAdvancedConfig(advancedData.data);
+        }
+
+        if (platformData.success) {
+            boxPlayPlatform = platformData.data.platform || 'all';
+            availablePlatforms = platformData.data.platforms || {};
+            displayBoxPlayPlatform(availablePlatforms, boxPlayPlatform);
+        }
+    } catch (error) {
+        console.error('加载高级配置失败:', error);
+    }
+}
+
+function displayBoxPlayPlatform(platforms, currentPlatform) {
+    const platformCard = document.getElementById('boxPlayPlatformCard');
+    const platformSelect = document.getElementById('boxPlayPlatformSelect');
+
+    const entries = Object.entries(platforms);
+
+    if (entries.length === 0) {
+        platformCard.style.display = 'none';
+        return;
+    }
+
+    platformCard.style.display = 'block';
+
+    let options = '<option value="all">聚合搜索</option>';
+    entries.forEach(([key, name]) => {
+        const selected = key === currentPlatform ? 'selected' : '';
+        options += `<option value="${key}" ${selected}>${name}</option>`;
+    });
+    platformSelect.innerHTML = options;
+}
+
+function displayAdvancedConfig(config) {
+    const autoConvertRow = document.getElementById('autoConvertRow');
+    if (window.currentBackendType === 2) {
+        autoConvertRow.style.display = 'flex';
+    } else {
+        autoConvertRow.style.display = 'none';
+    }
+
+    document.getElementById('autoAddSongCheckbox').checked = config.auto_add_song || false;
+    document.getElementById('autoConvertCheckbox').checked = config.auto_convert || false;
+
+    const aiapiInfo = config.aiapi_info || {};
+    document.getElementById('aiApiEnabledCheckbox').checked = aiapiInfo.enabled || false;
+    document.getElementById('aiBaseUrlInput').value = aiapiInfo.base_url || '';
+    document.getElementById('aiApiKeyInput').value = aiapiInfo.api_key || '';
+    document.getElementById('aiModelInput').value = aiapiInfo.model || 'qwen-plus';
+}
+
+async function saveAdvancedConfig() {
+    const autoAddSong = document.getElementById('autoAddSongCheckbox').checked;
+    const autoConvert = window.currentBackendType === 2 ? document.getElementById('autoConvertCheckbox').checked : false;
+    const aiApiEnabled = document.getElementById('aiApiEnabledCheckbox').checked;
+    const aiBaseUrl = document.getElementById('aiBaseUrlInput').value;
+    const aiApiKey = document.getElementById('aiApiKeyInput').value;
+    const aiModel = document.getElementById('aiModelInput').value;
+
+    const aiapi_info = {
+        enabled: aiApiEnabled,
+        base_url: aiBaseUrl,
+        api_key: aiApiKey,
+        model: aiModel
+    };
+
+    const payload = {
+        auto_add_song: autoAddSong,
+        aiapi_info: aiapi_info
+    };
+
+    if (window.currentBackendType === 2) {
+        payload.auto_convert = autoConvert;
+    }
+
+    try {
+        const [advancedRes, platformRes] = await Promise.all([
+            fetch('/api/advanced-config/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }),
+            fetch('/api/box-play-platform/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ platform: document.getElementById('boxPlayPlatformSelect').value })
+            })
+        ]);
+
+        const advancedData = await advancedRes.json();
+        const platformData = await platformRes.json();
+
+        if (advancedData.success && platformData.success) {
+            alert('保存成功');
+            closeAdvancedConfig();
+        } else {
+            const error = advancedData.error || platformData.error || '未知错误';
+            alert('保存失败: ' + error);
+        }
+    } catch (error) {
+        alert('保存失败: ' + error.message);
+    }
+}
+
+function openAdvancedConfig() {
+    loadAdvancedConfig();
+    const modal = document.getElementById('advancedConfigModal');
+    modal.classList.add('show');
+}
+
+function closeAdvancedConfig() {
+    const modal = document.getElementById('advancedConfigModal');
+    modal.classList.remove('show');
 }

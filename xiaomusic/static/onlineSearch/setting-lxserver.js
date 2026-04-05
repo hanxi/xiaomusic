@@ -30,12 +30,22 @@ function displayLxServerConfig(config) {
     window.currentPlatforms = config.platforms || {};
     renderPlatformsList();
 
-    // 显示提示信息，等待用户手动拉取
-    document.getElementById('love-list-info').textContent = '';
-    document.getElementById('love-list-info').style.color = '#999';
-    document.getElementById('default-list-info').textContent = '';
-    document.getElementById('default-list-info').style.color = '#999';
-    document.getElementById('user-list-container').innerHTML = '<div class="empty-playlist"></div>';
+    // 判断是否显示LX歌单板块（需要同时配置接口地址和认证信息）
+    const lxPlaylistSection = document.getElementById('lx-playlist-section');
+    const baseUrl = config.base_url || '';
+    const hasAuth = username && username !== 'x-user-name' && token && token !== 'your_token_here';
+
+    if (baseUrl && hasAuth) {
+        lxPlaylistSection.style.display = 'block';
+        // 显示提示信息，等待用户手动拉取
+        document.getElementById('love-list-info').textContent = '';
+        document.getElementById('love-list-info').style.color = '#999';
+        document.getElementById('default-list-info').textContent = '';
+        document.getElementById('default-list-info').style.color = '#999';
+        document.getElementById('user-list-container').innerHTML = '<div class="empty-playlist"></div>';
+    } else {
+        lxPlaylistSection.style.display = 'none';
+    }
 }
 
 function renderPlatformsList() {
@@ -513,6 +523,15 @@ async function refreshUserPlaylist() {
 }
 
 async function fetchLxPlaylist() {
+    // 检查是否配置了认证信息
+    const auth = window.currentLxServerAuth || {};
+    const username = auth['x-user-name'] || '';
+    const token = auth['x-user-token'] || '';
+
+    if (!username || username === '' || !token || token === '') {
+        return;
+    }
+
     const syncBtn = document.getElementById('sync-playlist-btn');
     const statusDiv = document.getElementById('playlist-sync-status');
     const statusText = document.getElementById('sync-status-text');

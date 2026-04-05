@@ -482,6 +482,8 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            min-width: 100px;
+            justify-content: center;
         }
 
         .enable-btn {
@@ -964,7 +966,11 @@
             </button>
             <button class="header-btn" id="plugin-upload-btn" onclick="uploadPlugins()">
                 <span class="material-icons">file_upload</span>
-                <span>手动导入</span>
+                <span>手动上传</span>
+            </button>
+            <button class="header-btn" id="plugin-online-btn" style="display: none;" onclick="importOnlinePlugin()">
+                <span class="material-icons">cloud_download</span>
+                <span>在线导入</span>
             </button>
             <button class="header-btn" id="plugin-refresh-btn" onclick="loadPlugins()">
                 <span class="material-icons">refresh</span>
@@ -1061,10 +1067,10 @@
                     <div class="plugin-details">
                         <div><strong>认证信息</strong></div>
                         <div style="margin-top: 8px;">
-                            <span style="color: #666; font-size: 13px;">用户名：</span><span id="lxserver-username"></span>
+                            <span style="color: #666; font-size: 13px;">x-user-name：</span><span id="lxserver-username"></span>
                         </div>
                         <div style="margin-top: 4px;">
-                            <span style="color: #666; font-size: 13px;">Token：</span><span id="lxserver-token"></span>
+                            <span style="color: #666; font-size: 13px;">x-user-token：</span><span id="lxserver-token"></span>
                         </div>
                     </div>
                 </div>
@@ -1083,8 +1089,9 @@
                 </button>
             </div>
             <div id="platforms-list" class="platforms-list"></div>
-            <div class="section-title" style="margin-top: 20px;">LX歌单</div>
-            <div class="plugin-actions" style="margin-bottom: 15px;">
+            <div id="lx-playlist-section">
+                <div class="section-title" style="margin-top: 20px;">LX歌单</div>
+                <div class="header-buttons" style="margin-bottom: 15px;">
                 <button class="action-btn sync-btn" id="sync-playlist-btn" onclick="fetchLxPlaylist()">
                     <span class="material-icons">cloud_download</span>
                     <span>拉取LX歌单</span>
@@ -1095,7 +1102,7 @@
                 </button>
                 <button class="action-btn clear-btn" id="clear-xiaomusic-btn" onclick="clearXiaomusicPlaylists()">
                     <span class="material-icons">clear_all</span>
-                    <span>清空已转换歌单</span>
+                    <span>清空已转歌单</span>
                 </button>
                 <button class="action-btn delete-btn" id="delete-playlist-btn" onclick="deleteSelectedPlaylists()" disabled>
                     <span class="material-icons">delete</span>
@@ -1149,24 +1156,24 @@
 <div class="modal-overlay" id="lxserverAuthModal">
     <div class="modal-content" style="max-width: 450px;">
         <div class="modal-header">
-            <h2>修改 LXServer 认证信息</h2>
+            <h2>编辑认证信息</h2>
             <button class="modal-close" onclick="closeLxServerAuthModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div class="config-row" style="border-bottom: none;">
-                <div class="config-label">用户名</div>
+                <div class="config-label">x-user-name</div>
                 <div class="config-value">
-                    <input type="text" class="config-input" id="lxserver-username-input" placeholder="请输入用户名" style="background-color: #f8f9fa;">
+                    <input type="text" class="config-input" id="lxserver-username-input" placeholder="请输入x-user-name" style="background-color: #f8f9fa;">
                 </div>
             </div>
             <div class="config-row" style="border-bottom: none;">
-                <div class="config-label">Token</div>
+                <div class="config-label">x-user-token</div>
                 <div class="config-value">
                     <div style="position: relative; display: inline-flex; align-items: center; width: 100%;">
-                        <input type="password" class="config-input" id="lxserver-token-input" placeholder="请输入Token" style="background-color: #f8f9fa; padding-right: 35px;">
+                        <input type="password" class="config-input" id="lxserver-token-input" placeholder="请输入x-user-token" style="background-color: #f8f9fa; padding-right: 35px;">
                         <span class="material-icons toggle-password" onclick="toggleTokenVisibility()" id="token-toggle-icon" style="position: absolute; right: 10px; cursor: pointer; font-size: 20px; color: #666;">visibility_off</span>
                     </div>
-                    <span style="color: #999; font-size: 12px; margin-top: 4px; display: inline-block;">请从 LXServer 获取认证信息</span>
+                    <span style="color: #999; font-size: 12px; margin-top: 4px; display: inline-block;">请从 LXServer 处获取认证信息</span>
                 </div>
             </div>
         </div>
@@ -1217,6 +1224,13 @@
                         <span style="margin-left: 8px; color: #6c757d; font-size: 13px;">小爱播放完最后一首时自动添加同歌手歌曲</span>
                     </div>
                 </div>
+                <div class="config-row" id="autoConvertRow" style="display: none;">
+                    <div class="config-label">自动拉取并转换</div>
+                    <div class="config-value">
+                        <input type="checkbox" class="config-checkbox" id="autoConvertCheckbox">
+                        <span style="margin-left: 8px; color: #6c757d; font-size: 13px;">每30秒自动拉取LX歌单并转为XM歌单</span>
+                    </div>
+                </div>
             </div>
             <div class="config-card">
                 <div class="config-card-title">
@@ -1252,7 +1266,7 @@
                     </div>
                 </div>
             </div>
-            <div class="config-card" id="boxPlayPlatformCard">
+            <div class="config-card" id="boxPlayPlatformCard" style="display: none;">
                 <div class="config-card-title">偏好设置</div>
                 <div class="config-row">
                     <div class="config-label">口令搜索偏好</div>

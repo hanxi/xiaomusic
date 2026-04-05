@@ -264,3 +264,32 @@ async function uninstallPlugin(pluginName) {
         alert(`插件卸载出错：${error.message}`);
     }
 }
+
+// 在线导入插件
+async function importOnlinePlugin() {
+    const url = prompt('请输入在线插件地址（JS文件URL）');
+
+    if (!url) return;
+
+    if (!confirm('相同名称插件将被覆盖，是否继续导入？')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/js-plugins/import-online', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            alert(data.message);
+            await loadPlugins();
+        } else {
+            alert('导入失败：' + data.error);
+        }
+    } catch (error) {
+        alert('导入出错：' + error.message);
+    }
+}
