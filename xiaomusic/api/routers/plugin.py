@@ -221,6 +221,82 @@ async def update_lxserver_platforms(request: Request):
         return {"success": False, "error": str(e)}
 
 
+@router.post("/api/lxServer/updateAuth")
+async def update_lxserver_auth(request: Request):
+    """更新LXServer认证信息"""
+    try:
+        request_json = await request.json()
+        username = request_json.get("x-user-name")
+        token = request_json.get("x-user-token")
+        if not username or not token:
+            return {
+                "success": False,
+                "error": "Missing 'x-user-name' or 'x-user-token' in request body",
+            }
+        return xiaomusic.js_plugin_manager.update_lxserver_auth(username, token)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/lxServer/userList")
+async def get_lxserver_user_list():
+    """获取LXServer用户歌单"""
+    try:
+        lx_server_info = xiaomusic.js_plugin_manager.get_lx_server_info()
+        if not lx_server_info.get("base_url"):
+            return {"success": False, "error": "LX Server未配置"}
+        headers = xiaomusic.js_plugin_manager._build_lx_server_headers(lx_server_info)
+        if not headers:
+            return {
+                "success": False,
+                "error": "LX Server认证信息未配置，请先配置用户名和Token",
+            }
+        return xiaomusic.js_plugin_manager.get_local_lxserver_user_list()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/lxServer/pullPlaylist")
+async def pull_lxserver_playlist():
+    """拉取LXServer用户歌单到plugins-config.json"""
+    try:
+        return await xiaomusic.js_plugin_manager.pull_lxserver_playlist()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/lxServer/convertPlaylist")
+async def convert_lxserver_playlist():
+    """将LXServer歌单转换为xiaomusic格式并保存到setting.json"""
+    try:
+        return xiaomusic.js_plugin_manager.convert_lxserver_playlist()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/lxServer/deletePlaylists")
+async def delete_lxserver_playlists(request: Request):
+    """删除LXServer歌单"""
+    try:
+        request_json = await request.json()
+        delete_list = request_json.get("deleteList", [])
+        user_list_indexes = request_json.get("userListIndexes", [])
+        return xiaomusic.js_plugin_manager.delete_lxserver_playlists(
+            delete_list, user_list_indexes
+        )
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/lxServer/clearXiaomusicPlaylists")
+async def clear_xiaomusic_playlists():
+    """清空xiaomusic中所有_online_lx_前缀的歌单"""
+    try:
+        return xiaomusic.js_plugin_manager.clear_xiaomusic_playlists()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # ----------------------------插件源接口---------------------------------------
 
 
@@ -332,7 +408,7 @@ async def update_box_play_platform(request: Request):
         if platform is None:
             return {"success": False, "error": "Missing parameters"}
 
-        return xiaomusic.js_plugin_manager.update_box_play_platform( platform)
+        return xiaomusic.js_plugin_manager.update_box_play_platform(platform)
     except Exception as e:
         return {"success": False, "error": str(e)}
 
