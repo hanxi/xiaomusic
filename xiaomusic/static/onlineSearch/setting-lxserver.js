@@ -436,7 +436,7 @@ async function deleteSelectedPlaylists() {
         return;
     }
 
-    if (!confirm(`确定要删除选中的 ${deleteList.length + selectedIndexes.length} 个歌单吗？`)) {
+    if (!confirm(`确定要删除选中的 ${deleteList.length + selectedIndexes.length} 个歌单吗？\n 仅删除本地LX歌单，还可通过接口拉取更新！`)) {
         return;
     }
 
@@ -466,6 +466,9 @@ async function deleteSelectedPlaylists() {
             loveListCb.checked = false;
             defaultListCb.checked = false;
             await loadUserPlaylist();
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
         } else {
             statusText.textContent = `删除失败: ${data.error}`;
             statusDiv.style.background = '#ffebee';
@@ -503,6 +506,10 @@ async function clearXiaomusicPlaylists() {
             statusDiv.style.background = '#e8f5e9';
             statusDiv.style.borderColor = '#c8e6c9';
             statusDiv.style.color = '#2e7d32';
+            alert(data.message);
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
         } else {
             statusText.textContent = `清空失败: ${data.error}`;
             statusDiv.style.background = '#ffebee';
@@ -581,8 +588,8 @@ async function convertToXiaomusic() {
     const userListCbs = document.querySelectorAll('.user-playlist-checkbox');
 
     const selectedPlaylists = [];
-    if (loveListCb?.checked) selectedPlaylists.push('loveList');
-    if (defaultListCb?.checked) selectedPlaylists.push('defaultList');
+    if (loveListCb?.checked) selectedPlaylists.push('我喜欢的音乐');
+    if (defaultListCb?.checked) selectedPlaylists.push('默认歌单');
 
     const playlistData = window.currentPlaylistData;
     if (!playlistData) {
@@ -600,7 +607,7 @@ async function convertToXiaomusic() {
     let confirmMsg;
     const totalSelected = selectedPlaylists.length + userListSelected.length;
     if (totalSelected > 0) {
-        confirmMsg = `转换勾选的 ${totalSelected} 个歌单？`;
+        confirmMsg = `将勾选的 ${totalSelected} 个歌单，转换为XM歌单？`;
     } else {
         const allPlaylists = [];
         if (playlistData.loveList?.length) allPlaylists.push('我喜欢的音乐');
@@ -628,8 +635,11 @@ async function convertToXiaomusic() {
     statusDiv.style.display = 'block';
     statusText.textContent = '正在转换为xiaomusic格式...';
 
+    const allSelected = [...selectedPlaylists, ...userListSelected];
+    const queryParams = allSelected.length > 0 ? `?playlists=${encodeURIComponent(allSelected.join(','))}` : '';
+
     try {
-        const response = await fetch('/api/lxServer/convertPlaylist');
+        const response = await fetch(`/api/lxServer/convertPlaylist${queryParams}`);
         const data = await response.json();
 
         if (data.success) {
@@ -637,6 +647,9 @@ async function convertToXiaomusic() {
             statusDiv.style.background = '#e8f5e9';
             statusDiv.style.borderColor = '#c8e6c9';
             statusDiv.style.color = '#2e7d32';
+            loveListCb.checked = false;
+            defaultListCb.checked = false;
+            await loadUserPlaylist();
             setTimeout(() => {
                 statusDiv.style.display = 'none';
             }, 3000);

@@ -314,10 +314,18 @@ async def pull_lxserver_playlist():
 
 
 @router.get("/api/lxServer/convertPlaylist")
-async def convert_lxserver_playlist():
+async def convert_lxserver_playlist(
+    playlists: str = Query(
+        default=None,
+        description="指定要转换的歌单名称，多个用逗号分隔。为空则全量转换。可选值：我喜欢的音乐,默认歌单,或userList中的歌单名称",
+    ),
+):
     """将LXServer歌单转换为xiaomusic格式并保存到setting.json"""
     try:
-        return xiaomusic.js_plugin_manager.convert_lxserver_playlist()
+        target_playlists = None
+        if playlists:
+            target_playlists = [p.strip() for p in playlists.split(",") if p.strip()]
+        return xiaomusic.js_plugin_manager.convert_lxserver_playlist(target_playlists)
     except Exception as e:
         return {"success": False, "error": str(e)}
 

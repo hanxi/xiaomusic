@@ -1,6 +1,6 @@
 // config.js
 window.appConfig = {
     // TODO 版本号
-    version: "1.1.2",
+    version: "1.1.3",
     // 其他配置项可继续添加
 };

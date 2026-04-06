@@ -1556,8 +1556,14 @@ class JSPluginManager:
             self.log.error(f"拉取LXServer歌单失败: {e}")
             return {"success": False, "error": str(e)}
 
-    def convert_lxserver_playlist(self) -> dict[str, Any]:
+    def convert_lxserver_playlist(
+        self, target_playlists: list[str] | None = None
+    ) -> dict[str, Any]:
         """将LXServer歌单转换为xiaomusic格式并保存到setting.json
+
+        Args:
+            target_playlists: 指定要转换的歌单名称列表，为None时全量转换。
+                              可选值：我喜欢的音乐、默认歌单、或userList中的歌单名称
 
         Returns:
             Dict[str, Any]: 转换结果
@@ -1593,15 +1599,20 @@ class JSPluginManager:
 
             converted_count = 0
 
+            def should_convert(name: str) -> bool:
+                if target_playlists is None:
+                    return True
+                return name in target_playlists
+
             love_list = playlist_data.get("loveList", [])
-            if love_list:
+            if love_list and should_convert("我喜欢的音乐"):
                 list_name = "_online_lx_我喜欢的音乐"
                 musics = self._convert_lxserver_songs(love_list, "我喜欢的音乐")
                 music_lists.append({"name": list_name, "musics": musics})
                 converted_count += 1
 
             default_list = playlist_data.get("defaultList", [])
-            if default_list:
+            if default_list and should_convert("默认歌单"):
                 list_name = "_online_lx_默认歌单"
                 musics = self._convert_lxserver_songs(default_list, "默认歌单")
                 music_lists.append({"name": list_name, "musics": musics})
@@ -1612,11 +1623,12 @@ class JSPluginManager:
                 list_name = user_list.get("name", "")
                 if not list_name:
                     continue
-                list_name = f"_online_lx_{list_name}"
-                songs = user_list.get("list", [])
-                musics = self._convert_lxserver_songs(songs, list_name)
-                music_lists.append({"name": list_name, "musics": musics})
-                converted_count += 1
+                if should_convert(list_name):
+                    full_name = f"_online_lx_{list_name}"
+                    songs = user_list.get("list", [])
+                    musics = self._convert_lxserver_songs(songs, list_name)
+                    music_lists.append({"name": full_name, "musics": musics})
+                    converted_count += 1
 
             setting_data["music_list_json"] = json.dumps(
                 music_lists, ensure_ascii=False
@@ -1630,10 +1642,15 @@ class JSPluginManager:
             if self.xiaomusic and hasattr(self.xiaomusic, "music_library"):
                 self.xiaomusic.music_library.gen_all_music_list()
 
-            self.log.info(f"LXServer歌单转换完成，共转换 {converted_count} 个歌单")
+            convert_type = "全量" if target_playlists is None else "指定"
+            self.log.info(
+                f"LXServer歌单{convert_type}转换完成，共转换 {converted_count} 个歌单"
+            )
             return {
                 "success": True,
-                "message": f"LXServer歌单转换完成，共转换 {converted_count} 个歌单",
+                "message": f"LXServer歌单{convert_type}转换完成，共转换 {converted_count} 个歌单",
+                "converted_count": converted_count,
+                "target_playlists": target_playlists,
             }
 
         except Exception as e:
