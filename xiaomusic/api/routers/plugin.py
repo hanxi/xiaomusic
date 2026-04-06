@@ -1,5 +1,6 @@
 """插件管理路由"""
 
+import asyncio
 import os
 
 import aiofiles
@@ -164,6 +165,53 @@ async def upload_js_plugin(file: UploadFile = File(...)):
         return {"success": False, "error": str(e)}
 
 
+@router.post("/api/js-plugins/import-online")
+async def import_online_plugin(request: Request):
+    """在线导入 JS 插件"""
+    try:
+        request_json = await request.json()
+        url = request_json.get("url")
+
+        if not url:
+            return {"success": False, "error": "请输入插件地址"}
+
+        if not url.startswith(("http://", "https://")):
+            return {"success": False, "error": "请输入有效的HTTP地址"}
+
+        if (
+            not hasattr(xiaomusic, "js_plugin_manager")
+            or not xiaomusic.js_plugin_manager
+        ):
+            return {"success": False, "error": "JS Plugin Manager not available"}
+
+        import re
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        filename = os.path.basename(parsed.path)
+        if not filename.endswith(".js"):
+            filename = re.sub(r"[^\w\-]", "_", parsed.netloc) + ".js"
+
+        plugin_name = os.path.splitext(filename)[0]
+
+        sys_files = ["ALL", "all", "OpenAPI", "OPENAPI"]
+        if plugin_name in sys_files:
+            return {"success": False, "error": f"插件名非法，不能命名为：{sys_files}"}
+
+        success = await asyncio.to_thread(
+            xiaomusic.js_plugin_manager.download_single_plugin, plugin_name, url
+        )
+
+        if success:
+            xiaomusic.js_plugin_manager.reload_plugins()
+            return {"success": True, "message": f"插件 {filename} 导入成功"}
+        else:
+            return {"success": False, "error": "下载或保存插件失败"}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # ----------------------------LX Server接口相关函数---------------------------------------
 
 
@@ -217,6 +265,90 @@ async def update_lxserver_platforms(request: Request):
         if platforms is None:
             return {"success": False, "error": "Missing 'platforms' in request body"}
         return xiaomusic.js_plugin_manager.update_lxserver_platforms(platforms)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/lxServer/updateAuth")
+async def update_lxserver_auth(request: Request):
+    """更新LXServer认证信息"""
+    try:
+        request_json = await request.json()
+        username = request_json.get("x-user-name")
+        token = request_json.get("x-user-token")
+        if not username or not token:
+            return {
+                "success": False,
+                "error": "Missing 'x-user-name' or 'x-user-token' in request body",
+            }
+        return xiaomusic.js_plugin_manager.update_lxserver_auth(username, token)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/lxServer/userList")
+async def get_lxserver_user_list():
+    """获取LXServer用户歌单"""
+    try:
+        lx_server_info = xiaomusic.js_plugin_manager.get_lx_server_info()
+        if not lx_server_info.get("base_url"):
+            return {"success": False, "error": "LX Server未配置"}
+        headers = xiaomusic.js_plugin_manager._build_lx_server_headers(lx_server_info)
+        if not headers:
+            return {
+                "success": False,
+                "error": "LX Server认证信息未配置，请先配置用户名和Token",
+            }
+        return xiaomusic.js_plugin_manager.get_local_lxserver_user_list()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/lxServer/pullPlaylist")
+async def pull_lxserver_playlist():
+    """拉取LXServer用户歌单到plugins-config.json"""
+    try:
+        return await xiaomusic.js_plugin_manager.pull_lxserver_playlist()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/lxServer/convertPlaylist")
+async def convert_lxserver_playlist(
+    playlists: str = Query(
+        default=None,
+        description="指定要转换的歌单名称，多个用逗号分隔。为空则全量转换。可选值：我喜欢的音乐,默认歌单,或userList中的歌单名称",
+    ),
+):
+    """将LXServer歌单转换为xiaomusic格式并保存到setting.json"""
+    try:
+        target_playlists = None
+        if playlists:
+            target_playlists = [p.strip() for p in playlists.split(",") if p.strip()]
+        return xiaomusic.js_plugin_manager.convert_lxserver_playlist(target_playlists)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/lxServer/deletePlaylists")
+async def delete_lxserver_playlists(request: Request):
+    """删除LXServer歌单"""
+    try:
+        request_json = await request.json()
+        delete_list = request_json.get("deleteList", [])
+        user_list_indexes = request_json.get("userListIndexes", [])
+        return xiaomusic.js_plugin_manager.delete_lxserver_playlists(
+            delete_list, user_list_indexes
+        )
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/lxServer/clearXiaomusicPlaylists")
+async def clear_xiaomusic_playlists():
+    """清空xiaomusic中所有_online_lx_前缀的歌单"""
+    try:
+        return xiaomusic.js_plugin_manager.clear_xiaomusic_playlists()
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -297,9 +429,10 @@ async def update_advanced_config(request: Request):
     try:
         request_json = await request.json()
         auto_add_song = request_json.get("auto_add_song")
+        auto_convert = request_json.get("auto_convert")
         aiapi_info = request_json.get("aiapi_info")
         return xiaomusic.js_plugin_manager.update_advanced_config(
-            auto_add_song, aiapi_info
+            auto_add_song, auto_convert, aiapi_info
         )
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -332,7 +465,7 @@ async def update_box_play_platform(request: Request):
         if platform is None:
             return {"success": False, "error": "Missing parameters"}
 
-        return xiaomusic.js_plugin_manager.update_box_play_platform( platform)
+        return xiaomusic.js_plugin_manager.update_box_play_platform(platform)
     except Exception as e:
         return {"success": False, "error": str(e)}
 

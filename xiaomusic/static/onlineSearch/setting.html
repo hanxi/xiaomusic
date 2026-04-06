@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>后台配置</title>
     <script src="./config.js"></script>
-    <link rel="preload" href="../default/materialicons.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preconnect" href="../default/materialicons.woff2" as="font" type="font/woff2" crossorigin>
     <style>
         /* ==================== Material Icons 字体定义 ==================== */
         @font-face {
@@ -310,6 +310,84 @@
             background-color: #e9ecef;
         }
 
+        /* 后台类型选择器样式 */
+        .backend-selector {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+
+        .backend-selector .section-title {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .backend-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .backend-option {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .backend-option:hover {
+            border-color: #007bff;
+            background: #f0f7ff;
+        }
+
+        .backend-option.selected {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+
+        .backend-option-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .backend-option-desc {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .backend-option .radio-circle {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+            position: relative;
+        }
+
+        .backend-option.selected .radio-circle {
+            border-color: #007bff;
+        }
+
+        .backend-option.selected .radio-circle::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: #007bff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
         /* 插件设置区域样式 */
         .plugins-section {
             padding: 20px;
@@ -404,6 +482,8 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            min-width: 100px;
+            justify-content: center;
         }
 
         .enable-btn {
@@ -462,126 +542,207 @@
             transform: none;
         }
 
-        /* 后台类型选择器样式 */
-        .backend-selector {
-            padding: 20px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #eee;
-        }
-
-        .backend-selector .section-title {
-            margin-top: 0;
-            margin-bottom: 15px;
-        }
-
-        .backend-options {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .backend-option {
-            flex: 1;
-            min-width: 200px;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background: white;
-        }
-
-        .backend-option:hover {
-            border-color: #007bff;
-            background: #f0f7ff;
-        }
-
-        .backend-option.selected {
-            border-color: #007bff;
-            background: #e3f2fd;
-        }
-
-        .backend-option-title {
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 8px;
-            color: #333;
-        }
-
-        .backend-option-desc {
-            font-size: 13px;
-            color: #6c757d;
-        }
-
-        .backend-option .radio-circle {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #ddd;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 10px;
-            vertical-align: middle;
-            position: relative;
-        }
-
-        .backend-option.selected .radio-circle {
-            border-color: #007bff;
-        }
-
-        .backend-option.selected .radio-circle::after {
-            content: '';
-            width: 10px;
-            height: 10px;
-            background: #007bff;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
         /* LXServer 配置样式 */
         .lxserver-section {
             padding: 0;
         }
 
-        .config-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            background: #f8f9fa;
-            margin-bottom: 15px;
-        }
-
-        .config-item-info {
-            flex: 1;
-        }
-
-        .config-item-label {
-            font-weight: 600;
-            font-size: 14px;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .config-item-value {
-            font-size: 13px;
-            color: #6c757d;
-            word-break: break-all;
-        }
-
-        .config-item-value:empty::before {
-            content: '未配置';
-            color: #999;
-        }
-
-        /* 平台列表样式 */
         .platforms-list {
             display: flex;
             flex-direction: column;
             gap: 10px;
+        }
+
+        .user-playlists {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .user-playlist-section {
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 12px 15px;
+        }
+
+        .playlist-category-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .playlist-info {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .user-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .playlist-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            gap: 10px;
+        }
+
+        .playlist-item-info {
+            flex: 1;
+        }
+
+        .playlist-item-name {
+            font-weight: 500;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .playlist-item-meta {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .playlist-item-source {
+            font-size: 11px;
+            padding: 2px 6px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 3px;
+        }
+
+        .expand-icon {
+            cursor: pointer;
+            font-size: 12px;
+            color: #666;
+            transition: transform 0.2s;
+            padding: 4px;
+        }
+
+        .playlist-item-wrapper {
+            margin-bottom: 0;
+        }
+
+        .playlist-songs {
+            margin-left: 34px;
+            padding: 8px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        .song-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            border-bottom: 1px solid #eee;
+            gap: 10px;
+        }
+
+        .song-item:last-child {
+            border-bottom: none;
+        }
+
+        .song-index {
+            font-size: 12px;
+            color: #999;
+            min-width: 20px;
+        }
+
+        .song-info {
+            flex: 1;
+        }
+
+        .song-title {
+            font-size: 13px;
+            color: #333;
+        }
+
+        .song-artist {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .empty-songs {
+            font-size: 12px;
+            color: #999;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .sync-btn {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .sync-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .convert-btn {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .convert-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .delete-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .clear-btn {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .playlist-item input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .playlist-sync-status {
+            padding: 8px 12px;
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #2e7d32;
+        }
+
+        .empty-playlist {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            padding: 10px;
         }
 
         .platform-item {
@@ -634,10 +795,6 @@
 
         .error {
             color: #dc3545;
-        }
-
-        .empty {
-            color: #6c757d;
         }
 
         /* 移动端适配 */
@@ -754,21 +911,6 @@
                 font-size: 18px;
             }
 
-            .modal-body {
-                padding: 0;
-            }
-
-            .modal-body .config-card {
-                padding: 12px;
-                margin-bottom: 12px;
-            }
-
-            .modal-body .config-card-title {
-                font-size: 14px;
-                padding-bottom: 8px;
-                margin-bottom: 10px;
-            }
-
             .config-row {
                 flex-direction: column;
                 align-items: flex-start;
@@ -783,18 +925,6 @@
             }
 
             .config-value {
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-            }
-
-            .config-value a {
-                margin-left: 0 !important;
-                margin-top: 4px;
-            }
-
-            .config-input {
                 width: 100%;
             }
 
@@ -815,18 +945,6 @@
                 animation: none !important;
             }
         }
-
-        /* 动画效果 */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(15px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
     </style>
 </head>
 <body>
@@ -837,39 +955,36 @@
             <span id="versionSpan"></span>
         </div>
         <p>在线搜索后台配置</p>
-        <!-- 顶部居中按钮 -->
         <div class="header-buttons">
             <a href="./index.html" class="header-btn">
                 <span class="material-icons">arrow_back</span>
                 <span>返回搜索</span>
             </a>
-            <!-- 高级设置按钮 -->
             <button class="header-btn" onclick="openAdvancedConfig()">
                 <span class="material-icons">settings</span>
                 <span>高级设置</span>
             </button>
-            <!-- 插件导入 -->
             <button class="header-btn" id="plugin-upload-btn" onclick="uploadPlugins()">
                 <span class="material-icons">file_upload</span>
-                <span>手动导入</span>
+                <span>手动上传</span>
             </button>
-            <!-- 刷新插件按钮 -->
+            <button class="header-btn" id="plugin-online-btn" style="display: none;" onclick="importOnlinePlugin()">
+                <span class="material-icons">cloud_download</span>
+                <span>在线导入</span>
+            </button>
             <button class="header-btn" id="plugin-refresh-btn" onclick="loadPlugins()">
                 <span class="material-icons">refresh</span>
                 <span>刷新插件</span>
             </button>
             <a href="https://pd.qq.com/s/3tkfauiqe?b=9" target="_blank" class="header-btn" id="plugin-channel-btn">
-                <!-- 自定义 SVG 图标 -->
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32" style="display: block;">
                     <g fill="none" fill-rule="evenodd">
-                        <!-- 移除了背景矩形 path，只保留图标主体 -->
                         <path d="M15.9998867 0l-.3175962.00373031c-6.8340705.16105657-10.59798873 5.52198001-10.62328209 13.09956699l.00099159.2727027-.86256398 2.1053645c-.34339269.8459887-.59479858 1.4918602-.8236549 2.1249911-.16246446.4494579-.31092035.8862129-.4515632 1.3302912-1.41043336 4.4529342-1.46997142 7.7313526 1.14979123 8.0424546l.19586827.0182568c.69853306.0462522 1.18775172-.1357889 1.69345756-.5695745l.04666502-.0427837.10703497.1859114.16295747.2641667.09000756.1369219-.10203891.0725127c-1.18457469.8599516-1.78515849 2.0422997-.8749963 3.5478041.72014893 1.1919865 1.68579016 1.3851809 4.67654251 1.4059241h1.2781117l.7210113-.0101194c1.4578857-.0287327 2.9764342-.1065736 3.9343697-.2001215l.2555297.0243167c1.1291243.09698 2.8606159.1735357 4.3993902.1859242h1.2781118c2.9907546-.0207471 3.95642-.2139816 4.6768437-1.4064227l.0983227-.1723424c.764361-1.4241985.1648309-2.548721-.9747412-3.3755348l-.1034569-.072941.0912293-.1362605.1629318-.2641511.1068389-.1855884.0466679.0427821c.5516504.4732059 1.0836451.6468525 1.8890001.5513616 2.6200145-.3116105 2.5604594-3.5895097 1.1502083-8.0424822-.136678-.4315245-.2810058-.8567817-.4385987-1.2939849l-.1781698-.4846461c-.0923296-.2464665-.1903348-.5013359-.2976536-.7744519l-.3954267-.9868956-.8290275-2.020683.0009399-.279262c-.038761-7.60576089-3.8169423-12.93053326-10.6187985-13.09291824zm.0001023 2c6.339972.00032813 9.0947051 5.25726658 8.9334981 11.7557738l.8516442 2.0748544c.5606846 1.3708665.9939584 2.4718584 1.3860782 3.7098724 1.2134003 3.8314013.8203049 5.4169539.5209683 5.4525554-.6424867.0761796-2.5006035-2.8842697-2.5006035-2.8842697 0 1.7141775-.8994592 3.9510027-2.8457046 5.5664147l.3377045.1073023c1.0249215.341207 2.6653848 1.0302704 2.2154641 1.7750936-.4078113.675007-6.9962271.4309917-8.8982689.2207732l-.4753503.0452169c-2.33636.195172-8.04423656.3608021-8.42291849-.2659901-.50418989-.8339832 1.61195836-1.5976385 2.55205373-1.8820678-1.94652419-1.615412-2.84615056-3.852456-2.84615056-5.5667428l-.32111727.4924567c-.56063792.838483-1.70355568 2.4482423-2.17943051 2.391813-.29933663-.0355468-.69254342-1.6211541.52102408-5.4525554l.21887662-.6654718c.52220361-1.5311231 1.13363576-2.9515889 2.01884579-5.1193097-.17029299-6.39290578 2.5220086-11.75539097 8.93338651-11.7557191z" fill="currentColor" fill-rule="nonzero"/>
                     </g>
                 </svg>
                 <span>MusicFree频道</span>
             </a>
-            <!-- LX Server 项目 -->
-            <a href="https://github.com/XCQ0607/lxserver" target="_blank" class="header-btn" id="lxserver-project-btn">
+            <a href="https://github.com/XCQ0607/lxserver" target="_blank" class="header-btn" id="lxserver-project-btn" style="display: none;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 18V5l12-2v13M6 15v8m6-8v8" />
                 </svg>
@@ -911,7 +1026,6 @@
                         <span class="material-icons">refresh</span>
                         <span>更新订阅</span>
                     </button>
-                    <!-- 编辑按钮 -->
                     <button class="action-btn edit-btn" id="edit-source-btn" onclick="editPluginSource()" style="display: inline-block;">
                         <span class="material-icons">edit</span>
                         <span>编辑</span>
@@ -948,14 +1062,124 @@
                     </button>
                 </div>
             </div>
+            <div class="plugin-item" style="margin-top: 15px;">
+                <div class="plugin-info">
+                    <div class="plugin-details">
+                        <div><strong>认证信息</strong></div>
+                        <div style="margin-top: 8px;">
+                            <span style="color: #666; font-size: 13px;">x-user-name：</span><span id="lxserver-username"></span>
+                        </div>
+                        <div style="margin-top: 4px;">
+                            <span style="color: #666; font-size: 13px;">x-user-token：</span><span id="lxserver-token"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="plugin-actions">
+                    <button class="action-btn edit-btn" id="edit-lxserver-auth-btn" onclick="editLxServerAuth()">
+                        <span class="material-icons">edit</span>
+                        <span>编辑</span>
+                    </button>
+                </div>
+            </div>
             <div class="section-title" style="margin-top: 20px;">平台配置</div>
-            <div id="platforms-list" class="platforms-list"></div>
-            <div class="plugin-actions" style="margin-top: 10px;">
+            <div class="plugin-actions" style="margin-top: 10px; margin-bottom: 15px">
                 <button class="action-btn enable-btn" onclick="addPlatform()">
                     <span class="material-icons">add</span>
                     <span>添加平台</span>
                 </button>
             </div>
+            <div id="platforms-list" class="platforms-list"></div>
+            <div id="lx-playlist-section">
+                <div class="section-title" style="margin-top: 20px;">LX歌单</div>
+                <div class="header-buttons" style="margin-bottom: 15px;">
+                <button class="action-btn sync-btn" id="sync-playlist-btn" onclick="fetchLxPlaylist()">
+                    <span class="material-icons">cloud_download</span>
+                    <span>拉取LX歌单</span>
+                </button>
+                <button class="action-btn convert-btn" id="convert-playlist-btn" onclick="convertToXiaomusic()">
+                    <span class="material-icons">transform</span>
+                    <span>转换为XM歌单</span>
+                </button>
+                <button class="action-btn clear-btn" id="clear-xiaomusic-btn" onclick="clearXiaomusicPlaylists()">
+                    <span class="material-icons">clear_all</span>
+                    <span>清空已转歌单</span>
+                </button>
+                <button class="action-btn delete-btn" id="delete-playlist-btn" onclick="deleteSelectedPlaylists()" disabled>
+                    <span class="material-icons">delete</span>
+                    <span>删除选中</span>
+                </button>
+            </div>
+            <div id="playlist-sync-status" class="playlist-sync-status" style="margin-bottom: 15px; display: none;">
+                <span id="sync-status-text"></span>
+            </div>
+            <div id="user-playlists" class="user-playlists">
+                <div class="user-playlist-section">
+                    <div class="playlist-category-title">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="love-list-checkbox" value="loveList">
+                            <span class="expand-icon" onclick="toggleLoveListExpand(event)">▶</span>
+                            <span style="margin-left: 8px;">我喜欢的音乐</span>
+                        </label>
+                    </div>
+                    <div id="love-list-info" class="playlist-info">加载中...</div>
+                    <div id="love-list-songs" class="playlist-songs" style="display: none;"></div>
+                </div>
+                <div class="user-playlist-section">
+                    <div class="playlist-category-title">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="default-list-checkbox" value="defaultList">
+                            <span class="expand-icon" onclick="toggleDefaultListExpand(event)">▶</span>
+                            <span style="margin-left: 8px;">默认歌单</span>
+                        </label>
+                    </div>
+                    <div id="default-list-info" class="playlist-info">加载中...</div>
+                    <div id="default-list-songs" class="playlist-songs" style="display: none;"></div>
+                </div>
+                <div class="user-playlist-section">
+                    <div class="playlist-category-title" style="display: flex; align-items: center; gap: 10px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="select-all-playlists">
+                            <span style="margin-left: 8px;">自定义歌单</span>
+                        </label>
+                    </div>
+                    <div id="user-list-container" class="user-list-container">加载中...</div>
+                </div>
+            </div>
+            <div id="playlist-sync-status" class="playlist-sync-status" style="margin-top: 10px; display: none;">
+                <span id="sync-status-text"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LXServer 认证信息模态框 -->
+<div class="modal-overlay" id="lxserverAuthModal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h2>编辑认证信息</h2>
+            <button class="modal-close" onclick="closeLxServerAuthModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="config-row" style="border-bottom: none;">
+                <div class="config-label">x-user-name</div>
+                <div class="config-value">
+                    <input type="text" class="config-input" id="lxserver-username-input" placeholder="请输入x-user-name" style="background-color: #f8f9fa;">
+                </div>
+            </div>
+            <div class="config-row" style="border-bottom: none;">
+                <div class="config-label">x-user-token</div>
+                <div class="config-value">
+                    <div style="position: relative; display: inline-flex; align-items: center; width: 100%;">
+                        <input type="password" class="config-input" id="lxserver-token-input" placeholder="请输入x-user-token" style="background-color: #f8f9fa; padding-right: 35px;">
+                        <span class="material-icons toggle-password" onclick="toggleTokenVisibility()" id="token-toggle-icon" style="position: absolute; right: 10px; cursor: pointer; font-size: 20px; color: #666;">visibility_off</span>
+                    </div>
+                    <span style="color: #999; font-size: 12px; margin-top: 4px; display: inline-block;">请从 LXServer 处获取认证信息</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-secondary" onclick="closeLxServerAuthModal()">取消</button>
+            <button class="modal-btn modal-btn-primary" onclick="confirmLxServerAuth()">确定</button>
         </div>
     </div>
 </div>
@@ -991,7 +1215,6 @@
             <button class="modal-close" onclick="closeAdvancedConfig()">&times;</button>
         </div>
         <div class="modal-body">
-            <!-- 播放设置卡片 -->
             <div class="config-card">
                 <div class="config-card-title">播放设置</div>
                 <div class="config-row">
@@ -1001,8 +1224,14 @@
                         <span style="margin-left: 8px; color: #6c757d; font-size: 13px;">小爱播放完最后一首时自动添加同歌手歌曲</span>
                     </div>
                 </div>
+                <div class="config-row" id="autoConvertRow" style="display: none;">
+                    <div class="config-label">自动拉取并转换</div>
+                    <div class="config-value">
+                        <input type="checkbox" class="config-checkbox" id="autoConvertCheckbox">
+                        <span style="margin-left: 8px; color: #6c757d; font-size: 13px;">每30秒自动拉取LX歌单并转为XM歌单</span>
+                    </div>
+                </div>
             </div>
-            <!-- AI大模型配置卡片 -->
             <div class="config-card">
                 <div class="config-card-title">
                     AI 大模型配置
@@ -1037,8 +1266,7 @@
                     </div>
                 </div>
             </div>
-            <!-- 偏好设置卡片 -->
-            <div class="config-card" id="boxPlayPlatformCard">
+            <div class="config-card" id="boxPlayPlatformCard" style="display: none;">
                 <div class="config-card-title">偏好设置</div>
                 <div class="config-row">
                     <div class="config-label">口令搜索偏好</div>
@@ -1060,771 +1288,26 @@
     </div>
 </div>
 
+<!-- 加载独立的 JS 文件 -->
+<script src="./setting-backend.js"></script>
+<script src="./setting-musicfree.js"></script>
+<script src="./setting-lxserver.js"></script>
 <script>
-    // 页面加载时获取插件列表
-    window.onload = function() {
-    };
-    // 页面加载时执行
+    /*============================通用函数=================================*/
     document.addEventListener('DOMContentLoaded', async function() {
-        // 首先检查是否需要密码验证
         await checkPasswordRequired();
-
-        // 检查是否已验证，如果需要密码但未验证，则不加载配置
         const passwordModal = document.getElementById('passwordModal');
         if (passwordModal.classList.contains('show')) {
             return;
         }
-
-        // 不需要密码或已验证，加载页面数据
         await initPageData();
     });
 
-    /*============================后台类型配置函数=================================*/
-    async function loadBackConfInfo() {
-        try {
-            const response = await fetch('/api/back-conf/load');
-            const data = await response.json();
-            if (data.success) {
-                displayBackConfInfo(data.data);
-            }
-        } catch (error) {
-            console.error('加载后台配置失败:', error);
-        }
-    }
-
-    function displayBackConfInfo(config) {
-        const container = document.getElementById('backend-options');
-        const apiOptions = config.api_options || [];
-        const currentType = config.api_type || 1;
-        // 保存当前类型到全局变量
-        window.currentBackendType = currentType;
-        window.selectedBackendType = currentType;
-
-        const html = apiOptions.map(opt => `
-            <div class="backend-option ${opt.type === currentType ? 'selected' : ''}"
-                 data-type="${opt.type}" onclick="selectBackendType(${opt.type})">
-                <div class="backend-option-title">
-                    <span class="radio-circle"></span>
-                    ${opt.name}
-                </div>
-                <div class="backend-option-desc">
-                    ${opt.type === 1 ? '使用 MusicFree 插件搜索音乐' : '使用 LXServer 接口搜索音乐'}
-                </div>
-            </div>
-        `).join('');
-
-        container.innerHTML = html;
-
-        // 根据当前选择显示/隐藏配置区域，并加载对应数据
-        updateConfigAreas(currentType);
-        // 加载对应类型的数据
-        if (currentType === 1) {
-            loadPlugins();
-            loadPluginSource();
-        } else {
-            loadLxServerConfig();
-        }
-    }
-
-    function selectBackendType(apiType) {
-        const currentType = window.currentBackendType;
-
-        if (parseInt(apiType) === currentType) {
-            return;
-        }
-
-        if (!confirm('确定要切换接口生态吗？')) {
-            return;
-        }
-
-        window.selectedBackendType = apiType;
-        saveBackendType();
-    }
-
-    async function saveBackendType() {
-        const newType = window.selectedBackendType;
-        const currentType = window.currentBackendType;
-
-        try {
-            const response = await fetch('/api/back-conf/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ api_type: newType })
-            });
-            const data = await response.json();
-            if (data.success) {
-                // 更新全局变量
-                window.currentBackendType = newType;
-                alert('切换成功');
-                // 根据新类型更新配置区域
-                updateConfigAreas(newType);
-                // 更新选项卡选中状态
-                document.querySelectorAll('.backend-option').forEach(el => {
-                    el.classList.remove('selected');
-                    if (parseInt(el.dataset.type) === newType) {
-                        el.classList.add('selected');
-                    }
-                });
-                // 加载对应类型的数据
-                if (newType === 1) {
-                    loadPlugins();
-                    loadPluginSource();
-                } else {
-                    loadLxServerConfig();
-                }
-            } else {
-                alert(`保存失败：${data.error}`);
-            }
-        } catch (error) {
-            alert(`保存出错：${error.message}`);
-        }
-    }
-
-    function updateConfigAreas(apiType) {
-        const pluginArea = document.getElementById('plugin-config-area');
-        const lxserverArea = document.getElementById('lxserver-config-area');
-
-        // 获取需要控制显示的按钮
-        const pluginUploadBtn = document.getElementById('plugin-upload-btn');
-        const pluginRefreshBtn = document.getElementById('plugin-refresh-btn');
-        const pluginChannelBtn = document.getElementById('plugin-channel-btn');
-        const lxserverProjectBtn = document.getElementById('lxserver-project-btn');
-
-        if (apiType === 1) {
-            // MusicFree 模式：显示插件相关按钮，隐藏 LX Server 按钮
-            pluginArea.style.display = 'block';
-            lxserverArea.style.display = 'none';
-
-            pluginUploadBtn.style.display = 'inline-flex';
-            pluginRefreshBtn.style.display = 'inline-flex';
-            pluginChannelBtn.style.display = 'inline-flex';
-            lxserverProjectBtn.style.display = 'none';
-        } else {
-            // LXServer 模式：显示 LX Server 按钮，隐藏插件相关按钮
-            pluginArea.style.display = 'none';
-            lxserverArea.style.display = 'block';
-
-            pluginUploadBtn.style.display = 'none';
-            pluginRefreshBtn.style.display = 'none';
-            pluginChannelBtn.style.display = 'none';
-            lxserverProjectBtn.style.display = 'inline-flex';
-        }
-    }
-
-    /*============================LXServer配置函数=================================*/
-    async function loadLxServerConfig() {
-        try {
-            const response = await fetch('/api/lxServer/load');
-            const data = await response.json();
-            if (data.success) {
-                displayLxServerConfig(data.data);
-            }
-        } catch (error) {
-            console.error('加载LXServer配置失败:', error);
-        }
-    }
-
-    function displayLxServerConfig(config) {
-        document.getElementById('lxserver-url').textContent = config.base_url || '';
-
-        // 显示可编辑的平台列表
-        window.currentPlatforms = config.platforms || {};
-        renderPlatformsList();
-    }
-
-    function renderPlatformsList() {
-        const container = document.getElementById('platforms-list');
-        const platforms = window.currentPlatforms || {};
-        const entries = Object.entries(platforms);
-
-        if (entries.length === 0) {
-            container.innerHTML = '<div class="empty">暂无配置平台</div>';
-            return;
-        }
-
-        const html = entries.map(([key, name]) => `
-            <div class="platform-item">
-                <input type="text" class="platform-key" value="${key}" placeholder="缩写" disabled>
-                <input type="text" class="platform-name" value="${name}" placeholder="平台名称" disabled>
-                <button class="delete-platform-btn" onclick="deletePlatform('${key}')">删除</button>
-            </div>
-        `).join('');
-
-        container.innerHTML = html;
-    }
-
-    function addPlatform() {
-        const newKey = prompt('请输入平台缩写（如：tx, kg, kw）:');
-        if (!newKey || newKey.trim() === '') return;
-
-        const newName = prompt('请输入平台名称（如：QQ音乐）:');
-        if (!newName || newName.trim() === '') return;
-
-        window.currentPlatforms[newKey.trim()] = newName.trim();
-        renderPlatformsList();
-        savePlatforms();
-    }
-
-    function deletePlatform(key) {
-        if (!confirm(`确定要删除平台 "${key}" 吗？`)) return;
-        delete window.currentPlatforms[key];
-        renderPlatformsList();
-        savePlatforms();
-    }
-
-    function updatePlatformKey(oldKey, newKey) {
-        if (oldKey === newKey) return;
-        if (window.currentPlatforms[newKey]) {
-            alert('该缩写已存在！');
-            renderPlatformsList();
-            return;
-        }
-        const name = window.currentPlatforms[oldKey];
-        delete window.currentPlatforms[oldKey];
-        window.currentPlatforms[newKey] = name;
-        renderPlatformsList();
-        savePlatforms();
-    }
-
-    function updatePlatformName(key, newName) {
-        window.currentPlatforms[key] = newName;
-        savePlatforms();
-    }
-
-    async function savePlatforms() {
-        try {
-            const response = await fetch('/api/lxServer/updatePlatforms', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ platforms: window.currentPlatforms })
-            });
-            const data = await response.json();
-            if (!data.success) {
-                alert(`保存失败：${data.error}`);
-            }
-        } catch (error) {
-            console.error('保存平台配置失败:', error);
-        }
-    }
-
-    function editLxServerUrl() {
-        const urlElement = document.getElementById('lxserver-url');
-        const currentUrl = urlElement.textContent;
-        const newUrl = prompt('请输入LXServer 接口地址（如: http://127.0.0.1:9527/api）', currentUrl);
-
-        if (newUrl === null) return;
-
-        if (newUrl.trim() === '') {
-            alert('LXServer 接口地址不能为空！');
-            return;
-        }
-        const flag = isValidUrl(newUrl);
-        if (flag) {
-            updateLxServerUrl(newUrl);
-        } else {
-            alert('请输入有效的接口地址！');
-        }
-    }
-
-    function isValidUrl(url) {
-        try {
-            if (!url.match(/^https?:\/\//i)) {
-                url = 'http://' + url;
-            }
-            const urlObj = new URL(url);
-            const hostname = urlObj.hostname;
-            const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
-            const domainPattern = /^([\da-z-]+\.)+[a-z]{2,6}$/i;
-            return !(!ipPattern.test(hostname) && !domainPattern.test(hostname));
-
-        } catch (e) {
-            return false;
-        }
-    }
-
-    async function updateLxServerUrl(newUrl) {
-        try {
-            const response = await fetch('/api/lxServer/updateUrl', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ search_url: newUrl })
-            });
-            const data = await response.json();
-            if (data.success) {
-                await loadLxServerConfig();
-            } else {
-                alert(`更新失败：${data.error}`);
-            }
-        } catch (error) {
-            alert(`更新出错：${error.message}`);
-        }
-    }
-
-    async function testLxServer() {
-        const urlElement = document.getElementById('lxserver-url');
-        const baseUrl = urlElement.textContent;
-
-        if (!baseUrl) {
-            alert('请先配置 LXServer 接口地址！');
-            return;
-        }
-
-        const testBtn = document.getElementById('test-lxserver-btn');
-        const originalContent = testBtn.innerHTML;
-        testBtn.innerHTML = '<span class="material-icons">sync</span><span>测试中...</span>';
-        testBtn.disabled = true;
-        try {
-            const response = await fetch('/api/lxServer/test');
-            const data = await response.json();
-            if (data.success) {
-                alert(`✅ 测试成功，可正常调用！`);
-            } else {
-                alert(`❌ 测试失败：${data.error || '未知错误'}`);
-            }
-        } catch (error) {
-            alert(`❌ 连接失败：${error.message}\n请检查服务器是否开启或地址是否正确。`);
-        } finally {
-            testBtn.innerHTML = originalContent;
-            testBtn.disabled = false;
-        }
-    }
-
-    /*============================插件源相关函数=================================*/
-    // 加载 OpenAPI 配置
-    async function loadPluginSource() {
-        const container = document.getElementById('plugin-source');
-        if (!container) return;
-        try {
-            const response = await fetch('/api/plugin-source/load');
-            const data = await response.json();
-            if (data.success) {
-                displayPluginSource(data.data);
-            } else {
-                container.innerHTML = `<div class="error">加载失败：${data.error}</div>`;
-            }
-        } catch (error) {
-            container.innerHTML = `<div class="error">加载出错：${error.message}</div>`;
-        }
-    }
-
-    // 显示 OpenAPI 配置
-    function displayPluginSource(config) {
-        document.getElementById('source-url').textContent = config.source_url || '';
-        const editButtonElement = document.getElementById('edit-source-btn');
-        if (config.source_url && config.source_url.length > 0) {
-            editButtonElement.style.display = 'inline-flex';
-        }
-    }
-
-
-    // 刷新订阅源
-    async function refreshPluginSource() {
-        try {
-            const urlElement = document.getElementById('source-url');
-            const currentUrl = urlElement.textContent;
-            if (!currentUrl) {
-                alert('请先设置接口地址！');
-                return;
-            }
-            if (!confirm(`确定要刷新订阅源吗？相同名称插件将被覆盖！`)) {
-                return;
-            }
-            const response = await fetch('/api/plugin-source/refresh', {
-                method: 'POST'
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                // 操作成功，重新加载插件列表
-                await loadPlugins();
-            } else {
-                alert(`切换失败：${data.error}`);
-            }
-        } catch (error) {
-            alert(`操作出错：${error.message}`);
-        }
-    }
-
-    // 编辑插件订阅源地址
-    function editPluginSource() {
-        const urlElement = document.getElementById('source-url');
-        const currentUrl = urlElement.textContent;
-        const newUrl = prompt('请输入新的插件源地址:', currentUrl);
-
-        // 检查用户是否点击了取消
-        if (newUrl === null) {
-            // 用户点击了取消，不执行任何操作
-            return;
-        }
-
-        // 检查用户是否输入了空字符串
-        if (newUrl.trim() === '') {
-            alert('插件源地址不能为空！');
-            return;
-        }
-
-        // 校验 URL 格式
-        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-        if (urlPattern.test(newUrl)) {
-            // 更新地址
-            updatePluginSource(newUrl);
-        } else {
-            alert('请输入有效的插件源地址！');
-        }
-    }
-
-    // 更新 OpenAPI 地址
-    async function updatePluginSource(newUrl) {
-        try {
-            const response = await fetch('/api/plugin-source/updateUrl', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ source_url: newUrl })
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                // 更新成功，重新加载插件列表
-                await loadPluginSource();
-            } else {
-                alert(`更新失败：${data.error}`);
-            }
-        } catch (error) {
-            alert(`更新出错：${error.message}`);
-        }
-    }
-
-    /*============================插件函数=================================*/
-
-    // 加载插件列表
-    async function loadPlugins() {
-        const container = document.getElementById('plugins-container');
-        container.innerHTML = '<div class="loading">加载中...</div>';
-
-        try {
-            const response = await fetch('/api/js-plugins');
-            const data = await response.json();
-
-            if (data.success) {
-                displayPlugins(data.data);
-            } else {
-                container.innerHTML = `<div class="error">加载失败：${data.error}</div>`;
-            }
-        } catch (error) {
-            container.innerHTML = `<div class="error">加载出错：${error.message}</div>`;
-        }
-    }
-
-    /// 在现有的 script 标签中添加以下函数
-
-    /*============================高级设置函数=================================*/
-    // 打开高级设置模态框
-    async function openAdvancedConfig() {
-        // 检查密码是否需要验证
-        try {
-            const response = await fetch('/api/password/check');
-            const data = await response.json();
-            if (data.success && data.data.required) {
-                const isVerified = sessionStorage.getItem('setting_verified');
-                if (isVerified !== 'true') {
-                    showPasswordModal();
-                    return;
-                }
-            }
-        } catch (error) {
-            console.error('检查密码配置失败:', error);
-        }
-
-        const modal = document.getElementById('advancedConfigModal');
-        modal.classList.add('show');
-        // 加载当前配置
-        await loadAdvancedConfig();
-        // 加载平台偏好设置
-        await loadBoxPlayPlatform();
-    }
-
-    // 关闭高级设置模态框
-    function closeAdvancedConfig() {
-        const modal = document.getElementById('advancedConfigModal');
-        modal.classList.remove('show');
-    }
-
-    // 加载高级配置
-    async function loadAdvancedConfig() {
-        try {
-            const response = await fetch('/api/advanced-config/load');
-            const data = await response.json();
-            if (data.success) {
-                displayAdvancedConfig(data.data);
-            } else {
-                alert(`加载失败：${data.error}`);
-            }
-        } catch (error) {
-            alert(`加载出错：${error.message}`);
-        }
-    }
-
-    // 显示高级配置
-    function displayAdvancedConfig(config) {
-        // 自动添加歌曲
-        const autoAddSongCheckbox = document.getElementById('autoAddSongCheckbox');
-        autoAddSongCheckbox.checked = config.auto_add_song === true;
-
-        // AI 接口配置
-        const aiapiInfo = config.aiapi_info || {};
-        const aiApiEnabledCheckbox = document.getElementById('aiApiEnabledCheckbox');
-        const aiBaseUrlInput = document.getElementById('aiBaseUrlInput');
-        const aiApiKeyInput = document.getElementById('aiApiKeyInput');
-        const aiModelInput = document.getElementById('aiModelInput');
-
-        aiApiEnabledCheckbox.checked = aiapiInfo.enabled === true;
-        aiBaseUrlInput.value = aiapiInfo.base_url || '';
-        aiApiKeyInput.value = aiapiInfo.api_key || '';
-        aiModelInput.value = aiapiInfo.model || '';
-    }
-
-    // 保存高级配置（包含平台偏好）
-    async function saveAdvancedConfig() {
-        try {
-            const autoAddSong = document.getElementById('autoAddSongCheckbox').checked;
-            const aiApiEnabled = document.getElementById('aiApiEnabledCheckbox').checked;
-            const aiBaseUrl = document.getElementById('aiBaseUrlInput').value.trim();
-            const aiApiKey = document.getElementById('aiApiKeyInput').value.trim();
-            const aiModel = document.getElementById('aiModelInput').value.trim();
-
-            const aiapiInfo = {
-                enabled: aiApiEnabled,
-                base_url: aiBaseUrl || undefined,
-                api_key: aiApiKey,
-                model: aiModel
-            };
-
-            // 保存高级配置
-            const response = await fetch('/api/advanced-config/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    auto_add_song: autoAddSong,
-                    aiapi_info: aiapiInfo
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                // 同时保存平台偏好
-                await saveBoxPlayPlatform();
-                alert('保存成功');
-                closeAdvancedConfig();
-            } else {
-                alert(`保存失败：${data.error}`);
-            }
-        } catch (error) {
-            alert(`保存出错：${error.message}`);
-        }
-    }
-
-    // 加载平台偏好设置
-    async function loadBoxPlayPlatform() {
-        try {
-            const response = await fetch('/api/box-play-platform/load');
-            const data = await response.json();
-            if (data.success) {
-                displayBoxPlayPlatform(data.data);
-            }
-        } catch (error) {
-            console.error('加载平台偏好设置失败:', error);
-        }
-    }
-
-    // 显示平台偏好设置
-    function displayBoxPlayPlatform(config) {
-        const platformSelect = document.getElementById('boxPlayPlatformSelect');
-
-        // 清空并填充平台选项
-        platformSelect.innerHTML = '<option value="all">聚合搜索</option>';
-        // 处理 platforms 为对象的情况
-        const platformsObj = config.platforms || {};
-        Object.entries(platformsObj).forEach(([key, name]) => {
-            const option = document.createElement('option');
-            option.value = key;
-            option.textContent = name;
-            platformSelect.appendChild(option);
-        });
-
-        // 设置当前选中的平台
-        platformSelect.value = config.platform;
-    }
-
-    // 保存平台偏好设置
-    async function saveBoxPlayPlatform() {
-        try {
-            const platform = document.getElementById('boxPlayPlatformSelect').value;
-
-            const response = await fetch('/api/box-play-platform/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    platform: platform
-                })
-            });
-
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || '保存失败');
-            }
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    // 插件导入功能
-    function uploadPlugins() {
-        // 创建文件输入元素
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = '.js'; // 只允许上传 js 文件
-        fileInput.style.display = 'none';
-
-        // 监听文件选择事件
-        fileInput.onchange = async function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            // 验证文件类型
-            if (!file.name.endsWith('.js')) {
-                alert('只允许上传 .js 格式的文件');
-                return;
-            }
-
-            // 创建 FormData 对象
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                // 上传文件
-                const response = await fetch('/api/js-plugins/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('插件导入成功');
-                    // 自动刷新插件列表
-                    await loadPlugins();
-                } else {
-                    alert(`插件导入失败：${data.error}`);
-                }
-            } catch (error) {
-                alert(`插件导入出错：${error.message}`);
-            }
-        };
-
-        // 触发文件选择对话框
-        document.body.appendChild(fileInput);
-        fileInput.click();
-        document.body.removeChild(fileInput);
-    }
-
-    // 显示插件列表
-    function displayPlugins(plugins) {
-        const container = document.getElementById('plugins-container');
-
-        if (!plugins || plugins.length === 0) {
-            container.innerHTML = '<div class="empty">没有找到插件</div>';
-            return;
-        }
-
-        const html = plugins.map(plugin => `
-            <div class="plugin-item">
-                <div class="plugin-info">
-                    <div class="plugin-name">${plugin.name}</div>
-                    <div class="plugin-details">
-                        <span class="plugin-status ${plugin.enabled ? 'status-enabled' : 'status-disabled'}">
-                            ${plugin.enabled ? '已启用' : '已禁用'}
-                        </span>
-                        ${plugin.error ? ` | 错误：${plugin.error}` : ''}
-                    </div>
-                </div>
-                <div class="plugin-actions">
-                    ${plugin.enabled ?
-            `<button class="action-btn disable-btn" onclick="togglePlugin('${plugin.name}', false)">
-                <span class="material-icons">block</span>
-                <span>禁用</span>
-            </button>` :
-            `<button class="action-btn enable-btn" onclick="togglePlugin('${plugin.name}', true)">
-                <span class="material-icons">check_circle</span>
-                <span>启用</span>
-            </button>
-            <button class="action-btn uninstall-btn" onclick="uninstallPlugin('${plugin.name}')">
-                <span class="material-icons">delete</span>
-                <span>卸载</span>
-            </button>`
-        }
-                </div>
-            </div>
-        `).join('');
-
-        container.innerHTML = `<div class="plugin-list">${html}</div>`;
-    }
-
-    // 启用/禁用插件
-    async function togglePlugin(pluginName, enable) {
-        try {
-            const url = enable ?
-                `/api/js-plugins/${pluginName}/enable` :
-                `/api/js-plugins/${pluginName}/disable`;
-
-            const response = await fetch(url, {
-                method: 'PUT'
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                // 操作成功，重新加载插件列表
-                await loadPlugins();
-            } else {
-                alert(`${enable ? '启用' : '禁用'}插件失败：${data.error}`);
-            }
-        } catch (error) {
-            alert(`${enable ? '启用' : '禁用'}插件出错：${error.message}`);
-        }
-    }
-
-    // 卸载插件功能
-    async function uninstallPlugin(pluginName) {
-        if (!confirm(`确定要卸载插件 "${pluginName}" 吗？此操作不可恢复。`)) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/js-plugins/${pluginName}/uninstall`, {
-                method: 'DELETE'
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                alert('插件卸载成功');
-                // 重新加载插件列表
-                await loadPlugins();
-            } else {
-                alert(`插件卸载失败：${data.error}`);
-            }
-        } catch (error) {
-            alert(`插件卸载出错：${error.message}`);
-        }
-    }
-
-    /*============================密码验证函数=================================*/
     async function checkPasswordRequired() {
         try {
             const response = await fetch('/api/password/check');
             const data = await response.json();
             if (data.success && data.data.required) {
-                // 需要密码验证，检查是否已验证
                 const isVerified = sessionStorage.getItem('setting_verified');
                 if (isVerified !== 'true') {
                     showPasswordModal();
@@ -1835,28 +1318,22 @@
         }
     }
 
-    // 初始化页面数据
     async function initPageData() {
-        // 获取版本号
         if (window.appConfig && window.appConfig.version) {
             const versionSpan = document.getElementById('versionSpan');
             if (versionSpan) {
                 versionSpan.textContent = `v${window.appConfig.version}`;
             }
         }
-        // 初始化全局变量
         window.currentBackendType = 1;
-        // 首先加载后台配置
         await loadBackConfInfo();
-        // 根据后台类型加载对应配置
         if (window.currentBackendType === 1) {
             await loadPlugins();
             await loadPluginSource();
         } else {
-            loadLxServerConfig();
+            await loadLxServerConfig();
+            await fetchLxPlaylist();
         }
-
-        // 添加字体加载完成后的处理
         document.fonts.ready.then(function() {
             document.body.classList.add('fonts-loaded');
         });
@@ -1893,7 +1370,6 @@
                 sessionStorage.setItem('setting_verified', 'true');
                 hidePasswordModal();
                 passwordInput.value = '';
-                // 密码验证成功后加载页面数据
                 await initPageData();
             } else {
                 alert(data.error || '密码错误');
@@ -1913,7 +1389,6 @@
     function returnToIndex() {
         window.location.href = './index.html';
     }
-
 </script>
 <!-- 密码验证模态框 -->
 <div class="modal-overlay" id="passwordModal">

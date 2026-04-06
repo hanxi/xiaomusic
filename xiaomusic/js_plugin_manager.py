@@ -46,6 +46,10 @@ class JSPluginManager:
         self._config_cache_time = 0
         self._config_cache_ttl = 3 * 60  # 缓存有效期5秒，可根据需要调整
 
+        # 自动转换定时任务
+        self._auto_convert_task = None
+        self._auto_convert_interval = 30  # 定时任务间隔（秒）
+
         # 启动 Node.js 子进程
         self._start_node_process()
 
@@ -286,26 +290,33 @@ class JSPluginManager:
             if config_data:
                 return {
                     "auto_add_song": config_data.get("auto_add_song", False),
+                    "auto_convert": config_data.get("auto_convert", False),
                     "aiapi_info": config_data.get("aiapi_info", {}),
                 }
             else:
                 return {
                     "auto_add_song": False,
+                    "auto_convert": False,
                     "aiapi_info": {"enabled": False, "api_key": ""},
                 }
         except Exception as e:
             self.log.error(f"Failed to read advanced config: {e}")
             return {
                 "auto_add_song": False,
+                "auto_convert": False,
                 "aiapi_info": {"enabled": False, "api_key": ""},
             }
 
     def update_advanced_config(
-        self, auto_add_song: bool = None, aiapi_info: dict = None
+        self,
+        auto_add_song: bool = None,
+        auto_convert: bool = None,
+        aiapi_info: dict = None,
     ) -> dict[str, Any]:
         """更新高级配置信息
         Args:
             auto_add_song: 自动添加歌曲开关
+            auto_convert: 自动转换洛雪歌单开关
             aiapi_info: AI接口配置信息
         Returns:
             更新结果字典
@@ -318,12 +329,19 @@ class JSPluginManager:
                 if auto_add_song is not None:
                     config_data["auto_add_song"] = auto_add_song
 
+                if auto_convert is not None:
+                    config_data["auto_convert"] = auto_convert
+
                 if aiapi_info is not None:
                     config_data["aiapi_info"] = aiapi_info
 
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
                 self._invalidate_config_cache()
+
+                if auto_convert is not None:
+                    self.restart_auto_convert()
+
                 return {"success": True}
             else:
                 return {"success": False, "error": "Config file not found"}
@@ -376,6 +394,26 @@ class JSPluginManager:
 
     """------------------------------LX Server接口相关函数----------------------------------------"""
 
+    def _build_lx_server_headers(
+        self, lx_server_info: dict[str, Any]
+    ) -> dict[str, str] | None:
+        """构建 LX Server 认证头
+
+        Args:
+            lx_server_info: LX Server 配置信息
+
+        Returns:
+            包含认证信息的请求头，如果未配置则返回 None
+        """
+        user_name = lx_server_info.get("x-user-name", "")
+        user_token = lx_server_info.get("x-user-token", "")
+        if user_name and user_token and user_name != "" and user_token != "":
+            return {
+                "x-user-name": user_name,
+                "x-user-token": user_token,
+            }
+        return None
+
     async def test_lx_server(self) -> dict[str, Any]:
         """测试lxServer接口
         Returns:
@@ -384,8 +422,10 @@ class JSPluginManager:
         try:
             lx_server_info = self.get_lx_server_info()
             if lx_server_info.get("base_url", "") != "":
+                headers = self._build_lx_server_headers(lx_server_info)
                 result_data = await self.simple_async_get(
-                    url=lx_server_info.get("base_url") + "/music/config"
+                    url=lx_server_info.get("base_url") + "/music/config",
+                    headers=headers,
                 )
                 if (
                     result_data
@@ -401,6 +441,26 @@ class JSPluginManager:
             else:
                 return {"success": False, "error": "LX Server接口未配置！"}
         except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def get_local_lxserver_user_list(self) -> dict[str, Any]:
+        """获取本地的LXServer用户歌单数据
+
+        Returns:
+            Dict[str, Any]: 本地缓存的歌单数据
+        """
+        try:
+            lx_server_info = self.get_lx_server_info()
+            raw_playlist = lx_server_info.get("music_list_json", "")
+
+            if not raw_playlist:
+                return {"success": False, "error": "请先点击「同步LX歌单」获取歌单数据"}
+
+            playlist_data = json.loads(raw_playlist)
+            return {"success": True, "data": playlist_data}
+
+        except Exception as e:
+            self.log.error(f"获取本地LXServer歌单失败: {e}")
             return {"success": False, "error": str(e)}
 
     def get_lx_server_info(self) -> dict[str, Any]:
@@ -491,6 +551,43 @@ class JSPluginManager:
                 return {"success": False, "error": "Config file not found"}
         except Exception as e:
             self.log.error(f"Failed to update LXServer platforms: {e}")
+            return {"success": False, "error": str(e)}
+
+    def update_lxserver_auth(self, username: str, token: str) -> dict[str, Any]:
+        """更新LXServer认证信息
+        Args:
+            username: 用户名
+            token: 认证Token
+        Returns:
+            更新结果字典
+        """
+        try:
+            if os.path.exists(self.plugins_config_path):
+                with open(self.plugins_config_path, encoding="utf-8") as f:
+                    config_data = json.load(f)
+
+                lx_server_info = config_data.get("lx_server_info", {})
+                lx_server_info["x-user-name"] = username
+                lx_server_info["x-user-token"] = token
+                config_data["lx_server_info"] = lx_server_info
+
+                with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                    json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+                self._invalidate_config_cache()
+
+                config_data = self._get_config_data()
+                auto_convert = (
+                    config_data.get("auto_convert", False) if config_data else False
+                )
+                if auto_convert and username and token:
+                    self.restart_auto_convert()
+
+                return {"success": True}
+            else:
+                return {"success": False, "error": "Config file not found"}
+        except Exception as e:
+            self.log.error(f"Failed to update LXServer auth: {e}")
             return {"success": False, "error": str(e)}
 
     def get_box_play_platform_preference(self) -> str:
@@ -1049,6 +1146,7 @@ class JSPluginManager:
         params: dict[str, Any] | None = None,
         json_data: dict[str, Any] | None = None,
         timeout: int = 10,
+        headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """统一的异步 HTTP 请求封装
 
@@ -1058,6 +1156,7 @@ class JSPluginManager:
             params: URL 查询参数
             json_data: JSON 请求体
             timeout: 超时时间（秒）
+            headers: 自定义请求头
 
         Returns:
             dict: 包含 success、data/status、error 字段的响应字典
@@ -1071,7 +1170,7 @@ class JSPluginManager:
             async with aiohttp.ClientSession(connector=connector) as session:
                 if method.upper() == "GET":
                     async with session.get(
-                        url, params=params, timeout=client_timeout
+                        url, params=params, timeout=client_timeout, headers=headers
                     ) as response:
                         response.raise_for_status()
                         return {
@@ -1084,7 +1183,7 @@ class JSPluginManager:
                         }
                 else:
                     async with session.post(
-                        url, json=json_data, timeout=client_timeout
+                        url, json=json_data, timeout=client_timeout, headers=headers
                     ) as response:
                         response.raise_for_status()
                         return {
@@ -1103,11 +1202,12 @@ class JSPluginManager:
             self.log.error(f"Request error at {url}: {str(e)}")
             return {"success": False, "error": str(e)}
 
-    async def simple_async_get(self, url: str):
+    async def simple_async_get(self, url: str, headers: dict[str, str] | None = None):
         """基础的异步 GET 请求封装
 
         Args:
             url (str): 请求地址
+            headers (dict): 自定义请求头
 
         Returns:
             Any: 如果响应是 JSON 则返回 dict/list，否则返回响应文本字符串。
@@ -1118,7 +1218,9 @@ class JSPluginManager:
         connector = aiohttp.TCPConnector(ssl=False)
         try:
             async with aiohttp.ClientSession(connector=connector) as session:
-                async with session.get(url, timeout=timeout) as response:
+                async with session.get(
+                    url, timeout=timeout, headers=headers
+                ) as response:
                     response.raise_for_status()
                     content_type = response.headers.get("Content-Type", "")
                     if "application/json" in content_type:
@@ -1143,6 +1245,7 @@ class JSPluginManager:
         source: str = "tx",
         limit: int = 20,
         page: int = 1,
+        lx_server_info: dict[str, Any] | None = None,
     ):
         """直接调用LX Server接口进行音乐搜索
 
@@ -1153,13 +1256,17 @@ class JSPluginManager:
             artist (str): 搜索的歌手名，可能为空
             limit (int): 每页数量，默认为20
             page (int): 页码，默认为1
+            lx_server_info (dict): LX Server 配置信息
         Returns:
             Dict[str, Any]: 搜索结果，数据结构与search函数一致
         """
         params = {"source": source, "name": keyword, "limit": limit, "page": page}
         self.log.info(f"Calling LX Server API: {url} with params: {params}")
+        headers = (
+            self._build_lx_server_headers(lx_server_info) if lx_server_info else None
+        )
 
-        result = await self._http_request("GET", url, params=params)
+        result = await self._http_request("GET", url, params=params, headers=headers)
         if not result["success"]:
             return {
                 "success": False,
@@ -1214,7 +1321,11 @@ class JSPluginManager:
         }
 
     async def lx_server_music_url(
-        self, url: str, song_info: dict[str, Any], quality: str = "320k"
+        self,
+        url: str,
+        song_info: dict[str, Any],
+        quality: str = "320k",
+        lx_server_info: dict[str, Any] | None = None,
     ):
         """直接调用LX Server接口获取音乐URL
 
@@ -1222,12 +1333,18 @@ class JSPluginManager:
             url (str): 在线搜索接口地址
             song_info (dict[str, Any]): 歌曲信息
             quality (str): 音质，默认为320k
+            lx_server_info (dict): LX Server 配置信息
 
         Returns:
             Dict[str, Any]: 包含音乐URL的响应
         """
         json_data = {"songInfo": song_info, "quality": quality}
-        result = await self._http_request("POST", url, json_data=json_data)
+        headers = (
+            self._build_lx_server_headers(lx_server_info) if lx_server_info else None
+        )
+        result = await self._http_request(
+            "POST", url, json_data=json_data, headers=headers
+        )
 
         if not result["success"]:
             return {"success": False, "error": result["error"], "data": {}}
@@ -1243,12 +1360,18 @@ class JSPluginManager:
             }
         return raw_data
 
-    async def lx_server_music_lyric(self, url: str, song_info: dict[str, Any]):
+    async def lx_server_music_lyric(
+        self,
+        url: str,
+        song_info: dict[str, Any],
+        lx_server_info: dict[str, Any] | None = None,
+    ):
         """直接调用 LX Server 接口获取歌词
 
         Args:
             url (str): 在线搜索接口地址
             song_info (dict[str, Any]): 歌曲信息字典，包含 source、songmid、name 等字段
+            lx_server_info (dict): LX Server 配置信息
 
         Returns:
             Dict[str, Any]: 歌词数据
@@ -1263,8 +1386,11 @@ class JSPluginManager:
         }
 
         self.log.info(f"LX Server 歌词接口请求参数：{params}")
+        headers = (
+            self._build_lx_server_headers(lx_server_info) if lx_server_info else None
+        )
 
-        result = await self._http_request("GET", url, params=params)
+        result = await self._http_request("GET", url, params=params, headers=headers)
         if not result["success"]:
             return {"success": False, "error": result["error"], "data": {}}
 
@@ -1284,6 +1410,546 @@ class JSPluginManager:
             return raw_data
         else:
             return {"success": False, "error": "Lyric field not found in response"}
+
+    async def lx_server_user_list(
+        self,
+        lx_server_info: dict[str, Any] | None = None,
+    ):
+        """直接调用 LX Server 接口获取用户歌单
+
+        Args:
+            lx_server_info (dict): LX Server 配置信息
+
+        Returns:
+            Dict[str, Any]: 用户歌单数据，包含 defaultList、loveList、userList
+        """
+        if not lx_server_info or not lx_server_info.get("base_url"):
+            return {"success": False, "error": "LX Server未配置"}
+
+        headers = self._build_lx_server_headers(lx_server_info)
+        if not headers:
+            return {"success": False, "error": "LX Server认证信息未配置"}
+
+        url = lx_server_info.get("base_url") + "/user/list"
+        self.log.info(f"Calling LX Server user list API: {url}")
+
+        result = await self._http_request("GET", url, headers=headers)
+        if not result["success"]:
+            return {"success": False, "error": result["error"]}
+
+        raw_data = result["data"]
+        self.log.info(f"LX Server 用户歌单返回原始Json: {raw_data}")
+
+        if not isinstance(raw_data, dict):
+            return {"success": False, "error": f"API request failed: {raw_data}"}
+
+        return {"success": True, "data": raw_data}
+
+    async def pull_lxserver_playlist(self) -> dict[str, Any]:
+        """拉取LXServer用户歌单到plugins-config.json
+
+        Returns:
+            Dict[str, Any]: 同步结果
+        """
+        try:
+            lx_server_info = self.get_lx_server_info()
+            if not lx_server_info.get("base_url"):
+                return {"success": False, "error": "LX Server未配置"}
+
+            headers = self._build_lx_server_headers(lx_server_info)
+            if not headers:
+                return {"success": False, "error": "LX Server认证信息未配置"}
+
+            url = lx_server_info.get("base_url") + "/user/list"
+            self.log.info(f"同步LXServer歌单: {url}")
+
+            result = await self._http_request("GET", url, headers=headers)
+            if not result["success"]:
+                return {"success": False, "error": result["error"]}
+
+            playlist_data = result["data"]
+            if not isinstance(playlist_data, dict):
+                return {
+                    "success": False,
+                    "error": f"API request failed: {playlist_data}",
+                }
+
+            love_list = playlist_data.get("loveList")
+            if love_list is None or (
+                isinstance(love_list, list) and len(love_list) == 0
+            ):
+                playlist_data.pop("loveList", None)
+
+            default_list = playlist_data.get("defaultList")
+            if default_list is None or (
+                isinstance(default_list, list) and len(default_list) == 0
+            ):
+                playlist_data.pop("defaultList", None)
+
+            if "userList" in playlist_data:
+                filtered_user_list = []
+                for lst in playlist_data["userList"]:
+                    song_list = (
+                        lst.get("list")
+                        or lst.get("musicList")
+                        or lst.get("songs")
+                        or []
+                    )
+                    song_count = len(song_list) if isinstance(song_list, list) else 0
+                    lst["songCount"] = song_count
+                    if song_count > 0:
+                        filtered_user_list.append(lst)
+                    else:
+                        self.log.info(
+                            f"过滤空歌单: {lst.get('name', 'unknown')}, 歌曲数量: {song_count}"
+                        )
+                playlist_data["userList"] = filtered_user_list
+
+            if not os.path.exists(self.plugins_config_path):
+                return {"success": False, "error": "配置文件不存在"}
+
+            with open(self.plugins_config_path, encoding="utf-8") as f:
+                config_data = json.load(f)
+
+            lx_server_info["music_list_json"] = json.dumps(
+                playlist_data, ensure_ascii=False
+            )
+            config_data["lx_server_info"] = lx_server_info
+
+            with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+            self._invalidate_config_cache()
+
+            synced_count = 0
+            log_parts = []
+            if playlist_data.get("loveList"):
+                synced_count += 1
+                love_count = len(playlist_data.get("loveList", []))
+                log_parts.append(f"我喜欢的音乐({love_count}首)")
+            if playlist_data.get("defaultList"):
+                synced_count += 1
+                default_count = len(playlist_data.get("defaultList", []))
+                log_parts.append(f"默认歌单({default_count}首)")
+            if playlist_data.get("userList"):
+                user_lists = playlist_data.get("userList", [])
+                synced_count += len(user_lists)
+                for lst in user_lists:
+                    song_list = (
+                        lst.get("list")
+                        or lst.get("musicList")
+                        or lst.get("songs")
+                        or []
+                    )
+                    song_count = len(song_list) if isinstance(song_list, list) else 0
+                    log_parts.append(f"{lst.get('name', 'unknown')}({song_count}首)")
+
+            self.log.info(
+                f"LXServer歌单拉取完成，共 {synced_count} 个歌单: {', '.join(log_parts)}"
+            )
+            return {
+                "success": True,
+                "message": f"拉取成功，共 {synced_count} 个歌单",
+            }
+
+        except Exception as e:
+            self.log.error(f"拉取LXServer歌单失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    def convert_lxserver_playlist(
+        self, target_playlists: list[str] | None = None
+    ) -> dict[str, Any]:
+        """将LXServer歌单转换为xiaomusic格式并保存到setting.json
+
+        Args:
+            target_playlists: 指定要转换的歌单名称列表，为None时全量转换。
+                              可选值：我喜欢的音乐、默认歌单、或userList中的歌单名称
+
+        Returns:
+            Dict[str, Any]: 转换结果
+        """
+        try:
+            lx_server_info = self.get_lx_server_info()
+            raw_playlist = lx_server_info.get("music_list_json", "")
+
+            if not raw_playlist:
+                return {"success": False, "error": "请先点击「同步LX歌单」获取歌单数据"}
+
+            playlist_data = json.loads(raw_playlist)
+
+            setting_path = os.path.join(self.xiaomusic.config.conf_path, "setting.json")
+            if not os.path.exists(setting_path):
+                return {"success": False, "error": "setting.json配置文件不存在"}
+
+            with open(setting_path, encoding="utf-8") as f:
+                setting_data = json.load(f)
+
+            music_list_json = setting_data.get("music_list_json", "")
+            if music_list_json:
+                try:
+                    music_lists = json.loads(music_list_json)
+                except json.JSONDecodeError:
+                    music_lists = []
+            else:
+                music_lists = []
+
+            music_lists = [
+                lst for lst in music_lists if not lst["name"].startswith("_online_lx_")
+            ]
+
+            converted_count = 0
+
+            def should_convert(name: str) -> bool:
+                if target_playlists is None:
+                    return True
+                return name in target_playlists
+
+            love_list = playlist_data.get("loveList", [])
+            if love_list and should_convert("我喜欢的音乐"):
+                list_name = "_online_lx_我喜欢的音乐"
+                musics = self._convert_lxserver_songs(love_list, "我喜欢的音乐")
+                music_lists.append({"name": list_name, "musics": musics})
+                converted_count += 1
+
+            default_list = playlist_data.get("defaultList", [])
+            if default_list and should_convert("默认歌单"):
+                list_name = "_online_lx_默认歌单"
+                musics = self._convert_lxserver_songs(default_list, "默认歌单")
+                music_lists.append({"name": list_name, "musics": musics})
+                converted_count += 1
+
+            user_lists = playlist_data.get("userList", [])
+            for user_list in user_lists:
+                list_name = user_list.get("name", "")
+                if not list_name:
+                    continue
+                if should_convert(list_name):
+                    full_name = f"_online_lx_{list_name}"
+                    songs = user_list.get("list", [])
+                    musics = self._convert_lxserver_songs(songs, list_name)
+                    music_lists.append({"name": full_name, "musics": musics})
+                    converted_count += 1
+
+            setting_data["music_list_json"] = json.dumps(
+                music_lists, ensure_ascii=False
+            )
+
+            with open(setting_path, "w", encoding="utf-8") as f:
+                json.dump(setting_data, f, ensure_ascii=False, indent=2)
+
+            self.xiaomusic.config.music_list_json = setting_data["music_list_json"]
+
+            if self.xiaomusic and hasattr(self.xiaomusic, "music_library"):
+                self.xiaomusic.music_library.gen_all_music_list()
+
+            convert_type = "全量" if target_playlists is None else "指定"
+            self.log.info(
+                f"LXServer歌单{convert_type}转换完成，共转换 {converted_count} 个歌单"
+            )
+            return {
+                "success": True,
+                "message": f"LXServer歌单{convert_type}转换完成，共转换 {converted_count} 个歌单",
+                "converted_count": converted_count,
+                "target_playlists": target_playlists,
+            }
+
+        except Exception as e:
+            self.log.error(f"转换LXServer歌单失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def _auto_convert_loop(self):
+        """自动转换定时任务循环"""
+        while True:
+            await asyncio.sleep(self._auto_convert_interval)
+            try:
+                config_data = self._get_config_data()
+                auto_convert = (
+                    config_data.get("auto_convert", False) if config_data else False
+                )
+
+                if not auto_convert:
+                    self.log.info("自动转换已关闭，停止定时任务")
+                    break
+
+                lx_server_info = self.get_lx_server_info()
+                user_name = lx_server_info.get("x-user-name", "")
+                user_token = lx_server_info.get("x-user-token", "")
+
+                if not user_name or not user_token:
+                    self.log.debug("LXServer认证信息未配置，跳过本次同步")
+                    continue
+
+                self.log.info("开始自动同步LXServer歌单...")
+                pull_result = await self.pull_lxserver_playlist()
+                if not pull_result.get("success"):
+                    self.log.warning(f"自动拉取歌单失败: {pull_result.get('error')}")
+                    continue
+
+                self.log.info("开始自动转换歌单...")
+                convert_result = self.convert_lxserver_playlist()
+                if convert_result.get("success"):
+                    self.log.info("自动转换完成")
+                else:
+                    self.log.warning(f"自动转换失败: {convert_result.get('error')}")
+
+            except asyncio.CancelledError:
+                self.log.info("自动转换任务已取消")
+                raise
+            except Exception as e:
+                self.log.error(f"自动转换任务异常: {e}")
+
+    def start_auto_convert(self):
+        """启动自动转换定时任务"""
+        if self._auto_convert_task is not None and not self._auto_convert_task.done():
+            self.log.info("自动转换任务已在运行中")
+            return
+
+        config_data = self._get_config_data()
+        auto_convert = config_data.get("auto_convert", False) if config_data else False
+
+        if not auto_convert:
+            self.log.info("自动转换未启用，不启动定时任务")
+            return
+
+        lx_server_info = self.get_lx_server_info()
+        user_name = lx_server_info.get("x-user-name", "")
+        user_token = lx_server_info.get("x-user-token", "")
+
+        if not user_name or not user_token:
+            self.log.info("LXServer认证信息未配置，不启动定时任务")
+            return
+
+        self.log.info("启动自动转换定时任务，每30秒拉取一次")
+        self._auto_convert_task = asyncio.create_task(self._auto_convert_loop())
+
+    def stop_auto_convert(self):
+        """停止自动转换定时任务"""
+        if self._auto_convert_task is not None and not self._auto_convert_task.done():
+            self._auto_convert_task.cancel()
+            self.log.info("已停止自动转换定时任务")
+
+    def restart_auto_convert(self):
+        """重启自动转换定时任务"""
+        self.stop_auto_convert()
+        self.start_auto_convert()
+
+    def delete_lxserver_playlists(
+        self, delete_list: list[str], user_list_indexes: list[int]
+    ) -> dict[str, Any]:
+        """删除LXServer歌单
+
+        Args:
+            delete_list: 要删除的歌单类型列表，如 ["loveList", "defaultList"]
+            user_list_indexes: 要删除的用户歌单索引列表
+
+        Returns:
+            Dict[str, Any]: 删除结果
+        """
+        try:
+            if not os.path.exists(self.plugins_config_path):
+                return {"success": False, "error": "配置文件不存在"}
+
+            with open(self.plugins_config_path, encoding="utf-8") as f:
+                config_data = json.load(f)
+
+            lx_server_info = config_data.get("lx_server_info", {})
+            raw_playlist = lx_server_info.get("music_list_json", "")
+
+            if not raw_playlist:
+                return {"success": False, "error": "没有可删除的歌单数据"}
+
+            playlist_data = json.loads(raw_playlist)
+            deleted_count = 0
+
+            if "loveList" in delete_list:
+                playlist_data.pop("loveList", None)
+                deleted_count += 1
+
+            if "defaultList" in delete_list:
+                playlist_data.pop("defaultList", None)
+                deleted_count += 1
+
+            if user_list_indexes and "userList" in playlist_data:
+                user_lists = playlist_data["userList"]
+                for index in sorted(user_list_indexes, reverse=True):
+                    if 0 <= index < len(user_lists):
+                        user_lists.pop(index)
+                        deleted_count += 1
+
+            lx_server_info["music_list_json"] = json.dumps(
+                playlist_data, ensure_ascii=False
+            )
+            config_data["lx_server_info"] = lx_server_info
+
+            with open(self.plugins_config_path, "w", encoding="utf-8") as f:
+                json.dump(config_data, f, ensure_ascii=False, indent=2)
+
+            self._invalidate_config_cache()
+
+            self.log.info(f"LXServer歌单删除完成，共删除 {deleted_count} 个歌单")
+            return {
+                "success": True,
+                "message": f"删除成功，共删除 {deleted_count} 个歌单",
+            }
+
+        except Exception as e:
+            self.log.error(f"删除LXServer歌单失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    def clear_xiaomusic_playlists(self) -> dict[str, Any]:
+        """清空xiaomusic中所有_online_lx_前缀的歌单
+
+        Returns:
+            Dict[str, Any]: 清空结果
+        """
+        try:
+            setting_path = os.path.join(self.xiaomusic.config.conf_path, "setting.json")
+            if not os.path.exists(setting_path):
+                return {"success": False, "error": "setting.json配置文件不存在"}
+
+            with open(setting_path, encoding="utf-8") as f:
+                setting_data = json.load(f)
+
+            music_list_json = setting_data.get("music_list_json", "")
+            if music_list_json:
+                try:
+                    music_lists = json.loads(music_list_json)
+                except json.JSONDecodeError:
+                    music_lists = []
+            else:
+                music_lists = []
+
+            original_count = len(
+                [lst for lst in music_lists if lst["name"].startswith("_online_lx_")]
+            )
+            music_lists = [
+                lst for lst in music_lists if not lst["name"].startswith("_online_lx_")
+            ]
+
+            setting_data["music_list_json"] = json.dumps(
+                music_lists, ensure_ascii=False
+            )
+
+            if "devices" in setting_data:
+                for device_did, device_info in setting_data["devices"].items():
+                    if "playlist2music" in device_info:
+                        playlist2music = device_info["playlist2music"]
+                        keys_to_remove = [
+                            key
+                            for key in playlist2music
+                            if key.startswith("_online_lx_")
+                        ]
+                        for key in keys_to_remove:
+                            del playlist2music[key]
+                        if device_info.get("cur_playlist", "").startswith(
+                            "_online_lx_"
+                        ):
+                            device_info["cur_playlist"] = ""
+                            device_info["cur_music"] = ""
+
+            with open(setting_path, "w", encoding="utf-8") as f:
+                json.dump(setting_data, f, ensure_ascii=False, indent=2)
+
+            self.xiaomusic.config.music_list_json = setting_data["music_list_json"]
+
+            if self.xiaomusic and hasattr(self.xiaomusic, "music_library"):
+                self.xiaomusic.music_library.gen_all_music_list()
+
+            self.log.info(f"清空xiaomusic歌单完成，共清空 {original_count} 个歌单")
+            return {
+                "success": True,
+                "message": f"清空成功，共清空 {original_count} 个歌单",
+            }
+
+        except Exception as e:
+            self.log.error(f"清空xiaomusic歌单失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    def _convert_lxserver_songs(self, songs: list[dict], list_name: str) -> list[dict]:
+        """将LXServer歌曲格式转换为xiaomusic在线歌单格式
+
+        Args:
+            songs: LXServer歌曲列表
+            list_name: 歌单名称（用于日志）
+
+        Returns:
+            list: 转换后的歌曲列表
+        """
+        import base64
+        import json as json_module
+
+        converted = []
+        for song in songs:
+            try:
+                meta = song.get("meta", {})
+                source = song.get("source", "")
+                name = song.get("name", "")
+                singer = song.get("singer", "")
+                interval = song.get("interval", "")
+                albumId = song.get("albumId", "") or meta.get("albumId", "")
+                albumName = song.get("albumName", "") or meta.get("albumName", "")
+                copyrightId = song.get("copyrightId", "") or meta.get("copyrightId", "")
+                img = (
+                    song.get("img", "") or meta.get("picUrl", "") or meta.get("img", "")
+                )
+                songmid = (
+                    song.get("songmid", "")
+                    or song.get("id", "")
+                    or meta.get("songId", "")
+                )
+                types = song.get("types", []) or meta.get("qualitys", []) or []
+                _types = song.get("_types", {}) or meta.get("_qualitys", {}) or {}
+
+                if not name:
+                    continue
+
+                raw_info = {
+                    "singer": singer,
+                    "name": name,
+                    "albumName": albumName,
+                    "albumId": albumId,
+                    "songmid": songmid,
+                    "copyrightId": copyrightId,
+                    "source": source,
+                    "interval": interval,
+                    "img": img,
+                    "lrc": None,
+                    "lrcUrl": "",
+                    "types": types,
+                    "_types": _types,
+                    "typeUrl": {},
+                }
+
+                song_info = {
+                    "_raw": raw_info,
+                    "id": songmid,
+                    "title": name,
+                    "duration": interval,
+                    "artist": singer,
+                    "album": albumName,
+                    "platform": source,
+                    "artwork": img,
+                }
+
+                origin_data = json_module.dumps(song_info, ensure_ascii=False)
+                datab64 = base64.b64encode(origin_data.encode("utf-8")).decode("utf-8")
+                proxy_url = f"self:///api/proxy/plugin-url?data={datab64}"
+
+                converted.append(
+                    {
+                        "url": proxy_url,
+                        "name": f"{name}-{singer}" if singer else name,
+                        "type": "music",
+                    }
+                )
+            except Exception as e:
+                self.log.warning(
+                    f"转换歌曲失败: {song.get('name', 'unknown')}, error: {e}"
+                )
+                continue
+
+        self.log.info(f"歌单 [{list_name}] 转换完成，共 {len(converted)} 首歌曲")
+        return converted
 
     def optimize_search_results(
         self,

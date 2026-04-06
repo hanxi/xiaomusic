@@ -122,6 +122,7 @@ class OnlineMusicService:
                     page=page,
                     limit=limit,
                     source=plugin,
+                    lx_server_info=lx_server_info,
                 )
         else:
             return {"success": False, "error": "LX Server接口未配置！"}
@@ -135,7 +136,9 @@ class OnlineMusicService:
         if lx_server_info.get("base_url", "") != "":
             # LX Server接口获取
             result_data = await self.js_plugin_manager.lx_server_music_url(
-                url=lx_server_info.get("base_url") + "/music/url", song_info=song_info
+                url=lx_server_info.get("base_url") + "/music/url",
+                song_info=song_info,
+                lx_server_info=lx_server_info,
             )
         else:
             return {"success": False, "error": "LX Server接口未配置！"}
@@ -148,7 +151,9 @@ class OnlineMusicService:
         if lx_server_info.get("base_url", "") != "":
             # LX Server接口获取
             result_data = await self.js_plugin_manager.lx_server_music_lyric(
-                url=lx_server_info.get("base_url") + "/music/lyric", song_info=song_info
+                url=lx_server_info.get("base_url") + "/music/lyric",
+                song_info=song_info,
+                lx_server_info=lx_server_info,
             )
         else:
             return {"success": False, "error": "LX Server接口未配置！"}
@@ -183,10 +188,6 @@ class OnlineMusicService:
         results = []
         sources = {}
 
-        # 计算每个platform的限制数量
-        platform_count = len(platform_keys)
-        item_limit = max(1, limit // platform_count) if platform_count > 0 else limit
-
         # 并行搜索所有插件
         search_tasks = [
             self.js_plugin_manager.lx_server_search(
@@ -196,6 +197,7 @@ class OnlineMusicService:
                 page=page,
                 limit=limit,
                 source=platform,
+                lx_server_info=lx_server_info,
             )
             for platform in platform_keys
         ]
@@ -359,9 +361,13 @@ class OnlineMusicService:
                 await self.xiaomusic.do_play_music_list(did, list_name, song_name)
             else:
                 # 获取用户配置的平台偏好
-                user_preference = self.js_plugin_manager.get_box_play_platform_preference()
+                user_preference = (
+                    self.js_plugin_manager.get_box_play_platform_preference()
+                )
                 # 获取歌曲列表
-                result = await self.get_music_list_online(plugin=user_preference, keyword=name, limit=10)
+                result = await self.get_music_list_online(
+                    plugin=user_preference, keyword=name, limit=10
+                )
                 self.log.info(f"在线搜索歌手的歌曲列表: {result}")
 
                 if result.get("success") and result.get("total") > 0:
@@ -386,7 +392,10 @@ class OnlineMusicService:
             user_preference = self.js_plugin_manager.get_box_play_platform_preference()
             self.log.info(f"追加歌手歌曲，当前页码: {self._singer_add_page}")
             result = await self.get_music_list_online(
-                plugin=user_preference, keyword=name, page=self._singer_add_page, limit=10
+                plugin=user_preference,
+                keyword=name,
+                page=self._singer_add_page,
+                limit=10,
             )
             if result.get("success") and result.get("total") > 0:
                 self._handle_music_list(result.get("data"), list_name, True)
@@ -551,7 +560,9 @@ class OnlineMusicService:
         try:
             user_preference = self.js_plugin_manager.get_box_play_platform_preference()
             # 获取歌曲列表
-            result = await self.get_music_list_online(plugin=user_preference, keyword=name, limit=10)
+            result = await self.get_music_list_online(
+                plugin=user_preference, keyword=name, limit=10
+            )
 
             if result.get("success") and result.get("total") > 0:
                 # 打印输出 result.data

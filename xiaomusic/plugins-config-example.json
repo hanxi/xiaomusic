@@ -12,6 +12,9 @@
   },
   "lx_server_info": {
     "base_url": "",
+    "x-user-name": "",
+    "x-user-token": "",
+    "auto_convert": false,
     "platforms": {
       "tx": "小秋音乐",
       "kg": "小枸音乐",
