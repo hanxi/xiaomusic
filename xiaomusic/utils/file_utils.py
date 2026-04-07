@@ -83,13 +83,15 @@ def safe_join_path(safe_root: str, directory: str) -> str:
     Raises:
         ValueError: 如果路径不在安全根目录内
     """
-    directory = os.path.join(safe_root, directory)
-    # Normalize the directory path
-    normalized_directory = os.path.normpath(directory)
-    # Ensure the directory is within the safe root
-    if not normalized_directory.startswith(os.path.normpath(safe_root)):
-        raise ValueError(f"Access to directory '{directory}' is not allowed.")
-    return normalized_directory
+    joined_path = os.path.join(safe_root, directory)
+    real_safe_root = os.path.realpath(safe_root)
+    real_directory = os.path.realpath(joined_path)
+    try:
+        if os.path.commonpath([real_directory, real_safe_root]) != real_safe_root:
+            raise ValueError(f"Access to directory '{joined_path}' is not allowed.")
+    except ValueError as e:
+        raise ValueError(f"Access to directory '{joined_path}' is not allowed.") from e
+    return real_directory
 
 
 def _longest_common_prefix(file_names: list) -> str:
