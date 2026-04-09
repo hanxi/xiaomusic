@@ -1,5 +1,17 @@
 # 版本日志
 
+## v0.5.1 (2026-04-09)
+
+### Feat
+
+- 新增MusicFree插件 (#809)
+
+### Fix
+
+- **security**: arbitrary code execution via `eval` in plugin exec (#819)
+- **security**: path traversal bypass in `safe_join_path` prefix c (#820)
+- 修补url的base64编码 (#815)
+
 ## v0.5.0 (2026-03-25)
 
 ### Feat
