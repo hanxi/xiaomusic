@@ -606,8 +606,11 @@ class XiaoMusicDevice:
     async def text_to_speech(self, value):
         """文字转语音"""
         try:
+            # 检查设置中是否启用了语音TTS。如果是关闭，直接退出，避免后续走到小米TTS，导致token失效
+            if self.config.edge_tts_voice == "disable":
+                return
             # 检查是否配置了 edge-tts 语音角色
-            if self.config.edge_tts_voice:
+            elif self.config.edge_tts_voice:
                 await self._text_to_speech_edge_tts(value)
             else:
                 # 使用原有的 TTS 逻辑
