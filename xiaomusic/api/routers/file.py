@@ -53,6 +53,154 @@ from xiaomusic.utils.system_utils import try_add_access_control_param
 
 router = APIRouter()
 
+# 下载任务状态管理
+download_tasks = {}  # {task_id: {"total": 总数, "completed": 已完成数, "status": "pending|downloading|paused|stopped|completed|failed", "current_song": "当前歌曲名", "process": 进程对象}}
+
+
+async def monitor_download_progress(task_id: str, dirname: str):
+    """后台监控下载进度，通过统计mp3文件数量来更新
+    
+    Args:
+        task_id: 任务ID
+        dirname: 下载目录名
+    """
+    try:
+        dir_path = safe_join_path(config.download_path, dirname)
+        last_count = 0
+        
+        log.info(f"Monitor task started for {task_id}, watching directory: {dir_path}")
+        
+        while True:
+            await asyncio.sleep(1)  # 每1秒检查一次
+            
+            # 检查任务是否还在进行中
+            if task_id not in download_tasks:
+                log.info(f"Task {task_id} not found, stopping monitor")
+                break
+            
+            task = download_tasks[task_id]
+            # 允许在 paused 状态下也继续监控（为继续做准备）
+            if task["status"] not in ["downloading", "pending", "paused"]:
+                log.info(f"Task {task_id} status is {task['status']}, stopping monitor")
+                break
+            
+            # 统计已下载的mp3文件数量
+            if os.path.exists(dir_path):
+                try:
+                    # 只统计.mp3文件，排除.m4a等临时文件
+                    mp3_files = [f for f in os.listdir(dir_path) if f.endswith('.mp3')]
+                    current_count = len(mp3_files)
+                    
+                    # 只有当数量变化时才更新
+                    if current_count > last_count:
+                        download_tasks[task_id]["completed"] = current_count
+                        download_tasks[task_id]["current_song"] = f"已下载 {current_count} 首歌曲..."
+                        last_count = current_count
+                        log.info(f"Progress updated: {current_count} mp3 files downloaded")
+                except Exception as e:
+                    log.warning(f"Monitor progress error: {e}")
+    except asyncio.CancelledError:
+        log.info(f"Monitor task cancelled for {task_id}")
+    except Exception as e:
+        log.exception(f"Monitor task error: {e}")
+
+
+async def monitor_download_progress_with_output(task_id: str, dirname: str, process):
+    """后台监控下载进度，通过解析yt-dlp输出来获取总数和进度
+    
+    Args:
+        task_id: 任务ID
+        dirname: 下载目录名
+        process: yt-dlp进程对象
+    """
+    try:
+        dir_path = safe_join_path(config.download_path, dirname)
+        last_count = 0
+        import re
+        
+        log.info(f"Monitor task started for {task_id}, watching stderr")
+        
+        # 读取进程输出，解析总数和当前进度（yt-dlp输出到stderr）
+        if process.stderr:
+            line_count = 0
+            while True:
+                await asyncio.sleep(0.5)  # 每0.5秒检查一次，更实时
+                
+                # 检查任务状态
+                if task_id not in download_tasks:
+                    log.info(f"Task {task_id} not found, stopping monitor")
+                    break
+                
+                task = download_tasks[task_id]
+                if task["status"] not in ["downloading", "pending", "paused"]:
+                    log.info(f"Task {task_id} status is {task['status']}, stopping monitor")
+                    break
+                
+                # 尝试从stderr读取一行
+                try:
+                    line = await asyncio.wait_for(process.stderr.readline(), timeout=0.3)
+                    if not line:
+                        # 没有更多输出，检查进程是否结束
+                        if process.returncode is not None:
+                            log.info(f"Process ended with code {process.returncode}")
+                            break
+                        continue
+                    
+                    line_count += 1
+                    line_str = line.decode('utf-8', errors='ignore').strip()
+                    
+                    # 实时输出到日志，让用户看到进度
+                    if line_str:
+                        log.info(f"[yt-dlp] {line_str}")
+                    
+                    # 每10行输出一次计数日志，避免太多
+                    if line_count % 10 == 0:
+                        log.debug(f"Read {line_count} lines from stderr")
+                    
+                    # 解析 "Downloading X of Y" 或 "Downloading item X of Y"
+                    match = re.search(r'(?:Downloading|item)\s+(\d+)\s+of\s+(\d+)', line_str)
+                    if match:
+                        current = int(match.group(1))
+                        total = int(match.group(2))
+                        
+                        # 更新任务状态
+                        download_tasks[task_id]["completed"] = current
+                        download_tasks[task_id]["total"] = total
+                        download_tasks[task_id]["current_song"] = f"正在下载第 {current}/{total} 首..."
+                        log.info(f"Parsed progress: {current}/{total}")
+                    
+                    # 备用方案：统计已完成的mp3文件数（排除临时文件）
+                    if os.path.exists(dir_path):
+                        try:
+                            # 只统计.mp3文件，排除.m4a等临时文件
+                            mp3_files = [f for f in os.listdir(dir_path) if f.endswith('.mp3')]
+                            file_count = len(mp3_files)
+                            
+                            if file_count > last_count:
+                                # 如果还没有从输出中解析到total，使用文件数
+                                if download_tasks[task_id]["total"] == 0:
+                                    download_tasks[task_id]["completed"] = file_count
+                                    download_tasks[task_id]["current_song"] = f"已下载 {file_count} 首歌曲..."
+                                last_count = file_count
+                                log.info(f"File count updated: {file_count} mp3 files")
+                        except Exception as e:
+                            log.warning(f"Count files error: {e}")
+                            
+                except asyncio.TimeoutError:
+                    # 读取超时，继续循环
+                    continue
+                except Exception as e:
+                    log.warning(f"Read output error: {e}")
+        else:
+            log.warning(f"Process stderr is None, cannot monitor output")
+            # 回退到简单的文件统计
+            await monitor_download_progress(task_id, dirname)
+            
+    except asyncio.CancelledError:
+        log.info(f"Monitor with output task cancelled for {task_id}")
+    except Exception as e:
+        log.exception(f"Monitor with output task error: {e}")
+
 
 def _process_m3u8_content(m3u8_content: str, base_url: str, is_radio: bool) -> str:
     """处理 m3u8 文件内容，将资源 URL 替换为代理 URL
@@ -125,44 +273,160 @@ async def downloadjson(data: UrlInfo, Verifcation=Depends(verification)):
 @router.post("/downloadplaylist")
 async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verification)):
     """下载歌单"""
+    task_id = str(uuid.uuid4())
     try:
+        # 初始化任务状态
+        download_tasks[task_id] = {
+            "total": 0,
+            "completed": 0,
+            "status": "pending",
+            "current_song": "",
+            "dirname": data.dirname,
+            "url": data.url,  # 保存URL以便重新开始
+            "task_type": "playlist",  # 标记任务类型
+            "created_at": asyncio.get_event_loop().time()
+        }
+        
         bili_fav_list = await check_bili_fav_list(data.url)
         download_proc_list = []
         if bili_fav_list:
-            for bvid, title in bili_fav_list.items():
+            total_songs = len(bili_fav_list)
+            download_tasks[task_id]["total"] = total_songs
+            download_tasks[task_id]["status"] = "downloading"
+            
+            for idx, (bvid, title) in enumerate(bili_fav_list.items(), 1):
                 bvurl = f"https://www.bilibili.com/video/{bvid}"
+                download_tasks[task_id]["current_song"] = f"{title} ({idx}/{total_songs})"
                 download_proc_list[title] = await download_one_music(
                     config, bvurl, os.path.join(data.dirname, title)
                 )
+            
             for title, download_proc_sigle in download_proc_list.items():
                 exit_code = await download_proc_sigle.wait()
                 log.info(f"Download completed {title} with exit code {exit_code}")
+                download_tasks[task_id]["completed"] += 1
+            
             dir_path = safe_join_path(config.download_path, data.dirname)
             log.debug(f"Download dir_path: {dir_path}")
             # 可能只是部分失败，都需要整理下载目录
             remove_common_prefix(dir_path)
             chmoddir(dir_path)
-            return {"ret": "OK"}
+            
+            download_tasks[task_id]["status"] = "completed"
+            download_tasks[task_id]["current_song"] = ""
+            return {"ret": "OK", "task_id": task_id}
         else:
+            download_tasks[task_id]["status"] = "downloading"
+            download_tasks[task_id]["current_song"] = "正在获取歌单信息..."
+            download_tasks[task_id]["total"] = 0
+            download_tasks[task_id]["completed"] = 0
+            log.info(f"Starting download playlist: {data.url}")
+            
+            # 使用 yt-dlp Python API 快速获取总数
+            try:
+                import yt_dlp
+                
+                ydl_opts = {
+                    'quiet': True,
+                    'no_warnings': True,
+                    'extract_flat': 'in_playlist',  # 只提取播放列表结构，不下载
+                    'skip_download': True,
+                }
+                
+                log.info(f"Getting playlist count via yt-dlp API...")
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(data.url, download=False)
+                    
+                    if info and 'entries' in info:
+                        entries = list(info['entries'])
+                        total_count = len(entries)
+                        if total_count > 0:
+                            download_tasks[task_id]["total"] = total_count
+                            log.info(f"✓ Playlist has {total_count} items")
+                        else:
+                            log.warning("Empty playlist")
+                    elif info and 'playlist_count' in info:
+                        total_count = info['playlist_count']
+                        if total_count > 0:
+                            download_tasks[task_id]["total"] = total_count
+                            log.info(f"✓ Playlist has {total_count} items")
+                    else:
+                        log.warning("Could not determine playlist size")
+            except Exception as e:
+                log.warning(f"Error getting playlist count via API: {e} (continuing anyway)")
+            
+            # 确保下载目录存在
+            dir_path = safe_join_path(config.download_path, data.dirname)
+            os.makedirs(dir_path, exist_ok=True)
+            log.info(f"Download directory ensured: {dir_path}")
+            
+            download_tasks[task_id]["current_song"] = "正在解析歌单..."
             download_proc = await download_playlist(config, data.url, data.dirname)
+            # 保存进程对象以便后续控制
+            download_tasks[task_id]["process"] = download_proc
+            log.info(f"Download process started, PID: {download_proc.pid}")
 
         async def check_download_proc():
-            # 等待子进程完成
-            exit_code = await download_proc.wait()
-            log.info(f"Download completed with exit code {exit_code}")
+            # 启动后台监控任务，通过文件统计来更新进度
+            log.info(f"Starting monitor task for {task_id}")
+            monitor_task = asyncio.create_task(monitor_download_progress(task_id, data.dirname))
+            
+            try:
+                # 等待子进程完成
+                log.info(f"Waiting for download process to complete...")
+                exit_code = await download_proc.wait()
+                log.info(f"Download completed with exit code {exit_code}")
 
-            dir_path = safe_join_path(config.download_path, data.dirname)
-            log.debug(f"Download dir_path: {dir_path}")
-            # 可能只是部分失败，都需要整理下载目录
-            remove_common_prefix(dir_path)
-            chmoddir(dir_path)
+                # 停止监控任务
+                monitor_task.cancel()
+                try:
+                    await monitor_task
+                except asyncio.CancelledError:
+                    pass
+
+                dir_path = safe_join_path(config.download_path, data.dirname)
+                log.debug(f"Download dir_path: {dir_path}")
+                # 可能只是部分失败，都需要整理下载目录
+                remove_common_prefix(dir_path)
+                chmoddir(dir_path)
+                
+                # 检查是否已被手动停止
+                if download_tasks[task_id]["status"] == "stopped":
+                    # 已经被停止，保持stopped状态
+                    log.info(f"Task was already stopped, keeping status")
+                else:
+                    download_tasks[task_id]["status"] = "completed" if exit_code == 0 else "failed"
+                    download_tasks[task_id]["current_song"] = ""
+                    # 更新最终的完成数量
+                    if os.path.exists(dir_path):
+                        final_count = len([f for f in os.listdir(dir_path) if f.endswith('.mp3')])
+                        download_tasks[task_id]["completed"] = final_count
+                        download_tasks[task_id]["total"] = final_count
+            except asyncio.CancelledError:
+                log.info(f"Download task cancelled: {task_id}")
+                monitor_task.cancel()
+                download_tasks[task_id]["status"] = "stopped"
+                download_tasks[task_id]["current_song"] = "已停止"
+            except Exception as e:
+                # 检查是否是因为被停止而导致的异常
+                if download_tasks.get(task_id, {}).get("status") == "stopped":
+                    log.info(f"Task was stopped, exception is expected: {e}")
+                    # 已经被停止，保持stopped状态，不覆盖
+                else:
+                    log.exception(f"Download task error: {e}")
+                    monitor_task.cancel()
+                    download_tasks[task_id]["status"] = "failed"
+                    download_tasks[task_id]["current_song"] = str(e)
 
         asyncio.create_task(check_download_proc())
-        return {"ret": "OK"}
+        return {"ret": "OK", "task_id": task_id}
     except Exception as e:
         log.exception(f"Execption {e}")
+        if task_id in download_tasks:
+            download_tasks[task_id]["status"] = "failed"
+            download_tasks[task_id]["current_song"] = str(e)
 
-    return {"ret": "Failed download"}
+    return {"ret": "Failed download", "task_id": task_id}
 
 
 @router.post("/downloadonemusic")
@@ -175,7 +439,22 @@ async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verificat
         data.dirname: 子目录名（可选，兼容字段），相对于 music 根目录
         data.playlist_name: 下载成功后要关联的歌单名（可选）
     """
+    task_id = str(uuid.uuid4())
     try:
+        # 初始化任务状态
+        download_tasks[task_id] = {
+            "total": 1,
+            "completed": 0,
+            "status": "downloading",
+            "current_song": data.name or "正在下载...",
+            "url": data.url,  # 保存URL以便重新开始
+            "name": data.name,  # 保存文件名
+            "dirname": data.dirname or "",  # 保存目录名
+            "playlist_name": data.playlist_name or "",  # 保存歌单名
+            "task_type": "single",  # 标记任务类型
+            "created_at": asyncio.get_event_loop().time()
+        }
+        
         pre_all_music_names = set(xiaomusic.music_library.all_music.keys())
         playlist_name = (data.playlist_name or "").strip()
 
@@ -190,72 +469,377 @@ async def downloadonemusic(data: DownloadOneMusic, Verifcation=Depends(verificat
             data.name,
             download_root=download_root,
         )
+        # 保存进程对象以便后续控制
+        download_tasks[task_id]["process"] = download_proc
 
         async def check_download_proc():
-            # 等待子进程完成
-            exit_code = await download_proc.wait()
-            log.info(f"Download completed with exit code {exit_code}")
-
-            if exit_code != 0:
-                return
-
+            # 对于单曲下载，设置初始状态
+            download_tasks[task_id]["completed"] = 0
+            download_tasks[task_id]["total"] = 1
+            
             try:
-                chmoddir(download_root)
-            except Exception:
-                pass
+                # 等待子进程完成
+                exit_code = await download_proc.wait()
+                log.info(f"Download completed with exit code {exit_code}")
 
-            try:
-                xiaomusic.music_library.gen_all_music_list()
-                xiaomusic.update_all_playlist()
+                if exit_code != 0:
+                    download_tasks[task_id]["status"] = "failed"
+                    download_tasks[task_id]["current_song"] = "下载失败"
+                    return
+
+                # 下载成功，更新为完成
+                download_tasks[task_id]["completed"] = 1
+                download_tasks[task_id]["current_song"] = "下载完成"
+
+                try:
+                    chmoddir(download_root)
+                except Exception:
+                    pass
+
+                try:
+                    xiaomusic.music_library.gen_all_music_list()
+                    xiaomusic.update_all_playlist()
+                except Exception as e:
+                    log.exception(f"refresh music list failed after download: {e}")
+                    download_tasks[task_id]["status"] = "failed"
+                    return
+
+                if not playlist_name:
+                    download_tasks[task_id]["status"] = "completed"
+                    download_tasks[task_id]["completed"] = 1
+                    download_tasks[task_id]["current_song"] = ""
+                    return
+
+                resolved_music_name = ""
+                if data.name and data.name in xiaomusic.music_library.all_music:
+                    resolved_music_name = data.name
+                else:
+                    new_music_names = [
+                        name
+                        for name in xiaomusic.music_library.all_music.keys()
+                        if name not in pre_all_music_names
+                    ]
+                    if len(new_music_names) == 1:
+                        resolved_music_name = new_music_names[0]
+                    elif data.name:
+                        for name in new_music_names:
+                            if name.startswith(data.name):
+                                resolved_music_name = name
+                                break
+
+                if not resolved_music_name:
+                    log.warning(
+                        f"download succeeded but failed to resolve music name for playlist: {playlist_name}"
+                    )
+                    download_tasks[task_id]["status"] = "completed"
+                    download_tasks[task_id]["completed"] = 1
+                    download_tasks[task_id]["current_song"] = ""
+                    return
+
+                added = xiaomusic.music_library.play_list_add_music(
+                    playlist_name, [resolved_music_name]
+                )
+                if added:
+                    xiaomusic.update_all_playlist()
+                    log.info(
+                        f"downloadonemusic auto add success: {resolved_music_name} -> {playlist_name}"
+                    )
+                else:
+                    log.warning(
+                        f"downloadonemusic auto add failed: {resolved_music_name} -> {playlist_name}"
+                    )
+                
+                
+                download_tasks[task_id]["status"] = "completed"
+                download_tasks[task_id]["completed"] = 1
+                download_tasks[task_id]["current_song"] = ""
+            except asyncio.CancelledError:
+                log.info(f"Download task cancelled: {task_id}")
+                download_tasks[task_id]["status"] = "stopped"
+                download_tasks[task_id]["current_song"] = "已停止"
             except Exception as e:
-                log.exception(f"refresh music list failed after download: {e}")
-                return
-
-            if not playlist_name:
-                return
-
-            resolved_music_name = ""
-            if data.name and data.name in xiaomusic.music_library.all_music:
-                resolved_music_name = data.name
-            else:
-                new_music_names = [
-                    name
-                    for name in xiaomusic.music_library.all_music.keys()
-                    if name not in pre_all_music_names
-                ]
-                if len(new_music_names) == 1:
-                    resolved_music_name = new_music_names[0]
-                elif data.name:
-                    for name in new_music_names:
-                        if name.startswith(data.name):
-                            resolved_music_name = name
-                            break
-
-            if not resolved_music_name:
-                log.warning(
-                    f"download succeeded but failed to resolve music name for playlist: {playlist_name}"
-                )
-                return
-
-            added = xiaomusic.music_library.play_list_add_music(
-                playlist_name, [resolved_music_name]
-            )
-            if added:
-                xiaomusic.update_all_playlist()
-                log.info(
-                    f"downloadonemusic auto add success: {resolved_music_name} -> {playlist_name}"
-                )
-            else:
-                log.warning(
-                    f"downloadonemusic auto add failed: {resolved_music_name} -> {playlist_name}"
-                )
+                log.exception(f"Download task error: {e}")
+                download_tasks[task_id]["status"] = "failed"
+                download_tasks[task_id]["current_song"] = str(e)
 
         asyncio.create_task(check_download_proc())
-        return {"ret": "OK"}
+        return {"ret": "OK", "task_id": task_id}
     except Exception as e:
         log.exception(f"Execption {e}")
+        if task_id in download_tasks:
+            download_tasks[task_id]["status"] = "failed"
+            download_tasks[task_id]["current_song"] = str(e)
 
-    return {"ret": "Failed download"}
+    return {"ret": "Failed download", "task_id": task_id}
+
+
+@router.get("/download_progress")
+async def get_download_progress(task_id: str = ""):
+    """获取下载任务进度
+    
+    Args:
+        task_id: 任务ID，如果为空则返回所有任务
+    
+    Returns:
+        dict: 下载任务进度信息
+    """
+    if task_id:
+        # 返回指定任务
+        if task_id in download_tasks:
+            task = download_tasks[task_id]
+            progress = 0
+            if task["total"] > 0:
+                progress = int((task["completed"] / task["total"]) * 100)
+            
+            return {
+                "ret": "OK",
+                "task_id": task_id,
+                "total": task["total"],
+                "completed": task["completed"],
+                "progress": progress,
+                "status": task["status"],
+                "current_song": task["current_song"]
+            }
+        else:
+            return {"ret": "Not found", "task_id": task_id}
+    else:
+        # 返回所有活跃任务
+        active_tasks = {}
+        current_time = asyncio.get_event_loop().time()
+        
+        for tid, task in list(download_tasks.items()):
+            # 只返回未完成或最近5分钟完成的任务
+            task_age = current_time - task.get("created_at", 0)
+            if task["status"] in ["pending", "downloading"] or task_age < 300:
+                progress = 0
+                if task["total"] > 0:
+                    progress = int((task["completed"] / task["total"]) * 100)
+                
+                active_tasks[tid] = {
+                    "total": task["total"],
+                    "completed": task["completed"],
+                    "progress": progress,
+                    "status": task["status"],
+                    "current_song": task["current_song"],
+                    "dirname": task.get("dirname", "")
+                }
+        
+        return {
+            "ret": "OK",
+            "tasks": active_tasks
+        }
+
+
+@router.post("/clear_completed_tasks")
+async def clear_completed_tasks(Verifcation=Depends(verification)):
+    """清理已完成的下载任务记录"""
+    cleared_count = 0
+    current_time = asyncio.get_event_loop().time()
+    
+    for task_id in list(download_tasks.keys()):
+        task = download_tasks[task_id]
+        task_age = current_time - task.get("created_at", 0)
+        
+        # 清理已完成超过5分钟的任务
+        if task["status"] in ["completed", "failed", "stopped"] and task_age >= 300:
+            del download_tasks[task_id]
+            cleared_count += 1
+    
+    return {
+        "ret": "OK",
+        "cleared_count": cleared_count
+    }
+
+
+@router.post("/pause_download")
+async def pause_download(task_id: str, Verifcation=Depends(verification)):
+    """暂停下载任务
+    
+    Args:
+        task_id: 任务ID
+    
+    Returns:
+        dict: 操作结果
+    """
+    if task_id not in download_tasks:
+        return {"ret": "Not found", "message": "任务不存在"}
+    
+    task = download_tasks[task_id]
+    
+    if task["status"] != "downloading":
+        return {"ret": "Failed", "message": f"当前状态为{task['status']}，无法暂停"}
+    
+    try:
+        # 暂停进程
+        if "process" in task and task["process"]:
+            import os
+            import signal
+            # Windows下使用CTRL_BREAK_EVENT，Unix下使用SIGSTOP
+            if os.name == 'nt':
+                task["process"].send_signal(signal.CTRL_BREAK_EVENT)
+            else:
+                task["process"].send_signal(signal.SIGSTOP)
+        
+        task["status"] = "paused"
+        task["current_song"] = "已暂停"
+        
+        log.info(f"Download task paused: {task_id}")
+        return {"ret": "OK", "message": "已暂停下载"}
+    except Exception as e:
+        log.exception(f"Pause download failed: {e}")
+        return {"ret": "Failed", "message": str(e)}
+
+
+@router.post("/resume_download")
+async def resume_download(task_id: str, Verifcation=Depends(verification)):
+    """继续下载任务
+    
+    Args:
+        task_id: 任务ID
+    
+    Returns:
+        dict: 操作结果
+    """
+    if task_id not in download_tasks:
+        return {"ret": "Not found", "message": "任务不存在"}
+    
+    task = download_tasks[task_id]
+    
+    if task["status"] != "paused":
+        return {"ret": "Failed", "message": f"当前状态为{task['status']}，无法继续"}
+    
+    try:
+        # 恢复进程
+        if "process" in task and task["process"]:
+            import os
+            import signal
+            # Windows下不支持SIGCONT，需要重新创建进程，这里简化处理
+            if os.name != 'nt':
+                task["process"].send_signal(signal.SIGCONT)
+        
+        task["status"] = "downloading"
+        task["current_song"] = "继续下载中..."
+        
+        log.info(f"Download task resumed: {task_id}")
+        return {"ret": "OK", "message": "已继续下载"}
+    except Exception as e:
+        log.exception(f"Resume download failed: {e}")
+        return {"ret": "Failed", "message": str(e)}
+
+
+@router.post("/stop_download")
+async def stop_download(task_id: str, Verifcation=Depends(verification)):
+    """停止下载任务
+    
+    Args:
+        task_id: 任务ID
+    
+    Returns:
+        dict: 操作结果
+    """
+    if task_id not in download_tasks:
+        return {"ret": "Not found", "message": "任务不存在"}
+    
+    task = download_tasks[task_id]
+    
+    if task["status"] in ["completed", "failed", "stopped"]:
+        return {"ret": "Failed", "message": f"当前状态为{task['status']}，无法停止"}
+    
+    try:
+        # 终止进程
+        if "process" in task and task["process"]:
+            try:
+                task["process"].kill()
+                await task["process"].wait()
+            except Exception as e:
+                log.warning(f"Kill process warning: {e}")
+        
+        task["status"] = "stopped"
+        task["current_song"] = "已停止"
+        
+        log.info(f"Download task stopped: {task_id}")
+        return {"ret": "OK", "message": "已停止下载"}
+    except Exception as e:
+        log.exception(f"Stop download failed: {e}")
+        return {"ret": "Failed", "message": str(e)}
+
+
+@router.post("/delete_download_task")
+async def delete_download_task(task_id: str, Verifcation=Depends(verification)):
+    """删除下载任务记录（仅针对已停止/完成/失败的任务）
+    
+    Args:
+        task_id: 任务ID
+    
+    Returns:
+        dict: 操作结果
+    """
+    if task_id not in download_tasks:
+        return {"ret": "Not found", "message": "任务不存在"}
+    
+    task = download_tasks[task_id]
+    
+    # 只允许删除已停止、已完成或失败的任务
+    if task["status"] in ["downloading", "paused", "pending"]:
+        return {"ret": "Failed", "message": f"当前状态为{task['status']}，无法删除。请先停止任务。"}
+    
+    try:
+        del download_tasks[task_id]
+        log.info(f"Download task deleted: {task_id}")
+        return {"ret": "OK", "message": "已删除任务记录"}
+    except Exception as e:
+        log.exception(f"Delete task failed: {e}")
+        return {"ret": "Failed", "message": str(e)}
+
+
+@router.post("/restart_download")
+async def restart_download(task_id: str, Verifcation=Depends(verification)):
+    """重新开始下载任务（仅针对已停止的任务）
+    
+    Args:
+        task_id: 任务ID
+    
+    Returns:
+        dict: 操作结果，包含新的task_id
+    """
+    if task_id not in download_tasks:
+        return {"ret": "Not found", "message": "任务不存在"}
+    
+    old_task = download_tasks[task_id]
+    
+    # 只允许重新开始已停止的任务
+    if old_task["status"] != "stopped":
+        return {"ret": "Failed", "message": f"当前状态为{old_task['status']}，无法重新开始。"}
+    
+    try:
+        task_type = old_task.get("task_type", "single")
+        
+        if task_type == "playlist":
+            # 歌单下载：重新发起歌单下载请求
+            from xiaomusic.api.models import DownloadPlayList
+            data = DownloadPlayList(
+                dirname=old_task["dirname"],
+                url=old_task["url"]
+            )
+            # 调用原有的下载函数
+            result = await downloadplaylist(data, Verifcation)
+            return result
+        else:
+            # 单曲下载：重新发起单曲下载请求
+            from xiaomusic.api.models import DownloadOneMusic
+            data = DownloadOneMusic(
+                name=old_task.get("name", ""),
+                url=old_task["url"],
+                dirname=old_task.get("dirname", ""),
+                playlist_name=old_task.get("playlist_name", "")
+            )
+            # 调用原有的下载函数
+            result = await downloadonemusic(data, Verifcation)
+            return result
+            
+    except Exception as e:
+        log.exception(f"Restart download failed: {e}")
+        return {"ret": "Failed", "message": str(e)}
 
 
 @router.post("/uploadytdlpcookie")

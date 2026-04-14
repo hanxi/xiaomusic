@@ -9,19 +9,6 @@
 	<script src="./libs/tailwind.js"></script>
 	<link rel="icon" href="./favicon.ico">
 
-	<!-- Google tag (gtag.js) -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id=G-Z09NC1K7ZW"></script>
-	<script>
-		window.dataLayer = window.dataLayer || [];
-		function gtag() { dataLayer.push(arguments) };
-		gtag('js', new Date());
-		gtag('config', 'G-Z09NC1K7ZW');
-	</script>
-
-	<!-- umami -->
-	<script async defer src="https://umami.hanxi.cc/script.js"
-		data-website-id="7bfb0890-4115-4260-8892-b391513e7e99"></script>
-
 </head>
 
 <body class="bg-gray-100 min-h-screen p-6">
@@ -78,6 +65,17 @@
 					下载单曲
 				</button>
 			</div>
+		</div>
+
+		<!-- 下载进度显示区域 -->
+		<div id="progressSection" class="bg-white rounded-lg shadow-md p-6 mt-6 hidden">
+			<h2 class="text-lg font-medium text-gray-900 mb-4">下载进度</h2>
+			<div id="progressList" class="space-y-4">
+				<!-- 动态插入进度条 -->
+			</div>
+			<button id="clearCompletedBtn" class="mt-4 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+				清理已完成任务
+			</button>
 		</div>
 
 		<!-- 使用说明部分 -->
@@ -175,8 +173,164 @@
 
 
 	<script>
+		// 存储当前任务ID列表
+		let currentTaskIds = [];
+		let progressUpdateInterval = null;
+
+		// 开始定时更新进度
+		function startProgressUpdates() {
+			if (progressUpdateInterval) {
+				clearInterval(progressUpdateInterval);
+			}
+			updateProgress(); // 立即更新一次
+			progressUpdateInterval = setInterval(updateProgress, 2000); // 每2秒更新一次
+		}
+
+		// 停止定时更新
+		function stopProgressUpdates() {
+			if (progressUpdateInterval) {
+				clearInterval(progressUpdateInterval);
+				progressUpdateInterval = null;
+			}
+		}
+
+		// 更新进度
+		async function updateProgress() {
+			try {
+				const response = await fetch('/download_progress');
+				const data = await response.json();
+				
+				if (data.ret === 'OK' && data.tasks) {
+					const tasks = data.tasks;
+					const taskIds = Object.keys(tasks);
+					
+					if (taskIds.length > 0) {
+						$('#progressSection').removeClass('hidden');
+						renderProgressList(tasks);
+						currentTaskIds = taskIds;
+						
+						// 如果有活跃任务，确保定时器在运行
+						if (!progressUpdateInterval) {
+							startProgressUpdates();
+						}
+					} else {
+						$('#progressSection').addClass('hidden');
+						currentTaskIds = [];
+						
+						// 如果没有任务了，停止定时器以节省资源
+						stopProgressUpdates();
+					}
+				}
+			} catch (error) {
+				console.error('获取下载进度失败:', error);
+			}
+		}
+
+		// 渲染进度列表
+		function renderProgressList(tasks) {
+			const progressList = $('#progressList');
+			progressList.empty();
+
+			Object.entries(tasks).forEach(([taskId, task]) => {
+				const progressItem = createProgressItem(taskId, task);
+				progressList.append(progressItem);
+			});
+		}
+
+		// 创建进度项
+		function createProgressItem(taskId, task) {
+			const statusText = getStatusText(task.status);
+			const statusColor = getStatusColor(task.status);
+			const progressPercent = task.progress || 0;
+			
+			// 根据状态显示不同的按钮
+			let actionButtons = '';
+			if (task.status === 'downloading') {
+				// 下载中：暂停 + 停止
+				actionButtons = `
+					<button onclick="pauseTask('${taskId}')" class="px-3 py-1 bg-yellow-500 text-white text-xs rounded hover:bg-yellow-600 transition-colors">
+						暂停
+					</button>
+					<button onclick="stopTask('${taskId}')" class="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors">
+						停止
+					</button>
+				`;
+			} else if (task.status === 'paused') {
+				// 已暂停：继续 + 停止
+				actionButtons = `
+					<button onclick="resumeTask('${taskId}')" class="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors">
+						继续
+					</button>
+					<button onclick="stopTask('${taskId}')" class="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors">
+						停止
+					</button>
+				`;
+			} else if (task.status === 'stopped') {
+				// 已停止：开始 + 删除
+				actionButtons = `
+					<button onclick="restartTask('${taskId}')" class="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors">
+						开始
+					</button>
+					<button onclick="deleteTask('${taskId}')" class="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors">
+						删除
+					</button>
+				`;
+			}
+			
+			// 处理总数显示：如果total为0，显示 "X/?" 表示未知总数
+			const countDisplay = task.total > 0 ? `${task.completed}/${task.total}` : `${task.completed}/?`;
+			
+			return `
+				<div class="border border-gray-200 rounded-lg p-4">
+					<div class="flex justify-between items-center mb-2">
+						<div class="flex items-center space-x-2">
+							<span class="text-sm font-medium text-gray-700">${task.dirname || '下载任务'}</span>
+							<span class="px-2 py-1 text-xs rounded-full ${statusColor}">${statusText}</span>
+						</div>
+						<div class="flex items-center space-x-2">
+							<span class="text-sm text-gray-600">${countDisplay}</span>
+							<div class="flex space-x-1">
+								${actionButtons}
+							</div>
+						</div>
+					</div>
+					<div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+						<div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progressPercent}%"></div>
+					</div>
+					${task.current_song ? `<div class="text-xs text-gray-500">当前: ${task.current_song}</div>` : ''}
+					<div class="text-xs text-gray-400 mt-1">进度: ${progressPercent}%</div>
+				</div>
+			`;
+		}
+
+		// 获取状态文本
+		function getStatusText(status) {
+			const statusMap = {
+				'pending': '等待中',
+				'downloading': '下载中',
+				'paused': '已暂停',
+				'stopped': '已停止',
+				'completed': '已完成',
+				'failed': '失败'
+			};
+			return statusMap[status] || status;
+		}
+
+		// 获取状态颜色
+		function getStatusColor(status) {
+			const colorMap = {
+				'pending': 'bg-yellow-100 text-yellow-800',
+				'downloading': 'bg-blue-100 text-blue-800',
+				'paused': 'bg-orange-100 text-orange-800',
+				'stopped': 'bg-gray-100 text-gray-800',
+				'completed': 'bg-green-100 text-green-800',
+				'failed': 'bg-red-100 text-red-800'
+			};
+			return colorMap[status] || 'bg-gray-100 text-gray-800';
+		}
+
 		// 下载歌单
-		$('#downloadPlaylistBtn').click(function () {
+		$('#downloadPlaylistBtn').click(async function () {
 			var playlistUrl = $('#playlistUrl').val();
 			var dirname = $('#dirname').val();
 
@@ -189,23 +343,32 @@
 				dirname: dirname,
 				url: playlistUrl
 			};
-			$.ajax({
-				type: "POST",
-				url: "/downloadplaylist",
-				contentType: "application/json",
-				data: JSON.stringify(data),
-				success: (msg) => {
-					alert('歌单下载请求已发送!');
-					console.log(response);
-				},
-				error: (msg) => {
-					alert('歌单下载请求失败，请重试。');
+			
+			try {
+				const response = await fetch('/downloadplaylist', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(data)
+				});
+				const result = await response.json();
+				
+				if (result.ret === 'OK') {
+					alert('歌单下载任务已创建!');
+					// 立即更新一次进度，后续由updateProgress自动管理
+					updateProgress();
+				} else {
+					alert('歌单下载请求失败: ' + (result.message || '未知错误'));
 				}
-			});
+			} catch (error) {
+				console.error('Error:', error);
+				alert('歌单下载请求失败，请重试。');
+			}
 		});
 
 		// 下载单曲
-		$('#downloadSongBtn').click(function () {
+		$('#downloadSongBtn').click(async function () {
 			var songName = $('#songName').val();
 			var songUrl = $('#songUrl').val();
 
@@ -218,19 +381,169 @@
 				name: songName,
 				url: songUrl
 			};
-			$.ajax({
-				type: "POST",
-				url: "/downloadonemusic",
-				contentType: "application/json",
-				data: JSON.stringify(data),
-				success: (msg) => {
-					alert('单曲下载请求已发送!');
-					console.log(response);
-				},
-				error: (msg) => {
-					alert('单曲下载请求失败，请重试。');
+			
+			try {
+				const response = await fetch('/downloadonemusic', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(data)
+				});
+				const result = await response.json();
+				
+				if (result.ret === 'OK') {
+					alert('单曲下载任务已创建!');
+					// 立即更新一次进度，后续由updateProgress自动管理
+					updateProgress();
+				} else {
+					alert('单曲下载请求失败: ' + (result.message || '未知错误'));
 				}
-			});
+			} catch (error) {
+				console.error('Error:', error);
+				alert('单曲下载请求失败，请重试。');
+			}
+		});
+
+		// 清理已完成任务
+		$('#clearCompletedBtn').click(async function () {
+			try {
+				const response = await fetch('/clear_completed_tasks', {
+					method: 'POST'
+				});
+				const result = await response.json();
+				
+				if (result.ret === 'OK') {
+					alert(`已清理 ${result.cleared_count} 个已完成任务`);
+					updateProgress();
+				}
+			} catch (error) {
+				console.error('清理任务失败:', error);
+				alert('清理任务失败');
+			}
+		});
+
+		// 暂停任务
+		async function pauseTask(taskId) {
+			try {
+				const response = await fetch(`/pause_download?task_id=${taskId}`, {
+					method: 'POST'
+				});
+				const result = await response.json();
+				
+				if (result.ret === 'OK') {
+					console.log('任务已暂停');
+					updateProgress(); // 立即更新显示
+				} else {
+					alert('暂停失败: ' + (result.message || '未知错误'));
+				}
+			} catch (error) {
+				console.error('暂停任务失败:', error);
+				alert('暂停任务失败');
+			}
+		}
+
+		// 继续任务
+		async function resumeTask(taskId) {
+			try {
+				const response = await fetch(`/resume_download?task_id=${taskId}`, {
+					method: 'POST'
+				});
+				const result = await response.json();
+				
+				if (result.ret === 'OK') {
+					console.log('任务已继续');
+					updateProgress(); // 立即更新显示
+				} else {
+					alert('继续失败: ' + (result.message || '未知错误'));
+				}
+			} catch (error) {
+				console.error('继续任务失败:', error);
+				alert('继续任务失败');
+			}
+		}
+
+		// 停止任务
+		async function stopTask(taskId) {
+			if (!confirm('确定要停止此下载任务吗？')) {
+				return;
+			}
+			
+			try {
+				const response = await fetch(`/stop_download?task_id=${taskId}`, {
+					method: 'POST'
+				});
+				const result = await response.json();
+				
+				if (result.ret === 'OK') {
+					console.log('任务已停止');
+					updateProgress(); // 立即更新显示
+				} else {
+					alert('停止失败: ' + (result.message || '未知错误'));
+				}
+			} catch (error) {
+				console.error('停止任务失败:', error);
+				alert('停止任务失败');
+			}
+		}
+
+		// 删除任务（仅针对已停止的任务）
+		async function deleteTask(taskId) {
+			if (!confirm('确定要删除此任务记录吗？')) {
+				return;
+			}
+			
+			try {
+				const response = await fetch(`/delete_download_task?task_id=${taskId}`, {
+					method: 'POST'
+				});
+				const result = await response.json();
+				
+				if (result.ret === 'OK') {
+					console.log('任务记录已删除');
+					updateProgress(); // 立即更新显示
+				} else {
+					alert('删除失败: ' + (result.message || '未知错误'));
+				}
+			} catch (error) {
+				console.error('删除任务失败:', error);
+				alert('删除任务失败');
+			}
+		}
+
+		// 重新开始任务（仅针对已停止的任务）
+		async function restartTask(taskId) {
+			if (!confirm('确定要重新开始此下载任务吗？\n将会创建一个新的下载任务。')) {
+				return;
+			}
+			
+			try {
+				const response = await fetch(`/restart_download?task_id=${taskId}`, {
+					method: 'POST'
+				});
+				const result = await response.json();
+				
+				if (result.ret === 'OK') {
+					console.log('任务已重新开始，新任务ID:', result.task_id);
+					alert('下载任务已重新开始！');
+					updateProgress(); // 立即更新显示
+				} else {
+					alert('重新开始失败: ' + (result.message || '未知错误'));
+				}
+			} catch (error) {
+				console.error('重新开始任务失败:', error);
+				alert('重新开始任务失败');
+			}
+		}
+
+		// 页面加载时检查是否有进行中的任务
+		$(document).ready(function() {
+			updateProgress();
+		});
+
+		// 页面卸载时停止定时器
+		$(window).on('beforeunload', function() {
+			stopProgressUpdates();
 		});
 	</script>
 </body>
