@@ -625,14 +625,30 @@
       justify-content: center;
       overflow: hidden;
     }
+
+    @keyframes marquee-loop {
+      0% { transform: translateX(0); opacity: 0; }
+      5%, 15% { transform: translateX(0); opacity: 1; }
+      80%, 90% { transform: translateX(var(--scroll-dist)); opacity: 1; }
+      95%, 100% { transform: translateX(var(--scroll-dist)); opacity: 0; }
+    }
+    .marquee-scroll {
+      animation: marquee-loop 6s linear infinite;
+    }
+
     .now-playing-title {
       font-size: 19px;
       font-weight: bold;
       white-space: nowrap;
-      text-overflow: ellipsis;
       overflow: hidden;
       width: 100%;
-      text-align: center;
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+    .np-title-text {
+      display: inline-block;
+      white-space: nowrap;
     }
     .controls {
       display: flex;
@@ -1289,6 +1305,7 @@
         </div>
       </div>
       <div class="about-footer">
+        <button class="about-secondary" id="about-migrate-btn">升级旧版歌单</button>
         <button class="about-primary" id="about-ok">我知道了</button>
       </div>
     </div>
@@ -1394,6 +1411,9 @@
 
             <div class="modal-input-group" style="margin-top: 0; flex: 1; height: 30px; border-radius: 6px; border: 1px solid var(--primary); overflow: hidden; display: flex; padding-right: 0;">
               <input type="text" id="mf-source-input" placeholder="输入插件网址URL..." autocomplete="off" style="padding: 0 10px; font-size: 13px; height: 100%; border: none; outline: none; background: transparent; flex: 1;">
+              <button id="mf-source-clear" style="background: transparent; border: none; color: var(--text-sub); display: none; align-items: center; justify-content: center; width: 26px; cursor: pointer; flex-shrink: 0;" title="清空">
+                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
               <button class="mf-btn-sm" id="mf-source-refresh" style="background: var(--primary); color: #fff; border: none; height: 100%; padding: 0 16px; border-radius: 0; flex-shrink: 0; font-weight: bold;">拉取</button>
             </div>
 
@@ -1434,11 +1454,17 @@
 
           <div style="display: flex; gap: 10px; margin-bottom: 12px; height: 68px;">
               <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
-                  <div class="modal-input-group" style="margin-top: 0; height: 30px; border-radius: 6px;">
-                    <input type="text" id="lx-user-input" placeholder="数据同步用户名" autocomplete="off" style="padding: 0 10px; font-size: 13px; height: 100%;">
+                  <div class="modal-input-group" style="margin-top: 0; height: 30px; border-radius: 6px; position: relative;">
+                    <input type="text" id="lx-user-input" placeholder="x-user-name (数据同步用户名)" autocomplete="off" style="padding: 0 30px 0 10px; font-size: 13px; height: 100%; width: 100%; box-sizing: border-box;">
+                    <button id="lx-user-clear" style="position: absolute; right: 4px; top: 0; background: transparent; border: none; color: var(--text-sub); display: none; align-items: center; justify-content: center; height: 100%; cursor: pointer;" title="清空">
+                       <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
                   </div>
-                  <div class="modal-input-group" style="margin-top: 0; height: 30px; border-radius: 6px;">
-                    <input type="password" id="lx-token-input" placeholder="数据同步Token" autocomplete="off" style="padding: 0 10px; font-size: 13px; height: 100%;">
+                  <div class="modal-input-group" style="margin-top: 0; height: 30px; border-radius: 6px; position: relative;">
+                    <input type="text" id="lx-token-input" placeholder="x-user-token (数据同步Token)" autocomplete="off" style="padding: 0 30px 0 10px; font-size: 13px; height: 100%; width: 100%; box-sizing: border-box;">
+                    <button id="lx-token-clear" style="position: absolute; right: 4px; top: 0; background: transparent; border: none; color: var(--text-sub); display: none; align-items: center; justify-content: center; height: 100%; cursor: pointer;" title="清空">
+                       <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
                   </div>
               </div>
               <button class="mf-btn-sm" id="lx-auth-save-btn" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); height: 100%; border-radius: 8px; flex-shrink: 0; padding: 0 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.3;"><span>保存</span><span>认证</span></button>
@@ -1460,6 +1486,16 @@
            <div class="setting-group">
                <div class="setting-item">
                    <div class="setting-info">
+                       <div class="setting-title">语音搜索功能</div>
+                       <div class="setting-desc">为XiaoMusic注入online_play和singer_play指令。</div>
+                   </div>
+                   <label class="ios-switch">
+                       <input type="checkbox" id="voice-online-search-toggle">
+                       <span class="ios-slider"></span>
+                   </label>
+               </div>
+               <div class="setting-item">
+                   <div class="setting-info">
                        <div class="setting-title">监听小爱语音口令</div>
                        <div class="setting-desc">开启后XiaoMusic才能接收小爱音箱对话。</div>
                    </div>
@@ -1468,15 +1504,15 @@
                        <span class="ios-slider"></span>
                    </label>
                </div>
-               <div class="setting-item">
+               <div class="setting-item" style="flex-direction: column; align-items: stretch; gap: 8px; padding-bottom: 14px;">
                    <div class="setting-info">
-                       <div class="setting-title">语音搜索支持</div>
-                       <div class="setting-desc">为XiaoMusic注入online_play和singer_play指令。</div>
+                       <div class="setting-title">语音搜索口令</div>
+                       <div class="setting-desc">语音口令可多个，用逗号隔开</div>
                    </div>
-                   <label class="ios-switch">
-                       <input type="checkbox" id="voice-online-search-toggle">
-                       <span class="ios-slider"></span>
-                   </label>
+                   <div class="modal-input-group" style="margin-top: 0; height: 30px; border-radius: 6px; background: transparent; border: none;">
+                       <input type="text" id="voice-keywords-input" placeholder="例如: 在线播放,在线搜索" autocomplete="off" style="padding: 0 10px; font-size: 13px; height: 100%; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-color);">
+                       <button class="mf-btn-sm" id="voice-keywords-save" style="background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); height: 100%; border-radius: 6px; flex-shrink: 0; margin-left: 8px;">保存</button>
+                   </div>
                </div>
            </div>
 
@@ -1484,14 +1520,14 @@
            <div class="setting-group radio-group" style="margin-bottom: 0;">
                <label class="radio-item">
                    <input type="radio" name="voice-engine" value="mf" id="radio-mf" checked>
-                   <span class="radio-label">MusicFree</span>
+                   <span class="radio-label">MusicFree插件</span>
                </label>
                <label class="radio-item">
                    <input type="radio" name="voice-engine" value="lx" id="radio-lx">
-                   <span class="radio-label">LX Server</span>
+                   <span class="radio-label">LX Server接口</span>
                </label>
            </div>
-           <div style="padding: 8px 16px 20px 16px; font-size: 11px; color: var(--text-sub);">💡 设置小爱语音搜歌时默认去哪里抓取数据。(后端代码中)</div>
+           <div style="padding: 8px 16px 20px 16px; font-size: 11px; color: var(--text-sub);">设置小爱语音搜歌时默认去哪里抓取数据。</div>
 
            <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--text-sub);">播放自动化</div>
            <div class="setting-group">
@@ -1506,6 +1542,7 @@
                    </label>
                </div>
            </div>
+
         </div>
 
       </div>
@@ -1535,7 +1572,7 @@
     /* ==========================================
      * 1. 核心配置与全局状态
      * ========================================== */
-    const APP_VERSION = 'v1.5';
+    const APP_VERSION = 'v1.61';
     const APP_LOGO = document.getElementById('app-logo')?.content || '';
     const LX_PLATFORMS_MAP = { 'tx': 'QQ', 'wy': '网易云', 'kg': '酷狗', 'kw': '酷我', 'mg': '咪咕' };
     const API = {
@@ -1751,12 +1788,12 @@
       else if (name === '本地搜索') { icon = SVG_ICONS.search; displayName = '曲库搜索'; }
       else if (name === '下载') icon = SVG_ICONS.download;
       else if (name === '最近新增') { icon = SVG_ICONS.recent; displayName = '本地新增'; }
-      else if (name === '_online_iwebplayer_search') { icon = SVG_ICONS.disc; displayName = '在线资源临时推送歌单'; }
-      else if (name === '其他') icon = SVG_ICONS.folder;
-      else if (name.startsWith('🎵')) {
+      else if (name === '_online_iwebplayer_search' || name === '_online_play' || name.startsWith('🎵')) {
         icon = SVG_ICONS.disc;
-        displayName = name.replace(/^🎵\s*/, '');
+        displayName = window.getDisplayPlaylistName(name);
       }
+      else if (name === '其他') icon = SVG_ICONS.folder;
+
       return `<span style="display:inline-flex; align-items:center; vertical-align:-3px; margin-right:6px; opacity:0.8;">${icon}</span>${displayName} (${count})`;
     }
 
@@ -1885,13 +1922,27 @@
       } else {
         miniCover.style.display = '';
       }
-      if (!checkFav) {
-        npTitle.innerHTML = `<span class="np-title-text">${text}</span>`;
-        return;
+
+      let favSvg = '';
+      if (checkFav && favoriteList.includes(text)) {
+        favSvg = `<svg style="flex-shrink: 0; position: relative; top: 2px; margin-left: 4px;" viewBox="0 0 24 24" width="18" height="18" fill="var(--primary)" color="var(--primary)"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
       }
-      const isFav = favoriteList.includes(text);
-      const favSvg = isFav ? `<svg style="flex-shrink: 0; position: relative; top: 2px;" viewBox="0 0 24 24" width="18" height="18" fill="var(--primary)" color="var(--primary)"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` : '';
       npTitle.innerHTML = `<span class="np-title-text">${text}</span>${favSvg}`;
+
+      setTimeout(() => {
+        const textEl = npTitle.querySelector('.np-title-text');
+        if (textEl) {
+          const overflowSpan = textEl.scrollWidth - npTitle.clientWidth + (favSvg ? 22 : 0);
+          if (overflowSpan > 0) {
+            textEl.style.setProperty('--scroll-dist', `-${overflowSpan + 15}px`);
+            textEl.classList.add('marquee-scroll');
+            npTitle.style.justifyContent = 'flex-start';
+          } else {
+            textEl.classList.remove('marquee-scroll');
+            npTitle.style.justifyContent = 'center';
+          }
+        }
+      }, 50);
     }
 
     function highlightSongUI(index) {
@@ -2077,7 +2128,7 @@
         if (favIcon) favIcon.style.display = 'none';
         showToast(`已取消收藏: ${songName}`);
       } else {
-        favoriteList.push(songName);
+        favoriteList.unshift(songName);
         if (favIcon) favIcon.style.display = 'block';
         showToast(`已收藏: ${songName}`);
       }
@@ -2252,10 +2303,8 @@
                 backendPlaylist = '在线资源';
             } else if (backendPlaylist === '_local_iwebplayer_search') {
                 backendPlaylist = '本地搜索';
-            } else if (backendPlaylist && backendPlaylist.startsWith('_online_mf_')) {
-                backendPlaylist = backendPlaylist.replace('_online_mf_', '');
-            } else if (backendPlaylist && backendPlaylist.startsWith('_online_lx_')) {
-                backendPlaylist = backendPlaylist.replace('_online_lx_', '');
+            } else if (backendPlaylist && backendPlaylist.startsWith('_online_iwp_')) {
+                backendPlaylist = backendPlaylist.replace('_online_iwp_', '');
             }
 
             const isValidBackendPlaylist = backendPlaylist && Array.from(document.querySelectorAll('#playlist-opts .select-option')).some(opt => opt.dataset.key === backendPlaylist);
@@ -2315,6 +2364,9 @@
               }
             }
             if (data.is_playing) {
+              consecutiveFailures = 0;
+              deadSongIndexes = [];
+
               updatePlayButtonUI(true);
               const cur = data.offset || 0;
               const dur = data.duration || 1;
@@ -2529,8 +2581,6 @@
 
       const currentRawItem = songList[index];
 
-      await window.checkAndSwitchEngine(currentRawItem, currentPlaylist, false);
-
       highlightSongUI(index);
       const targetSongName = currentSongName;
 
@@ -2559,7 +2609,7 @@
         } else if (currentPlaylist !== '在线资源') {
           const rawItem = songList[index];
           const isOnlineObj = typeof rawItem === 'object' && rawItem !== null;
-          const actualPlaylistName = isOnlineObj ? (rawItem._sourcePlaylist || ('_online_mf_' + currentPlaylist)) : currentPlaylist;
+          const actualPlaylistName = isOnlineObj ? (rawItem._sourcePlaylist || ('_online_iwp_' + currentPlaylist)) : currentPlaylist;
           sendRemoteCmd(`播放列表${actualPlaylistName}|${targetSongName}`);
         }
       }
@@ -2647,10 +2697,6 @@
 
                   if (targetSongName !== currentSongName) return;
 
-                  if (sourceData && sourceData.url && sourceData.success !== false) {
-                      consecutiveFailures = 0;
-                      deadSongIndexes = [];
-                  }
                   preloadCache = null;
 
                   if (currentDid === "" && sourceData && sourceData.url && sourceData.success !== false) {
@@ -2739,10 +2785,6 @@
               info = await res.json();
           }
 
-          if (info && info.url) {
-              consecutiveFailures = 0;
-              deadSongIndexes = [];
-          }
           preloadCache = null;
 
           if (currentDid === "" && info.url) {
@@ -2881,8 +2923,6 @@
         const rawItem = songList[targetIndex];
         const isOnlineObj = typeof rawItem === 'object' && rawItem !== null;
 
-        await window.checkAndSwitchEngine(rawItem, currentPlaylist, true);
-
         let realUrl = null;
 
         const fetchUrl = async () => {
@@ -2957,13 +2997,28 @@
      * 7. 全局业务逻辑 (Add, Remove, Plugins)
      * ========================================== */
 
+    window.getDisplayPlaylistName = function(k) {
+        if (k === '_online_iwebplayer_search') return '在线搜索推送歌单';
+        if (k === '_online_play') return '语音搜索歌单';
+        return k.replace(/^🎵\s*/, '');
+    };
+
+    window.encodePluginUrlItem = function(cleanItem) {
+        const jsonStr = JSON.stringify(cleanItem);
+        const utf8Bytes = new TextEncoder().encode(jsonStr);
+        const binStr = Array.from(utf8Bytes).map(b => String.fromCharCode(b)).join('');
+        const b64Data = window.btoa(binStr);
+        const selfUrl = "self:///api/proxy/plugin-url?data=" + b64Data;
+        const songNameStr = window.getSongNameObj(cleanItem);
+        return { name: songNameStr, url: selfUrl, type: "music", tags: cleanItem };
+    };
+
     window.getCustomPlaylists = function() {
         const uniqueBaseNames = new Set();
 
         Object.keys(allPlaylists).forEach(k => {
-            if (k === '全部' || k === '_local_iwebplayer_search') return;
-            if (k.startsWith('_online_mf_')) uniqueBaseNames.add(k.replace('_online_mf_', ''));
-            else if (k.startsWith('_online_lx_')) uniqueBaseNames.add(k.replace('_online_lx_', ''));
+            if (k === '全部' || k === '_local_iwebplayer_search' || k === '_online_webPush') return;
+            if (k.startsWith('_online_iwp_')) uniqueBaseNames.add(k.replace('_online_iwp_', ''));
             else uniqueBaseNames.add(k);
         });
 
@@ -2973,15 +3028,13 @@
 
         allCleanKeys.forEach(k => {
             if (predefinedOrder.includes(k)) return; // 排除系统默认歌单
-            if (k === '_online_iwebplayer_search' || k.startsWith('🎵') || (window.customPlaylistNames && window.customPlaylistNames.includes(k))) {
+            if (k === '_online_iwebplayer_search' || k === '_online_play' || k.startsWith('🎵') || (window.customPlaylistNames && window.customPlaylistNames.includes(k))) {
                 customKeys.push(k);
             }
         });
 
         return customKeys.sort((a, b) => {
-            const nameA = a === '_online_iwebplayer_search' ? '在线资源临时推送歌单' : a.replace(/^🎵\s*/, '');
-            const nameB = b === '_online_iwebplayer_search' ? '在线资源临时推送歌单' : b.replace(/^🎵\s*/, '');
-            return nameA.localeCompare(nameB, 'zh-CN');
+            return window.getDisplayPlaylistName(a).localeCompare(window.getDisplayPlaylistName(b), 'zh-CN');
         });
     };
 
@@ -2995,8 +3048,7 @@
             customKeys.forEach(k => {
                 const li = document.createElement('li');
                 li.style.cssText = 'padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; color: var(--text-main); font-size: 14px; display: flex; align-items: center; gap: 10px; transition: background 0.2s;';
-                let displayName = k.replace(/^🎵\s*/, '');
-                if (k === '_online_iwebplayer_search') displayName = '在线资源临时推送歌单';
+                let displayName = window.getDisplayPlaylistName(k);
                 const songCount = window.getMergedSongList(k).length;
                 li.innerHTML = `<input type="radio" name="add_target_pl" style="pointer-events: none; margin: 0; width: 16px; height: 16px; accent-color: var(--primary);"> <span>${displayName} <span style="opacity: 0.6; font-size: 12px; margin-left: 2px;">(${songCount})</span></span>`;
                 li.onmousedown = () => { li.style.backgroundColor = 'var(--border)'; };
@@ -3040,32 +3092,6 @@
         return item;
     };
 
-    window.checkAndSwitchEngine = async function(rawItem, currentPlaylistName, isSilent = false) {
-        let requiredEngine = window.currentEngineType;
-        const actualPlaylistName = (typeof rawItem === 'object' && rawItem !== null && rawItem._sourcePlaylist)
-            ? rawItem._sourcePlaylist : currentPlaylistName;
-
-        if (actualPlaylistName.startsWith('_online_lx_')) {
-            requiredEngine = 2;
-        } else if (actualPlaylistName.startsWith('_online_mf_')) {
-            requiredEngine = 1;
-        } else if (currentPlaylistName === '在线资源') {
-            const currentEngineStr = document.getElementById('engine-val')?.dataset.value || 'MusicFree';
-            requiredEngine = (currentEngineStr === 'LXServer') ? 2 : 1;
-        }
-
-        if (requiredEngine && requiredEngine !== window.currentEngineType) {
-            console.log(`[${isSilent ? '探路换轨' : '智能换轨'}] 侦测到跨服歌曲，正在将后端引擎切换为: ${requiredEngine === 1 ? 'MusicFree' : 'LX Server'}`);
-            try {
-                await fetch('/api/back-conf/update', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ api_type: requiredEngine })
-                });
-                window.currentEngineType = requiredEngine;
-            } catch (e) { console.error("引擎切换失败", e); }
-        }
-    };
-
     window.getSongNameObj = function(rawItem) {
         if (typeof rawItem === 'string') return rawItem;
         if (rawItem && rawItem._isSavedOnlineStr) return rawItem.name;
@@ -3077,16 +3103,14 @@
     window.getMergedSongList = function(baseName) {
         if (baseName === '在线资源' || baseName === '本地搜索') return allPlaylists[baseName] || [];
         let merged = [];
-        const mfName = '_online_mf_' + baseName;
-        const lxName = '_online_lx_' + baseName;
+        const iwpName = '_online_iwp_' + baseName;
 
         const wrap = (item, source) => {
             if (typeof item === 'string') return { _isSavedOnlineStr: true, name: item, _sourcePlaylist: source };
             return { ...item, _sourcePlaylist: source };
         };
 
-        if (allPlaylists[mfName]) merged = merged.concat(allPlaylists[mfName].map(i => wrap(i, mfName)));
-        if (allPlaylists[lxName]) merged = merged.concat(allPlaylists[lxName].map(i => wrap(i, lxName)));
+        if (allPlaylists[iwpName]) merged = merged.concat(allPlaylists[iwpName].map(i => wrap(i, iwpName)));
         if (allPlaylists[baseName]) merged = merged.concat(allPlaylists[baseName]);
 
         return merged;
@@ -3112,7 +3136,7 @@
         } else {
             const rawItem = songList[index];
             const isOnlineObj = typeof rawItem === 'object' && rawItem !== null;
-            const actualPlaylistName = isOnlineObj ? (rawItem._sourcePlaylist || ('_online_mf_' + currentPlaylist)) : currentPlaylist;
+            const actualPlaylistName = isOnlineObj ? (rawItem._sourcePlaylist || ('_online_iwp_' + currentPlaylist)) : currentPlaylist;
 
             if (allPlaylists[actualPlaylistName] && allPlaylists[actualPlaylistName] !== songList) {
                 const realIndex = allPlaylists[actualPlaylistName].findIndex(item => window.getSongNameObj(item) === window.getSongNameObj(rawItem));
@@ -3220,14 +3244,16 @@
 
     window.executeAddSong = async function(index, songName, targetPlaylist) {
         const rawItem = songList[index];
-        const isFreshOnlineJson = typeof rawItem === 'object' && rawItem !== null && !rawItem._isSavedOnlineStr;
+
+        const realItem = window.decodePluginUrlItem(rawItem);
+        const isFreshOnlineJson = typeof realItem === 'object' && realItem !== null && !realItem._isSavedOnlineStr;
 
         if (!isFreshOnlineJson) {
             let isNewPlaylist = !allPlaylists[targetPlaylist];
             if (isNewPlaylist) allPlaylists[targetPlaylist] = [];
 
             if (!allPlaylists[targetPlaylist].includes(songName)) {
-                allPlaylists[targetPlaylist].push(songName);
+                allPlaylists[targetPlaylist].unshift(songName);
             }
 
             showToast(`⏳ 正在加入 ${targetPlaylist.replace(/^🎵\s*/, '')}...`);
@@ -3260,9 +3286,7 @@
             } catch(e) { showToast("❌ 网络异常"); }
 
         } else {
-            const currentEngine = document.getElementById('engine-val')?.dataset.value || 'MusicFree';
-            const prefix = currentEngine === 'MusicFree' ? '_online_mf_' : '_online_lx_';
-            const hiddenListName = prefix + targetPlaylist;
+            const hiddenListName = '_online_iwp_' + targetPlaylist;
 
             showToast(`⏳ 正在同步线上资源至后台...`);
 
@@ -3276,24 +3300,17 @@
 
                 let plIndex = musicArr.findIndex(pl => pl.name === hiddenListName);
 
-                const jsonStr = JSON.stringify(rawItem);
-                const utf8Bytes = new TextEncoder().encode(jsonStr);
-                const binStr = Array.from(utf8Bytes).map(b => String.fromCharCode(b)).join('');
-                const b64Data = window.btoa(binStr);
-                const selfUrl = "self:///api/proxy/plugin-url?data=" + b64Data;
+                const cleanItem = { ...realItem };
+                delete cleanItem._sourcePlaylist;
+                delete cleanItem._isDead;
 
-                const songNameStr = window.getSongNameObj(rawItem);
-                const wrappedSong = {
-                    name: songNameStr,
-                    url: selfUrl,
-                    type: "music",
-                    tags: rawItem
-                };
+                const wrappedSong = window.encodePluginUrlItem(cleanItem);
+                const songNameStr = wrappedSong.name;
 
                 let isNewPlaylist = false;
                 if (plIndex !== -1) {
                     const isExist = musicArr[plIndex].musics.some(m => window.getSongNameObj(m) === songNameStr);
-                    if (!isExist) musicArr[plIndex].musics.push(wrappedSong);
+                    if (!isExist) musicArr[plIndex].musics.unshift(wrappedSong);
                 } else {
                     isNewPlaylist = true;
                     musicArr.push({ name: hiddenListName, musics: [wrappedSong] });
@@ -3326,7 +3343,6 @@
                     }
                 } else {
                     showToast("❌ 线上保存失败：" + (saveData.error || "未知错误"));
-
                 }
             } catch (e) {
                 showToast("❌ 网络请求失败");
@@ -3343,9 +3359,17 @@
         const onlineSongs = [];
 
         songList.forEach(rawItem => {
-            const isFreshOnlineJson = typeof rawItem === 'object' && rawItem !== null && !rawItem._isSavedOnlineStr;
-            if (isFreshOnlineJson) onlineSongs.push(rawItem);
-            else localSongs.push(window.getSongNameObj(rawItem));
+            const realItem = window.decodePluginUrlItem(rawItem);
+            const isFreshOnlineJson = typeof realItem === 'object' && realItem !== null && !realItem._isSavedOnlineStr;
+
+            if (isFreshOnlineJson) {
+                const cleanItem = { ...realItem };
+                delete cleanItem._sourcePlaylist;
+                delete cleanItem._isDead;
+                onlineSongs.push(cleanItem);
+            } else {
+                localSongs.push(window.getSongNameObj(realItem));
+            }
         });
 
         let isNewPlaylist = !document.querySelector(`#playlist-opts .select-option[data-key="${targetPlaylist}"]`);
@@ -3355,9 +3379,9 @@
             if (!allPlaylists[targetPlaylist]) {
                 allPlaylists[targetPlaylist] = [];
             }
-            localSongs.forEach(songName => {
-                if (!allPlaylists[targetPlaylist].includes(songName)) allPlaylists[targetPlaylist].push(songName);
-            });
+            const newLocals = localSongs.filter(songName => !allPlaylists[targetPlaylist].includes(songName));
+            allPlaylists[targetPlaylist] = [...newLocals, ...allPlaylists[targetPlaylist]];
+
             try {
                 const res = await fetch('/playlistupdatemusic', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -3369,9 +3393,7 @@
         }
 
         if (onlineSongs.length > 0) {
-            const currentEngine = document.getElementById('engine-val')?.dataset.value || 'MusicFree';
-            const prefix = currentEngine === 'MusicFree' ? '_online_mf_' : '_online_lx_';
-            const hiddenListName = prefix + targetPlaylist;
+            const hiddenListName = '_online_iwp_' + targetPlaylist;
 
             try {
                 const settingRes = await fetch(API.setting + '?t=' + Date.now());
@@ -3384,18 +3406,14 @@
                     plIndex = musicArr.length - 1;
                 }
 
-                onlineSongs.forEach(rawItem => {
-                    const jsonStr = JSON.stringify(rawItem);
-                    const utf8Bytes = new TextEncoder().encode(jsonStr);
-                    const binStr = Array.from(utf8Bytes).map(b => String.fromCharCode(b)).join('');
-                    const b64Data = window.btoa(binStr);
-                    const selfUrl = "self:///api/proxy/plugin-url?data=" + b64Data;
-                    const songNameStr = window.getSongNameObj(rawItem);
-
-                    const wrappedSong = { name: songNameStr, url: selfUrl, type: "music", tags: rawItem };
-                    const isExist = musicArr[plIndex].musics.some(m => window.getSongNameObj(m) === songNameStr);
-                    if (!isExist) musicArr[plIndex].musics.push(wrappedSong);
+                const newWrappedSongs = [];
+                onlineSongs.forEach(cleanItem => {
+                    const wrappedSong = window.encodePluginUrlItem(cleanItem);
+                    const isExist = musicArr[plIndex].musics.some(m => window.getSongNameObj(m) === wrappedSong.name);
+                    if (!isExist) newWrappedSongs.push(wrappedSong);
                 });
+
+                musicArr[plIndex].musics = [...newWrappedSongs, ...musicArr[plIndex].musics];
 
                 const saveRes = await fetch('/savesetting', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -3500,12 +3518,76 @@
         });
     }
 
+    // ================= 语音搜索口令保存 =================
+    const voiceKeywordsSaveBtn = document.getElementById('voice-keywords-save');
+    if (voiceKeywordsSaveBtn) {
+        voiceKeywordsSaveBtn.addEventListener('click', async () => {
+            const inputEl = document.getElementById('voice-keywords-input');
+            if (!inputEl) return;
+
+            let val = inputEl.value.replace(/，/g, ',').trim();
+            inputEl.value = val;
+
+            if (!val) {
+                showToast("⚠️ 口令不能为空");
+                return;
+            }
+
+            voiceKeywordsSaveBtn.disabled = true;
+            voiceKeywordsSaveBtn.style.opacity = '0.5';
+            voiceKeywordsSaveBtn.innerText = '保存中';
+
+            try {
+
+                const res = await fetch('/savesetting', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keywords_online_play: val })
+                });
+                const data = await res.json();
+
+                if (data === "save success" || data === "success" || data.ret === "OK") {
+                    window.globalVoiceKeywords = val;
+                    showToast("✅ 语音搜索口令已保存！");
+                } else {
+                    showToast("❌ 保存失败：" + (data.error || "未知错误"));
+                }
+            } catch (e) {
+                showToast("❌ 网络异常，保存失败");
+            } finally {
+                voiceKeywordsSaveBtn.disabled = false;
+                voiceKeywordsSaveBtn.style.opacity = '1';
+                voiceKeywordsSaveBtn.innerText = '保存';
+            }
+        });
+    }
+
     const voiceEngineRadios = document.querySelectorAll('input[name="voice-engine"]');
     voiceEngineRadios.forEach(radio => {
-        radio.addEventListener('change', (e) => {
+        radio.addEventListener('change', async (e) => {
             if (e.target.checked) {
-                localStorage.setItem('voice_search_engine', e.target.value);
-                showToast(`✅ 默认搜索引擎配置已保存`);
+                const engineValue = e.target.value;
+                localStorage.setItem('voice_search_engine', engineValue);
+
+                showToast(`⏳ 正在同步搜索引擎配置...`);
+                try {
+                    // 1 代表 MusicFree, 2 代表 LX Server
+                    const apiType = engineValue === 'lx' ? 2 : 1;
+                    const res = await fetch('/api/back-conf/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ api_type: apiType })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        window.currentEngineType = apiType;
+                        showToast(`✅ 默认搜索引擎已切换为 ${engineValue === 'lx' ? 'LX Server接口' : 'MusicFree插件'}`);
+                    } else {
+                        showToast(`❌ 同步失败`);
+                    }
+                } catch (err) {
+                    showToast(`❌ 网络请求异常`);
+                }
             }
         });
     });
@@ -3722,14 +3804,14 @@
       } else {
         const resultsMap = new Map();
 
-        const blacklist = SYSTEM_PLAYLISTS;
+        // 直接定义要排除的系统级和临时歌单。
+        const blacklist = ['全部', '在线资源', '本地搜索', '_local_iwebplayer_search', '_online_iwebplayer_search', '_online_play', '_online_webPush'];
 
         Object.keys(allPlaylists).forEach(listName => {
             if (blacklist.includes(listName)) return;
 
             let displayName = listName;
-            if (listName.startsWith('_online_mf_')) displayName = listName.replace('_online_mf_', '');
-            else if (listName.startsWith('_online_lx_')) displayName = listName.replace('_online_lx_', '');
+            if (listName.startsWith('_online_iwp_')) displayName = listName.replace('_online_iwp_', '');
             displayName = displayName.replace(/^🎵\s*/, '');
 
             allPlaylists[listName].forEach(rawItem => {
@@ -3889,8 +3971,7 @@
       const uniqueBaseNames = new Set();
       Object.keys(allPlaylists).forEach(k => {
           if (k === '全部' || k === '_local_iwebplayer_search') return;
-          if (k.startsWith('_online_mf_')) uniqueBaseNames.add(k.replace('_online_mf_', ''));
-          else if (k.startsWith('_online_lx_')) uniqueBaseNames.add(k.replace('_online_lx_', ''));
+          if (k.startsWith('_online_iwp_')) uniqueBaseNames.add(k.replace('_online_iwp_', ''));
           else uniqueBaseNames.add(k);
       });
       const allCleanKeys = Array.from(uniqueBaseNames);
@@ -3946,7 +4027,7 @@
       };
 
       const predefinedOrder = ['在线资源', '本地搜索', '所有电台', '所有歌曲', '最近新增', '收藏', '下载'];
-      const hiddenPlaylists = ['全部', '_local_iwebplayer_search'];
+      const hiddenPlaylists = ['全部', '_local_iwebplayer_search', '_online_webPush'];
 
       if (window.getMergedSongList('其他').length === 0) hiddenPlaylists.push('其他');
       if (window.getMergedSongList('下载').length === 0) hiddenPlaylists.push('下载');
@@ -3958,7 +4039,7 @@
 
       allCleanKeys.forEach(k => {
           if (predefinedOrder.includes(k) || hiddenPlaylists.includes(k)) return;
-          if (k === '_online_iwebplayer_search' || k.startsWith('🎵') || (window.customPlaylistNames && window.customPlaylistNames.includes(k))) {
+          if (k === '_online_iwebplayer_search' || k === '_online_play' || k.startsWith('🎵') || (window.customPlaylistNames && window.customPlaylistNames.includes(k))) {
               customKeys.push(k);
           } else {
               localFolderKeys.push(k);
@@ -3966,9 +4047,7 @@
       });
 
       customKeys.sort((a, b) => {
-          const nameA = a === '_online_iwebplayer_search' ? '在线资源临时推送歌单' : a.replace(/^🎵\s*/, '');
-          const nameB = b === '_online_iwebplayer_search' ? '在线资源临时推送歌单' : b.replace(/^🎵\s*/, '');
-          return nameA.localeCompare(nameB, 'zh-CN');
+          return window.getDisplayPlaylistName(a).localeCompare(window.getDisplayPlaylistName(b), 'zh-CN');
       });
       localFolderKeys.sort((a, b) => a.localeCompare(b, 'zh-CN'));
 
@@ -4087,7 +4166,8 @@
 
         let platformStr = isOnlineObj ? (realItem.platform || (realItem.tags && realItem.tags.platform) || '') : '';
         const actualPlaylistName = isOnlineObj && realItem._sourcePlaylist ? realItem._sourcePlaylist : currentPlaylist;
-        const isLxSong = actualPlaylistName.startsWith('_online_lx_') || (currentPlaylist === '在线资源' && document.getElementById('engine-val')?.dataset.value === 'LXServer');
+
+        const isLxSong = (isOnlineObj && (realItem._raw || (realItem.tags && realItem.tags._raw))) || (currentPlaylist === '在线资源' && document.getElementById('engine-val')?.dataset.value === 'LXServer');
 
         if (isLxSong && LX_PLATFORMS_MAP[platformStr]) platformStr = LX_PLATFORMS_MAP[platformStr];
 
@@ -4263,7 +4343,8 @@
             const pluginsData = await pluginsRes.json();
 
             if (sourceData.success && sourceData.data) {
-              document.getElementById('mf-source-input').value = sourceData.data.source_url || '';
+              const mfSrcEl = document.getElementById('mf-source-input');
+              if (mfSrcEl) mfSrcEl.value = sourceData.data.source_url || '';
             }
 
             if (pluginsData.success) {
@@ -4559,7 +4640,12 @@
         });
 
         audioEl.addEventListener('playing', () => {
-          if (currentDid === "" && 'mediaSession' in navigator) setupMediaSession();
+          if (currentDid === "") {
+
+            consecutiveFailures = 0;
+            deadSongIndexes = [];
+            if ('mediaSession' in navigator) setupMediaSession();
+          }
         });
 
         audioEl.addEventListener('pause', () => {
@@ -4653,7 +4739,12 @@
         btnPlay.addEventListener('click', () => {
 
           if (currentDid !== "" && isPlaying) {
-            sendRemoteCmd("关机");
+            fetch('/device/stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ did: currentDid })
+            }).catch(() => {});
+
             updatePlayButtonUI(false);
             progressBar.style.width = '0%';
             timeCurrentEl.innerText = '00:00';
@@ -4875,8 +4966,7 @@
             customKeys.forEach(k => {
                 const li = document.createElement('li');
                 li.className = 'edit-pl-item';
-                let displayName = k.replace(/^🎵\s*/, '');
-                if (k === '_online_iwebplayer_search') displayName = '在线资源临时推送歌单';
+                let displayName = window.getDisplayPlaylistName(k);
                 const songCount = window.getMergedSongList ? window.getMergedSongList(k).length : 0;
 
                 const defaultHtml = `
@@ -4931,11 +5021,10 @@
                                 musicArr.forEach(pl => {
 
                                     if (pl.name === '_online_iwebplayer_search' && finalOldName === '_online_iwebplayer_search') {
-                                        pl.name = '_online_mf_' + finalNewName;
+                                        pl.name = '_online_iwp_' + finalNewName;
                                         changed = true;
                                     }
-                                    if (pl.name === '_online_mf_' + finalOldName) { pl.name = '_online_mf_' + finalNewName; changed = true; }
-                                    if (pl.name === '_online_lx_' + finalOldName) { pl.name = '_online_lx_' + finalNewName; changed = true; }
+                                    if (pl.name === '_online_iwp_' + finalOldName) { pl.name = '_online_iwp_' + finalNewName; changed = true; }
                                 });
                                 if (changed) {
                                     await fetch('/savesetting', {
@@ -4983,7 +5072,7 @@
                                 let musicArr = JSON.parse(settingData.music_list_json);
                                 const initialLen = musicArr.length;
 
-                                musicArr = musicArr.filter(pl => pl.name !== k && pl.name !== '_online_mf_' + k && pl.name !== '_online_lx_' + k);
+                                musicArr = musicArr.filter(pl => pl.name !== k && pl.name !== '_online_iwp_' + k);
                                 if (musicArr.length !== initialLen) {
                                     await fetch('/savesetting', {
                                         method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -5145,6 +5234,10 @@
                 fetch(API.setting + '?t=' + Date.now()).then(r=>r.json()).then(data => {
                     const cmd = data.active_cmd || '';
                     if (onlineToggle) onlineToggle.checked = cmd.includes('online_play') && cmd.includes('singer_play');
+
+                    window.globalVoiceKeywords = data.keywords_online_play || '在线播放,在线搜索';
+                    const keywordsInput = document.getElementById('voice-keywords-input');
+                    if (keywordsInput) keywordsInput.value = window.globalVoiceKeywords;
                 }).catch(()=>{});
 
                 const autoAddToggle = document.getElementById('voice-auto-add-toggle');
@@ -5154,9 +5247,19 @@
                     }
                 }).catch(()=>{});
 
-                const savedEngine = localStorage.getItem('voice_search_engine') || 'mf';
-                const radio = document.getElementById(savedEngine === 'mf' ? 'radio-mf' : 'radio-lx');
-                if (radio) radio.checked = true;
+                fetch('/api/back-conf/load').then(r=>r.json()).then(data => {
+                    if (data.success && data.data) {
+                        const apiType = data.data.api_type || 1;
+                        window.currentEngineType = apiType;
+                        const activeEngine = apiType === 2 ? 'lx' : 'mf';
+                        const radio = document.getElementById(activeEngine === 'mf' ? 'radio-mf' : 'radio-lx');
+                        if (radio) radio.checked = true;
+                    }
+                }).catch(()=>{
+                    const savedEngine = localStorage.getItem('voice_search_engine') || 'mf';
+                    const radio = document.getElementById(savedEngine === 'mf' ? 'radio-mf' : 'radio-lx');
+                    if (radio) radio.checked = true;
+                });
             });
         }
 
@@ -5202,15 +5305,13 @@
                         const data = await res.json();
                         if (data.success && data.data) {
                             const urlInput = document.getElementById('lx-url-input');
-                            urlInput.value = data.data.base_url || '';
+                            if (urlInput) urlInput.value = data.data.base_url || '';
 
-                            const lxUrlClearBtn = document.getElementById('lx-url-clear');
-                            if (lxUrlClearBtn) {
-                                lxUrlClearBtn.style.display = urlInput.value.trim().length > 0 ? 'flex' : 'none';
-                            }
+                            const lxUserEl = document.getElementById('lx-user-input');
+                            if (lxUserEl) lxUserEl.value = data.data['x-user-name'] || '';
 
-                            document.getElementById('lx-user-input').value = data.data['x-user-name'] || '';
-                            document.getElementById('lx-token-input').value = data.data['x-user-token'] || '';
+                            const lxTokenEl = document.getElementById('lx-token-input');
+                            if (lxTokenEl) lxTokenEl.value = data.data['x-user-token'] || '';
 
                             const loadedPlatforms = data.data.platforms ? Object.keys(data.data.platforms) : [];
                             const standardKeys = ['tx', 'wy', 'kg', 'kw', 'mg'];
@@ -5235,59 +5336,80 @@
                     const listenToggle = document.getElementById('voice-listen-toggle');
                     if (listenToggle) listenToggle.checked = !!window.isVoiceCmdEnabled;
 
-                    const onlineToggle = document.getElementById('voice-online-search-toggle');
-                    fetch(API.setting + '?t=' + Date.now()).then(r=>r.json()).then(data => {
-                        const cmd = data.active_cmd || '';
-                        if (onlineToggle) onlineToggle.checked = cmd.includes('online_play') && cmd.includes('singer_play');
-                    }).catch(()=>{});
+                    const keywordsInput = document.getElementById('voice-keywords-input');
+                    if (keywordsInput) keywordsInput.value = window.globalVoiceKeywords || '在线播放,在线搜索';
+                } else if (targetId === 'mf-pane') {
 
-                    const autoAddToggle = document.getElementById('voice-auto-add-toggle');
-                    fetch('/api/advanced-config/load').then(r=>r.json()).then(data => {
-                        if (data.success && data.data && autoAddToggle) {
-                            autoAddToggle.checked = !!data.data.auto_add_song;
+                    fetch('/api/plugin-source/load').then(r=>r.json()).then(data => {
+                        if (data.success && data.data) {
+                            const mfSrcEl = document.getElementById('mf-source-input');
+                            if (mfSrcEl && document.activeElement !== mfSrcEl) {
+                                mfSrcEl.value = data.data.source_url || '';
+                            }
                         }
                     }).catch(()=>{});
-
-                    const savedEngine = localStorage.getItem('voice_search_engine') || 'mf';
-                    const radio = document.getElementById(savedEngine === 'mf' ? 'radio-mf' : 'radio-lx');
-                    if (radio) radio.checked = true;
                 }
             });
         });
 
         const lxUrlInput = document.getElementById('lx-url-input');
-        const lxUrlClear = document.getElementById('lx-url-clear');
         const lxTestStatus = document.getElementById('lx-test-status');
         const lxUserInput = document.getElementById('lx-user-input');
         const lxTokenInput = document.getElementById('lx-token-input');
         const lxAuthStatus = document.getElementById('lx-auth-status');
 
         if (lxUrlInput) {
+
             lxUrlInput.addEventListener('blur', function() {
                 let val = this.value.trim();
                 if (!val) return;
                 if (val.endsWith('/')) val = val.slice(0, -1);
                 if (!val.endsWith('/api')) val += '/api';
                 this.value = val;
-                if (lxUrlClear) lxUrlClear.style.display = this.value.length > 0 ? 'flex' : 'none';
             });
-            lxUrlInput.addEventListener('input', function() {
-                if (lxTestStatus) lxTestStatus.innerHTML = '';
-                if (lxUrlClear) lxUrlClear.style.display = this.value.length > 0 ? 'flex' : 'none';
-            });
-            if (lxUrlClear) {
-                lxUrlClear.style.display = lxUrlInput.value.trim().length > 0 ? 'flex' : 'none';
-                lxUrlClear.addEventListener('click', () => {
-                    lxUrlInput.value = '';
-                    lxUrlClear.style.display = 'none';
-                    if (lxTestStatus) lxTestStatus.innerHTML = '';
-                    lxUrlInput.focus();
-                });
-            }
         }
 
-        if (lxUserInput) lxUserInput.addEventListener('input', () => { if (lxAuthStatus) lxAuthStatus.innerHTML = ''; });
-        if (lxTokenInput) lxTokenInput.addEventListener('input', () => { if (lxAuthStatus) lxAuthStatus.innerHTML = ''; });
+        const setupClearBtn = (inputId, clearBtnId, extraCallback) => {
+            const inputEl = document.getElementById(inputId);
+            const clearBtn = document.getElementById(clearBtnId);
+            if (inputEl && clearBtn) {
+                const toggleX = () => {
+                    clearBtn.style.display = inputEl.value.length > 0 ? 'flex' : 'none';
+                };
+
+                inputEl.addEventListener('input', () => {
+                    toggleX();
+                    if (extraCallback) extraCallback();
+                });
+
+                inputEl.addEventListener('focus', toggleX);
+
+                inputEl.addEventListener('blur', () => {
+                    setTimeout(() => { clearBtn.style.display = 'none'; }, 150);
+                });
+
+                clearBtn.addEventListener('click', () => {
+                    inputEl.value = '';
+                    clearBtn.style.display = 'none';
+                    inputEl.focus();
+                    if (extraCallback) extraCallback();
+                });
+            }
+        };
+
+        setupClearBtn('mf-source-input', 'mf-source-clear');
+        setupClearBtn('lx-url-input', 'lx-url-clear', () => {
+            const lxTestStatus = document.getElementById('lx-test-status');
+            if (lxTestStatus) lxTestStatus.innerHTML = '';
+        });
+        setupClearBtn('lx-user-input', 'lx-user-clear', () => {
+            const lxAuthStatus = document.getElementById('lx-auth-status');
+            if (lxAuthStatus) lxAuthStatus.innerHTML = '';
+        });
+        setupClearBtn('lx-token-input', 'lx-token-clear', () => {
+            const lxAuthStatus = document.getElementById('lx-auth-status');
+            if (lxAuthStatus) lxAuthStatus.innerHTML = '';
+        });
 
         const lxUrlSaveBtn = document.getElementById('lx-url-save-btn');
         if (lxUrlSaveBtn) {
@@ -5506,19 +5628,7 @@
 
                 isFetchingOnline = true;
                 const currentEngine = document.getElementById('engine-val').dataset.value;
-                const requiredEngine = currentEngine === 'LXServer' ? 2 : 1;
-
-                if (requiredEngine !== window.currentEngineType) {
-                    try {
-                        await fetch('/api/back-conf/update', {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ api_type: requiredEngine })
-                        });
-                        window.currentEngineType = requiredEngine;
-                    } catch (e) {
-                        console.error("引擎切换失败", e);
-                    }
-                }
+                const apiType = currentEngine === 'LXServer' ? 2 : 1;
 
                 const selectedPlugin = document.getElementById('mf-plugin-val').dataset.value;
 
@@ -5553,7 +5663,7 @@
                 };
 
                 try {
-                    const response = await fetch(`/api/search/online?keyword=${encodeURIComponent(keyword)}&plugin=${selectedPlugin}&page=${currentSearchPage}&limit=30`);
+                    const response = await fetch(`/api/search/online?keyword=${encodeURIComponent(keyword)}&plugin=${selectedPlugin}&page=${currentSearchPage}&limit=30&api_type=${apiType}`);
                     const data = await response.json();
 
                     if (data.success && data.data && data.data.length > 0) {
@@ -5779,6 +5889,7 @@
             const settingData = await settingRes.json();
 
             window.isVoiceCmdEnabled = settingData.enable_pull_ask !== false;
+            window.globalVoiceKeywords = settingData.keywords_online_play || '在线播放,在线搜索';
             if (typeof updateVoiceCmdIconUI === 'function') updateVoiceCmdIconUI();
 
             allPlaylists = await listRes.json();
@@ -5845,6 +5956,86 @@
             throw e;
         }
     }
+
+    // ==========================================
+    // 升级合并旧版 mf 和 lx 歌单为 iwp 通用架构。针对早于v1.5版本
+    // ==========================================
+    window.migrateOldPlaylists = async function(isSilent = false) {
+        if (!isSilent) showToast("⏳ 正在检查并升级旧版歌单配置...");
+        try {
+            const settingRes = await fetch('/getsetting?t=' + Date.now());
+            const settingData = await settingRes.json();
+            if (!settingData.music_list_json) {
+                if (!isSilent) showToast("✅ 无需升级");
+                return;
+            }
+
+            let musicArr = JSON.parse(settingData.music_list_json);
+            let hasChanges = false;
+            const newPlaylistsMap = new Map();
+            const retainedPlaylists = [];
+
+            musicArr.forEach(pl => {
+                const name = pl.name;
+                if (name === '_online_iwebplayer_search') {
+                    retainedPlaylists.push(pl);
+                    return;
+                }
+
+                let baseName = null;
+
+                if (name.startsWith('_online_mf_')) { baseName = name.replace('_online_mf_', ''); hasChanges = true; }
+                else if (name.startsWith('_online_lx_')) { baseName = name.replace('_online_lx_', ''); hasChanges = true; }
+                else if (name.startsWith('_online_iwp_')) { baseName = name.replace('_online_iwp_', ''); }
+
+                if (baseName) {
+                    if (!newPlaylistsMap.has(baseName)) {
+                        newPlaylistsMap.set(baseName, []);
+                    }
+
+                    const existingSongs = newPlaylistsMap.get(baseName);
+                    pl.musics.forEach(song => {
+                        const songNameObj = window.getSongNameObj(song);
+                        const isExist = existingSongs.some(m => window.getSongNameObj(m) === songNameObj);
+                        if (!isExist) existingSongs.push(song);
+                    });
+                } else {
+                    retainedPlaylists.push(pl);
+                }
+            });
+
+            if (!hasChanges) {
+                if (!isSilent) showToast("✅ 歌单已经是最新架构，无需升级");
+                return;
+            }
+
+            newPlaylistsMap.forEach((musics, baseName) => {
+                retainedPlaylists.push({
+                    name: '_online_iwp_' + baseName,
+                    musics: musics
+                });
+            });
+
+            await fetch('/savesetting', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ music_list_json: JSON.stringify(retainedPlaylists) })
+            });
+
+            if (!isSilent) showToast("🎉 歌单架构合并升级成功！");
+
+            if (typeof reloadGlobalData === 'function') await reloadGlobalData();
+            if (typeof initPlaylistDropdown === 'function') initPlaylistDropdown();
+
+        } catch (e) {
+            console.error(e);
+            if (!isSilent) showToast("❌ 升级失败，请检查网络");
+        }
+    };
+
+    document.getElementById('about-migrate-btn')?.addEventListener('click', () => {
+        window.migrateOldPlaylists(false);
+    });
 
     async function init() {
       renderLogos();
@@ -5965,6 +6156,10 @@
               localStorage.clear();
               if (savedMode) localStorage.setItem('local_play_mode', savedMode);
               localStorage.setItem('iwebplayer_version', APP_VERSION);
+
+              if (typeof window.migrateOldPlaylists === 'function') {
+                  window.migrateOldPlaylists(true);
+              }
 
               const aboutModal = document.getElementById('about-backdrop');
               if (aboutModal) {
