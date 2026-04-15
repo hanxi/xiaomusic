@@ -61,7 +61,7 @@ class OnlineMusicService:
         self._singer_add_page = 1
 
     async def get_music_list_online(
-        self, plugin="all", keyword="", page=1, limit=20, **kwargs
+        self, plugin="all", keyword="", page=1, limit=20, api_type=None, **kwargs
     ):
         """在线获取歌曲列表
 
@@ -83,7 +83,12 @@ class OnlineMusicService:
         keyword, artist = await self._parse_keyword_and_artist(keyword)
 
         # 获取API配置信息
-        is_lx_server = self.js_plugin_manager.is_lx_server()
+        # 🌟 根据前端传入的 api_type 判断，1为MF插件，2为LX接口。如果没有传则用老办法兜底
+        if api_type is not None:
+            is_lx_server = (int(api_type) == 2)
+        else:
+            is_lx_server = self.js_plugin_manager.is_lx_server()
+
         if is_lx_server:
             # LX Server在线搜索
             return await self._execute_lx_server_search(
@@ -768,8 +773,8 @@ class OnlineMusicService:
         Returns:
             dict: 包含成功状态和URL信息的字典
         """
-        # 判断接口类型
-        is_lx_server = self.js_plugin_manager.is_lx_server()
+        # 🌟 自动判断接口类型
+        is_lx_server = self.js_plugin_manager.is_lx_server(context_info=music_item)
         if is_lx_server:
             # LX Server在线搜索
             return await self._execute_lx_server_music_url(
@@ -796,8 +801,8 @@ class OnlineMusicService:
         Returns:
             dict: 包含成功状态和歌词信息的字典
         """
-        # 判断接口类型
-        is_lx_server = self.js_plugin_manager.is_lx_server()
+        # 🌟 自动判断接口类型
+        is_lx_server = self.js_plugin_manager.is_lx_server(context_info=music_item)
         if is_lx_server:
             # LX Server在线搜索
             return await self._execute_lx_server_music_lyric(

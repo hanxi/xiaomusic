@@ -1032,8 +1032,14 @@ class JSPluginManager:
         except Exception:
             return 1
 
-    def is_lx_server(self) -> bool:
+    def is_lx_server(self, context_info=None) -> bool:
         """判定是否使用lx_server接口"""
+        if context_info and isinstance(context_info, dict):
+            # 目前判断：有 _raw 就是 LX
+            if "_raw" in context_info:
+                return True
+            # 没有就是MusicFree
+            return False
         return self._get_api_type() == 2
 
     def get_platforms(self) -> dict[Any, Any]:

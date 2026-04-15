@@ -42,6 +42,7 @@ async def search_online_music(
     plugin: str = Query("all", description="指定插件名称，all表示搜索所有插件"),
     page: int = Query(1, description="页码"),
     limit: int = Query(20, description="每页数量"),
+    api_type: int = Query(None, description="接口类型：1=MusicFree，2=LXServer"),  # 🌟 接收前端传来的 api_type
 ):
     """在线音乐搜索API"""
     try:
@@ -49,7 +50,7 @@ async def search_online_music(
             return {"success": False, "error": "Keyword required"}
 
         return await xiaomusic.get_music_list_online(
-            keyword=keyword, plugin=plugin, page=page, limit=limit
+            keyword=keyword, plugin=plugin, page=page, limit=limit, api_type=api_type
         )
     except Exception as e:
         return {"success": False, "error": str(e)}
