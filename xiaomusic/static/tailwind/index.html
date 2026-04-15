@@ -146,7 +146,7 @@
                             <li v-for="playlist in customPlaylists" :key="playlist.name">
                                 <a class="flex justify-between" :class="{ active: curSelectPlaylist === playlist.name }"
                                     @click="selectPlaylist(playlist.name)">
-                                    <span class="truncate flex-1">{{ playlist.name }}</span>
+                                    <span class="truncate flex-1" style="white-space:unset;">{{ playlist.name }}</span>
                                     <div class="badge badge-sm">{{ playlist.count }}</div>
                                 </a>
                             </li>
