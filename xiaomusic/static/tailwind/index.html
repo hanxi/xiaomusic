@@ -255,7 +255,7 @@
                             <!-- <a href="./now_playing.html" target="_blank"> -->
                                 <div class="w-12 rounded-lg">
 <!--                                    <img :src="currentSong?.cover" :alt="currentSong?.title" />-->
-                                    <img :src="currentSong?.cover || '/static/xiaoai.png'" :alt="currentSong?.title" />
+                                    <img :src="currentSong?.cover || '/static/changpian.png'" :alt="currentSong?.title" />
                                 </div>
                             <!-- </a> -->
                         </div>
@@ -503,7 +503,7 @@
                                             title: tags.title || data.cur_music,
                                             artist: tags.artist || '未知歌手',
                                             album: tags.album || '未知专辑',
-                                            cover: tags.picture || "/static/xiaoai.png",
+                                            cover: tags.picture || "/static/changpian.png",
                                             url: musicInfo.url,
                                             isPlaying: data.is_playing
                                         };
@@ -515,7 +515,7 @@
                                         title: data.cur_music,
                                         artist: '未知歌手',
                                         album: '未知专辑',
-                                        cover: "/static/xiaoai.png",
+                                        cover: "/static/changpian.png",
                                         isPlaying: data.is_playing
                                     };
                                 }
@@ -697,7 +697,7 @@
                                     artist: '未知歌手',
                                     album: '未知专辑',
                                     duration: '0:00',
-                                    cover: '/static/xiaoai.png',
+                                    cover: '/static/changpian.png',
                                     url: '',
                                     isLoading: false
                                 };
@@ -711,7 +711,7 @@
                                 year: info.tags?.year || '',
                                 genre: info.tags?.genre || '',
                                 duration: info.duration ? formatTime(info.duration) : '0:00',
-                                cover: info.tags?.picture || '/static/xiaoai.png',
+                                cover: info.tags?.picture || '/static/changpian.png',
                                 url: info.url,
                                 lyrics: info.tags?.lyrics || '',
                                 isLoading: false
@@ -1214,7 +1214,7 @@
                             artist: '未知歌手',
                             album: '未知专辑',
                             duration: '0:00',
-                            cover: '/static/xiaoai.png',
+                            cover: '/static/changpian.png',
                             url: '',
                             isLoading: false
                         }));
