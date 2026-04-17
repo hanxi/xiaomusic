@@ -111,6 +111,8 @@ class XiaoMusicDevice:
         # 是否启用自动添加
         auto_add_song = self.xiaomusic.js_plugin_manager.get_auto_add_song()
         is_online = self.xiaomusic.music_library.is_online_music(cur_list_name)
+        # 采用作者建议的黑名单模式，直接排除以 "_online_iwp_" 开头的自定义歌单
+        is_allowed_list = is_online and not cur_list_name.startswith("_online_iwp_")
         # 歌单循环方式：播放全部
         play_all = self.device.play_type == PLAY_TYPE_ALL
         # 当前播放的歌曲是歌单中的最后一曲
@@ -122,7 +124,7 @@ class XiaoMusicDevice:
             index = self._play_list.index(cur_music)
             is_last_song = index == play_list_len - 1
         # 四个条件都满足，才自动添加下一首
-        if auto_add_song and is_online and play_all and is_last_song:
+        if auto_add_song and is_allowed_list and play_all and is_last_song:
             await self._add_singer_song(cur_list_name, cur_music, sleep_sec)
 
     # 启用延时器，搜索当前歌曲歌手的其他不在歌单内的歌曲
