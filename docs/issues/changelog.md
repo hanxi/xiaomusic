@@ -1,5 +1,19 @@
 # 版本日志
 
+## v0.5.2 (2026-04-20)
+
+### Feat
+
+- 优化MusicFree插件和LX Server接口。修复若干bug。 (#838)
+- tailwind主题的一些修改（封面图以及播放列表样式） (#833)
+- 调整适配后端自动识别MusicFree与LX Server。 (#832)
+- 后台自动切换MusicFree插件/LX Server接口 (#829)
+- tailwind主题添加下载进度以及下载控制按钮 (#830)
+
+### Fix
+
+- 当XiaoMusic设置中语音TTS设为不使用，语音关机小爱音箱，会导致token失效 (#825)
+
 ## v0.5.1 (2026-04-09)
 
 ### Feat
