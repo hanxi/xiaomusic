@@ -18,6 +18,7 @@
       --primary: #ec4899;
       --border: #e5e7eb;
       --player-height: 160px;
+      --tag-local: #4b5563;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -26,6 +27,7 @@
         --text-main: #f9fafb;
         --text-sub: #9ca3af;
         --border: #374151;
+        --tag-local: #d1d5db;
       }
     }
     * {
@@ -724,6 +726,27 @@
       margin: 0;
       cursor: pointer;
     }
+    .np-format-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 14px;
+      box-sizing: border-box;
+      font-size: 8px;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      border-radius: 4px;
+      padding: 0 2px;
+      margin-left: 6px;
+      font-weight: bold;
+      flex-shrink: 0;
+      line-height: 1;
+      transform: translateY(2px);
+    }
+    .np-format-hidden {
+        visibility: hidden;
+    }
 
     /* ==========================================
        6. 全屏抽屉 (Cover & Lyrics)
@@ -1305,7 +1328,7 @@
         </div>
       </div>
       <div class="about-footer">
-        <button class="about-secondary" id="about-migrate-btn">升级旧版歌单</button>
+        <button class="about-secondary" id="about-migrate-btn" style="display: none;">升级旧版歌单</button>
         <button class="about-primary" id="about-ok">我知道了</button>
       </div>
     </div>
@@ -1572,7 +1595,7 @@
     /* ==========================================
      * 1. 核心配置与全局状态
      * ========================================== */
-    const APP_VERSION = 'v1.61';
+    const APP_VERSION = 'v1.63';
     const APP_LOGO = document.getElementById('app-logo')?.content || '';
     const LX_PLATFORMS_MAP = { 'tx': 'QQ', 'wy': '网易云', 'kg': '酷狗', 'kw': '酷我', 'mg': '咪咕' };
     const API = {
@@ -1915,7 +1938,7 @@
       btnPlay.classList.remove('disabled-push');
     }
 
-    function updateNpTitleUI(text, checkFav = true) {
+    function updateNpTitleUI(text, checkFav = true, formatReady = true) {
       if (!text) return;
       if (text === "暂无播放" || text === "设备已离线") {
         miniCover.style.display = 'none';
@@ -1925,20 +1948,74 @@
 
       let favSvg = '';
       if (checkFav && favoriteList.includes(text)) {
-        favSvg = `<svg style="flex-shrink: 0; position: relative; top: 2px; margin-left: 4px;" viewBox="0 0 24 24" width="18" height="18" fill="var(--primary)" color="var(--primary)"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+        favSvg = `<svg style="flex-shrink: 0; margin-left: 4px;" viewBox="0 0 24 24" width="18" height="18" fill="var(--primary)" color="var(--primary)"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
       }
-      npTitle.innerHTML = `<span class="np-title-text">${text}</span>${favSvg}`;
+
+      let extHtml = '';
+      let extension = '';
+      let isVisible = false;
+
+      if (currentDid === "") {
+          if (formatReady && text !== "暂无播放" && text !== "设备已离线" && audioEl.src) {
+              try {
+                  let urlToParse = audioEl.src;
+                  if (urlToParse.includes('urlb64=')) {
+                      const b64 = new URL(urlToParse).searchParams.get('urlb64');
+                      try { urlToParse = decodeURIComponent(escape(window.atob(b64))); } catch(e) { urlToParse = window.atob(b64); }
+                  }
+                  const match = urlToParse.split('?')[0].match(/\.([a-zA-Z0-9]+)$/);
+                  if (match) {
+                      extension = match[1].toUpperCase();
+                      isVisible = true;
+                  }
+              } catch(e) {}
+          }
+
+          let tagColor = 'var(--primary)'; // 默认：MusicFree 紫红
+          if (currentIndex !== -1 && songList[currentIndex]) {
+              const rawItem = songList[currentIndex];
+              const realItem = window.decodePluginUrlItem(rawItem);
+              const isOnlineObj = typeof realItem === 'object' && realItem !== null && !realItem._isSavedOnlineStr;
+
+              if (!isOnlineObj) {
+                  tagColor = 'var(--tag-local)'; // 本地文件：浅色黑/暗色白
+              } else {
+                  const isLxSong = (realItem._raw || (realItem.tags && realItem.tags._raw)) ||
+                                   (currentPlaylist === '在线资源' && document.getElementById('engine-val')?.dataset.value === 'LXServer');
+                  if (isLxSong) {
+                      tagColor = '#10b981'; // LX Server：翠绿
+                  }
+              }
+          } else {
+              tagColor = 'var(--tag-local)';
+          }
+
+          const tagStyle = `visibility: ${isVisible ? 'visible' : 'hidden'}; display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 14px; box-sizing: border-box; font-size: 8px; border: 1px solid ${tagColor}; color: ${tagColor}; border-radius: 4px; padding: 0 2px; margin-left: 6px; font-weight: bold; flex-shrink: 0; line-height: 1; transform: translateY(2px);`;
+          extHtml = `<span style="${tagStyle}">${extension || 'MP3'}</span>`;
+      }
+
+      npTitle.innerHTML = `
+        <div class="np-marquee-container" style="display: flex; align-items: center; white-space: nowrap;">
+          <span class="np-title-text">${text}</span>
+          <div class="np-title-extra" style="display: flex; align-items: center; flex-shrink: 0;">
+            ${extHtml}${favSvg}
+          </div>
+        </div>
+      `;
 
       setTimeout(() => {
-        const textEl = npTitle.querySelector('.np-title-text');
-        if (textEl) {
-          const overflowSpan = textEl.scrollWidth - npTitle.clientWidth + (favSvg ? 22 : 0);
-          if (overflowSpan > 0) {
-            textEl.style.setProperty('--scroll-dist', `-${overflowSpan + 15}px`);
-            textEl.classList.add('marquee-scroll');
+        const container = npTitle.querySelector('.np-marquee-container');
+        if (container) {
+          const contentWidth = container.scrollWidth;
+          const parentWidth = npTitle.clientWidth;
+          const overflow = contentWidth - parentWidth;
+
+          if (overflow > 0) {
+            container.style.setProperty('--scroll-dist', `-${overflow + 20}px`);
+            container.classList.add('marquee-scroll');
             npTitle.style.justifyContent = 'flex-start';
           } else {
-            textEl.classList.remove('marquee-scroll');
+            container.classList.remove('marquee-scroll');
             npTitle.style.justifyContent = 'center';
           }
         }
@@ -1959,7 +2036,7 @@
         currentEl.classList.add('playing');
         setTimeout(() => scrollToCurrentSong('smooth'), 100);
       }
-      updateNpTitleUI(currentSongName);
+      updateNpTitleUI(currentSongName, true, false);
       fpCover.src = defaultCover;
       miniCoverImg.src = defaultCover;
       fpLyricsContainer.innerHTML = '<div class="no-lyrics">加载中...</div>';
@@ -2019,94 +2096,22 @@
         if (savedSearch && searchClear) searchClear.classList.add('show');
 
       } else if (playlistName === '在线资源') {
+
         if (searchWrap) searchWrap.classList.remove('show');
         if (mfPluginRow) mfPluginRow.classList.add('show');
         if (plContainer) plContainer.classList.add('playlist-container-search');
 
-        const currentEngine = document.getElementById('engine-val') ? document.getElementById('engine-val').dataset.value : 'MusicFree';
-        const mfPluginContainer = document.getElementById('mf-plugin-container');
-        const mfPluginVal = document.getElementById('mf-plugin-val');
-
         if (mfSearchWrap) mfSearchWrap.classList.add('show');
+
+        const mfPluginContainer = document.getElementById('mf-plugin-container');
         if (mfPluginContainer) {
             mfPluginContainer.style.opacity = '1';
             mfPluginContainer.style.pointerEvents = 'auto';
         }
 
-        if (mfSearchSaveBtn) mfSearchSaveBtn.classList.toggle('show', songList && songList.length > 0);
-
-        const engineVal = document.getElementById('engine-val');
-        if (engineVal) engineVal.classList.remove('text-mf', 'text-lx');
-        if (mfPluginVal) mfPluginVal.classList.remove('text-mf', 'text-lx');
-        const mfPluginOpts = document.getElementById('mf-plugin-opts');
-        if (mfPluginOpts) mfPluginOpts.classList.remove('lx-opts');
-        const mfSearchBtn = document.getElementById('mf-search-btn');
-        if (mfSearchBtn) mfSearchBtn.classList.remove('bg-mf', 'bg-lx');
-        if (mfSearchSaveBtn) mfSearchSaveBtn.classList.remove('bg-mf', 'bg-lx');
-
-        if (currentEngine === 'LXServer') {
-            if (engineVal) engineVal.classList.add('text-lx');
-            if (mfPluginVal) mfPluginVal.classList.add('text-lx');
-            if (mfPluginOpts) mfPluginOpts.classList.add('lx-opts');
-            if (mfSearchBtn) mfSearchBtn.classList.add('bg-lx');
-            if (mfSearchSaveBtn) mfSearchSaveBtn.classList.add('bg-lx');
-            renderSearchPluginDropdown('LXServer');
-        } else {
-            if (engineVal) engineVal.classList.add('text-mf');
-            if (mfPluginVal) mfPluginVal.classList.add('text-mf');
-            if (mfSearchBtn) mfSearchBtn.classList.add('bg-mf');
-            if (mfSearchSaveBtn) mfSearchSaveBtn.classList.add('bg-mf');
-            renderSearchPluginDropdown('MusicFree');
-        }
-
-        const savedMfKeyword = currentEngine === 'LXServer' ? (window.lastLxKeyword || '') : (window.lastMfKeyword || '');
-        if (mfSearchInput) mfSearchInput.value = savedMfKeyword;
-        if (mfSearchClear && savedMfKeyword) mfSearchClear.classList.add('show');
-
-        if (savedMfKeyword || (onlineMusicItems && onlineMusicItems.length > 0)) {
-          if (onlineMusicItems && onlineMusicItems.length > 0) {
-              songList = [...onlineMusicItems];
-              renderPlaylist();
-              const text = formatPlaylistText('在线资源', songList.length);
-              if (playlistVal) playlistVal.innerHTML = text;
-              const mfOpt = document.querySelector('#playlist-opts .select-option[data-key="在线资源"]');
-              if (mfOpt) mfOpt.innerHTML = text;
-          } else {
-              songList = [];
-              renderPlaylist();
-              setTimeout(() => {
-                  const mfSearchBtn = document.getElementById('mf-search-btn');
-                  if (mfSearchBtn) mfSearchBtn.click();
-              }, 400);
-          }
-        } else {
-          if (currentDid !== "" && allPlaylists['_online_iwebplayer_search'] && allPlaylists['_online_iwebplayer_search'].length > 0) {
-              songList = allPlaylists['_online_iwebplayer_search'];
-              renderPlaylist();
-              const text = formatPlaylistText('在线资源', songList.length);
-              if (playlistVal) playlistVal.innerHTML = text;
-              const mfOpt = document.querySelector('#playlist-opts .select-option[data-key="在线资源"]');
-              if (mfOpt) mfOpt.innerHTML = text;
-
-              if (currentSongName !== "") {
-                  const safeCurrent = cleanStr(currentSongName);
-                  const matchIdx = songList.findIndex(song => cleanStr(song) === safeCurrent);
-                  if (matchIdx !== -1) {
-                      currentIndex = matchIdx;
-                      document.getElementById('song-' + currentIndex)?.classList.add('playing');
-                      setTimeout(() => scrollToCurrentSong('smooth'), 100);
-                  }
-              }
-          } else {
-              songList = [];
-              renderPlaylist();
-              const text = formatPlaylistText('在线资源', 0);
-              if (playlistVal) playlistVal.innerHTML = text;
-              const mfOpt = document.querySelector('#playlist-opts .select-option[data-key="在线资源"]');
-              if (mfOpt) mfOpt.innerHTML = text;
-
-              if (playlistEl) playlistEl.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-sub); font-size: 14px;">暂无搜索结果，请输入歌曲全网搜索</div>';
-          }
+        const currentEngineStr = document.getElementById('engine-val')?.dataset.value || 'MusicFree';
+        if (typeof window.applyEngineUIAndState === 'function') {
+            window.applyEngineUIAndState(currentEngineStr);
         }
       } else {
         if (searchWrap) searchWrap.classList.remove('show');
@@ -2310,11 +2315,9 @@
             const isValidBackendPlaylist = backendPlaylist && Array.from(document.querySelectorAll('#playlist-opts .select-option')).some(opt => opt.dataset.key === backendPlaylist);
             if (!hasSyncedPlaylistOnce && isValidBackendPlaylist) {
 
-              await window.syncBackendEngineState();
-              const syncedEngineStr = document.getElementById('engine-val')?.dataset.value || 'MusicFree';
-              renderSearchPluginDropdown(syncedEngineStr);
+                  await window.syncBackendEngineState();
 
-              currentPlaylist = backendPlaylist;
+                  currentPlaylist = backendPlaylist;
 
               document.querySelectorAll('#playlist-opts .select-option').forEach(el => {
                 el.classList.remove('active');
@@ -2704,6 +2707,7 @@
                     localState.songName = currentSongName;
                     localStorage.setItem('local_state', JSON.stringify(localState));
                     audioEl.src = sourceData.url;
+                    updateNpTitleUI(currentSongName, true, true);
                     if (!autoPlay) {
                       const restoreProgress = () => {
                         if (audioEl.duration) {
@@ -2792,6 +2796,7 @@
             localState.songName = currentSongName;
             localStorage.setItem('local_state', JSON.stringify(localState));
             audioEl.src = info.url;
+            updateNpTitleUI(currentSongName, true, true);
             if (!autoPlay) {
               const restoreProgress = () => {
                 if (audioEl.duration) {
@@ -3148,14 +3153,18 @@
                 const oIdx = onlineMusicItems.findIndex(item => window.getSongNameObj(item) === targetNameObj);
                 if (oIdx !== -1) onlineMusicItems.splice(oIdx, 1);
 
-                if (window.lastLxSearchResults) {
-                    const lxIdx = window.lastLxSearchResults.findIndex(item => window.getSongNameObj(item) === targetNameObj);
-                    if (lxIdx !== -1) window.lastLxSearchResults.splice(lxIdx, 1);
-                }
-                if (window.lastMfSearchResults) {
-                    const mfIdx = window.lastMfSearchResults.findIndex(item => window.getSongNameObj(item) === targetNameObj);
-                    if (mfIdx !== -1) window.lastMfSearchResults.splice(mfIdx, 1);
-                }
+                const currentEngineStr = document.getElementById('engine-val')?.dataset.value || 'MusicFree';
+                const cacheKey = currentEngineStr === 'LXServer' ? 'lx_online_search_cache' : 'mf_online_search_cache';
+                try {
+                    const cache = JSON.parse(localStorage.getItem(cacheKey));
+                    if (cache && cache.list) {
+                        const cIdx = cache.list.findIndex(item => window.getSongNameObj(item) === targetNameObj);
+                        if (cIdx !== -1) {
+                            cache.list.splice(cIdx, 1);
+                            localStorage.setItem(cacheKey, JSON.stringify(cache));
+                        }
+                    }
+                } catch(e) {}
             }
 
             songList.splice(index, 1);
@@ -3736,6 +3745,22 @@
                 const data = await res.json();
                 if (data.success && data.data && data.data.base_url && data.data.base_url.trim() !== '') {
                     hasUrl = true;
+
+                    if (data.data.platforms) {
+                        const loadedPlatforms = Object.keys(data.data.platforms);
+                        const standardKeys = ['tx', 'wy', 'kg', 'kw', 'mg'];
+                        let finalKeys = [];
+
+                        loadedPlatforms.forEach(k => {
+                            if (standardKeys.includes(k) && !finalKeys.includes(k)) finalKeys.push(k);
+                        });
+
+                        standardKeys.forEach(k => {
+                            if (!finalKeys.includes(k)) finalKeys.push(k);
+                        });
+
+                        localStorage.setItem('lx_platforms_order', JSON.stringify(finalKeys));
+                    }
                 }
             } catch (e) {}
 
@@ -3805,7 +3830,7 @@
         const resultsMap = new Map();
 
         // 直接定义要排除的系统级和临时歌单。
-        const blacklist = ['全部', '在线资源', '本地搜索', '_local_iwebplayer_search', '_online_iwebplayer_search', '_online_play', '_online_webPush'];
+        const blacklist = ['全部', '所有歌曲', '最近新增', '在线资源', '本地搜索', '_local_iwebplayer_search', '_online_iwebplayer_search', '_online_play', '_online_webPush'];
 
         Object.keys(allPlaylists).forEach(listName => {
             if (blacklist.includes(listName)) return;
@@ -3871,6 +3896,8 @@
             timeDurationEl.innerText = '00:00';
           }
           currentDid = did;
+
+          await window.syncBackendEngineState();
           updatePlayButtonUI(isPlaying);
           updateVolumeDeviceUI();
           updatePushBtnState();
@@ -4473,78 +4500,13 @@
             opt.addEventListener('click', (e) => {
               e.stopPropagation();
               const selectedEngine = opt.dataset.value;
-              engineVal.textContent = opt.textContent;
-              engineVal.dataset.value = selectedEngine;
-              engineOpts.classList.remove('show');
-              engineOpts.querySelectorAll('.select-option').forEach(el => el.classList.remove('active'));
-              opt.classList.add('active');
-
-              const mfSearchWrap = document.getElementById('mf-search-wrap');
-              const mfPluginOpts = document.getElementById('mf-plugin-opts');
-              const mfSearchBtn = document.getElementById('mf-search-btn');
-
-              engineVal.classList.remove('text-mf', 'text-lx');
-              if (mfPluginVal) mfPluginVal.classList.remove('text-mf', 'text-lx');
-              if (mfPluginOpts) mfPluginOpts.classList.remove('lx-opts');
-              if (mfSearchBtn) mfSearchBtn.classList.remove('bg-mf', 'bg-lx');
-              if (mfSearchSaveBtn) mfSearchSaveBtn.classList.remove('bg-mf', 'bg-lx');
-
-              const mfSearchInput = document.getElementById('mf-search-input');
-              const mfSearchClear = document.getElementById('mf-search-clear');
-
-              if (selectedEngine === 'LXServer') {
-                engineVal.classList.add('text-lx');
-                if (mfPluginVal) mfPluginVal.classList.add('text-lx');
-                if (mfPluginOpts) mfPluginOpts.classList.add('lx-opts');
-                if (mfSearchBtn) mfSearchBtn.classList.add('bg-lx');
-                if (mfSearchSaveBtn) mfSearchSaveBtn.classList.add('bg-lx');
-                renderSearchPluginDropdown('LXServer');
-                if (mfSearchWrap) mfSearchWrap.classList.add('show');
-
-                songList = window.lastLxSearchResults || [];
-                if (mfSearchInput) mfSearchInput.value = window.lastLxKeyword || '';
-
-                try {
-                    const lxCache = JSON.parse(localStorage.getItem('lx_online_search_cache'));
-                    currentSearchPage = lxCache ? (lxCache.page || 1) : 1;
-                    hasMoreOnlineSearch = lxCache ? (lxCache.hasMore !== false) : true;
-                } catch(e) {}
-              } else {
-
-                engineVal.classList.add('text-mf');
-                if (mfPluginVal) mfPluginVal.classList.add('text-mf');
-                if (mfSearchBtn) mfSearchBtn.classList.add('bg-mf');
-                if (mfSearchSaveBtn) mfSearchSaveBtn.classList.add('bg-mf');
-                renderSearchPluginDropdown('MusicFree');
-                if (mfSearchWrap) mfSearchWrap.classList.add('show');
-
-                songList = window.lastMfSearchResults || [];
-                if (mfSearchInput) mfSearchInput.value = window.lastMfKeyword || '';
-
-                try {
-                    const mfCache = JSON.parse(localStorage.getItem('mf_online_search_cache'));
-                    currentSearchPage = mfCache ? (mfCache.page || 1) : 1;
-                    hasMoreOnlineSearch = mfCache ? (mfCache.hasMore !== false) : true;
-                } catch(e) {}
+              // 仅在本机模式下，手动选择才会被记忆到 localStorage，不污染小爱状态
+              if (currentDid === "") {
+                  localStorage.setItem('iwp_web_engine_choice', selectedEngine);
               }
-
-              if (mfSearchClear && mfSearchInput) {
-                  mfSearchClear.classList.toggle('show', mfSearchInput.value.length > 0);
-              }
-              onlineMusicItems = [...songList];
-              allPlaylists['在线资源'] = songList;
-              renderPlaylist();
-
-              const playlistVal = document.getElementById('playlist-val');
-              const text = formatPlaylistText('在线资源', songList.length);
-              if (playlistVal) playlistVal.innerHTML = text;
-              const mfOpt = document.querySelector('#playlist-opts .select-option[data-key="在线资源"]');
-              if (mfOpt) mfOpt.innerHTML = text;
-              if (mfSearchSaveBtn) mfSearchSaveBtn.classList.toggle('show', songList.length > 0);
-
-              const playlistEl = document.getElementById('playlist');
-              if (songList.length === 0 && playlistEl) {
-                  playlistEl.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-sub); font-size: 14px;">暂无搜索结果，请输入歌曲全网搜索</div>';
+              // 调用统一的状态恢复中心
+              if (typeof window.applyEngineUIAndState === 'function') {
+                  window.applyEngineUIAndState(selectedEngine);
               }
             });
           });
@@ -4571,6 +4533,8 @@
         });
 
         document.addEventListener('click', (e) => {
+          // 屏蔽代码自动触发的点击（如自动跳歌），防止打断用户正在操作的菜单
+          if (!e.isTrusted) return;
           if (!e.target.closest('#device-container')) deviceOpts.classList.remove('show');
           if (!e.target.closest('#playlist-container')) playlistOpts.classList.remove('show');
           if (!e.target.closest('#settings-container') && settingsOpts) settingsOpts.classList.remove('show');
@@ -4739,11 +4703,7 @@
         btnPlay.addEventListener('click', () => {
 
           if (currentDid !== "" && isPlaying) {
-            fetch('/device/stop', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ did: currentDid })
-            }).catch(() => {});
+            sendRemoteCmd("停止");
 
             updatePlayButtonUI(false);
             progressBar.style.width = '0%';
@@ -5681,12 +5641,8 @@
                         }
 
                         if (currentEngine === 'LXServer') {
-                            window.lastLxSearchResults = [...songList];
-                            window.lastLxKeyword = keyword;
                             localStorage.setItem('lx_online_search_cache', JSON.stringify({ keyword, page: currentSearchPage, hasMore: hasMoreOnlineSearch, list: songList }));
                         } else {
-                            window.lastMfSearchResults = [...songList];
-                            window.lastMfKeyword = keyword;
                             localStorage.setItem('mf_online_search_cache', JSON.stringify({ keyword, page: currentSearchPage, hasMore: hasMoreOnlineSearch, list: songList }));
                         }
 
@@ -5850,7 +5806,110 @@
     }
 
     // ==========================================
-    // 智能同步后台引擎状态，并映射给 UI
+    // 统一引擎状态控制中心（负责 UI、缓存、关键字的恢复）
+    // ==========================================
+    window.applyEngineUIAndState = function(targetVal) {
+        const engineVal = document.getElementById('engine-val');
+        const engineOpts = document.getElementById('engine-opts');
+        const mfPluginVal = document.getElementById('mf-plugin-val');
+        const mfPluginOpts = document.getElementById('mf-plugin-opts');
+        const mfSearchBtn = document.getElementById('mf-search-btn');
+        const mfSearchSaveBtn = document.getElementById('mf-search-save');
+
+        if (!engineVal || !engineOpts) return;
+        engineVal.dataset.value = targetVal;
+        engineVal.textContent = targetVal;
+        engineOpts.querySelectorAll('.select-option').forEach(el => el.classList.remove('active'));
+        const activeOpt = engineOpts.querySelector(`.select-option[data-value="${targetVal}"]`);
+        if (activeOpt) activeOpt.classList.add('active');
+        engineOpts.classList.remove('show');
+
+        engineVal.classList.remove('text-mf', 'text-lx');
+        if (mfPluginVal) mfPluginVal.classList.remove('text-mf', 'text-lx');
+        if (mfPluginOpts) mfPluginOpts.classList.remove('lx-opts');
+        if (mfSearchBtn) mfSearchBtn.classList.remove('bg-mf', 'bg-lx');
+        if (mfSearchSaveBtn) mfSearchSaveBtn.classList.remove('bg-mf', 'bg-lx');
+
+        if (targetVal === 'LXServer') {
+            engineVal.classList.add('text-lx');
+            if (mfPluginVal) mfPluginVal.classList.add('text-lx');
+            if (mfPluginOpts) mfPluginOpts.classList.add('lx-opts');
+            if (mfSearchBtn) mfSearchBtn.classList.add('bg-lx');
+            if (mfSearchSaveBtn) mfSearchSaveBtn.classList.add('bg-lx');
+        } else {
+            engineVal.classList.add('text-mf');
+            if (mfPluginVal) mfPluginVal.classList.add('text-mf');
+            if (mfSearchBtn) mfSearchBtn.classList.add('bg-mf');
+            if (mfSearchSaveBtn) mfSearchSaveBtn.classList.add('bg-mf');
+        }
+
+        if (typeof renderSearchPluginDropdown === 'function') renderSearchPluginDropdown(targetVal);
+
+        const mfSearchInput = document.getElementById('mf-search-input');
+        const mfSearchClear = document.getElementById('mf-search-clear');
+        let cacheList = [];
+        let cacheKeyword = '';
+
+        const backendHistoryList = allPlaylists['_online_iwebplayer_search'] || [];
+
+        if (targetVal === 'LXServer') {
+            try {
+                const lxCache = JSON.parse(localStorage.getItem('lx_online_search_cache'));
+                cacheList = lxCache ? (lxCache.list || []) : [];
+                cacheKeyword = lxCache ? (lxCache.keyword || '') : '';
+                currentSearchPage = lxCache ? (lxCache.page || 1) : 1;
+                hasMoreOnlineSearch = lxCache ? (lxCache.hasMore !== false) : true;
+            } catch(e) {}
+        } else {
+            try {
+                const mfCache = JSON.parse(localStorage.getItem('mf_online_search_cache'));
+                cacheList = mfCache ? (mfCache.list || []) : [];
+                cacheKeyword = mfCache ? (mfCache.keyword || '') : '';
+                currentSearchPage = mfCache ? (mfCache.page || 1) : 1;
+                hasMoreOnlineSearch = mfCache ? (mfCache.hasMore !== false) : true;
+            } catch(e) {}
+        }
+
+        if (currentDid !== "" && !cacheKeyword && backendHistoryList.length > 0) {
+            cacheList = backendHistoryList;
+        }
+
+        if (mfSearchInput) mfSearchInput.value = cacheKeyword;
+        if (mfSearchClear) mfSearchClear.classList.toggle('show', cacheKeyword.length > 0);
+
+        if (currentPlaylist === '在线资源') {
+            songList = cacheList;
+            onlineMusicItems = [...songList];
+            allPlaylists['在线资源'] = songList;
+            renderPlaylist();
+
+            const playlistVal = document.getElementById('playlist-val');
+            const text = formatPlaylistText('在线资源', songList.length);
+            if (playlistVal) playlistVal.innerHTML = text;
+            const mfOpt = document.querySelector('#playlist-opts .select-option[data-key="在线资源"]');
+            if (mfOpt) mfOpt.innerHTML = text;
+
+            if (mfSearchSaveBtn) mfSearchSaveBtn.classList.toggle('show', songList.length > 0);
+
+            if (currentSongName !== "" && songList.length > 0) {
+                const safeCurrent = cleanStr(currentSongName);
+                const matchIdx = songList.findIndex(song => cleanStr(song) === safeCurrent);
+                if (matchIdx !== -1) {
+                    currentIndex = matchIdx;
+                    document.getElementById('song-' + currentIndex)?.classList.add('playing');
+                    setTimeout(() => scrollToCurrentSong('smooth'), 100);
+                }
+            }
+
+            if (songList.length === 0) {
+                const playlistEl = document.getElementById('playlist');
+                if (playlistEl) playlistEl.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-sub); font-size: 14px;">暂无搜索结果，请输入歌曲全网搜索</div>';
+            }
+        }
+    };
+
+    // ==========================================
+    // 智能判定身份并派发更新
     // ==========================================
     window.syncBackendEngineState = async function() {
         try {
@@ -5864,16 +5923,19 @@
         }
 
         const engineVal = document.getElementById('engine-val');
-        const engineOpts = document.getElementById('engine-opts');
-        if (engineVal && engineOpts) {
-            const targetVal = window.currentEngineType === 2 ? 'LXServer' : 'MusicFree';
-            if (engineVal.dataset.value !== targetVal) {
-                engineVal.dataset.value = targetVal;
-                engineVal.textContent = targetVal;
+        if (engineVal) {
+            let targetVal = 'MusicFree';
+            if (currentDid === "") {
+                // 本机模式：读取浏览器缓存
+                targetVal = localStorage.getItem('iwp_web_engine_choice') || 'MusicFree';
+            } else {
+                // 小爱模式：读取后台引擎
+                targetVal = window.currentEngineType === 2 ? 'LXServer' : 'MusicFree';
+            }
 
-                engineOpts.querySelectorAll('.select-option').forEach(el => el.classList.remove('active'));
-                const activeOpt = engineOpts.querySelector(`.select-option[data-value="${targetVal}"]`);
-                if (activeOpt) activeOpt.classList.add('active');
+            // 只要身份变了（或者引擎不同），就派发全局更新
+            if (engineVal.dataset.value !== targetVal) {
+                window.applyEngineUIAndState(targetVal);
             }
         }
     };
@@ -5895,6 +5957,7 @@
             allPlaylists = await listRes.json();
 
             window.customPlaylistNames = [];
+            let hasOldPlaylists = false;
             if (settingData.custom_play_list_json) {
                 const customPlaylists = JSON.parse(settingData.custom_play_list_json);
                 window.customPlaylistNames.push(...Object.keys(customPlaylists));
@@ -5904,50 +5967,21 @@
                 musicLists.forEach(list => {
                     if (list.name) {
                         window.customPlaylistNames.push(list.name);
+                        if (list.name.startsWith('_online_mf_') || list.name.startsWith('_online_lx_')) {
+                            hasOldPlaylists = true;
+                        }
                         if (list.name.startsWith('_online_') && list.musics && Array.isArray(list.musics)) {
                             allPlaylists[list.name] = list.musics;
                         }
                     }
                 });
             }
-
+            const migrateBtn = document.getElementById('about-migrate-btn');
             if (!allPlaylists["收藏"]) allPlaylists["收藏"] = [];
             if (!allPlaylists["本地搜索"]) allPlaylists["本地搜索"] = [];
 
-            try {
-                const lxCache = JSON.parse(localStorage.getItem('lx_online_search_cache'));
-                if (lxCache) {
-                    window.lastLxSearchResults = lxCache.list || [];
-                    window.lastLxKeyword = lxCache.keyword || '';
-                }
-                const mfCache = JSON.parse(localStorage.getItem('mf_online_search_cache'));
-                if (mfCache) {
-                    window.lastMfSearchResults = mfCache.list || [];
-                    window.lastMfKeyword = mfCache.keyword || '';
-                }
+            if (!allPlaylists["在线资源"]) allPlaylists["在线资源"] = backupOnlineSearch.length > 0 ? backupOnlineSearch : [];
 
-                const currentEngineStr = document.getElementById('engine-val')?.dataset.value || 'MusicFree';
-                const activeCache = currentEngineStr === 'LXServer' ? lxCache : mfCache;
-
-                if (activeCache && backupOnlineSearch.length === 0) {
-                    onlineMusicItems = activeCache.list || [];
-                    allPlaylists["在线资源"] = onlineMusicItems;
-                    currentSearchPage = activeCache.page || 1;
-                    hasMoreOnlineSearch = activeCache.hasMore !== false;
-                } else {
-                    allPlaylists["在线资源"] = backupOnlineSearch;
-                    onlineMusicItems = [...backupOnlineSearch];
-                }
-            } catch(e) {
-                allPlaylists["在线资源"] = backupOnlineSearch;
-                onlineMusicItems = [...backupOnlineSearch];
-            }
-
-            const savedSearch = localStorage.getItem('local_search_keyword') || '';
-            if (savedSearch) {
-                const allSongs = allPlaylists['所有歌曲'] || [];
-                allPlaylists['本地搜索'] = allSongs.filter(song => song.toLowerCase().includes(savedSearch.toLowerCase().trim()));
-            }
             favoriteList = allPlaylists["收藏"];
 
             return settingData;
@@ -6062,9 +6096,6 @@
         initDeviceDropdown(settingData.devices || {});
         initPlaylistDropdown();
 
-        const currentEngineStr = document.getElementById('engine-val')?.dataset.value || 'MusicFree';
-        renderSearchPluginDropdown(currentEngineStr);
-
         const savedDid = localStorage.getItem('local_device_id') || "";
         if (savedDid !== "") {
           const targetOpt = Array.from(deviceOpts.children).find(li => li.dataset.did === savedDid);
@@ -6152,9 +6183,19 @@
 
           const savedAppVersion = localStorage.getItem('iwebplayer_version');
           if (savedAppVersion !== APP_VERSION) {
+
               const savedMode = localStorage.getItem('local_play_mode');
+              const localKeyword = localStorage.getItem('local_search_keyword');
+              const onlineKeyword = localStorage.getItem('online_search_keyword');
+              const onlineHistory = localStorage.getItem('online_search_history_list');
+
               localStorage.clear();
+
               if (savedMode) localStorage.setItem('local_play_mode', savedMode);
+              if (localKeyword) localStorage.setItem('local_search_keyword', localKeyword);
+              if (onlineKeyword) localStorage.setItem('online_search_keyword', onlineKeyword);
+              if (onlineHistory) localStorage.setItem('online_search_history_list', onlineHistory);
+
               localStorage.setItem('iwebplayer_version', APP_VERSION);
 
               if (typeof window.migrateOldPlaylists === 'function') {
