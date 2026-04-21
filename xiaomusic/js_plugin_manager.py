@@ -1898,11 +1898,10 @@ class JSPluginManager:
                 img = (
                     song.get("img", "") or meta.get("picUrl", "") or meta.get("img", "")
                 )
-                songmid = (
-                    song.get("songmid", "")
-                    or song.get("id", "")
-                    or meta.get("songId", "")
-                )
+
+                # 改成获取内层的songId。tx的内层是id
+                songmid = meta.get("songId", "") or meta.get("id", "")
+
                 types = song.get("types", []) or meta.get("qualitys", []) or []
                 _types = song.get("_types", {}) or meta.get("_qualitys", {}) or {}
 
@@ -1925,6 +1924,11 @@ class JSPluginManager:
                     "_types": _types,
                     "typeUrl": {},
                 }
+
+                #  kg还需要加hash
+                song_hash = meta.get("hash", "")
+                if song_hash:
+                    raw_info["hash"] = song_hash
 
                 song_info = {
                     "_raw": raw_info,
