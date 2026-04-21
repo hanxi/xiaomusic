@@ -1,8 +1,8 @@
 /* ==================== CSS 变量系统 ==================== */
 :root {
   /* 主色调 - 与 setting.html 保持一致 */
-  --primary-color: #007bff;
-  --primary-hover: #0056b3;
+  --primary-color: pink;
+  --primary-hover: pink;
   --primary-light: rgba(0, 123, 255, 0.1);
 
   /* 功能色 */
@@ -635,13 +635,6 @@ progress::-webkit-progress-value {
   border-radius: var(--radius-sm);
 }
 
-
-
-
-
-
-}
-
 .timer-tooltip {
   bottom: 50%;
 }
@@ -837,7 +830,7 @@ input:focus,
 
 @media screen and (min-width: 1025px) {
   .player {
-    max-width: 420px;
+    max-width: 1200px;
   }
 }
 

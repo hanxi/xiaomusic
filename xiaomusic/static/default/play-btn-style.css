@@ -1,0 +1,123 @@
+/* 播放器控制按钮 全局美化 */
+.control-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 50px;
+    height: 50px;
+    border-radius: 50% !important;
+    background: #f5f5f5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+.control-button:hover {
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.control-button .material-icons,
+.control-button .material-icons-outlined {
+    font-size: 26px;
+    transition: color 0.2s;
+}
+
+/* 分功能 彩色按钮（小爱科技风） */
+/* 播放模式按钮 */
+#modeBtn { background: #e6f7ff; }
+#modeBtn .material-icons { color: #0096cc; }
+#modeBtn:hover { background: #bae7ff; }
+
+/* 上一首/下一首 */
+.control-button:nth-child(2),
+.control-button:nth-child(7) { background: #e8f3ff; }
+.control-button:nth-child(2) .material-icons,
+.control-button:nth-child(7) .material-icons { color: #1677ff; }
+.control-button:nth-child(2):hover,
+.control-button:nth-child(7):hover { background: #d0e8ff; }
+
+/* 快退/快进10秒 */
+.control-button:nth-child(3),
+.control-button:nth-child(5) { background: #fff7e6; }
+.control-button:nth-child(3) .material-icons,
+.control-button:nth-child(5) .material-icons { color: #ff7d00; }
+.control-button:nth-child(3):hover,
+.control-button:nth-child(5):hover { background: #ffefce; }
+
+/* 播放/暂停按钮（主按钮 绿色） */
+.control-button:nth-child(4) { background: #80e9d2; width: 58px; height: 58px; } /*按钮主背景色*/
+
+.control-button:nth-child(4) .material-icons-outlined { color: #00b578; font-size: 32px; }
+.control-button:nth-child(4):hover { background: #80e9d2; }
+
+/* 倍速按钮（紫色） */
+.control-button:nth-child(6) { background: #f9f0ff; }
+.control-button:nth-child(6) .material-icons { color: #722ed1; }
+.control-button:nth-child(6):hover { background: #f3e1ff; }
+/* 倍速文字对齐优化 */
+#playbackRateText {
+    font-size: 11px !important;
+    margin-left: 0 !important;
+    line-height: 1;
+    color: #722ed1;
+    font-weight: bold;
+}
+
+/* 关机按钮（红色） */
+.control-button:nth-child(8) { background: #fff1f0; }
+.control-button:nth-child(8) .material-icons { color: #f53f3f; }
+.control-button:nth-child(8):hover { background: #ffe2e2; }
+
+/* 下方功能图标按钮 美化 */
+.icon-item {
+    background: #f8f9fa;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+.icon-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    background: #e6f7ff;
+}
+.icon-item .material-icons {
+    font-size: 24px;
+    color: #595959;
+    transition: color 0.2s;
+}
+.icon-item:hover .material-icons {
+    color: #1677ff;
+}
+
+/* 收藏按钮 红色高亮 */
+.favorite { background: #fff0f6 !important; }
+.favorite .material-icons { color: #eb2f96 !important; }
+.favorite:hover { background: #ffd6e7 !important; }
+
+/* 按钮文字统一样式 */
+.control-button .tooltip,
+.icon-item p {
+    font-size: 12px;
+    margin-top: 4px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* 播放/暂停等按钮的提示 tooltip 样式修改 */
+.tooltip {
+  background: #1677ff !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  opacity: 1 !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+}
+/* 如果 tooltip 有小箭头，同步颜色 */
+.tooltip:before,
+.tooltip:after {
+  border-top-color: #1677ff !important;
+}
+

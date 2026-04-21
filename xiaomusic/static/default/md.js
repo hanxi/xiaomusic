@@ -301,43 +301,55 @@ const WebPlayer = {
 function loadAndPlayMusic(musicName) {
   console.log("loadAndPlayMusic:", musicName);
 
-  $.get(`/musicinfo?name=${musicName}`, function (data, status) {
+  $.get(`/musicinfo?name=${encodeURIComponent(musicName)}`, function (data, status) {
     console.log(data);
     if (data.ret == "OK") {
       const audioElement = document.getElementById("audio");
+      const playMusicIcon = document.getElementById('playPauseIcon');
 
-      // 设置音频源
-      audioElement.src = data.url;
-
-      // 播放音频
-      audioElement
-        .play()
-        .then(() => {
-          console.log("播放成功:", musicName);
-
-          // 更新本机播放状态
-          WebPlayer.setCurrentMusic(musicName);
-
-          // 更新播放列表和索引
-          const playlist = $("#music_list").val();
-          WebPlayer.setPlaylist(playlist);
-
-          const playList = WebPlayer.getPlayList();
-          const index = playList.indexOf(musicName);
-          if (index !== -1) {
-            WebPlayer.setCurrentIndex(index);
+      // 判断当前状态：暂停 → 播放；播放 → 暂停
+      if (audioElement.paused) {
+          if(!audioElement.src){
+              // 设置音频源
+              audioElement.src = data.url;
           }
+          // 播放音频
+          audioElement
+              .play()
+              .then(() => {
+                  console.log("播放成功:", musicName);
 
-          // 更新 UI
-          updateWebPlayingUI();
+                  // 更新本机播放状态
+                  WebPlayer.setCurrentMusic(musicName);
 
-          // 更新收藏按钮状态
-          updateWebFavoriteButton();
-        })
-        .catch((error) => {
-          console.error("播放失败:", error);
-          alert("播放失败: " + error.message);
-        });
+                  // 更新播放列表和索引
+                  const playlist = $("#music_list").val();
+                  WebPlayer.setPlaylist(playlist);
+
+                  const playList = WebPlayer.getPlayList();
+                  const index = playList.indexOf(musicName);
+                  if (index !== -1) {
+                      WebPlayer.setCurrentIndex(index);
+                  }
+
+                  // 更新 UI
+                  updateWebPlayingUI();
+
+                  // 更新收藏按钮状态
+                  updateWebFavoriteButton();
+              })
+              .catch((error) => {
+                  console.error("播放失败:", error);
+                  alert("播放失败: " + error.message);
+              });
+          // 切换为暂停图标
+          playMusicIcon.textContent = 'pause_circle_outline';
+      } else {
+          audioElement.pause();
+          // 切换为播放图标
+          playMusicIcon.textContent = 'play_circle_outline';
+      }
+
     }
   });
 }
@@ -430,7 +442,9 @@ function stopPlay() {
 
 function prevTrack() {
   var did = $("#did").val();
-
+  audioElement = document.getElementById("audio");
+  audioElement.removeAttribute('src')
+  audioElement.pause();
   if (did == "web_device") {
     // 本机播放：播放上一首
     webPlayPrevious();
@@ -442,7 +456,9 @@ function prevTrack() {
 
 function nextTrack() {
   var did = $("#did").val();
-
+  audioElement = document.getElementById("audio");
+  audioElement.removeAttribute('src')
+  audioElement.pause();
   if (did == "web_device") {
     // 本机播放：播放下一首
     webPlayNext();

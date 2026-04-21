@@ -10,6 +10,7 @@
     <link rel="preload" href="./materialiconsoutlined.woff2" as="font" type="font/woff2" crossorigin>
     <script src="./jquery-3.7.1.min.js?version=1776681365"></script>
     <link rel="stylesheet" href="./main.css?version=1776681365">
+    <link rel="stylesheet" href="./play-btn-style.css">
     <link rel="icon" href="./favicon.ico">
 
     <!-- Google tag (gtag.js) -->
@@ -70,14 +71,19 @@
         <input id="upload-file" type="file" accept=".mp3,.m4a,.wav,.flac,.aac,.ogg,.ape" class="hidden-input" />
 
         <div id="device-audio" class="audio-section">
-            <progress class="progress" id="progress" value="0" max="100" role="progressbar" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="未播放"></progress>
+            <!-- 新增：进度条点击快进 -->
+            <progress class="progress" id="progress" value="0" max="100" role="progressbar" aria-label="播放进度"
+                      aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="未播放"
+                      onclick="seekTo(event)">
+
+            </progress>
             <div class="time-info">
                 <span class="current-time" id="current-time">0:00</span>
                 <div class="current-song" id="playering-music">当前播放歌曲：无</div>
                 <span class="duration" id="duration">00:00</span>
             </div>
         </div>
-        <audio id="audio" controls src="" autoplay class="hidden-audio"></audio>
+        <audio id="audio" controls autoplay class="hidden-audio"></audio>
 
         <div class="buttons">
             <div class="player-controls button-group">
@@ -89,10 +95,36 @@
                     <span class="material-icons" aria-hidden="true">skip_previous</span>
                     <span class="tooltip">上一首</span>
                 </div>
-                <div onclick="play()" class="control-button" role="button" aria-label="播放" tabindex="0">
-                    <span class="material-icons-outlined play" aria-hidden="true">play_circle_outline</span>
-                    <span class="tooltip">播放</span>
+
+                <!-- 新增：快退10秒按钮 -->
+                <div onclick="rewind()" class="control-button device-enable" role="button" aria-label="快退10秒"
+                     tabindex="0">
+                    <span class="material-icons" aria-hidden="true">replay_10</span>
+                    <span class="tooltip">快退10秒</span>
                 </div>
+
+                <div onclick="play()" class="control-button" role="button" aria-label="播放/暂停" tabindex="0">
+                    <span id="playPauseIcon" class="material-icons-outlined play"
+                          aria-hidden="true">play_circle_outline</span>
+                    <span class="tooltip">播放/暂停</span>
+                </div>
+
+                <!-- 新增：快进10秒按钮 -->
+                <div onclick="forward()" class="control-button device-enable" role="button" aria-label="快进10秒"
+                     tabindex="0">
+                    <span class="material-icons" aria-hidden="true">forward_10</span>
+                    <span class="tooltip">快进10秒</span>
+                </div>
+
+                <!-- 新增：倍速调节按钮 -->
+                <div onclick="changePlaybackRate()" class="control-button device-enable" role="button"
+                     aria-label="调节播放速度" tabindex="0">
+                    <span class="material-icons" aria-hidden="true">speed</span>
+                    <!-- 这里实时显示倍速 -->
+                    <span id="playbackRateText" style="font-size:12px; margin-left:3px;">1.0x</span>
+                    <span class="tooltip">倍速调节</span>
+                </div>
+
                 <div onclick="nextTrack()" class="control-button device-enable" role="button" aria-label="下一首" tabindex="0">
                     <span class="material-icons" aria-hidden="true">skip_next</span>
                     <span class="tooltip">下一首</span>
@@ -247,6 +279,66 @@
         function goOnlineSearch() {
             window.location.href = "/static/onlineSearch/index.html";
         }
+
+        // ===================== 新增功能：快进快退 + 倍速调节 =====================
+        // 快退10秒
+        function rewind() {
+            const audio = document.getElementById('audio');
+            if (audio.duration) {
+                audio.currentTime = Math.max(0, audio.currentTime - 10);
+                showToast('快退 10 秒');
+            }
+        }
+
+        // 快进10秒
+        function forward() {
+            const audio = document.getElementById('audio');
+            if (audio.duration) {
+                audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
+                showToast('快进 10 秒');
+            }
+        }
+
+        // 播放倍速配置（循环切换）
+        const playbackRates = [1.0, 1.25, 1.5, 2.0, 0.5];
+        let currentRateIndex = 0;
+
+        function changePlaybackRate() {
+            const audio = document.getElementById('audio');
+            currentRateIndex = (currentRateIndex + 1) % playbackRates.length;
+            audio.playbackRate = playbackRates[currentRateIndex];
+            showToast(`播放速度：${playbackRates[currentRateIndex]}x`);
+            // 无障碍提示
+            document.getElementById('sr-announcer').textContent = `播放速度已调整为${playbackRates[currentRateIndex]}倍`;
+
+            let rate = playbackRates[currentRateIndex];
+            // 更新界面显示（关键！）
+            document.getElementById("playbackRateText").innerText = rate + "x";
+        }
+
+        // 进度条点击跳转
+        function seekTo(e) {
+            const progress = document.getElementById('progress');
+            const audio = document.getElementById('audio');
+            if (!audio.duration) return;
+
+            const percent = e.offsetX / progress.offsetWidth;
+            audio.currentTime = percent * audio.duration;
+        }
+
+
+        // 显示提示（修复版）
+        function showToast(msg) {
+            const tip = document.getElementById('sr-announcer');
+            tip.textContent = msg;
+            tip.style.display = 'block';
+
+            // 1.5秒后自动隐藏
+            setTimeout(() => {
+                tip.style.display = 'none';
+            }, 2500);
+        }
+
     </script>
 </body>
 
