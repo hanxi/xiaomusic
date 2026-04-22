@@ -97,7 +97,7 @@
                 </div>
 
                 <!-- 新增：快退10秒按钮 -->
-                <div onclick="rewind()" class="control-button device-enable" role="button" aria-label="快退10秒"
+                <div id="rewindDiv" onclick="rewind()" class="control-button device-enable" role="button" aria-label="快退10秒"
                      tabindex="0">
                     <span class="material-icons" aria-hidden="true">replay_10</span>
                     <span class="tooltip">快退10秒</span>
@@ -110,14 +110,14 @@
                 </div>
 
                 <!-- 新增：快进10秒按钮 -->
-                <div onclick="forward()" class="control-button device-enable" role="button" aria-label="快进10秒"
+                <div id="forwardDiv" onclick="forward()" class="control-button device-enable" role="button" aria-label="快进10秒"
                      tabindex="0">
                     <span class="material-icons" aria-hidden="true">forward_10</span>
                     <span class="tooltip">快进10秒</span>
                 </div>
 
                 <!-- 新增：倍速调节按钮 -->
-                <div onclick="changePlaybackRate()" class="control-button device-enable" role="button"
+                <div id="speedDiv" onclick="changePlaybackRate()" class="control-button device-enable" role="button"
                      aria-label="调节播放速度" tabindex="0">
                     <span class="material-icons" aria-hidden="true">speed</span>
                     <!-- 这里实时显示倍速 -->
@@ -129,7 +129,7 @@
                     <span class="material-icons" aria-hidden="true">skip_next</span>
                     <span class="tooltip">下一首</span>
                 </div>
-                <div onclick="stopPlay()" class="control-button device-enable" role="button" aria-label="关机" tabindex="0">
+                <div id="stop" onclick="stopPlay()" class="control-button device-enable" role="button" aria-label="关机" tabindex="0">
                     <span class="material-icons" aria-hidden="true">stop</span>
                     <span class="tooltip">关机</span>
                 </div>
