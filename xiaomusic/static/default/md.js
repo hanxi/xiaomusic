@@ -297,49 +297,85 @@ const WebPlayer = {
   },
 };
 
+let lastMusicName = "";  // 上一首播放的歌曲名
 // 本机播放：加载并播放指定歌曲
 function loadAndPlayMusic(musicName) {
   console.log("loadAndPlayMusic:", musicName);
 
-  $.get(`/musicinfo?name=${musicName}`, function (data, status) {
-    console.log(data);
-    if (data.ret == "OK") {
-      const audioElement = document.getElementById("audio");
+  const audioElement = document.getElementById("audio");
+  const playMusicIcon = document.getElementById('playPauseIcon');
+  // 2. 判断：切换了新歌曲 → 重新加载播放
+  if (musicName !== lastMusicName) {
+    // 停止上一首歌曲
+    if (audioElement) {
+      audioElement.pause();
+    }
 
+    // 向后端请求歌曲地址（你原来的接口，自动编码参数，解决&截断问题）
+    $.get("/musicinfo", { name: musicName }, function (data) {
+      if (data.ret !== "OK" || !data.url) {
+        alert("歌曲地址获取失败！");
+        return;
+      }
       // 设置音频源
       audioElement.src = data.url;
-
       // 播放音频
-      audioElement
-        .play()
-        .then(() => {
-          console.log("播放成功:", musicName);
+      audioElement.play()
+          .then(() => {
+              console.log("播放成功:", musicName);
+              // 更新本机播放状态
+              WebPlayer.setCurrentMusic(musicName);
 
-          // 更新本机播放状态
-          WebPlayer.setCurrentMusic(musicName);
+              // 更新播放列表和索引
+              const playlist = $("#music_list").val();
+              WebPlayer.setPlaylist(playlist);
 
-          // 更新播放列表和索引
-          const playlist = $("#music_list").val();
-          WebPlayer.setPlaylist(playlist);
+              const playList = WebPlayer.getPlayList();
+              const index = playList.indexOf(musicName);
+              if (index !== -1) {
+                  WebPlayer.setCurrentIndex(index);
+              }
+              // 更新 UI
+              updateWebPlayingUI();
+              // 更新收藏按钮状态
+              updateWebFavoriteButton();
+          })
+          .catch((error) => {
+              console.error("播放失败:", error);
+              alert("播放失败: " + error.message);
+          });
 
-          const playList = WebPlayer.getPlayList();
-          const index = playList.indexOf(musicName);
-          if (index !== -1) {
-            WebPlayer.setCurrentIndex(index);
-          }
+      isPlaying = true;
+      lastMusicName = musicName;
+      // 切换为暂停图标
+      playMusicIcon.textContent = 'pause_circle_outline';
 
-          // 更新 UI
-          updateWebPlayingUI();
+      // 监听：歌曲播放完毕 → 自动切回播放图标
+      audioElement.addEventListener("ended", function () {
+      isPlaying = false;
+      playMusicIcon.textContent = "play_circle_outline";
+      });
+    }).fail(function () {
+      alert("请求歌曲信息失败！");
+    });
 
-          // 更新收藏按钮状态
-          updateWebFavoriteButton();
-        })
-        .catch((error) => {
-          console.error("播放失败:", error);
-          alert("播放失败: " + error.message);
-        });
-    }
-  });
+    return;
+  }
+
+// 3. 同一首歌曲 → 播放/暂停 切换
+  if (isPlaying) {
+    // 当前正在播放 → 暂停
+    audioElement.pause();
+    isPlaying = false;
+    playMusicIcon.textContent = "play_circle_outline";
+  } else {
+    // 当前已暂停 → 继续播放
+    audioElement.play();
+    isPlaying = true;
+    // 切换为暂停图标
+    playMusicIcon.textContent = 'pause_circle_outline';
+  }
+
 }
 
 function webPlay() {
@@ -404,7 +440,6 @@ function stopPlay() {
     const audioElement = document.getElementById("audio");
     audioElement.pause();
     audioElement.currentTime = 0;
-
     // 更新 UI
     updateWebPlayingUI();
 
@@ -430,27 +465,44 @@ function stopPlay() {
 
 function prevTrack() {
   var did = $("#did").val();
-
+  audioElement = document.getElementById("audio");
+  audioElement.removeAttribute('src')
+  audioElement.pause();
   if (did == "web_device") {
     // 本机播放：播放上一首
     webPlayPrevious();
   } else {
     // 设备播放：发送命令
     sendcmd("上一首");
+    show_now_player_music_name();
   }
 }
 
 function nextTrack() {
   var did = $("#did").val();
-
+  audioElement = document.getElementById("audio");
+  audioElement.removeAttribute('src')
+  audioElement.pause();
   if (did == "web_device") {
     // 本机播放：播放下一首
     webPlayNext();
   } else {
     // 设备播放：发送命令
     sendcmd("下一首");
+
+    show_now_player_music_name();
   }
 }
+
+//获取当前正在播放的歌曲显示到歌曲选择列表
+function show_now_player_music_name(){
+      setTimeout(() => {
+      let now_player_music_name = $("#playering-music").text();
+      now_player_music_name = now_player_music_name.replace("【播放中】 ","")
+      $("#music_name").val(now_player_music_name);
+    }, 1000);
+}
+
 
 // 本机播放：播放上一首
 function webPlayPrevious() {
@@ -485,6 +537,7 @@ function webPlayPrevious() {
   }
 
   const prevMusic = playList[prevIndex];
+  $("#music_name").val(prevMusic);
   if (prevMusic) {
     loadAndPlayMusic(prevMusic);
   }
@@ -494,7 +547,6 @@ function webPlayPrevious() {
 function webPlayNext() {
   const playList = WebPlayer.getPlayList();
   const currentIndex = WebPlayer.getCurrentIndex();
-
   if (playList.length === 0) {
     alert("播放列表为空");
     return;
@@ -541,6 +593,7 @@ function webPlayNext() {
   }
 
   const nextMusic = playList[nextIndex];
+  $("#music_name").val(nextMusic);
   if (nextMusic) {
     loadAndPlayMusic(nextMusic);
   }
@@ -786,6 +839,7 @@ $.get("/getsetting", function (data, status) {
     var cur_device = Object.values(data.devices).find(
       (device) => device.did === value,
     );
+
     if (cur_device) {
       deviceOptions.push({
         value: value,
@@ -809,7 +863,6 @@ $.get("/getsetting", function (data, status) {
     value: "web_device",
     text: "本机",
   });
-
   // 批量填充设备选项
   fillSelectOptions(
     "#did",
@@ -832,6 +885,8 @@ $.get("/getsetting", function (data, status) {
     $("#audio").fadeIn();
     $("#device-audio").fadeIn(); // 保持显示，因为进度条在这里
 
+    //本机播放隐藏关机按钮
+    $('#stop').hide();
     // 本机播放：禁用设备相关按钮，启用本机按钮
     // 搜索、定时、测试按钮禁用
     $(".icon-item").each(function () {
@@ -856,6 +911,13 @@ $.get("/getsetting", function (data, status) {
     $(".icon-item").removeClass("disabled");
     $(".icon-item").css("opacity", "");
     $(".icon-item").css("pointer-events", "");
+
+    //设备播放隐藏快进快退倍速按钮
+     $("#speedDiv").hide();
+     $("#rewindDiv").hide();
+     $("#forwardDiv").hide();
+
+
   }
 
   // 初始化对话记录开关状态
