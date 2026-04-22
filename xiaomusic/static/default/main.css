@@ -1,8 +1,8 @@
 /* ==================== CSS 变量系统 ==================== */
 :root {
   /* 主色调 - 与 setting.html 保持一致 */
-  --primary-color: pink;
-  --primary-hover: pink;
+  --primary-color: #007bff;
+  --primary-hover: #0056b3;
   --primary-light: rgba(0, 123, 255, 0.1);
 
   /* 功能色 */
