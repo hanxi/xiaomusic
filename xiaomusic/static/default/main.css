@@ -567,6 +567,8 @@ progress::-webkit-progress-value {
 
 .control-button {
   display: flex;
+  /*flex 方向改为垂直排列，图标在上、文字在下 倍速调节*/
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 48px;
@@ -577,7 +579,12 @@ progress::-webkit-progress-value {
   transition: all var(--transition-base);
   border: 2px solid transparent;
 }
-
+/* 补充倍速文字的样式，修正间距 */
+.control-button #playbackRateText {
+  /* 去掉原来的水平间距，改成垂直间距 */
+  margin-left: 0 !important;
+  line-height: 1; /* 消除文字行高带来的额外高度 */
+}
 .control-button:hover {
   background: var(--primary-light);
   border-color: var(--primary-color);
