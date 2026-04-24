@@ -380,6 +380,22 @@ class XiaoMusic:
             plugin, keyword, page, limit, **kwargs
         )
 
+    # 在线获取歌单列表
+    async def get_playlist_online(
+            self, plugin="all", keyword="", page=1, limit=20, **kwargs
+    ):
+        """委托给 online_music_service"""
+        return await self.online_music_service.get_playlist_online(
+            plugin, keyword, page, limit, **kwargs
+        )
+
+    # 在线获取歌单内部歌曲详情
+    async def get_playlist_detail_online(self, id, plugin, api_type, **kwargs):
+        """委托给 online_music_service"""
+        return await self.online_music_service.get_playlist_detail_online(
+            id=id, plugin=plugin, api_type=api_type, **kwargs
+        )
+
     @staticmethod
     async def get_real_url_of_openapi(url: str, timeout: int = 10) -> str:
         """委托给 OnlineMusicService 的静态方法"""

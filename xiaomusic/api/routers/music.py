@@ -56,6 +56,42 @@ async def search_online_music(
         return {"success": False, "error": str(e)}
 
 
+@router.get("/api/search/online_playlist")
+async def search_online_playlist(
+    keyword: str = Query(..., description="搜索关键词"),
+    plugin: str = Query("all", description="指定平台名称"),
+    page: int = Query(1, description="页码"),
+    limit: int = Query(20, description="每页数量"),
+    api_type: int = Query(None, description="接口类型：1=MusicFree，2=LXServer"),
+):
+    """在线歌单搜索API"""
+    try:
+        if not keyword:
+            return {"success": False, "error": "Keyword required"}
+
+        return await xiaomusic.get_playlist_online(
+            keyword=keyword, plugin=plugin, page=page, limit=limit, api_type=api_type
+        )
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/search/online_playlist_detail")
+async def search_online_playlist_detail(
+    id: str = Query(..., description="歌单ID"),
+    plugin: str = Query(..., description="平台名称(如wy/kg)"),
+    api_type: int = Query(..., description="接口类型：1=MusicFree，2=LXServer"),
+):
+    """在线歌单详情获取API (歌单转歌曲)"""
+    try:
+        # 逻辑上 id, plugin, api_type 均由 Query(...) 强制要求，无需额外 if 判断
+        return await xiaomusic.get_playlist_detail_online(
+            id=id, plugin=plugin, api_type=api_type
+        )
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 @router.get("/api/proxy/real-url")
 async def get_real_music_url(url: str = Query(..., description="原始url")):
     """通过服务端代理获取真实的URL，不止是音频url,可能还有图片url"""
