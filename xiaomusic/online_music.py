@@ -100,6 +100,55 @@ class OnlineMusicService:
                 plugin, keyword, artist, page, limit
             )
 
+    async def get_playlist_online(
+            self, plugin="all", keyword="", page=1, limit=20, api_type=None, **kwargs
+    ):
+        """在线获取歌单列表
+
+        Args:
+            plugin: 平台类型 (对于 LX Server 对应 source)
+            keyword: 搜索关键词
+            page: 页码
+            limit: 每页数量
+            api_type: 1=MusicFree, 2=LXServer
+            **kwargs: 其他参数
+
+        Returns:
+            dict: 搜索结果
+        """
+        self.log.info(f"在线搜索歌单: {keyword}")
+        if not self.js_plugin_manager:
+            return {"success": False, "error": "JS Plugin Manager not available"}
+
+        # 判断接口类型，默认逻辑与搜索歌曲一致
+        if api_type is not None:
+            is_lx_server = (int(api_type) == 2)
+        else:
+            is_lx_server = self.js_plugin_manager.is_lx_server()
+
+        if is_lx_server:
+            # 执行 LX Server 歌单搜索
+            return await self._execute_lx_server_playlist_search(
+                plugin, keyword, page, limit
+            )
+        else:
+            # 兼容性预留：目前 MF 暂不支持搜歌单
+            return {"success": False, "error": "MusicFree 插件暂不支持歌单搜索"}
+
+    async def get_playlist_detail_online(
+            self, id, plugin, api_type, **kwargs
+    ):
+        """在线获取歌单详情"""
+        self.log.info(f"在线获取歌单详情 ID: {id}, Source: {plugin}")
+        if not self.js_plugin_manager:
+            return {"success": False, "error": "JS Plugin Manager not available"}
+
+        # api_type，预留MusicFree的歌单接口
+        if int(api_type) == 2:
+            return await self._execute_lx_server_playlist_detail(plugin, id)
+        else:
+            return {"success": False, "error": "目前仅支持 LX Server 的歌单详情"}
+
     async def _parse_keyword_and_artist(self, keyword):
         """解析关键词和艺术家"""
         parsed_keyword, parsed_artist = await self._parse_keyword_with_ai(keyword)
@@ -134,6 +183,35 @@ class OnlineMusicService:
 
         result_data["artist"] = artist or "佚名"
         return result_data
+
+    async def _execute_lx_server_playlist_search(self, plugin, keyword, page, limit):
+        """执行 LX Server 歌单搜索具体业务"""
+        lx_server_info = self.js_plugin_manager.get_lx_server_info()
+        if lx_server_info.get("base_url", "") != "":
+            # 调用执行层的核心请求方法
+            return await self.js_plugin_manager.lx_server_playlist_search(
+                url=lx_server_info.get("base_url") + "/music/songList/search",
+                keyword=keyword,
+                source=plugin if plugin != "all" else "tx",  # 默认取tx
+                page=page,
+                limit=limit,
+                lx_server_info=lx_server_info,
+            )
+        else:
+            return {"success": False, "error": "LX Server 接口未配置！"}
+
+    async def _execute_lx_server_playlist_detail(self, plugin, id):
+        """执行 LX Server 歌单详情具体业务"""
+        lx_server_info = self.js_plugin_manager.get_lx_server_info()
+        if lx_server_info.get("base_url", "") != "":
+            return await self.js_plugin_manager.lx_server_playlist_detail(
+                url=lx_server_info.get("base_url") + "/music/songList/detail",
+                id=id,
+                source=plugin,
+                lx_server_info=lx_server_info,
+            )
+        else:
+            return {"success": False, "error": "LX Server 接口未配置！"}
 
     async def _execute_lx_server_music_url(self, song_info):
         """执行LX Server获取音乐播放直链"""

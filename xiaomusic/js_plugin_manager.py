@@ -1243,6 +1243,26 @@ class JSPluginManager:
         except Exception as e:
             self.log.error(f"Unexpected error occurred at {url}: {str(e)}")
 
+    def _format_lx_songs(self, raw_songs: list, source: str) -> list:
+        """将 LX Server 返回的原始歌曲列表统一转换为前端标准格式"""
+        if not isinstance(raw_songs, list):
+            return []
+        return [
+            {
+                "_raw": item,
+                "id": item.get("songmid", ""),
+                "title": item.get("name", ""),
+                "duration": item.get("interval", ""),
+                "artist": item.get("singer", ""),
+                "album": item.get("albumName", ""),
+                "platform": source,
+                "artwork": item.get("img", ""),
+                "lrc": item.get("lrc", ""),
+                "lrcUrl": item.get("lrcUrl", ""),
+            }
+            for item in raw_songs
+        ]
+
     async def lx_server_search(
         self,
         url: str,
@@ -1296,21 +1316,8 @@ class JSPluginManager:
                 "limit": limit,
             }
 
-        converted_data = [
-            {
-                "_raw": item,
-                "id": item.get("songmid", ""),
-                "title": item.get("name", ""),
-                "duration": item.get("interval", ""),
-                "artist": item.get("singer", ""),
-                "album": item.get("albumName", ""),
-                "platform": source,
-                "artwork": item.get("img", ""),
-                "lrc": item.get("lrc", ""),
-                "lrcUrl": item.get("lrcUrl", ""),
-            }
-            for item in raw_data
-        ]
+        # LX格式转换成XiaoMusic格式
+        converted_data = self._format_lx_songs(raw_data, source)
 
         unified_result = {"data": converted_data}
         optimized_result = self.optimize_search_results(
@@ -1324,6 +1331,83 @@ class JSPluginManager:
             "total": len(results),
             "page": page,
             "limit": limit,
+        }
+
+    async def lx_server_playlist_search(
+            self,
+            url: str,
+            keyword: str,
+            source: str = "tx",
+            limit: int = 20,
+            page: int = 1,
+            lx_server_info: dict[str, Any] | None = None,
+    ):
+        """直接调用 LX Server 接口进行歌单搜索
+
+        Args:
+            url (str): 歌单搜索接口地址
+            keyword (str): 搜索关键词
+            source (str): 搜索平台 code
+            limit (int): 每页数量
+            page (int): 页码
+            lx_server_info (dict): LX Server 配置信息
+        Returns:
+            Dict[str, Any]: 歌单搜索结果列表
+        """
+        # 🌟 关键转换：将前端传来的 keyword 转换为 LX 认识的 text
+        params = {"source": source, "text": keyword, "limit": limit, "page": page}
+        self.log.info(f"正在向 LX Server 请求歌单搜索: {url} 参数: {params}")
+
+        # 复用现成的认证头构建逻辑
+        headers = (
+            self._build_lx_server_headers(lx_server_info) if lx_server_info else None
+        )
+
+        # 发起 HTTP GET 请求
+        result = await self._http_request("GET", url, params=params, headers=headers)
+
+        if not result["success"]:
+            return {
+                "success": False,
+                "error": result["error"],
+                "list": [],
+                "total": 0
+            }
+
+        # 直接透传 LX Server 返回的原始 JSON 结构
+        return result["data"]
+
+    async def lx_server_playlist_detail(
+            self,
+            url: str,
+            id: str,
+            source: str,
+            lx_server_info: dict[str, Any] | None = None,
+    ):
+        """直接调用 LX Server 接口获取歌单详情（全量歌曲）"""
+        params = {"source": source, "id": id}
+        self.log.info(f"正在向 LX Server 请求歌单详情: {url} 参数: {params}")
+
+        headers = (
+            self._build_lx_server_headers(lx_server_info) if lx_server_info else None
+        )
+
+        result = await self._http_request("GET", url, params=params, headers=headers)
+        if not result["success"]:
+            return {"success": False, "error": result["error"], "data": [], "total": 0}
+
+        raw_data = result["data"]
+
+        # 柔性脱壳并转换为标准格式
+        actual_songs = raw_data.get("list", []) if isinstance(raw_data, dict) else raw_data
+
+        # LX格式转换成XiaoMusic格式
+        converted_data = self._format_lx_songs(actual_songs, source)
+
+        return {
+            "success": True,
+            "data": converted_data,
+            "total": len(converted_data)
         }
 
     async def lx_server_music_url(
