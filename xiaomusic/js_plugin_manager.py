@@ -1354,7 +1354,7 @@ class JSPluginManager:
         Returns:
             Dict[str, Any]: 歌单搜索结果列表
         """
-        # 🌟 关键转换：将前端传来的 keyword 转换为 LX 认识的 text
+        # 将前端传来的 keyword 转换为 LX 认识的 text
         params = {"source": source, "text": keyword, "limit": limit, "page": page}
         self.log.info(f"正在向 LX Server 请求歌单搜索: {url} 参数: {params}")
 
