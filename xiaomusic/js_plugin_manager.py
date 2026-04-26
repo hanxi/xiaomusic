@@ -1334,13 +1334,13 @@ class JSPluginManager:
         }
 
     async def lx_server_playlist_search(
-            self,
-            url: str,
-            keyword: str,
-            source: str = "tx",
-            limit: int = 20,
-            page: int = 1,
-            lx_server_info: dict[str, Any] | None = None,
+        self,
+        url: str,
+        keyword: str,
+        source: str = "tx",
+        limit: int = 20,
+        page: int = 1,
+        lx_server_info: dict[str, Any] | None = None,
     ):
         """直接调用 LX Server 接口进行歌单搜索
 
@@ -1367,22 +1367,17 @@ class JSPluginManager:
         result = await self._http_request("GET", url, params=params, headers=headers)
 
         if not result["success"]:
-            return {
-                "success": False,
-                "error": result["error"],
-                "list": [],
-                "total": 0
-            }
+            return {"success": False, "error": result["error"], "list": [], "total": 0}
 
         # 直接透传 LX Server 返回的原始 JSON 结构
         return result["data"]
 
     async def lx_server_playlist_detail(
-            self,
-            url: str,
-            id: str,
-            source: str,
-            lx_server_info: dict[str, Any] | None = None,
+        self,
+        url: str,
+        id: str,
+        source: str,
+        lx_server_info: dict[str, Any] | None = None,
     ):
         """直接调用 LX Server 接口获取歌单详情（全量歌曲）"""
         params = {"source": source, "id": id}
@@ -1399,16 +1394,14 @@ class JSPluginManager:
         raw_data = result["data"]
 
         # 柔性脱壳并转换为标准格式
-        actual_songs = raw_data.get("list", []) if isinstance(raw_data, dict) else raw_data
+        actual_songs = (
+            raw_data.get("list", []) if isinstance(raw_data, dict) else raw_data
+        )
 
         # LX格式转换成XiaoMusic格式
         converted_data = self._format_lx_songs(actual_songs, source)
 
-        return {
-            "success": True,
-            "data": converted_data,
-            "total": len(converted_data)
-        }
+        return {"success": True, "data": converted_data, "total": len(converted_data)}
 
     async def lx_server_music_url(
         self,

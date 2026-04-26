@@ -382,7 +382,7 @@ class XiaoMusic:
 
     # 在线获取歌单列表
     async def get_playlist_online(
-            self, plugin="all", keyword="", page=1, limit=20, **kwargs
+        self, plugin="all", keyword="", page=1, limit=20, **kwargs
     ):
         """委托给 online_music_service"""
         return await self.online_music_service.get_playlist_online(

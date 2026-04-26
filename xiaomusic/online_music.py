@@ -85,7 +85,7 @@ class OnlineMusicService:
         # 获取API配置信息
         # 🌟 根据前端传入的 api_type 判断，1为MF插件，2为LX接口。如果没有传则用老办法兜底
         if api_type is not None:
-            is_lx_server = (int(api_type) == 2)
+            is_lx_server = int(api_type) == 2
         else:
             is_lx_server = self.js_plugin_manager.is_lx_server()
 
@@ -101,7 +101,7 @@ class OnlineMusicService:
             )
 
     async def get_playlist_online(
-            self, plugin="all", keyword="", page=1, limit=20, api_type=None, **kwargs
+        self, plugin="all", keyword="", page=1, limit=20, api_type=None, **kwargs
     ):
         """在线获取歌单列表
 
@@ -122,7 +122,7 @@ class OnlineMusicService:
 
         # 判断接口类型，默认逻辑与搜索歌曲一致
         if api_type is not None:
-            is_lx_server = (int(api_type) == 2)
+            is_lx_server = int(api_type) == 2
         else:
             is_lx_server = self.js_plugin_manager.is_lx_server()
 
@@ -135,9 +135,7 @@ class OnlineMusicService:
             # 兼容性预留：目前 MF 暂不支持搜歌单
             return {"success": False, "error": "MusicFree 插件暂不支持歌单搜索"}
 
-    async def get_playlist_detail_online(
-            self, id, plugin, api_type, **kwargs
-    ):
+    async def get_playlist_detail_online(self, id, plugin, api_type, **kwargs):
         """在线获取歌单详情"""
         self.log.info(f"在线获取歌单详情 ID: {id}, Source: {plugin}")
         if not self.js_plugin_manager:

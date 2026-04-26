@@ -160,7 +160,11 @@ def verification(
     payload = {"sub": credentials.username, "exp": expire_time}
     new_token = jwt.encode(payload, session_secret, algorithm="HS256")
     response.set_cookie(
-        key=cookie_name, value=new_token, max_age=60 * 60 * 24 * 7, httponly=True, samesite="lax"
+        key=cookie_name,
+        value=new_token,
+        max_age=60 * 60 * 24 * 7,
+        httponly=True,
+        samesite="lax",
     )
     # ========================================================
     return True
@@ -216,7 +220,9 @@ class AuthStaticFiles(StaticFiles):
             # ========================================================
             # 🚀 新增：7天免密模块 开始 (网页静态文件拦截层)
             # ========================================================
-            session_secret = hashlib.sha256(config.httpauth_password.encode()).hexdigest()
+            session_secret = hashlib.sha256(
+                config.httpauth_password.encode()
+            ).hexdigest()
             cookie_name = "xiaomusic_auth_session"
             token = request.cookies.get(cookie_name)
             is_authed = False
@@ -231,19 +237,27 @@ class AuthStaticFiles(StaticFiles):
             if not is_authed:
                 credentials = await security(request)
                 if not credentials:
-                    response = Response(status_code=401, headers={"WWW-Authenticate": "Basic"})
+                    response = Response(
+                        status_code=401, headers={"WWW-Authenticate": "Basic"}
+                    )
                     await response(scope, receive, send)
                     return
 
                 current_username_bytes = credentials.username.encode("utf8")
                 correct_username_bytes = config.httpauth_username.encode("utf8")
-                is_correct_username = secrets.compare_digest(current_username_bytes, correct_username_bytes)
+                is_correct_username = secrets.compare_digest(
+                    current_username_bytes, correct_username_bytes
+                )
                 current_password_bytes = credentials.password.encode("utf8")
                 correct_password_bytes = config.httpauth_password.encode("utf8")
-                is_correct_password = secrets.compare_digest(current_password_bytes, correct_password_bytes)
+                is_correct_password = secrets.compare_digest(
+                    current_password_bytes, correct_password_bytes
+                )
 
                 if not (is_correct_username and is_correct_password):
-                    response = Response(status_code=401, headers={"WWW-Authenticate": "Basic"})
+                    response = Response(
+                        status_code=401, headers={"WWW-Authenticate": "Basic"}
+                    )
                     await response(scope, receive, send)
                     return
             # ========================================================

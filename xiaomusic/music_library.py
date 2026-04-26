@@ -1095,14 +1095,14 @@ class MusicLibrary:
 
         # 是否需要代理
         # 对 bilibili 页面 URL，优先解析为真实音频/CDN URL；成功后再走 proxy，避免 /proxy 只拿到 HTML 页面。
-        is_bilibili_page = (
-            isinstance(url, str)
-            and ("bilibili.com/video/" in url or "b23.tv/" in url)
+        is_bilibili_page = isinstance(url, str) and (
+            "bilibili.com/video/" in url or "b23.tv/" in url
         )
         resolved_origin_url = url
         if is_bilibili_page:
             try:
                 import asyncio
+
                 cmd = [
                     "yt-dlp",
                     "-f",
@@ -1121,7 +1121,11 @@ class MusicLibrary:
                     stderr=asyncio.subprocess.PIPE,
                 )
                 stdout, stderr = await proc.communicate()
-                lines = [line.strip() for line in stdout.decode(errors="replace").splitlines() if line.strip()]
+                lines = [
+                    line.strip()
+                    for line in stdout.decode(errors="replace").splitlines()
+                    if line.strip()
+                ]
                 resolved = lines[0] if lines else ""
                 if proc.returncode == 0 and resolved:
                     self.log.info(

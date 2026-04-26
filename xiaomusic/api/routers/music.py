@@ -42,7 +42,9 @@ async def search_online_music(
     plugin: str = Query("all", description="指定插件名称，all表示搜索所有插件"),
     page: int = Query(1, description="页码"),
     limit: int = Query(20, description="每页数量"),
-    api_type: int = Query(None, description="接口类型：1=MusicFree，2=LXServer"),  # 🌟 接收前端传来的 api_type
+    api_type: int = Query(
+        None, description="接口类型：1=MusicFree，2=LXServer"
+    ),  # 🌟 接收前端传来的 api_type
 ):
     """在线音乐搜索API"""
     try:
@@ -114,11 +116,11 @@ async def get_plugin_source_url(
     try:
         # 获取请求数据
         # 容错处理1：将 URL 传输中可能被误转为空格的 '+' 还原回去（win平台）
-        data = data.replace(' ', '+')
+        data = data.replace(" ", "+")
         # 2. 容错处理：自动补全 Base64 缺失的 '=' 填充符（Linux平台）
         missing_padding = len(data) % 4
         if missing_padding:
-            data += '=' * (4 - missing_padding)
+            data += "=" * (4 - missing_padding)
 
         # 将Base64编码的URL解码为Json字符串
         json_str = base64.b64decode(data).decode("utf-8")
