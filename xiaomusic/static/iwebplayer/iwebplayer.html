@@ -706,9 +706,27 @@
     align-items: center;
     z-index: 110;
     width: 54px;
-    height: 160px;
+    height: 230px;
     touch-action: none;
   }
+  .vol-adj-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-size: 20px;
+    font-weight: 500;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+    margin: 4px 0;
+    user-select: none;
+  }
+  .vol-adj-btn:active { background: var(--bg-color); }
   .volume-popup.show { display: flex; }
   .volume-text {
     font-size: 12px;
@@ -1371,7 +1389,37 @@
   }
 
   /* ==========================================
-     13. 宽屏适配
+     13. iOS 桌面安装专用样式
+     ========================================== */
+  .ios-install-pane { display: none; animation: fadeIn 0.2s; }
+  .ios-install-pane.active { display: block; }
+
+  /* 底部偏右引导气泡 */
+  .ios-guide-bubble {
+    position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); right: 15px; left: auto;
+    transform: translateY(20px); width: 260px; background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 16px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    z-index: 1000; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex; flex-direction: column; align-items: flex-end; color: var(--text-main); text-align: right;
+  }
+  @media (prefers-color-scheme: dark) {
+    .ios-guide-bubble { background: rgba(31, 41, 55, 0.95); border-color: rgba(255,255,255,0.1); color: #fff; }
+  }
+  .ios-guide-bubble.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+  /* 🌟 紫红底色白箭头 */
+  .ios-guide-arrow {
+    margin-top: 12px; margin-right: 12px; width: 28px; height: 28px;
+    background: var(--primary); color: #fff; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
+    animation: ios-bounce 1.2s infinite;
+  }
+  @keyframes ios-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+
+  /* ==========================================
+     14. 宽屏适配
      ========================================== */
   @media (min-width: 600px) {
     html { background-color: #e5e7eb; overflow-y: scroll; scrollbar-gutter: stable; }
@@ -1422,6 +1470,16 @@
           </li>
           <li class="select-option" id="setting-config">
              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" style="margin-right:6px; vertical-align:-2px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> 后台配置
+          </li>
+
+          <li class="select-option" id="setting-ios-desktop">
+             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;">
+               <rect x="4" y="4" width="6" height="6" rx="1"></rect>
+               <rect x="14" y="4" width="6" height="6" rx="1"></rect>
+               <rect x="4" y="14" width="6" height="6" rx="1"></rect>
+               <line x1="14" y1="17" x2="20" y2="17"></line>
+               <line x1="17" y1="14" x2="17" y2="20"></line>
+             </svg> 桌面 (iOS)
           </li>
           <li class="select-option" id="setting-version">
              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" style="margin-right:6px; vertical-align:-2px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg> 版本 <span id="setting-version-label"></span>
@@ -1588,7 +1646,9 @@
           </button>
           <div class="volume-popup" id="volume-popup">
             <div class="volume-text" id="volume-text">50%</div>
+            <button class="vol-adj-btn" id="vol-plus" style="margin-bottom: 12px;">+</button>
             <input type="range" id="volume-slider" min="0" max="100" value="50" orient="vertical">
+            <button class="vol-adj-btn" id="vol-minus" style="margin-top: 12px;">-</button>
           </div>
         </div>
       </div>
@@ -1608,7 +1668,7 @@
         </div>
       </div>
       <div class="about-body">
-        <p><strong>iWebPlayer</strong> 是 <strong>XiaoMusic</strong> 的主题之一，专为 <strong>iPhone</strong> 交互优化，提供接近原生APP的音乐播放体验与远程设备控制能力。</p>
+        <p><strong>iWebPlayer</strong> 是 <strong>XiaoMusic</strong> 的主题之一，专为 <strong>iPhone</strong> 交互优化，媲美原生APP的音乐播放与小爱音箱控制。</p>
         <ul class="about-features">
           <li>适配 iPhone Safari 浏览器</li>
           <li>iPhone锁屏、灵动岛、媒体库完美体验</li>
@@ -1616,6 +1676,7 @@
           <li>封面 & 歌词自动刮削展示</li>
           <li>支持MusicFree插件</li>
           <li>支持调用LX Server接口(搜歌曲/搜歌单)</li>
+          <li>提供免签发Web App安装</li>
         </ul>
         <div class="about-link">
           项目主页 / 更新地址：<br>
@@ -1626,6 +1687,111 @@
         <button class="about-secondary" id="about-migrate-btn" style="display: none;">升级旧版歌单</button>
         <button class="about-primary" id="about-ok">我知道了</button>
       </div>
+    </div>
+  </div>
+
+  <div class="about-modal-backdrop" id="ios-desktop-backdrop" aria-hidden="true">
+    <div class="about-modal" role="dialog" aria-modal="true" style="height: auto; max-height: 85vh; display: flex; flex-direction: column;">
+      <button class="about-close" id="ios-desktop-close" aria-label="关闭">×</button>
+
+      <div class="about-header" style="flex-direction: column; align-items: flex-start; padding-bottom: 0; flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; margin-bottom: 12px;">
+          <div class="about-logo" style="width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;">
+            <img id="ios-header-logo-img" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;" />
+          </div>
+          <h2 style="font-size: 18px; font-weight: 800; margin: 0;">添加到 iPhone 主屏幕</h2>
+        </div>
+
+        <div style="display: flex; gap: 20px; border-bottom: 1px solid var(--border); width: 100%;">
+          <div class="ios-plugin-tab active" data-target="ios-mode-shortcut" style="padding-bottom: 10px; cursor: pointer; font-weight: bold; color: var(--primary); border-bottom: 2px solid var(--primary); transition: color 0.2s;">快捷链接</div>
+          <div class="ios-plugin-tab" data-target="ios-mode-pwa" style="padding-bottom: 10px; cursor: pointer; font-weight: 500; color: var(--text-sub); border-bottom: 2px solid transparent; transition: color 0.2s;">PWA模式</div>
+          <div class="ios-plugin-tab" data-target="ios-mode-profile" style="padding-bottom: 10px; cursor: pointer; font-weight: 500; color: var(--text-sub); border-bottom: 2px solid transparent; transition: color 0.2s;">配置直装</div>
+        </div>
+      </div>
+
+      <div class="about-body" style="flex: 1; padding: 15px 18px 25px 18px; overflow-y: auto;">
+        <div id="ios-mode-shortcut" class="ios-install-pane active">
+          <p style="font-size: 13px; font-weight: bold; margin-bottom: 4px; color: var(--text-main);">✨ 优点：</p>
+          <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px; padding-left: 6px;">功能完整，后台连播最稳定，锁屏后保活能力强。</p>
+          <p style="font-size: 13px; font-weight: bold; margin-bottom: 4px; color: var(--text-main);">💡 不足：</p>
+          <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 4px; padding-left: 6px;">有浏览器地址栏。</p>
+          <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 12px; padding-left: 6px;">正在播放时点击桌面图标会中断播放，需要点灵动岛进入。</p>
+
+          <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--text-main);">🛠️ 操作步骤：</div>
+          <div style="font-size: 13px; color: var(--text-main); background: var(--bg-color); padding: 12px; border-radius: 10px; line-height: 1.8;">
+            1. 点击浏览器底部的 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: text-bottom; margin: 0 2px;"><circle cx="5" cy="12" r="2.5"></circle><circle cx="12" cy="12" r="2.5"></circle><circle cx="19" cy="12" r="2.5"></circle></svg> 菜单<br>
+            2. 选择 <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin: 0 2px;"><path d="M8 9H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2"></path><polyline points="15 5 12 1 9 5"></polyline><line x1="12" y1="1" x2="12" y2="14"></line></svg> <b>共享</b><br>
+            3. 选择 <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin: 0 2px;"><rect x="4" y="4" width="16" height="16" rx="3" ry="3"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg> <b>添加到主屏幕</b><br>
+            4. <span style="color: #ef4444; font-weight: bold;">将【作为网页App打开】开关关闭</span> <svg viewBox="0 0 40 24" width="26" height="16" style="vertical-align: text-bottom; margin-left: 2px;"><rect width="40" height="24" rx="12" fill="#e5e7eb"/><circle cx="12" cy="12" r="10" fill="#fff" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.2))"/></svg><br>
+            5. 点击右上角 <b>添加</b><br>
+            6. 自动回到桌面，即可看到独立的原生 App 图标！
+          </div>
+          <button class="about-primary start-ios-guide-btn" style="width: 100%; margin-top: 15px;" onclick="window.startIosGuide(event)">开启安装引导</button>
+        </div>
+
+        <div id="ios-mode-pwa" class="ios-install-pane">
+          <p style="font-size: 13px; font-weight: bold; margin-bottom: 4px; color: var(--text-main);">✨ 优点：</p>
+          <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px; padding-left: 6px;">无地址栏，100% 沉浸感，媲美原生UI体验。</p>
+          <p style="font-size: 13px; font-weight: bold; margin-bottom: 4px; color: var(--text-main);">💡 不足：</p>
+          <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 12px; padding-left: 6px;">受 iOS 限制，锁屏暂停后系统会强制终止进程，无法恢复播放</p>
+
+          <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--text-main);">🛠️ 操作步骤：</div>
+          <div style="font-size: 13px; color: var(--text-main); background: var(--bg-color); padding: 12px; border-radius: 10px; line-height: 1.8;">
+            1. 点击浏览器底部的 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: text-bottom; margin: 0 2px;"><circle cx="5" cy="12" r="2.5"></circle><circle cx="12" cy="12" r="2.5"></circle><circle cx="19" cy="12" r="2.5"></circle></svg> 菜单<br>
+            2. 选择 <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin: 0 2px;"><path d="M8 9H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2"></path><polyline points="15 5 12 1 9 5"></polyline><line x1="12" y1="1" x2="12" y2="14"></line></svg> <b>共享</b><br>
+            3. 选择 <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin: 0 2px;"><rect x="4" y="4" width="16" height="16" rx="3" ry="3"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg> <b>添加到主屏幕</b><br>
+            4. <span style="color: #10b981; font-weight: bold;">确保【作为网页App打开】已开启</span> <svg viewBox="0 0 40 24" width="26" height="16" style="vertical-align: text-bottom; margin-left: 2px;"><rect width="40" height="24" rx="12" fill="#34c759"/><circle cx="28" cy="12" r="10" fill="#fff" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.2))"/></svg><br>
+            5. 点击右上角 <b>添加</b><br>
+            6. 自动回到桌面，即可看到独立的原生 App 图标！
+          </div>
+          <button class="about-primary start-ios-guide-btn" style="width: 100%; margin-top: 15px;" onclick="window.startIosGuide(event)">开启安装引导</button>
+        </div>
+
+        <div id="ios-mode-profile" class="ios-install-pane">
+          <p style="font-size: 13px; font-weight: bold; margin-bottom: 4px; color: var(--text-main);">✨ 优点：</p>
+          <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px; padding-left: 6px;">无地址栏，100% 沉浸感，媲美原生UI体验。</p>
+          <p style="font-size: 13px; font-weight: bold; margin-bottom: 4px; color: var(--text-main);">💡 不足：</p>
+          <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 12px; padding-left: 6px;">受 iOS 限制，锁屏暂停后系统会强制终止进程，无法恢复播放</p>
+
+          <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--text-main);">🛠️ 操作步骤：</div>
+          <div style="font-size: 13px; color: var(--text-main); background: var(--bg-color); padding: 12px; border-radius: 10px; line-height: 1.8; margin-bottom: 15px;">
+            1. 完成下方图标名称，绑定服务地址修改<br>
+            2. 点击<b>生成并下载配置</b>后，在弹窗中允许下载<br>
+            3. 打开手机自带的 <b>设置</b> 应用<br>
+            4. 前往 <b>通用</b> -> <b>VPN与设备管理</b><br>
+            5. 找到 <b>iWebPlayer Config</b> 点击进行安装，根据iPhone提示直到完成<br>
+            6. 回到桌面，即可看到独立的原生 App 图标！
+          </div>
+
+          <div style="margin-bottom: 12px;">
+              <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px; color: var(--text-main);">图标名称</div>
+              <div style="display: flex; align-items: center; background: var(--bg-color); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 36px;">
+                  <div style="padding: 0 10px; font-size: 14px; color: var(--text-sub); background: var(--border); height: 100%; display: flex; align-items: center; border-right: 1px solid var(--border); font-weight: bold; flex-shrink: 0; user-select: none;">iWebPlayer</div>
+                  <input type="text" id="ios-desktop-name" placeholder="后缀(可选)，如: (家)" maxlength="10" autocomplete="off" style="flex: 1; border: none; background: transparent; padding: 0 10px; font-size: 14px; color: var(--text-main); outline: none; height: 100%;">
+              </div>
+          </div>
+          <div style="margin-bottom: 12px;">
+              <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px; color: var(--text-main);">绑定服务地址</div>
+              <div class="modal-input-group" style="margin-top: 0; height: 36px; border-radius: 8px;">
+                  <input type="text" id="ios-desktop-url" autocomplete="off" style="padding: 0 10px; font-size: 14px; height: 100%;">
+              </div>
+          </div>
+
+          <button class="about-primary" id="btn-download-profile" style="width: 100%; margin-top: 15px; font-weight: bold;">生成并下载配置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ios-guide-bubble" id="ios-guide-bubble">
+    <div style="font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: flex-end; width: 100%;">
+      点击底部的 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style="margin: 0 4px;"><circle cx="5" cy="12" r="2.5"></circle><circle cx="12" cy="12" r="2.5"></circle><circle cx="19" cy="12" r="2.5"></circle></svg> 菜单
+    </div>
+    <div style="font-size: 13px; margin-top: 6px; opacity: 0.8;">
+      选择 <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin: 0 2px;"><path d="M8 9H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2"></path><polyline points="15 5 12 1 9 5"></polyline><line x1="12" y1="1" x2="12" y2="14"></line></svg><b>共享</b> -> <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin: 0 2px;"><rect x="4" y="4" width="16" height="16" rx="3" ry="3"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg><b>添加到主屏幕</b>
+    </div>
+    <div class="ios-guide-arrow">
+      <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="4" x2="12" y2="18"></line><polyline points="19 11 12 18 5 11"></polyline></svg>
     </div>
   </div>
 
@@ -1890,7 +2056,7 @@
     /* ==========================================
      * 1. 核心配置与全局状态
      * ========================================== */
-    const APP_VERSION = 'v1.6.6';
+    const APP_VERSION = 'v1.7.1';
     const APP_LOGO = document.getElementById('app-logo')?.content || '';
     const LX_PLATFORMS_MAP = { 'tx': 'QQ', 'wy': '网易云', 'kg': '酷狗', 'kw': '酷我', 'mg': '咪咕' };
     const LX_BACKEND_NAMES = { 'tx': '小秋音乐', 'wy': '小芸音乐', 'kg': '小枸音乐', 'kw': '小蜗音乐', 'mg': '小蜜音乐' };
@@ -1934,6 +2100,7 @@
     let currentIndex = -1;
     let activeSongMenuIndex = -1;
     let currentSongName = "";
+    window.isPushingToDevice = false;
 
     let currentSearchPage = 1;
     let isFetchingOnline = false;
@@ -2334,6 +2501,12 @@
         currentEl.classList.add('playing');
         setTimeout(() => scrollToCurrentSong('smooth'), 100);
       }
+
+      // 切歌瞬间立即重置时间和进度条，消除老歌残留感
+      if (timeCurrentEl) timeCurrentEl.innerText = "00:00";
+      if (timeDurationEl) timeDurationEl.innerText = "--:--";
+      if (progressBar) progressBar.style.width = '0%';
+
       updateNpTitleUI(currentSongName, true, false);
       fpCover.src = defaultCover;
       miniCoverImg.src = defaultCover;
@@ -2669,11 +2842,28 @@
               deadSongIndexes = [];
 
               updatePlayButtonUI(true);
-              const cur = data.offset || 0;
-              const dur = data.duration || 1;
-              progressBar.style.width = (cur / dur * 100) + '%';
+
+              let cur = parseFloat(data.offset) || 0;
+              let dur = parseFloat(data.duration) || 0;
+              if (window.isPushingToDevice) {
+                  dur = 0;
+              }
+              let percent = 0;
+              if (dur > 0 && isFinite(dur)) {
+                  percent = (cur / dur) * 100;
+                  if (percent > 100) percent = 100;
+              }
+
+              progressBar.style.width = percent + '%';
               timeCurrentEl.innerText = formatTime(cur);
-              timeDurationEl.innerText = formatTime(dur);
+
+              // 如果后端还在加载中（时长为0），显示占位符 "--:--"
+              if (dur > 0) {
+                  timeDurationEl.innerText = formatTime(dur);
+              } else {
+                  timeDurationEl.innerText = "--:--";
+              }
+
               syncLyrics(cur);
             } else {
               updatePlayButtonUI(false);
@@ -2938,6 +3128,9 @@
                   window.lastRemoteCmdTime = Date.now();
                   if (currentPlaylist === '在线资源') {
                       showToast("🎵 正在解析音源并推送给小爱同学...");
+                      // 告诉系统正在推送中，忽略一切时长更新
+                      window.isPushingToDevice = true;
+
                       fetch('/api/device/pushList', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -2949,19 +3142,18 @@
                       })
                       .then(res => res.json())
                       .then(data => {
+                        // 只要接口有返回了，就解除锁定
+                        window.isPushingToDevice = false;
+
                         if (!data.success) {
                             showToast("❌ 推送失败：" + data.error);
                         } else {
-                            setTimeout(async () => {
-                                if (typeof reloadGlobalData === 'function') {
-                                    await reloadGlobalData();
-                                    if (typeof initPlaylistDropdown === 'function') {
-                                        initPlaylistDropdown();
-                                    }
-                                }
-                            }, 1000);
+                            console.log("✅ 推送成功，已解锁时长显示");
                         }
-                      }).catch(err => { showToast("❌ 网络请求失败"); });
+                      }).catch(err => {
+                        window.isPushingToDevice = false;
+                        showToast("❌ 网络请求失败");
+                      });
                   }
               }
               updateNpTitleUI(currentSongName);
@@ -3244,19 +3436,60 @@
         };
 
         try {
-            console.log(`🕵️ 正在探路第 ${targetIndex} 首: ${targetSongName}`);
+            console.log(`🕵️ 正在提前获取第 ${targetIndex} 首链接: ${targetSongName}`);
             let fetchedData = await fetchUrl();
             realUrl = fetchedData?.url || null;
 
             if (!realUrl) {
-                console.log(`⚠️ 探路失败，等待1秒重试...`);
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 fetchedData = await fetchUrl();
                 realUrl = fetchedData?.url || null;
             }
 
             if (realUrl) {
-                console.log(`✅ 探路成功！拿到了直链`);
+                // 利用后端的 proxy 接口跨域拉取 Header 鉴定！
+                console.log(`🕵️ 拿到直链，借力后端 /proxy 接口跨域鉴定真伪...`);
+                let isFakeLink = false;
+
+                const controller = new AbortController();
+                // 给 3 秒钟时间获取头部信息
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+                try {
+                    // 转 Base64，防止 URL 特殊字符干扰
+                    const utf8Bytes = new TextEncoder().encode(realUrl);
+                    const binStr = Array.from(utf8Bytes).map(b => String.fromCharCode(b)).join('');
+                    const urlb64 = window.btoa(binStr);
+
+                    // 请求代理接口
+                    const proxyRes = await fetch(`/proxy/music?urlb64=${urlb64}`, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+
+                    const contentType = (proxyRes.headers.get('content-type') || '').toLowerCase();
+
+                    // 如果不是 2xx，或者返回类型是文本/JSON，说明链接无效或过期
+                    if (!proxyRes.ok || contentType.includes('json') || contentType.includes('text') || contentType.includes('html')) {
+                        isFakeLink = true;
+                        try {
+                            const errText = await proxyRes.text();
+                            console.log(`🧨 确诊假链接！后端抓获伪装成 200 的文本:`, errText.substring(0, 100));
+                        } catch(e){}
+                    } else {
+                        console.log(`✅ 代理头信息 Content-Type 为 ${contentType}，鉴定为真音频！`);
+                    }
+
+                    // 拿到 Header 鉴定结果后，立刻主动掐断连接！
+                    controller.abort();
+
+                } catch (e) {
+                    // AbortError 是我们主动掐断的，或者是 3 秒超时的掐断，不做死链处理，放行给主播放器试错
+                }
+
+                if (isFakeLink) {
+                    throw new Error("格式鉴定失败 (后端 proxy 确诊为报错文本)");
+                }
+
+                console.log(`✅ 提前获取成功，已存入直链备用`);
                 preloadCache = { index: targetIndex, url: realUrl, data: fetchedData };
             } else {
                 throw new Error("彻底失败");
@@ -3266,7 +3499,6 @@
             if (!deadSongIndexes.includes(targetIndex)) {
                 deadSongIndexes.push(targetIndex);
             }
-
             if (typeof songList[targetIndex] === 'object' && songList[targetIndex] !== null) {
                 songList[targetIndex]._isDead = true;
             }
@@ -3281,8 +3513,6 @@
                     platformTag.parentNode.insertBefore(failTag, platformTag);
                 }
             }
-
-            consecutiveFailures++;
 
             let nextNextIdx;
             if (playMode === 2 && songList.length > 1) {
@@ -4440,6 +4670,11 @@
     }
 
     function renderPlaylist() {
+      const grid = document.getElementById('playlist-grid');
+      const list = document.getElementById('playlist');
+      if (grid) grid.style.display = 'none';
+      if (list) list.style.display = 'block';
+
       playlistEl.innerHTML = '';
       let isCurrentSongInNewList = false;
       closeAllSongMenus();
@@ -5086,6 +5321,33 @@
             }, 300);
           }
         });
+
+        // 音量加减按钮逻辑
+        const adjustVolumeBy = (delta) => {
+            let currentVol = parseInt(volumeSlider.value) || 0;
+            let newVol = currentVol + delta;
+            if (newVol > 100) newVol = 100;
+            if (newVol < 0) newVol = 0;
+            volumeSlider.value = newVol;
+            volumeSlider.dispatchEvent(new Event('input'));
+        };
+
+        const volPlusBtn = document.getElementById('vol-plus');
+        const volMinusBtn = document.getElementById('vol-minus');
+
+        if (volPlusBtn) {
+            volPlusBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                adjustVolumeBy(5);
+            });
+        }
+
+        if (volMinusBtn) {
+            volMinusBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                adjustVolumeBy(-5);
+            });
+        }
 
         function getPercentage(e) {
           const rect = progressBg.getBoundingClientRect();
@@ -5895,8 +6157,8 @@
                             </li>`;
                         } else {
                             let iconSvg = item.type === 'playlist'
-                                ? `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" style="opacity:0.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`
-                                : `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" style="opacity:0.5"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`;
+                                ? `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M5 7h14"></path><path d="M7 3h10"></path></svg>`
+                                : `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`;
                             return `
                             <li class="history-item" data-index="${idx}">
                                 ${iconSvg}
@@ -5981,16 +6243,47 @@
                 });
             };
 
-            mfSearchInput.addEventListener('focus', renderSearchHistory);
-            mfSearchInput.addEventListener('click', renderSearchHistory);
+            // 焦点获取与失去：实现胶囊的“弹簧式”隐藏与恢复
+            mfSearchInput.addEventListener('focus', (e) => {
+                if (typeof renderSearchHistory === 'function') renderSearchHistory();
+
+                // 如果当前在详情页（有详情缓存和胶囊），聚焦时隐藏胶囊，恢复提示词和搜歌按钮
+                const cap = document.getElementById('search-tag-capsule');
+                if (cap && localStorage.getItem('lx_detail_cache')) {
+                    cap.style.display = 'none';
+                    e.target.placeholder = '搜全网资源...';
+                    if (typeof window.toggleSearchBackBtn === 'function') window.toggleSearchBackBtn(false);
+                }
+            });
+
+            mfSearchInput.addEventListener('click', (e) => {
+                if (typeof renderSearchHistory === 'function') renderSearchHistory();
+            });
+
+            mfSearchInput.addEventListener('blur', (e) => {
+                // 延迟200ms，给用户点击“搜歌”或“历史记录”留出执行时间，防止冲突
+                setTimeout(() => {
+                    const cap = document.getElementById('search-tag-capsule');
+                    // 只有当详情缓存还在，且用户没有输入任何新字时，才恢复胶囊和返回按钮
+                    if (cap && localStorage.getItem('lx_detail_cache') && e.target.value.trim() === '') {
+                        cap.style.display = 'inline-flex';
+                        e.target.placeholder = '';
+                        if (typeof window.toggleSearchBackBtn === 'function') window.toggleSearchBackBtn(true);
+                        const mfSearchClear = document.getElementById('mf-search-clear');
+                        if (mfSearchClear) mfSearchClear.classList.remove('show');
+                    }
+                }, 200);
+            });
 
             // ==========================================
             // 监听输入框、回车键与退格键机制
             // ==========================================
             mfSearchInput.addEventListener('input', (e) => {
-
               const capsule = document.getElementById('search-tag-capsule');
-              if (capsule) { capsule.remove(); window.currentLxSortId = null; }
+              const hasDetail = !!localStorage.getItem('lx_detail_cache');
+
+              // 如果不在详情页（如标签搜索），打字才销毁旧胶囊；在详情页绝对不物理删除它
+              if (capsule && !hasDetail) { capsule.remove(); window.currentLxSortId = null; }
 
               mfSearchClear.classList.toggle('show', e.target.value.length > 0);
             });
@@ -5999,7 +6292,10 @@
                 // 退格键销毁胶囊
                 if (e.key === 'Backspace' && e.target.value === '') {
                     const capsule = document.getElementById('search-tag-capsule');
-                    if (capsule) {
+                    const hasDetail = !!localStorage.getItem('lx_detail_cache');
+
+                    // 只有在非详情页时，退格键才允许销毁胶囊
+                    if (capsule && !hasDetail) {
                         capsule.remove();
                         window.currentLxSortId = null;
                         e.target.placeholder = '搜全网资源...';
@@ -6015,12 +6311,19 @@
                 }
             });
 
-            // 原生清除按钮：只清空，不藏海报墙
-            mfSearchClear.addEventListener('click', () => {
+            // 原生清除按钮：只清空，如果是详情页则保留胶囊
+            mfSearchClear.addEventListener('click', (e) => {
+              e.stopPropagation();
               mfSearchInput.value = '';
-              const capsule = document.getElementById('search-tag-capsule');
-              if (capsule) { capsule.remove(); window.currentLxSortId = null; }
               mfSearchClear.classList.remove('show');
+
+              const capsule = document.getElementById('search-tag-capsule');
+              const hasDetail = !!localStorage.getItem('lx_detail_cache');
+
+              // 如果是详情页，点 X 只清空你打的错字，保留它背后的胶囊
+              if (capsule && !hasDetail) { capsule.remove(); window.currentLxSortId = null; }
+              if (!hasDetail) { mfSearchInput.placeholder = '搜全网资源...'; }
+
               mfSearchInput.focus();
             });
 
@@ -6028,6 +6331,9 @@
             // 点击特定歌单 -> 进详情
             // ==========================================
             window.triggerPlaylistDetail = async function(id, name, source) {
+                // 点击进歌单前，先记录当前在海报墙滚到了多高
+                localStorage.setItem('lx_grid_scroll_y', window.scrollY);
+
                 let capsule = document.getElementById('search-tag-capsule');
                 if (!capsule) {
                     capsule = document.createElement('div');
@@ -6050,7 +6356,8 @@
                 capsule.dataset.source = source;
                 mfSearchInput.placeholder = '';
                 mfSearchInput.value = '';
-                document.getElementById('mf-search-clear')?.classList.add('show');
+                // 进入歌单详情瞬间，不需要显示 X 按钮（由右侧返回按钮接管退路）
+                document.getElementById('mf-search-clear')?.classList.remove('show');
 
                 const grid = document.getElementById('playlist-grid');
                 const list = document.getElementById('playlist');
@@ -6135,8 +6442,16 @@
                         mfSearchInput.blur();
                         const historyList = document.getElementById('mf-search-history-list');
                         if (historyList) historyList.classList.remove('show');
+
+                        localStorage.removeItem('lx_detail_cache');
+                        const capsule = document.getElementById('search-tag-capsule');
+                        if (capsule) { capsule.remove(); window.currentLxSortId = null; }
+
                         window.addOnlineSearchHistory({ type: 'playlist', keyword: keyword });
                     }
+                } else if (type === 'tag' && !isLoadMore) {
+                    // 如果是点击了历史记录里的分类标签，同样清空详情缓存
+                    localStorage.removeItem('lx_detail_cache');
                 }
 
                 // 胶囊(tag)直接走LX源地址，文字搜歌单(keyword)走XiaoMusic后端桥接！
@@ -6149,6 +6464,9 @@
                 const list = document.getElementById('playlist');
 
                 if (!isLoadMore) {
+                    // 发起新的搜索或点标签时，重置滚动记录
+                    localStorage.setItem('lx_grid_scroll_y', '0');
+
                     window.currentLxPlaylistPage = 1;
                     window.hasMoreLxPlaylists = true;
                     list.style.display = 'none';
@@ -6189,7 +6507,7 @@
                         // 存入专属的海报墙抽屉 (lx_grid_cache)
                         localStorage.setItem('lx_grid_cache', JSON.stringify({
                             type: type === 'keyword' ? 'playlist' : 'tag',
-                            keyword: type === 'keyword' ? keyword : (document.getElementById('search-tag-capsule')?.innerText || ''),
+                            keyword: type === 'keyword' ? keyword : (document.getElementById('search-tag-capsule')?.textContent || ''),
                             sortId: window.currentLxSortId,
                             page: window.currentLxPlaylistPage,
                             hasMore: window.hasMoreLxPlaylists,
@@ -6273,6 +6591,10 @@
                 if (!isLoadMore) {
                     mfSearchInput.blur();
                     if (historyList) historyList.classList.remove('show');
+
+                    // 发起全新单曲搜索时，彻底斩断退路，销毁详情缓存和胶囊
+                    localStorage.removeItem('lx_detail_cache');
+                    if (capsule) { capsule.remove(); window.currentLxSortId = null; }
 
                     window.addOnlineSearchHistory({ type: 'song', keyword: keyword });
 
@@ -6581,6 +6903,8 @@
         if (headerLogo) headerLogo.src = APP_LOGO;
         const aboutImg = document.getElementById('about-logo-img');
         if (aboutImg) aboutImg.src = APP_LOGO;
+        const iosLogoImg = document.getElementById('ios-desktop-logo-img');
+        if (iosLogoImg) iosLogoImg.src = APP_LOGO;
         setHeadIcon('icon', APP_LOGO);
         setHeadIcon('apple-touch-icon', APP_LOGO, { sizes: '180x180' });
       }
@@ -6590,16 +6914,32 @@
     // 统一引擎状态控制中心（负责 UI、缓存、关键字的恢复）
     // ==========================================
 
-    // 控制右侧按钮：是在搜歌还是在详情(显示返回)
+    // 控制右侧按钮：是在搜歌还是在详情(显示返回)，并同步控制插件下拉框状态
     window.toggleSearchBackBtn = function(showBack) {
         const mainBtns = document.getElementById('mf-search-main-btns');
         const backBtn = document.getElementById('mf-search-back-btn');
+        const mfPluginVal = document.getElementById('mf-plugin-val'); // 获取插件下拉框
+
         if (showBack) {
             if (mainBtns) mainBtns.style.display = 'none';
             if (backBtn) backBtn.style.display = 'block';
+
+            // 显示返回时，禁用插件下拉框
+            if (mfPluginVal) {
+                mfPluginVal.style.pointerEvents = 'none';
+                mfPluginVal.style.opacity = '0.5';
+                mfPluginVal.style.cursor = 'not-allowed';
+            }
         } else {
             if (mainBtns) mainBtns.style.display = 'flex';
             if (backBtn) backBtn.style.display = 'none';
+
+            // 隐藏返回时，恢复插件下拉框
+            if (mfPluginVal) {
+                mfPluginVal.style.pointerEvents = 'auto';
+                mfPluginVal.style.opacity = '1';
+                mfPluginVal.style.cursor = 'pointer';
+            }
         }
     };
 
@@ -6642,6 +6982,16 @@
             moreDiv.style.cursor = 'default';
         }
         grid.appendChild(moreDiv);
+
+        // 恢复海报墙的滚动位置
+        const savedY = localStorage.getItem('lx_grid_scroll_y');
+        if (savedY && savedY !== '0') {
+            setTimeout(() => {
+                window.scrollTo({ top: parseInt(savedY), behavior: 'instant' });
+                // 恢复一次后即清除，防止下次进其他列表时莫名跳转
+                localStorage.setItem('lx_grid_scroll_y', '0');
+            }, 100);
+        }
     };
 
     window.applyEngineUIAndState = function(targetVal) {
@@ -6692,9 +7042,10 @@
         let cacheList = [];
         let cacheKeyword = '';
         let isCapsuleRestored = false;
+        let mode = 'song'; //提升作用域，用于末尾判断
 
         const backendHistoryList = allPlaylists['_online_iwebplayer_search'] || [];
-        // 根据引擎动态控制 搜单按钮 和 分割线 的显示
+
         const playlistBtn = document.getElementById('mf-search-playlist-btn');
         const searchDivider = document.getElementById('mf-search-divider');
         if (playlistBtn) playlistBtn.style.display = (targetVal === 'LXServer' ? 'block' : 'none');
@@ -6704,7 +7055,6 @@
             try {
                 const detailCache = JSON.parse(localStorage.getItem('lx_detail_cache'));
                 const gridCache = JSON.parse(localStorage.getItem('lx_grid_cache'));
-
                 const oldSongCache = JSON.parse(localStorage.getItem('lx_online_search_cache'));
 
                 let activeCache = null;
@@ -6717,13 +7067,12 @@
                     currentSearchPage = activeCache.page || 1;
                     hasMoreOnlineSearch = activeCache.hasMore !== false;
 
-                    const mode = activeCache.type || 'song';
+                    mode = activeCache.type || 'song';
                     localStorage.setItem('last_search_action', mode === 'tag' ? 'playlist' : mode);
 
                     const grid = document.getElementById('playlist-grid');
                     const list = document.getElementById('playlist');
 
-                    // --- 分支 1：关键字搜索歌单 (恢复文字 + 海报墙) ---
                     if (mode === 'playlist' && currentPlaylist === '在线资源') {
                         if (grid) grid.style.display = 'grid';
                         if (list) list.style.display = 'none';
@@ -6740,7 +7089,6 @@
                         }
                         cacheKeyword = cacheKeywordRaw;
                     }
-                    // --- 分支 2：标签搜索 (恢复胶囊 + 海报墙) ---
                     else if (mode === 'tag' && currentPlaylist === '在线资源') {
                         if (grid) grid.style.display = 'grid';
                         if (list) list.style.display = 'none';
@@ -6771,7 +7119,6 @@
                         cacheKeyword = '';
                         isCapsuleRestored = true;
                     }
-                    // --- 分支 3：歌单详情页 (恢复胶囊 + 歌曲列表) ---
                     else if (mode === 'detail' && currentPlaylist === '在线资源') {
                         if (grid) grid.style.display = 'none';
                         if (list) list.style.display = 'block';
@@ -6783,20 +7130,16 @@
                             capsule.className = 'search-tag-capsule';
                             document.getElementById('mf-search-input-wrap').insertBefore(capsule, document.getElementById('mf-search-input'));
                         }
-
                         const boxWidth = document.getElementById('mf-search-input-wrap')?.clientWidth || window.innerWidth;
                         let maxChars = (boxWidth <= 370 || window.innerWidth <= 480) ? 14 : 18;
                         const shortName = cacheKeywordRaw.length > maxChars ? cacheKeywordRaw.substring(0, maxChars) + '...' : cacheKeywordRaw;
-
                         capsule.innerText = shortName;
                         capsule.title = cacheKeywordRaw;
-
                         if (mfSearchInput) { mfSearchInput.value = ''; mfSearchInput.placeholder = ''; }
                         cacheList = activeCache.list || [];
                         cacheKeyword = '';
                         isCapsuleRestored = true;
                     }
-                    // --- 分支 4：常规搜单曲 ---
                     else {
                         if (grid) grid.style.display = 'none';
                         if (list) list.style.display = 'block';
@@ -6804,11 +7147,16 @@
                         cacheKeyword = cacheKeywordRaw;
                     }
 
-                    // 根据当前是详情还是海报，自动切换按钮 UI
                     if (typeof window.toggleSearchBackBtn === 'function') window.toggleSearchBackBtn(!!detailCache);
                 }
             } catch(e) {}
         } else {
+            const grid = document.getElementById('playlist-grid');
+            const list = document.getElementById('playlist');
+            if (grid) grid.style.display = 'none';
+            if (list) list.style.display = 'block';
+            if (typeof window.toggleSearchBackBtn === 'function') window.toggleSearchBackBtn(false);
+
             try {
                 const mfCache = JSON.parse(localStorage.getItem('mf_online_search_cache'));
                 if (mfCache) {
@@ -6817,9 +7165,6 @@
                     currentSearchPage = mfCache.page || 1;
                     hasMoreOnlineSearch = mfCache.hasMore !== false;
                     localStorage.setItem('last_search_action', 'song');
-                    document.getElementById('playlist-grid').style.display = 'none';
-                    document.getElementById('playlist').style.display = 'block';
-                    if (typeof window.toggleSearchBackBtn === 'function') window.toggleSearchBackBtn(false);
                 }
             } catch(e) {}
         }
@@ -6831,34 +7176,21 @@
         if (mfSearchInput) mfSearchInput.value = cacheKeyword;
         if (mfSearchClear) mfSearchClear.classList.toggle('show', cacheKeyword.length > 0 || isCapsuleRestored);
 
+        // 只有在【非海报墙模式】且【当前是在线资源】时，才调用 renderPlaylist
         if (currentPlaylist === '在线资源') {
-            songList = cacheList;
-            onlineMusicItems = [...songList];
-            allPlaylists['在线资源'] = songList;
-            renderPlaylist();
-
-            const playlistVal = document.getElementById('playlist-val');
-            const text = formatPlaylistText('在线资源', songList.length);
-            if (playlistVal) playlistVal.innerHTML = text;
-            const mfOpt = document.querySelector('#playlist-opts .select-option[data-key="在线资源"]');
-            if (mfOpt) mfOpt.innerHTML = text;
-
-            if (mfSearchSaveBtn) mfSearchSaveBtn.classList.toggle('show', songList.length > 0);
-
-            if (currentSongName !== "" && songList.length > 0) {
-                const safeCurrent = cleanStr(currentSongName);
-                const matchIdx = songList.findIndex(song => cleanStr(song) === safeCurrent);
-                if (matchIdx !== -1) {
-                    currentIndex = matchIdx;
-                    document.getElementById('song-' + currentIndex)?.classList.add('playing');
-                    setTimeout(() => scrollToCurrentSong('smooth'), 100);
-                }
+            if (mode !== 'playlist' && mode !== 'tag') {
+                songList = cacheList;
+                onlineMusicItems = [...songList];
+                allPlaylists['在线资源'] = songList;
+                renderPlaylist();
+            } else {
+                // 如果是海报墙模式，我们已经手动处理过 UI 了，只需要同步一下顶栏文字即可
+                const playlistVal = document.getElementById('playlist-val');
+                const text = formatPlaylistText('在线资源', (window.lxPlaylistItems || []).length);
+                if (playlistVal) playlistVal.innerHTML = text;
             }
 
-            if (songList.length === 0) {
-                const playlistEl = document.getElementById('playlist');
-                if (playlistEl) playlistEl.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-sub); font-size: 14px;">暂无搜索结果，请输入歌曲全网搜索</div>';
-            }
+            if (mfSearchSaveBtn) mfSearchSaveBtn.classList.toggle('show', songList.length > 0 && mode !== 'playlist' && mode !== 'tag');
         }
     };
 
@@ -7180,8 +7512,137 @@
       }
     }
 
+    // ==========================================
+    // iOS 桌面安装弹窗与 PWA 逻辑
+    // ==========================================
+    const settingIosBtn = document.getElementById('setting-ios-desktop');
+    const iosModal = document.getElementById('ios-desktop-backdrop');
+    const iosTabs = document.querySelectorAll('.ios-plugin-tab');
+    const guideBubble = document.getElementById('ios-guide-bubble');
+    const iosCloseBtn = document.getElementById('ios-desktop-close');
+
+    // 仅保留需要的输入框变量
+    const iosInputUrl = document.getElementById('ios-desktop-url');
+    const iosInputName = document.getElementById('ios-desktop-name');
+
+    if (settingIosBtn && iosModal) {
+        // 打开弹窗
+        settingIosBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (settingsOpts) settingsOpts.classList.remove('show');
+
+            const headerLogoImg = document.getElementById('ios-header-logo-img');
+            if (headerLogoImg) headerLogoImg.src = document.getElementById('app-logo')?.content || '';
+
+            // 仅重置 URL 和名称，删除了所有关于 Step 的调整代码
+            if (iosInputUrl) iosInputUrl.value = window.location.origin + window.location.pathname;
+            if (iosInputName) iosInputName.value = '';
+
+            iosModal.classList.add('show');
+            iosModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        });
+
+        // 关闭弹窗
+        const closeIosModal = () => {
+            iosModal.classList.remove('show');
+            iosModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        };
+        iosCloseBtn?.addEventListener('click', closeIosModal);
+        iosModal.addEventListener('click', (e) => { if (e.target === iosModal) closeIosModal(); });
+
+        // 标签切换
+        iosTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetId = tab.dataset.target;
+                iosTabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.style.fontWeight = '500';
+                    t.style.color = 'var(--text-sub)';
+                    t.style.borderBottomColor = 'transparent';
+                });
+                tab.classList.add('active');
+                tab.style.fontWeight = 'bold';
+                tab.style.color = 'var(--primary)';
+                tab.style.borderBottomColor = 'var(--primary)';
+
+                document.querySelectorAll('.ios-install-pane').forEach(p => p.classList.remove('active'));
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+
+        window.startIosGuide = (e) => {
+            if (e) e.stopPropagation();
+            guideBubble.classList.add('show');
+        };
+
+        document.addEventListener('click', (e) => {
+            if (guideBubble && guideBubble.classList.contains('show')) {
+                if (!e.target.closest('.start-ios-guide-btn')) {
+                    guideBubble.classList.remove('show');
+                }
+            }
+        });
+
+        // 一键下载描述文件 - 删除了最后的跳转代码
+        document.getElementById('btn-download-profile')?.addEventListener('click', () => {
+            const targetUrl = iosInputUrl.value.trim();
+            if (!targetUrl) { showToast("请输入绑定的服务地址"); return; }
+
+            let hostIdentifier = "";
+            try { hostIdentifier = new URL(targetUrl).hostname; }
+            catch (e) { hostIdentifier = targetUrl.replace(/^https?:\/\//, '').split(/[:\/]/)[0]; }
+
+            const suffix = iosInputName.value.trim();
+            const finalLabel = suffix ? `iWebPlayer${suffix}` : 'iWebPlayer';
+            const configDisplayName = `${finalLabel} Config [${hostIdentifier}]`;
+
+            const logoMeta = document.getElementById('app-logo')?.content || '';
+            let base64Icon = '';
+            if (logoMeta.includes('base64,')) base64Icon = logoMeta.split('base64,')[1];
+
+            const uuid1 = crypto.randomUUID ? crypto.randomUUID() : '12345678-1234-1234-1234-123456789012';
+            const uuid2 = crypto.randomUUID ? crypto.randomUUID() : '87654321-4321-4321-4321-210987654321';
+
+            const mobileConfig = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict><key>PayloadContent</key><array><dict><key>FullScreen</key><true/><key>IsRemovable</key><true/><key>Label</key><string>${finalLabel}</string><key>PayloadIdentifier</key><string>com.iwp.webclip.${uuid1}</string><key>PayloadType</key><string>com.apple.webClip.managed</string><key>PayloadUUID</key><string>${uuid1}</string><key>PayloadVersion</key><integer>1</integer><key>Precomposed</key><true/><key>URL</key><string>${targetUrl}</string>${base64Icon ? `<key>Icon</key><data>${base64Icon}</data>` : ''}</dict></array><key>PayloadDisplayName</key><string>${configDisplayName}</string><key>PayloadDescription</key><string>添加全屏播放器</string><key>PayloadIdentifier</key><string>com.iwp.profile.${uuid2}</string><key>PayloadType</key><string>Configuration</string><key>PayloadUUID</key><string>${uuid2}</string><key>PayloadVersion</key><integer>1</integer></dict></plist>`;
+
+            const blob = new Blob([mobileConfig], { type: 'application/x-apple-aspen-config' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${finalLabel}_${hostIdentifier}.mobileconfig`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+            // 此处原本的 iosStep1/Step2 切换代码已删除
+            showToast("✅ 配置文件已生成并开始下载");
+        });
+    }
+
+    // ==========================================
+    // 核心容错：Standalone 模式下，锁屏暂停即“清空”
+    // ==========================================
+    const isStandaloneMode = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    if (isStandaloneMode && audioEl) {
+        audioEl.addEventListener('pause', () => {
+            if (audioEl.src && !audioEl.ended && currentDid === "") {
+                console.log('检测到 PWA 模式暂停，为防止死锁已清空音频源');
+                const currentTime = audioEl.currentTime;
+                audioEl.src = "";
+                audioEl.load();
+                if (typeof updatePlayButtonUI === 'function') updatePlayButtonUI(false);
+                localStorage.setItem('standalone_resume_time', currentTime);
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', init);
 
   </script>
 </body>
 </html>
+
