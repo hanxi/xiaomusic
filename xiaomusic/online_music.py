@@ -83,7 +83,7 @@ class OnlineMusicService:
         keyword, artist = await self._parse_keyword_and_artist(keyword)
 
         # 获取API配置信息
-        # 🌟 根据前端传入的 api_type 判断，1为MF插件，2为LX接口。如果没有传则用老办法兜底
+        # 根据前端传入的 api_type 判断，1为MF插件，2为LX接口。如果没有传则用老办法兜底
         if api_type is not None:
             is_lx_server = int(api_type) == 2
         else:
@@ -132,8 +132,10 @@ class OnlineMusicService:
                 plugin, keyword, page, limit
             )
         else:
-            # 兼容性预留：目前 MF 暂不支持搜歌单
-            return {"success": False, "error": "MusicFree 插件暂不支持歌单搜索"}
+            # 执行 MusicFree 插件歌单搜索
+            return await self._execute_plugin_playlist_search(
+                plugin, keyword, page, limit
+            )
 
     async def get_playlist_detail_online(self, id, plugin, api_type, **kwargs):
         """在线获取歌单详情"""
@@ -141,11 +143,11 @@ class OnlineMusicService:
         if not self.js_plugin_manager:
             return {"success": False, "error": "JS Plugin Manager not available"}
 
-        # api_type，预留MusicFree的歌单接口
+        # api_type，歌单接口
         if int(api_type) == 2:
             return await self._execute_lx_server_playlist_detail(plugin, id)
         else:
-            return {"success": False, "error": "目前仅支持 LX Server 的歌单详情"}
+            return await self._execute_plugin_playlist_detail(plugin, id)
 
     async def _parse_keyword_and_artist(self, keyword):
         """解析关键词和艺术家"""
@@ -342,6 +344,39 @@ class OnlineMusicService:
         )
         result_data["artist"] = artist or "佚名"
         return result_data
+
+    async def _execute_plugin_playlist_search(self, plugin, keyword, page, limit):
+        """执行 MusicFree 插件歌单搜索具体业务"""
+        if plugin == "all":
+            return {"success": False, "error": "请选择具体的插件平台(如 qq)进行搜单，暂不支持聚合搜单"}
+
+        if self.js_plugin_manager:
+            try:
+                # 同 LX 一样调用执行层的适配方法
+                return await self.js_plugin_manager.plugin_playlist_search(
+                    plugin_name=plugin,
+                    keyword=keyword,
+                    page=page,
+                    limit=limit
+                )
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+        else:
+            return {"success": False, "error": "JS Plugin Manager 不可用"}
+
+    async def _execute_plugin_playlist_detail(self, plugin, b64_id):
+        """执行 MusicFree 插件歌单详情具体业务"""
+        if self.js_plugin_manager:
+            try:
+                # 同 LX 一样调用执行层的适配方法
+                return await self.js_plugin_manager.plugin_playlist_detail(
+                    plugin_name=plugin,
+                    b64_id=b64_id
+                )
+            except Exception as e:
+                return {"success": False, "error": f"解析失败: {str(e)}"}
+        else:
+            return {"success": False, "error": "JS Plugin Manager 不可用"}
 
     def _merge_search_results(
         self, plugin_result, openapi_result, keyword, artist, limit
@@ -849,7 +884,7 @@ class OnlineMusicService:
         Returns:
             dict: 包含成功状态和URL信息的字典
         """
-        # 🌟 自动判断接口类型
+        # 自动判断接口类型
         is_lx_server = self.js_plugin_manager.is_lx_server(context_info=music_item)
         if is_lx_server:
             # LX Server在线搜索
@@ -877,7 +912,7 @@ class OnlineMusicService:
         Returns:
             dict: 包含成功状态和歌词信息的字典
         """
-        # 🌟 自动判断接口类型
+        # 自动判断接口类型
         is_lx_server = self.js_plugin_manager.is_lx_server(context_info=music_item)
         if is_lx_server:
             # LX Server在线搜索

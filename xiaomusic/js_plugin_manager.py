@@ -5,6 +5,7 @@ JS 插件管理器
 """
 
 import asyncio
+import base64
 import json
 import logging
 import os
@@ -1096,19 +1097,20 @@ class JSPluginManager:
             self.log.error(f"Failed to read enabled plugins from config: {e}")
             return False
 
-    def search(self, plugin_name: str, keyword: str, page: int = 1, limit: int = 20):
-        """搜索音乐"""
+    def search(self, plugin_name: str, keyword: str, page: int = 1, limit: int = 20, type_: str = "music"):
+        """搜索音乐/歌单"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
         self.log.info(
-            f"JS Plugin Manager starting search in plugin {plugin_name} for keyword: {keyword}"
+            f"JS Plugin Manager starting search in plugin {plugin_name} for keyword: {keyword}, type: {type_}"
         )
         response = self._send_message(
             {
                 "action": "search",
                 "pluginName": plugin_name,
-                "params": {"keywords": keyword, "page": page, "limit": limit},
+                # 把 type_ 参数传给底层 JS
+                "params": {"keywords": keyword, "page": page, "limit": limit, "type": type_},
             }
         )
 
@@ -2601,6 +2603,96 @@ class JSPluginManager:
 
         except Exception as e:
             self.log.error(f"Failed to update plugin config: {e}")
+
+    async def plugin_playlist_search(
+            self,
+            plugin_name: str,
+            keyword: str,
+            page: int = 1,
+            limit: int = 20,
+    ):
+        """调用 MusicFree 插件进行歌单搜索，并对齐 LX 格式
+
+        Args:
+            plugin_name: 插件名称 (如 qq)
+            keyword: 搜索关键词
+            page: 页码
+            limit: 每页数量
+        Returns:
+            Dict[str, Any]: 歌单搜索结果，结构对齐 LX Server
+        """
+        try:
+            # 显式传入 type_='sheet' 调用底层插件搜索
+            result = self.search(plugin_name, keyword, page, limit, type_='sheet')
+            data_list = result.get("data", [])
+
+            # 补齐平台字段
+            for item in data_list:
+                item["platform"] = plugin_name
+
+                # qq插件是worksNums，统一成worksNum
+                if "worksNums" in item:
+                    item["worksNum"] = item.pop("worksNums")
+
+            # 组装成对齐 LX Server 的标准结构
+            return {
+                "success": True,
+                "data": {
+                    "list": data_list,
+                    "total": result.get("total", len(data_list)),
+                    "page": page,
+                    "limit": limit,
+                }
+            }
+        except Exception as e:
+            self.log.error(f"插件 {plugin_name} 歌单搜索执行失败: {e}")
+            raise
+
+    async def plugin_playlist_detail(
+            self,
+            plugin_name: str,
+            b64_id: str,
+    ):
+        """解析 Base64 歌单对象并调用插件获取详情（全量歌曲）
+
+        Args:
+            plugin_name: 插件名称
+            b64_id: 前端传来的 JSON 对象 Base64 字符串
+        Returns:
+            Dict[str, Any]: 歌曲列表结果
+        """
+        try:
+            # 1. 容错处理 Base64 损坏
+            b64_id = b64_id.replace(' ', '+')
+            missing_padding = len(b64_id) % 4
+            if missing_padding:
+                b64_id += '=' * (4 - missing_padding)
+
+            # 2. 还原完整的 JSON 歌单对象
+            json_str = base64.b64decode(b64_id).decode("utf-8")
+            playlist_info = json.loads(json_str)
+
+            # 3. 调用插件获取歌曲列表
+            result = self.get_music_sheet_info(plugin_name, playlist_info, page=1)
+
+            if not result or not result.get("musicList"):
+                return {"success": False, "error": "歌单解析为空或格式不支持", "data": []}
+
+            data_list = result.get("musicList", [])
+
+            # 4. 补齐平台字段，确保后端播歌逻辑能识别来源
+            for item in data_list:
+                if "platform" not in item:
+                    item["platform"] = plugin_name
+
+            return {
+                "success": True,
+                "data": data_list,
+                "total": len(data_list)
+            }
+        except Exception as e:
+            self.log.error(f"插件 {plugin_name} 歌单详情解析执行失败: {e}")
+            raise
 
     def reset_restart_limit(self):
         """重置重启限制计数器，允许重新开始重启尝试"""
