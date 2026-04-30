@@ -1339,12 +1339,9 @@
     box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
   }
 
-  .search-tag-capsule {
+.search-tag-capsule {
     display: inline-flex;
     align-items: center;
-    background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
-    border: 1px solid rgba(16, 185, 129, 0.3);
     font-size: 13px;
     padding: 2px 8px;
     border-radius: 10px;
@@ -1352,7 +1349,19 @@
     flex-shrink: 0;
     user-select: none;
     animation: fadeIn 0.15s ease-out;
-  }
+}
+/* LX Server 绿色主题 */
+.search-tag-capsule.lx-theme {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+/* MusicFree 紫红色主题 */
+.search-tag-capsule.mf-theme {
+    background: rgba(236, 72, 153, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(236, 72, 153, 0.3);
+}
 
   .search-text-group {
     display: flex;
@@ -2056,7 +2065,7 @@
     /* ==========================================
      * 1. 核心配置与全局状态
      * ========================================== */
-    const APP_VERSION = 'v1.7.1';
+    const APP_VERSION = 'v1.7.2';
     const APP_LOGO = document.getElementById('app-logo')?.content || '';
     const LX_PLATFORMS_MAP = { 'tx': 'QQ', 'wy': '网易云', 'kg': '酷狗', 'kw': '酷我', 'mg': '咪咕' };
     const LX_BACKEND_NAMES = { 'tx': '小秋音乐', 'wy': '小芸音乐', 'kg': '小枸音乐', 'kw': '小蜗音乐', 'mg': '小蜜音乐' };
@@ -5008,7 +5017,20 @@
      * ========================================== */
     function bindAllEvents() {
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') scrollToCurrentSong();
+          if (document.visibilityState === 'visible') {
+              scrollToCurrentSong();
+
+              // 🌟 核心修复：监听从后台切回前台的瞬间
+              // 如果是在本机模式，且有选中的歌曲，且发现 src 被后台清空了，立刻重新静默拉取！
+              if (currentDid === "" && currentIndex !== -1) {
+                  const isSrcEmpty = !audioEl.src || audioEl.src === window.location.href || audioEl.src.includes('blob:');
+                  if (audioEl.paused && isSrcEmpty) {
+                      console.log('🔙 App切回前台，检测到音频源为空，触发静默预热...');
+                      const resumeTime = parseFloat(localStorage.getItem('standalone_resume_time')) || 0;
+                      playSong(currentIndex, false, resumeTime);
+                  }
+              }
+          }
         });
 
         const mfOpts = document.getElementById('mf-plugin-opts');
@@ -5269,8 +5291,16 @@
           if (currentDid !== "") {
             playSong(currentIndex);
           } else {
-            if (audioEl.paused) audioEl.play();
-            else audioEl.pause();
+            // 如果 src 还在，执行正常的播放/暂停
+            if (audioEl.paused) {
+                audioEl.play();
+            } else {
+                // 🌟 给系统发通行证：证明这个暂停是 btn-play 触发的
+                window.isPageBtnPause = true;
+                audioEl.pause();
+                // 0.2秒后立刻销毁通行证，防止影响后续真实的锁屏暂停
+                setTimeout(() => { window.isPageBtnPause = false; }, 200);
+            }
           }
         });
 
@@ -6121,9 +6151,15 @@
 
             window.addOnlineSearchHistory = function(itemObj) {
                 let history = JSON.parse(localStorage.getItem('online_search_history_list') || '[]');
-                // 去重：如果是特定歌单，根据 id 和 source 去重；否则按 keyword 去重
+
+                // 🌟 核心优化：只有具体的歌单(detail)和分类标签(tag)才绑定平台身份！打字搜歌/搜单不绑定
+                if (itemObj.type === 'detail' || itemObj.type === 'tag') {
+                    itemObj.engine = document.getElementById('engine-val')?.dataset.value || 'MusicFree';
+                }
+
                 history = history.filter(item => {
                     if (itemObj.type === 'detail') return !(item.type === 'detail' && item.id === itemObj.id && item.source === itemObj.source);
+                    if (itemObj.type === 'tag') return !(item.type === 'tag' && item.name === itemObj.name && item.source === itemObj.source);
                     return !(item.type === itemObj.type && item.keyword === itemObj.keyword);
                 });
                 history.unshift(itemObj);
@@ -6151,9 +6187,11 @@
                     historyHtml = history.slice(0, 10).map((item, idx) => {
                         if (item.type === 'detail' || item.type === 'tag') {
                             const sourceName = LX_PLATFORMS_MAP[item.source] || item.source;
+                            // 🌟 渲染：根据 engine 属性给历史胶囊上色
+                            const themeClass = item.engine === 'LXServer' ? 'lx-theme' : 'mf-theme';
                             return `
                             <li class="history-item" data-index="${idx}">
-                                <div class="search-tag-capsule" style="margin-left:0; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.3); font-weight:500;">${item.name} <span style="font-size:10px;opacity:0.6;margin-left:4px;">(${sourceName})</span></div>
+                                <div class="search-tag-capsule ${themeClass}" style="margin-left:0; font-weight:500;">${item.name} <span style="font-size:10px;opacity:0.6;margin-left:4px;">(${sourceName})</span></div>
                             </li>`;
                         } else {
                             let iconSvg = item.type === 'playlist'
@@ -6182,7 +6220,6 @@
                     const sortList = window.lxTagsCache[source] || [];
 
                     if (sortList.length > 0) {
-
                         if (window.currentLxSortId && !sortList.some(s => s.id == window.currentLxSortId)) window.currentLxSortId = null;
                         const tagsHtml = sortList.map(item => `
                             <div class="lx-tag-pill ${item.id == window.currentLxSortId ? 'active' : ''}" data-id="${item.id}">${item.name}</div>
@@ -6197,7 +6234,7 @@
                                 if (!capsule) {
                                     capsule = document.createElement('div');
                                     capsule.id = 'search-tag-capsule';
-                                    capsule.className = 'search-tag-capsule';
+                                    capsule.className = 'search-tag-capsule lx-theme';
                                     document.getElementById('mf-search-input-wrap').insertBefore(capsule, document.getElementById('mf-search-input'));
                                 }
                                 capsule.innerText = pill.innerText;
@@ -6220,6 +6257,12 @@
                     li.addEventListener('click', (e) => {
                         e.stopPropagation();
                         const item = history[li.dataset.index];
+
+                        // 🌟 核心优化：只有胶囊（具体歌单或标签）才强制切回它所属的引擎。关键词直接用当前引擎！
+                        if ((item.type === 'detail' || item.type === 'tag') && item.engine) {
+                            window.applyEngineUIAndState(item.engine);
+                        }
+
                         historyList.classList.remove('show');
                         if (item.type === 'detail') {
                             const currentSource = document.getElementById('mf-plugin-val')?.dataset.value;
@@ -6227,7 +6270,25 @@
                                 const sourceOpt = document.querySelector(`#mf-plugin-opts .select-option[data-value="${item.source}"]`);
                                 if (sourceOpt) sourceOpt.click();
                             }
-                            window.triggerPlaylistDetail(item.id, item.name, item.source);
+                            window.triggerPlaylistDetail(item.id, item.name, item.source, item.engine === 'LXServer' ? 2 : 1);
+                        } else if (item.type === 'tag') {
+                            const currentSource = document.getElementById('mf-plugin-val')?.dataset.value;
+                            if (currentSource !== item.source && currentSource !== 'all') {
+                                const sourceOpt = document.querySelector(`#mf-plugin-opts .select-option[data-value="${item.source}"]`);
+                                if (sourceOpt) sourceOpt.click();
+                            }
+                            window.currentLxSortId = item.sortId || '';
+                            let capsule = document.getElementById('search-tag-capsule');
+                            if (!capsule) {
+                                capsule = document.createElement('div');
+                                capsule.id = 'search-tag-capsule';
+                                capsule.className = `search-tag-capsule ${item.engine === 'LXServer' ? 'lx-theme' : 'mf-theme'}`;
+                                document.getElementById('mf-search-input-wrap').insertBefore(capsule, document.getElementById('mf-search-input'));
+                            }
+                            capsule.innerText = item.name;
+                            if (mfSearchInput) { mfSearchInput.placeholder = ''; mfSearchInput.value = ''; }
+                            if (mfSearchClear) mfSearchClear.classList.add('show');
+                            window.doLxPlaylistSearch(false, 'tag');
                         } else {
                             const capsule = document.getElementById('search-tag-capsule');
                             if (capsule) { capsule.remove(); window.currentLxSortId = null; mfSearchInput.placeholder = '搜全网资源...'; }
@@ -6330,8 +6391,7 @@
             // ==========================================
             // 点击特定歌单 -> 进详情
             // ==========================================
-            window.triggerPlaylistDetail = async function(id, name, source) {
-                // 点击进歌单前，先记录当前在海报墙滚到了多高
+            window.triggerPlaylistDetail = async function(id, name, source, apiType = 2) {
                 localStorage.setItem('lx_grid_scroll_y', window.scrollY);
 
                 let capsule = document.getElementById('search-tag-capsule');
@@ -6342,51 +6402,49 @@
                     document.getElementById('mf-search-input-wrap').insertBefore(capsule, document.getElementById('mf-search-input'));
                 }
 
+                // 🌟 根据 apiType 切换胶囊颜色类名
+                const currentEngine = apiType === 1 ? 'MusicFree' : 'LXServer';
+                capsule.className = `search-tag-capsule ${apiType === 1 ? 'mf-theme' : 'lx-theme'}`;
+
+                // 🌟 核心修复：把你之前不小心弄丢的这行代码补回来！把点进去的具体歌单存入历史记录
+                window.addOnlineSearchHistory({ type: 'detail', id: id, name: name, source: source });
+
+                // 控制提示词和清空搜歌文字
                 const searchBox = document.getElementById('mf-search-input-wrap');
-                const boxWidth = searchBox ? searchBox.clientWidth : window.innerWidth;
-                let maxChars = 18;
-                if (boxWidth <= 370) {
-                    // 如果搜索框本身的宽度被挤压到了 350 像素以内
-                    maxChars = 14;
-                }
+                const boxWidth = searchBox?.clientWidth || window.innerWidth;
+                let maxChars = (boxWidth <= 370 || window.innerWidth <= 480) ? 14 : 18;
                 const shortName = name.length > maxChars ? name.substring(0, maxChars) + '...' : name;
                 capsule.innerText = shortName;
-                capsule.title = name; // 鼠标悬停显示全名
-                capsule.dataset.id = id;
-                capsule.dataset.source = source;
-                mfSearchInput.placeholder = '';
-                mfSearchInput.value = '';
-                // 进入歌单详情瞬间，不需要显示 X 按钮（由右侧返回按钮接管退路）
-                document.getElementById('mf-search-clear')?.classList.remove('show');
+                capsule.title = name;
+
+                if (mfSearchInput) {
+                    mfSearchInput.placeholder = '';
+                    mfSearchInput.value = '';
+                }
+                if (mfSearchClear) mfSearchClear.classList.add('show');
+
+                const historyList = document.getElementById('mf-search-history-list');
+                if (historyList) historyList.classList.remove('show');
 
                 const grid = document.getElementById('playlist-grid');
                 const list = document.getElementById('playlist');
                 if (grid) grid.style.display = 'none';
                 if (list) {
                     list.style.display = 'block';
-
-                    list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-sub); font-size: 14px;"><svg style="animation: spin-hourglass 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; vertical-align:-3px; margin-right:6px; color: #10b981;" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2v20"></path><path d="M5 2h14"></path><path d="M5 22h14"></path><path d="M5 6l7 6 7-6"></path><path d="M5 18l7-6 7 6"></path></svg>正在拉取歌单歌曲，请稍候...</div>';
+                    list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-sub); font-size: 14px;">正在获取歌单详情...</div>';
                 }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                window.addOnlineSearchHistory({ type: 'detail', name: name, id: id, source: source });
-
-                // 调用后端刚写好的真实接口
                 try {
-                    // 请求参数：id, plugin(即source), api_type=2 (强制指定 LX Server)
-                    const res = await fetch(`/api/search/online_playlist_detail?id=${encodeURIComponent(id)}&plugin=${encodeURIComponent(source)}&api_type=2`);
+                    const res = await fetch(`/api/search/online_playlist_detail?id=${encodeURIComponent(id)}&plugin=${encodeURIComponent(source)}&api_type=${apiType}`);
                     const resJson = await res.json();
 
                     if (resJson.success && resJson.data && resJson.data.length > 0) {
-                        onlineMusicItems = resJson.data;
-                        songList = [...onlineMusicItems];
-                        allPlaylists['在线资源'] = songList;
+                        songList = resJson.data;
 
-                        // 歌单详情是一次性全量返回，所以关闭分页功能
-                        currentSearchPage = 1;
-                        hasMoreOnlineSearch = false;
-
-                        // 存入专属的详情抽屉 (lx_detail_cache)
+                        // 🌟 核心修复：在详情缓存里记录 engine
                         localStorage.setItem('lx_detail_cache', JSON.stringify({
+                            engine: currentEngine, // 存入身份
                             type: 'detail',
                             keyword: name,
                             page: 1,
@@ -6435,6 +6493,11 @@
                 const sortId = window.currentLxSortId || '';
                 if (!window.lxBaseUrl && type === 'tag') return;
 
+                const currentEngine = document.getElementById('engine-val')?.dataset.value || 'MusicFree';
+                const apiType = currentEngine === 'LXServer' ? 2 : 1;
+                // 🌟 加载 SVG 的动态颜色
+                const themeColor = currentEngine === 'LXServer' ? '#10b981' : 'var(--primary)';
+
                 // 核心判断：如果是打字搜歌单，处理历史记录和UI
                 if (type === 'keyword') {
                     if (!keyword) { showToast("请输入要搜索的歌单名"); return; }
@@ -6450,28 +6513,27 @@
                         window.addOnlineSearchHistory({ type: 'playlist', keyword: keyword });
                     }
                 } else if (type === 'tag' && !isLoadMore) {
-                    // 如果是点击了历史记录里的分类标签，同样清空详情缓存
                     localStorage.removeItem('lx_detail_cache');
+                    // 🌟 响应你的需求：仅仅清除旧的详情缓存，不再把标签当做历史记录存入
                 }
 
                 // 胶囊(tag)直接走LX源地址，文字搜歌单(keyword)走XiaoMusic后端桥接！
                 const reqUrl = type === 'tag'
                     ? `${window.lxBaseUrl}/music/songList/list?source=${source}&tagId=&sortId=${sortId}&page=${isLoadMore ? window.currentLxPlaylistPage + 1 : 1}`
-                    : `/api/search/online_playlist?keyword=${encodeURIComponent(keyword)}&plugin=${source}&page=${isLoadMore ? window.currentLxPlaylistPage + 1 : 1}&api_type=2`;
-
+                    : `/api/search/online_playlist?keyword=${encodeURIComponent(keyword)}&plugin=${source}&page=${isLoadMore ? window.currentLxPlaylistPage + 1 : 1}&api_type=${apiType}`;
                 window.isFetchingLxPlaylists = true;
                 const grid = document.getElementById('playlist-grid');
                 const list = document.getElementById('playlist');
 
                 if (!isLoadMore) {
-                    // 发起新的搜索或点标签时，重置滚动记录
                     localStorage.setItem('lx_grid_scroll_y', '0');
 
                     window.currentLxPlaylistPage = 1;
                     window.hasMoreLxPlaylists = true;
                     list.style.display = 'none';
                     grid.style.display = 'grid';
-                    grid.innerHTML = '<div style="text-align: center; padding: 60px; color: var(--text-sub); font-size: 14px; grid-column: 1 / -1;"><svg style="animation: spin-hourglass 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; vertical-align:-3px; margin-right:6px; color: #10b981;" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2v20"></path><path d="M5 2h14"></path><path d="M5 22h14"></path><path d="M5 6l7 6 7-6"></path><path d="M5 18l7-6 7 6"></path></svg>正在拉取歌单海报...</div>';
+                    // 🌟 修复转圈动画颜色
+                    grid.innerHTML = `<div style="text-align: center; padding: 60px; color: var(--text-sub); font-size: 14px; grid-column: 1 / -1;"><svg style="animation: spin-hourglass 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; vertical-align:-3px; margin-right:6px; color: ${themeColor};" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2v20"></path><path d="M5 2h14"></path><path d="M5 22h14"></path><path d="M5 6l7 6 7-6"></path><path d="M5 18l7-6 7 6"></path></svg>正在拉取歌单海报...</div>`;
                 } else {
                     window.currentLxPlaylistPage++;
 
@@ -6487,25 +6549,34 @@
 
                     const res = await fetch(reqUrl, { headers });
                     const resJson = await res.json();
-                    const data = resJson.data || resJson;
 
-                    if (data.list && data.list.length > 0) {
-                        // 累加存储歌单列表，而不是只存当前页
+                    let targetList = [];
+                    let targetLimit = 30;
+
+                    const dataObj = resJson.data || resJson;
+
+                    if (Array.isArray(dataObj)) {
+                        targetList = dataObj;
+                    } else if (dataObj && dataObj.list) {
+                        targetList = dataObj.list;
+                        targetLimit = dataObj.limit || 30;
+                    }
+
+                    if (targetList && targetList.length > 0) {
                         if (!isLoadMore) {
-                            window.lxPlaylistItems = data.list;
+                            window.lxPlaylistItems = targetList;
                             grid.innerHTML = '';
                         } else {
-                            window.lxPlaylistItems = [...(window.lxPlaylistItems || []), ...data.list];
-                            // 移除旧的加载按钮
+                            window.lxPlaylistItems = [...(window.lxPlaylistItems || []), ...targetList];
                             const oldMore = document.getElementById('lx-grid-load-more');
                             if (oldMore) oldMore.remove();
                         }
 
-                        // 判断是否还有下一页
-                        if (data.list.length < (data.limit || 30)) window.hasMoreLxPlaylists = false;
+                        if (targetList.length < targetLimit) window.hasMoreLxPlaylists = false;
 
-                        // 存入专属的海报墙抽屉 (lx_grid_cache)
+                        // 🌟 核心：存入专属的海报墙抽屉时带上引擎身份
                         localStorage.setItem('lx_grid_cache', JSON.stringify({
+                            engine: currentEngine, // 存入引擎身份
                             type: type === 'keyword' ? 'playlist' : 'tag',
                             keyword: type === 'keyword' ? keyword : (document.getElementById('search-tag-capsule')?.textContent || ''),
                             sortId: window.currentLxSortId,
@@ -6514,21 +6585,32 @@
                             list: window.lxPlaylistItems
                         }));
 
-                        // 同时同步切换按钮 (隐藏返回，显示搜歌搜单)
                         if (typeof window.toggleSearchBackBtn === 'function') window.toggleSearchBackBtn(false);
 
-                        const html = data.list.map(item => {
-                            const nameParts = item.name.split(/\||｜/);
+                        const html = targetList.map(item => {
+                            const rawName = item.name || item.title || '未知歌单';
+                            const nameParts = rawName.split(/\||｜/);
                             const mainName = nameParts[0];
-                            const subName = nameParts.slice(1).join('·') || item.author || '';
-                            const playCount = item.play_count || '0';
+                            const subName = nameParts.slice(1).join('·') || item.author || item.artist || '';
 
-                            const songCount = item.total || item.song_count || item.trackCount || '';
+                            let playCount = item.play_count || item.playCount || '0';
+                            if (playCount > 10000) playCount = (playCount / 10000).toFixed(1) + '万';
+
+                            const songCount = item.total || item.song_count || item.trackCount || item.worksNum || '';
                             const songCountHtml = songCount ? `<div class="pl-time">共 ${songCount} 首</div>` : '';
 
+                            const coverImg = item.img || item.artwork || item.coverImg || item.pic || '';
+                            const itemSource = item.source || item.platform || source;
+
+                            let targetId = item.id;
+                            if (apiType === 1) {
+                                const jsonStr = JSON.stringify(item);
+                                targetId = window.btoa(unescape(encodeURIComponent(jsonStr)));
+                            }
+
                             return `
-                            <div class="pl-card-b" onclick="window.triggerPlaylistDetail('${item.id}', '${mainName.replace(/'/g,"\\'")}', '${item.source}')">
-                              <img src="${item.img || ''}" alt="cover" loading="lazy">
+                            <div class="pl-card-b" onclick="window.triggerPlaylistDetail('${targetId}', '${mainName.replace(/'/g,"\\'")}', '${itemSource}', ${apiType})">
+                              <img src="${coverImg}" alt="cover" loading="lazy">
                               <div class="pl-overlay">
                                 <div class="pl-name">${mainName}${subName ? '<br>'+subName : ''}</div>
                                 ${songCountHtml}
@@ -6540,18 +6622,15 @@
                         }).join('');
 
                         grid.insertAdjacentHTML('beforeend', html);
-                        if (data.list.length < (data.limit||30)) window.hasMoreLxPlaylists = false;
+                        if (targetList.length < targetLimit) window.hasMoreLxPlaylists = false;
 
-                        // 网格底部状态条 (Load More) 贯穿所有列！
                         const moreDiv = document.createElement('div');
                         moreDiv.id = 'lx-grid-load-more';
-                        // 使用 grid-column: 1 / -1 让按钮强制独占一整行
                         moreDiv.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 15px 0 25px 0; color: var(--text-sub); font-size: 13px; cursor: pointer; display: flex; justify-content: center; margin-top: 10px;';
 
                         if (window.hasMoreLxPlaylists) {
                             moreDiv.innerHTML = `<div style="padding: 10px 24px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; color: var(--text-main); font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: background 0.2s;">点击加载下一页</div>`;
                             moreDiv.onclick = () => window.doLxPlaylistSearch(true);
-                            // 极简动画反馈
                             moreDiv.onmousedown = () => { if(moreDiv.firstElementChild) moreDiv.firstElementChild.style.background = 'var(--bg-color)'; };
                             moreDiv.onmouseup = () => { if(moreDiv.firstElementChild) moreDiv.firstElementChild.style.background = 'var(--card-bg)'; };
                         } else {
@@ -6573,7 +6652,7 @@
                     if (!isLoadMore) {
                         grid.innerHTML = `<div style="text-align: center; padding: 60px; color: #ef4444; font-size: 14px; grid-column: 1 / -1;">广场接口获取失败，暂不支持或网络异常</div>`;
                     } else {
-                        window.currentLxPlaylistPage--; // 回退页码防死锁
+                        window.currentLxPlaylistPage--;
                         const oldMore = document.getElementById('lx-grid-load-more');
                         if (oldMore) oldMore.innerHTML = `<div style="padding: 10px 24px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; color: #ef4444; font-weight: 500;">加载失败，点击重试</div>`;
                     }
@@ -6794,7 +6873,9 @@
                     }
                     if (typeof window.toggleSearchBackBtn === 'function') window.toggleSearchBackBtn(false);
 
-                    window.applyEngineUIAndState('LXServer');
+                    // 🌟 修复返回错乱：读取网格缓存的真实引擎身份，没记录就用当前引擎
+                    const targetEngine = gridCache.engine || document.getElementById('engine-val')?.dataset.value || 'MusicFree';
+                    window.applyEngineUIAndState(targetEngine);
                 } else {
                     if (mfSearchClear) mfSearchClear.click();
                 }
@@ -6947,17 +7028,33 @@
     window.renderLxGridFromCache = function(grid, list) {
         if (!grid || !list) return;
 
+        const currentEngine = document.getElementById('engine-val')?.dataset.value || 'MusicFree';
+        const apiType = currentEngine === 'LXServer' ? 2 : 1;
+
         grid.innerHTML = list.map(item => {
-            const nameParts = item.name.split(/\||｜/);
+            const rawName = item.name || item.title || '未知歌单';
+            const nameParts = rawName.split(/\||｜/);
             const mainName = nameParts[0];
-            const subName = nameParts.slice(1).join('·') || item.author || '';
-            const playCount = item.play_count || '0';
-            const songCount = item.total || item.song_count || item.trackCount || '';
+            const subName = nameParts.slice(1).join('·') || item.author || item.artist || '';
+
+            let playCount = item.play_count || item.playCount || '0';
+            if (playCount > 10000) playCount = (playCount / 10000).toFixed(1) + '万';
+
+            const songCount = item.total || item.song_count || item.trackCount || item.worksNum || '';
             const songCountHtml = songCount ? `<div class="pl-time">共 ${songCount} 首</div>` : '';
 
+            const coverImg = item.img || item.artwork || item.coverImg || item.pic || '';
+            const itemSource = item.source || item.platform || (document.getElementById('mf-plugin-val')?.dataset.value || 'tx');
+
+            let targetId = item.id;
+            if (apiType === 1) {
+                const jsonStr = JSON.stringify(item);
+                targetId = window.btoa(unescape(encodeURIComponent(jsonStr)));
+            }
+
             return `
-            <div class="pl-card-b" onclick="window.triggerPlaylistDetail('${item.id}', '${mainName.replace(/'/g,"\\'")}', '${item.source}')">
-              <img src="${item.img || ''}" alt="cover" loading="lazy">
+            <div class="pl-card-b" onclick="window.triggerPlaylistDetail('${targetId}', '${mainName.replace(/'/g,"\\'")}', '${itemSource}', ${apiType})">
+              <img src="${coverImg}" alt="cover" loading="lazy">
               <div class="pl-overlay">
                 <div class="pl-name">${mainName}${subName ? '<br>'+subName : ''}</div>
                 ${songCountHtml}
@@ -6988,7 +7085,6 @@
         if (savedY && savedY !== '0') {
             setTimeout(() => {
                 window.scrollTo({ top: parseInt(savedY), behavior: 'instant' });
-                // 恢复一次后即清除，防止下次进其他列表时莫名跳转
                 localStorage.setItem('lx_grid_scroll_y', '0');
             }, 100);
         }
@@ -7042,132 +7138,126 @@
         let cacheList = [];
         let cacheKeyword = '';
         let isCapsuleRestored = false;
-        let mode = 'song'; //提升作用域，用于末尾判断
+        let mode = 'song';
 
         const backendHistoryList = allPlaylists['_online_iwebplayer_search'] || [];
 
         const playlistBtn = document.getElementById('mf-search-playlist-btn');
         const searchDivider = document.getElementById('mf-search-divider');
-        if (playlistBtn) playlistBtn.style.display = (targetVal === 'LXServer' ? 'block' : 'none');
-        if (searchDivider) searchDivider.style.display = (targetVal === 'LXServer' ? 'block' : 'none');
+        if (playlistBtn) playlistBtn.style.display = 'block';
+        if (searchDivider) searchDivider.style.display = 'block';
 
-        if (targetVal === 'LXServer') {
-            try {
-                const detailCache = JSON.parse(localStorage.getItem('lx_detail_cache'));
-                const gridCache = JSON.parse(localStorage.getItem('lx_grid_cache'));
-                const oldSongCache = JSON.parse(localStorage.getItem('lx_online_search_cache'));
+        // 🌟 统一缓存恢复核心逻辑：双方都认同引擎身份牌
+        try {
+            const detailCache = JSON.parse(localStorage.getItem('lx_detail_cache'));
+            const gridCache = JSON.parse(localStorage.getItem('lx_grid_cache'));
+            const lxSongCache = JSON.parse(localStorage.getItem('lx_online_search_cache'));
+            const mfSongCache = JSON.parse(localStorage.getItem('mf_online_search_cache'));
 
-                let activeCache = null;
-                if (detailCache) activeCache = detailCache;
-                else if (gridCache) activeCache = gridCache;
-                else if (oldSongCache && oldSongCache.type === 'song') activeCache = oldSongCache;
+            let activeCache = null;
+            // 只有身份对得上，才能恢复这个缓存！
+            if (detailCache && detailCache.engine === targetVal) activeCache = detailCache;
+            else if (gridCache && gridCache.engine === targetVal) activeCache = gridCache;
+            else if (targetVal === 'LXServer' && lxSongCache && lxSongCache.type === 'song') activeCache = lxSongCache;
+            else if (targetVal === 'MusicFree' && mfSongCache && mfSongCache.type === 'song') activeCache = mfSongCache;
 
-                if (activeCache) {
-                    const cacheKeywordRaw = activeCache.keyword || '';
-                    currentSearchPage = activeCache.page || 1;
-                    hasMoreOnlineSearch = activeCache.hasMore !== false;
+            if (activeCache) {
+                const cacheKeywordRaw = activeCache.keyword || '';
+                currentSearchPage = activeCache.page || 1;
+                hasMoreOnlineSearch = activeCache.hasMore !== false;
 
-                    mode = activeCache.type || 'song';
-                    localStorage.setItem('last_search_action', mode === 'tag' ? 'playlist' : mode);
+                mode = activeCache.type || 'song';
+                localStorage.setItem('last_search_action', mode === 'tag' ? 'playlist' : mode);
 
-                    const grid = document.getElementById('playlist-grid');
-                    const list = document.getElementById('playlist');
+                const grid = document.getElementById('playlist-grid');
+                const list = document.getElementById('playlist');
 
-                    if (mode === 'playlist' && currentPlaylist === '在线资源') {
-                        if (grid) grid.style.display = 'grid';
-                        if (list) list.style.display = 'none';
+                if (mode === 'playlist' && currentPlaylist === '在线资源') {
+                    if (grid) grid.style.display = 'grid';
+                    if (list) list.style.display = 'none';
 
-                        const cachedPlList = activeCache.list || [];
-                        if (cachedPlList.length > 0) {
-                            window.currentLxPlaylistPage = activeCache.page || 1;
-                            window.hasMoreLxPlaylists = activeCache.hasMore !== false;
-                            window.currentLxSearchType = 'keyword';
-                            window.lxPlaylistItems = cachedPlList;
-                            if (typeof window.renderLxGridFromCache === 'function') window.renderLxGridFromCache(grid, cachedPlList);
-                        } else {
-                            setTimeout(() => window.doLxPlaylistSearch(false, 'keyword'), 50);
-                        }
-                        cacheKeyword = cacheKeywordRaw;
+                    const cachedPlList = activeCache.list || [];
+                    if (cachedPlList.length > 0) {
+                        window.currentLxPlaylistPage = activeCache.page || 1;
+                        window.hasMoreLxPlaylists = activeCache.hasMore !== false;
+                        window.currentLxSearchType = 'keyword';
+                        window.lxPlaylistItems = cachedPlList;
+                        if (typeof window.renderLxGridFromCache === 'function') window.renderLxGridFromCache(grid, cachedPlList);
+                    } else {
+                        setTimeout(() => window.doLxPlaylistSearch(false, 'keyword'), 50);
                     }
-                    else if (mode === 'tag' && currentPlaylist === '在线资源') {
-                        if (grid) grid.style.display = 'grid';
-                        if (list) list.style.display = 'none';
-
-                        let capsule = document.getElementById('search-tag-capsule');
-                        if (!capsule) {
-                            capsule = document.createElement('div');
-                            capsule.id = 'search-tag-capsule';
-                            capsule.className = 'search-tag-capsule';
-                            document.getElementById('mf-search-input-wrap').insertBefore(capsule, document.getElementById('mf-search-input'));
-                        }
-                        capsule.innerText = cacheKeywordRaw;
-                        capsule.title = cacheKeywordRaw;
-                        window.currentLxSortId = activeCache.sortId || '';
-
-                        const cachedPlList = activeCache.list || [];
-                        if (cachedPlList.length > 0) {
-                            window.currentLxPlaylistPage = activeCache.page || 1;
-                            window.hasMoreLxPlaylists = activeCache.hasMore !== false;
-                            window.currentLxSearchType = 'tag';
-                            window.lxPlaylistItems = cachedPlList;
-                            if (typeof window.renderLxGridFromCache === 'function') window.renderLxGridFromCache(grid, cachedPlList);
-                        } else {
-                            setTimeout(() => window.doLxPlaylistSearch(false, 'tag'), 50);
-                        }
-
-                        if (mfSearchInput) { mfSearchInput.value = ''; mfSearchInput.placeholder = ''; }
-                        cacheKeyword = '';
-                        isCapsuleRestored = true;
-                    }
-                    else if (mode === 'detail' && currentPlaylist === '在线资源') {
-                        if (grid) grid.style.display = 'none';
-                        if (list) list.style.display = 'block';
-
-                        let capsule = document.getElementById('search-tag-capsule');
-                        if (!capsule) {
-                            capsule = document.createElement('div');
-                            capsule.id = 'search-tag-capsule';
-                            capsule.className = 'search-tag-capsule';
-                            document.getElementById('mf-search-input-wrap').insertBefore(capsule, document.getElementById('mf-search-input'));
-                        }
-                        const boxWidth = document.getElementById('mf-search-input-wrap')?.clientWidth || window.innerWidth;
-                        let maxChars = (boxWidth <= 370 || window.innerWidth <= 480) ? 14 : 18;
-                        const shortName = cacheKeywordRaw.length > maxChars ? cacheKeywordRaw.substring(0, maxChars) + '...' : cacheKeywordRaw;
-                        capsule.innerText = shortName;
-                        capsule.title = cacheKeywordRaw;
-                        if (mfSearchInput) { mfSearchInput.value = ''; mfSearchInput.placeholder = ''; }
-                        cacheList = activeCache.list || [];
-                        cacheKeyword = '';
-                        isCapsuleRestored = true;
-                    }
-                    else {
-                        if (grid) grid.style.display = 'none';
-                        if (list) list.style.display = 'block';
-                        cacheList = activeCache.list || [];
-                        cacheKeyword = cacheKeywordRaw;
-                    }
-
-                    if (typeof window.toggleSearchBackBtn === 'function') window.toggleSearchBackBtn(!!detailCache);
+                    cacheKeyword = cacheKeywordRaw;
                 }
-            } catch(e) {}
-        } else {
-            const grid = document.getElementById('playlist-grid');
-            const list = document.getElementById('playlist');
-            if (grid) grid.style.display = 'none';
-            if (list) list.style.display = 'block';
-            if (typeof window.toggleSearchBackBtn === 'function') window.toggleSearchBackBtn(false);
+                else if (mode === 'tag' && currentPlaylist === '在线资源') {
+                    if (grid) grid.style.display = 'grid';
+                    if (list) list.style.display = 'none';
 
-            try {
-                const mfCache = JSON.parse(localStorage.getItem('mf_online_search_cache'));
-                if (mfCache) {
-                    cacheList = mfCache.list || [];
-                    cacheKeyword = mfCache.keyword || '';
-                    currentSearchPage = mfCache.page || 1;
-                    hasMoreOnlineSearch = mfCache.hasMore !== false;
-                    localStorage.setItem('last_search_action', 'song');
+                    let capsule = document.getElementById('search-tag-capsule');
+                    if (!capsule) {
+                        capsule = document.createElement('div');
+                        capsule.id = 'search-tag-capsule';
+                        // 根据引擎决定恢复出来的胶囊颜色
+                        capsule.className = `search-tag-capsule ${targetVal === 'LXServer' ? 'lx-theme' : 'mf-theme'}`;
+                        document.getElementById('mf-search-input-wrap').insertBefore(capsule, document.getElementById('mf-search-input'));
+                    }
+                    capsule.innerText = cacheKeywordRaw;
+                    capsule.title = cacheKeywordRaw;
+                    window.currentLxSortId = activeCache.sortId || '';
+
+                    const cachedPlList = activeCache.list || [];
+                    if (cachedPlList.length > 0) {
+                        window.currentLxPlaylistPage = activeCache.page || 1;
+                        window.hasMoreLxPlaylists = activeCache.hasMore !== false;
+                        window.currentLxSearchType = 'tag';
+                        window.lxPlaylistItems = cachedPlList;
+                        if (typeof window.renderLxGridFromCache === 'function') window.renderLxGridFromCache(grid, cachedPlList);
+                    } else {
+                        setTimeout(() => window.doLxPlaylistSearch(false, 'tag'), 50);
+                    }
+
+                    if (mfSearchInput) { mfSearchInput.value = ''; mfSearchInput.placeholder = ''; }
+                    cacheKeyword = '';
+                    isCapsuleRestored = true;
                 }
-            } catch(e) {}
-        }
+                else if (mode === 'detail' && currentPlaylist === '在线资源') {
+                    if (grid) grid.style.display = 'none';
+                    if (list) list.style.display = 'block';
+
+                    let capsule = document.getElementById('search-tag-capsule');
+                    if (!capsule) {
+                        capsule = document.createElement('div');
+                        capsule.id = 'search-tag-capsule';
+                        // 根据引擎决定恢复出来的胶囊颜色
+                        capsule.className = `search-tag-capsule ${targetVal === 'LXServer' ? 'lx-theme' : 'mf-theme'}`;
+                        document.getElementById('mf-search-input-wrap').insertBefore(capsule, document.getElementById('mf-search-input'));
+                    }
+                    const boxWidth = document.getElementById('mf-search-input-wrap')?.clientWidth || window.innerWidth;
+                    let maxChars = (boxWidth <= 370 || window.innerWidth <= 480) ? 14 : 18;
+                    const shortName = cacheKeywordRaw.length > maxChars ? cacheKeywordRaw.substring(0, maxChars) + '...' : cacheKeywordRaw;
+                    capsule.innerText = shortName;
+                    capsule.title = cacheKeywordRaw;
+                    if (mfSearchInput) { mfSearchInput.value = ''; mfSearchInput.placeholder = ''; }
+                    cacheList = activeCache.list || [];
+                    cacheKeyword = '';
+                    isCapsuleRestored = true;
+                }
+                else {
+                    if (grid) grid.style.display = 'none';
+                    if (list) list.style.display = 'block';
+                    cacheList = activeCache.list || [];
+                    cacheKeyword = cacheKeywordRaw;
+                }
+
+                if (typeof window.toggleSearchBackBtn === 'function') window.toggleSearchBackBtn(mode === 'detail');
+            } else {
+                // 如果当前引擎没有任何缓存，重置为单曲视图
+                const grid = document.getElementById('playlist-grid');
+                const list = document.getElementById('playlist');
+                if (grid) grid.style.display = 'none';
+                if (list) list.style.display = 'block';
+                if (typeof window.toggleSearchBackBtn === 'function') window.toggleSearchBackBtn(false);
+            }
+        } catch(e) {}
 
         if (currentDid !== "" && !cacheKeyword && !isCapsuleRestored && backendHistoryList.length > 0) {
             cacheList = backendHistoryList;
@@ -7176,7 +7266,6 @@
         if (mfSearchInput) mfSearchInput.value = cacheKeyword;
         if (mfSearchClear) mfSearchClear.classList.toggle('show', cacheKeyword.length > 0 || isCapsuleRestored);
 
-        // 只有在【非海报墙模式】且【当前是在线资源】时，才调用 renderPlaylist
         if (currentPlaylist === '在线资源') {
             if (mode !== 'playlist' && mode !== 'tag') {
                 songList = cacheList;
@@ -7184,7 +7273,6 @@
                 allPlaylists['在线资源'] = songList;
                 renderPlaylist();
             } else {
-                // 如果是海报墙模式，我们已经手动处理过 UI 了，只需要同步一下顶栏文字即可
                 const playlistVal = document.getElementById('playlist-val');
                 const text = formatPlaylistText('在线资源', (window.lxPlaylistItems || []).length);
                 if (playlistVal) playlistVal.innerHTML = text;
@@ -7629,8 +7717,11 @@
     const isStandaloneMode = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
     if (isStandaloneMode && audioEl) {
         audioEl.addEventListener('pause', () => {
+            // 🌟 核心结合点：如果是前端页面点击触发的暂停，直接放行，不执行清空！
+            if (window.isPageBtnPause) return;
+
             if (audioEl.src && !audioEl.ended && currentDid === "") {
-                console.log('检测到 PWA 模式暂停，为防止死锁已清空音频源');
+                console.log('检测到 PWA 模式暂停(非前端触发)，为防止死锁已清空音频源');
                 const currentTime = audioEl.currentTime;
                 audioEl.src = "";
                 audioEl.load();
@@ -7645,4 +7736,3 @@
   </script>
 </body>
 </html>
-
