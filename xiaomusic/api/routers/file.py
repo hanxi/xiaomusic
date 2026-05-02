@@ -957,20 +957,33 @@ async def music_file(request: Request, file_path: str, key: str = "", code: str 
     if not access_key_verification(f"/music/{file_path}", key, code):
         raise HTTPException(status_code=404, detail="File not found")
 
-    absolute_path = os.path.abspath(config.music_path)
-    absolute_file_path = os.path.normpath(os.path.join(absolute_path, file_path))
-    if not absolute_file_path.startswith(absolute_path):
-        raise HTTPException(status_code=404, detail="File not found")
-    if not os.path.exists(absolute_file_path):
-        raise HTTPException(status_code=404, detail="File not found")
+    # temp/ 前缀表示文件在 temp_path 中
+    if file_path.startswith("temp/"):
+        temp_file_name = file_path[5:]
+        if config.temp_path.startswith("/"):
+            temp_base = config.temp_path
+        else:
+            temp_base = os.path.abspath(config.temp_path)
+        absolute_file_path = os.path.normpath(os.path.join(temp_base, temp_file_name))
+        if not absolute_file_path.startswith(temp_base):
+            raise HTTPException(status_code=404, detail="File not found")
+        if not os.path.exists(absolute_file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+    else:
+        absolute_path = os.path.abspath(config.music_path)
+        absolute_file_path = os.path.normpath(os.path.join(absolute_path, file_path))
+        if not absolute_file_path.startswith(absolute_path):
+            raise HTTPException(status_code=404, detail="File not found")
+        if not os.path.exists(absolute_file_path):
+            raise HTTPException(status_code=404, detail="File not found")
 
     # 移除MP3 ID3 v2标签和填充
     if config.remove_id3tag and is_mp3(file_path):
         log.info(f"remove_id3tag:{config.remove_id3tag}, is_mp3:True ")
         temp_mp3_file = remove_id3_tags(absolute_file_path, config)
         if temp_mp3_file:
-            log.info(f"ID3 tag removed {absolute_file_path} to {temp_mp3_file}")
-            redirect = safe_redirect(f"/music/{temp_mp3_file}")
+            mp3_name = os.path.basename(temp_mp3_file)
+            redirect = safe_redirect(f"/music/temp/{mp3_name}")
             if redirect:
                 return redirect
         else:
@@ -979,8 +992,8 @@ async def music_file(request: Request, file_path: str, key: str = "", code: str 
     if config.convert_to_mp3 and not is_mp3(file_path):
         temp_mp3_file = convert_file_to_mp3(absolute_file_path, config)
         if temp_mp3_file:
-            log.info(f"Converted file: {absolute_file_path} to {temp_mp3_file}")
-            redirect = safe_redirect(f"/music/{temp_mp3_file}")
+            mp3_name = os.path.basename(temp_mp3_file)
+            redirect = safe_redirect(f"/music/temp/{mp3_name}")
             if redirect:
                 return redirect
         else:
