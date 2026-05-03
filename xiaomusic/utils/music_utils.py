@@ -11,6 +11,7 @@ import mimetypes
 import os
 import re
 import shutil
+import struct
 import subprocess
 import tempfile
 from dataclasses import (
@@ -412,6 +413,48 @@ def _get_alltag_value(tags, k: str) -> str:
     return ""
 
 
+def _parse_metadata_block_picture(tag_value: str) -> bytes | None:
+    """解析 OGG Vorbis 的 metadata_block_picture 标签
+
+    先尝试 JSON 格式（部分工具使用），再尝试 FLAC 二进制结构格式。
+    FLAC METADATA_BLOCK_PICTURE 二进制结构:
+      4B picture type | 4B MIME length + MIME | 4B desc length + desc
+      | 4B width | 4B height | 4B depth | 4B colors | 4B data length + data
+    """
+    raw = base64.b64decode(tag_value)
+
+    # 尝试 JSON 格式
+    try:
+        picture = json.loads(raw)
+        if isinstance(picture, dict) and "data" in picture:
+            return base64.b64decode(picture["data"])
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        pass
+
+    # 尝试 FLAC 二进制结构格式
+    try:
+        offset = 0
+        # picture type (4B)
+        offset += 4
+        # MIME type
+        mime_len = struct.unpack_from(">I", raw, offset)[0]
+        offset += 4 + mime_len
+        # description
+        desc_len = struct.unpack_from(">I", raw, offset)[0]
+        offset += 4 + desc_len
+        # width, height, depth, colors (各4B)
+        offset += 16
+        # picture data
+        data_len = struct.unpack_from(">I", raw, offset)[0]
+        offset += 4
+        return raw[offset : offset + data_len]
+    except (struct.error, IndexError):
+        pass
+
+    log.warning("Failed to parse metadata_block_picture")
+    return None
+
+
 def _save_picture(picture_data: bytes, save_root: str, file_path: str) -> str:
     """保存图片"""
     # 计算文件名的哈希值
@@ -542,10 +585,13 @@ def extract_audio_metadata(file_path: str, save_root: str) -> dict:
         metadata.year = _get_tag_value(tags, "DATE")
         metadata.genre = _get_tag_value(tags, "GENRE")
         if "metadata_block_picture" in tags:
-            picture = json.loads(base64.b64decode(tags["metadata_block_picture"][0]))
-            metadata.picture = _save_picture(
-                base64.b64decode(picture["data"]), save_root, file_path
+            picture_data = _parse_metadata_block_picture(
+                tags["metadata_block_picture"][0]
             )
+            if picture_data:
+                metadata.picture = _save_picture(
+                    picture_data, save_root, file_path
+                )
 
     elif isinstance(audio, ASF):
         metadata.title = _get_tag_value(tags, "Title")
