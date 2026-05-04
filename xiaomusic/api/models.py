@@ -72,3 +72,8 @@ class PlayListUpdateObj(BaseModel):
 class PlayListMusicObj(BaseModel):
     name: str = ""  # 歌单名
     music_list: list[str]  # 歌曲名列表
+
+
+class MusicInfosQuery(BaseModel):
+    name: list[str]
+    musictag: bool = False

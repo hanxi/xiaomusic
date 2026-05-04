@@ -11,12 +11,14 @@ const API = {
         if (!Array.isArray(songNames)) {
             throw new Error('songNames must be an array');
         }
-        
-        const queryParams = songNames
-            .map(name => `name=${encodeURIComponent(name)}`)
-            .join('&');
-            
-        const response = await fetch(`/musicinfos?${queryParams}&musictag=true`);
+
+        const response = await fetch('/musicinfos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: songNames, musictag: true })
+        });
         return response.json();
     },
 
