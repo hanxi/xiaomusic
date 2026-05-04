@@ -927,7 +927,8 @@
 
                                 // 验证URL是否有效
                                 const validUrl = new URL(musicInfo.url);
-                                if (!validUrl.pathname.endsWith('.mp3')) {
+                                const audioExts = ['.mp3', '.flac', '.wav', '.ogg', '.aac', '.m4a', '.wma', '.ape'];
+                                if (!audioExts.some(ext => validUrl.pathname.endsWith(ext))) {
                                     console.error('Invalid music URL format:', validUrl);
                                     showMessage('音乐文件格式不支持', 'alert-error');
                                     return;

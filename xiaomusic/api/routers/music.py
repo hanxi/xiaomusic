@@ -21,6 +21,7 @@ from xiaomusic.api.dependencies import (
 from xiaomusic.api.models import (
     DidPlayMusic,
     MusicInfoObj,
+    MusicInfosQuery,
     MusicItem,
 )
 
@@ -262,6 +263,22 @@ async def musicinfos(
             "url": url,
         }
         if musictag:
+            info["tags"] = await xiaomusic.music_library.get_music_tags(music_name)
+        ret.append(info)
+    return ret
+
+
+@router.post("/musicinfos")
+async def musicinfos_post(data: MusicInfosQuery):
+    """批量音乐信息（POST，避免 URL 过长）"""
+    ret = []
+    for music_name in data.name:
+        url, _ = await xiaomusic.music_library.get_music_url(music_name)
+        info = {
+            "name": music_name,
+            "url": url,
+        }
+        if data.musictag:
             info["tags"] = await xiaomusic.music_library.get_music_tags(music_name)
         ret.append(info)
     return ret
