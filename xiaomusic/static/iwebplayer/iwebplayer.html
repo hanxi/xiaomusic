@@ -1893,7 +1893,7 @@
         <div style="display: flex; gap: 20px; border-bottom: 1px solid var(--border); width: 100%;">
           <div class="plugin-tab active" data-target="mf-pane" style="padding-bottom: 10px; cursor: pointer; font-weight: bold; color: var(--primary); border-bottom: 2px solid var(--primary); transition: color 0.2s;">MusicFree</div>
           <div class="plugin-tab" data-target="lx-pane" style="padding-bottom: 10px; cursor: pointer; font-weight: 500; color: var(--text-sub); border-bottom: 2px solid transparent; transition: color 0.2s;">LX Server</div>
-          <div class="plugin-tab" data-target="voice-pane" style="padding-bottom: 10px; cursor: pointer; font-weight: 500; color: var(--text-sub); border-bottom: 2px solid transparent; transition: color 0.2s;">语音搜索</div>
+          <div class="plugin-tab" data-target="voice-pane" style="padding-bottom: 10px; cursor: pointer; font-weight: 500; color: var(--text-sub); border-bottom: 2px solid transparent; transition: color 0.2s;">语音搜索 <span style="font-size: 11px; opacity: 0.8; font-weight: normal;">(基于插件)</span></div>
         </div>
       </div>
 
@@ -1975,18 +1975,42 @@
         </div>
 
         <div id="voice-pane" class="plugin-pane" style="display: none; padding-bottom: 10px;">
+           <style>
+               /* 1. 开关 (Switch) ➔ 高级石板灰 */
+               #voice-pane .ios-switch input:checked + .ios-slider { background-color: #64748b; }
+               #voice-pane .ios-switch input:checked + .ios-slider:before { background-color: #ffffff; }
+
+               /* 2. 搜单策略 (Strategy) ➔ 强制应用石板灰，防止被覆盖 */
+               input[name="voice-strategy"]:checked { border-color: #64748b !important; }
+               input[name="voice-strategy"]:checked::after { background-color: #64748b !important; }
+               .radio-item:has(input[name="voice-strategy"]:checked) .radio-label { color: #64748b !important; font-weight: bold; }
+
+               /* 3. 保存按钮 (Save) ➔ 石板灰 */
+               #voice-keywords-save {
+                   background: #64748b !important;
+                   color: #fff !important;
+                   border: none !important;
+                   font-weight: bold;
+               }
+               #voice-keywords-save:disabled {
+                   background: var(--border) !important;
+                   color: var(--text-sub) !important;
+                   opacity: 0.6;
+               }
+
+               /* 4. 搜索引擎 (Engine) ➔ 保持特定的引擎识别色 */
+               /* MusicFree ➔ 紫红色 */
+               #radio-mf:checked { border-color: var(--primary) !important; }
+               #radio-mf:checked::after { background-color: var(--primary) !important; }
+               .radio-item:has(#radio-mf:checked) .radio-label { color: var(--primary) !important; }
+
+               /* LX Server ➔ 翠绿色 */
+               #radio-lx:checked { border-color: #10b981 !important; }
+               #radio-lx:checked::after { background-color: #10b981 !important; }
+               .radio-item:has(#radio-lx:checked) .radio-label { color: #10b981 !important; }
+           </style>
            <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--text-sub);">语音指令</div>
            <div class="setting-group">
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-title">语音搜索功能</div>
-                       <div class="setting-desc">为XiaoMusic注入online_play和singer_play指令。</div>
-                   </div>
-                   <label class="ios-switch">
-                       <input type="checkbox" id="voice-online-search-toggle">
-                       <span class="ios-slider"></span>
-                   </label>
-               </div>
                <div class="setting-item">
                    <div class="setting-info">
                        <div class="setting-title">监听小爱语音口令</div>
@@ -1997,20 +2021,41 @@
                        <span class="ios-slider"></span>
                    </label>
                </div>
-               <div class="setting-item" style="flex-direction: column; align-items: stretch; gap: 8px; padding-bottom: 14px;">
+               <div class="setting-item">
                    <div class="setting-info">
-                       <div class="setting-title">语音搜索口令</div>
-                       <div class="setting-desc">语音口令可多个，用逗号隔开</div>
+                       <div class="setting-title">语音在线搜索功能</div>
+                       <div class="setting-desc">online_play, singer_play, online_playlist_play指令。</div>
                    </div>
-                   <div class="modal-input-group" style="margin-top: 0; height: 30px; border-radius: 6px; background: transparent; border: none;">
-                       <input type="text" id="voice-keywords-input" placeholder="例如: 在线播放,在线搜索" autocomplete="off" style="padding: 0 10px; font-size: 13px; height: 100%; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-color);">
-                       <button class="mf-btn-sm" id="voice-keywords-save" style="background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); height: 100%; border-radius: 6px; flex-shrink: 0; margin-left: 8px;">保存</button>
+                   <label class="ios-switch">
+                       <input type="checkbox" id="voice-online-search-toggle">
+                       <span class="ios-slider"></span>
+                   </label>
+               </div>
+
+               <div class="setting-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding-bottom: 14px;">
+                   <div class="setting-info" style="display: flex; justify-content: space-between; align-items: center; padding-right: 0;">
+                       <div class="setting-title">自定义唤醒口令 <span style="font-size: 11px; font-weight: normal; color: var(--text-sub);">(逗号分隔)</span></div>
+                       <button class="mf-btn-sm" id="voice-keywords-save" style="background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); height: 26px; border-radius: 6px; padding: 0 14px; transition: all 0.2s;">保存</button>
+                   </div>
+                   <div style="display: flex; flex-direction: column; gap: 8px;">
+                       <div style="display: flex; align-items: center; gap: 8px;">
+                           <span style="font-size: 12px; color: var(--text-sub); width: 65px; text-align: left; flex-shrink: 0; white-space: nowrap;">搜在线单曲</span>
+                           <input type="text" id="voice-keywords-online" placeholder="在线播放,在线搜索" autocomplete="off" style="flex: 1; min-width: 0; padding: 0 8px; font-size: 13px; height: 30px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-color); color: var(--text-main); outline: none;">
+                       </div>
+                       <div style="display: flex; align-items: center; gap: 8px;">
+                           <span style="font-size: 12px; color: var(--text-sub); width: 65px; text-align: left; flex-shrink: 0; white-space: nowrap;">搜在线歌单</span>
+                           <input type="text" id="voice-keywords-playlist" placeholder="在线歌单,搜索歌单" autocomplete="off" style="flex: 1; min-width: 0; padding: 0 8px; font-size: 13px; height: 30px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-color); color: var(--text-main); outline: none;">
+                       </div>
+                       <div style="display: flex; align-items: center; gap: 8px;">
+                           <span style="font-size: 12px; color: var(--text-sub); width: 65px; text-align: left; flex-shrink: 0; white-space: nowrap;">搜在线歌手</span>
+                           <input type="text" id="voice-keywords-singer" placeholder="播放歌手,搜索歌手" autocomplete="off" style="flex: 1; min-width: 0; padding: 0 8px; font-size: 13px; height: 30px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-color); color: var(--text-main); outline: none;">
+                       </div>
                    </div>
                </div>
            </div>
 
-           <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--text-sub);">默认语音搜索引擎</div>
-           <div class="setting-group radio-group" style="margin-bottom: 0;">
+           <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--text-sub);">默认语音在线搜索引擎</div>
+           <div class="setting-group radio-group" style="margin-bottom: 12px;">
                <label class="radio-item">
                    <input type="radio" name="voice-engine" value="mf" id="radio-mf" checked>
                    <span class="radio-label">MusicFree插件</span>
@@ -2020,7 +2065,37 @@
                    <span class="radio-label">LX Server接口</span>
                </label>
            </div>
-           <div style="padding: 8px 16px 20px 16px; font-size: 11px; color: var(--text-sub);">设置小爱语音搜歌时默认去哪里抓取数据。</div>
+
+           <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--text-sub);">搜歌单优选策略</div>
+           <style>
+               /* 专属单选按钮高亮样式 */
+               .radio-item:has(input[name="voice-strategy"]:checked) .radio-label { color: var(--primary); font-weight: bold; }
+           </style>
+           <div class="setting-group" style="margin-bottom: 16px;">
+               <div class="setting-item" style="padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                   <div class="setting-info" style="padding-right: 0;">
+                       <div class="setting-desc">当语音搜出多个歌单时，决定自动提取哪一个播放。</div>
+                   </div>
+               </div>
+               <div style="display: grid; grid-template-columns: 1fr 1fr;">
+                   <label class="radio-item" style="border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 12px; justify-content: flex-start;">
+                       <input type="radio" name="voice-strategy" value="default" checked>
+                       <span class="radio-label">默认首单 <span style="font-size:10px;font-weight:normal;opacity:0.6;">(最快)</span></span>
+                   </label>
+                   <label class="radio-item" style="border-bottom: 1px solid var(--border); padding: 12px 12px; justify-content: flex-start;">
+                       <input type="radio" name="voice-strategy" value="max_songs">
+                       <span class="radio-label">最大曲目 <span style="font-size:10px;font-weight:normal;opacity:0.6;">(最多)</span></span>
+                   </label>
+                   <label class="radio-item" style="border-right: 1px solid var(--border); padding: 12px 12px; justify-content: flex-start;">
+                       <input type="radio" name="voice-strategy" value="max_plays">
+                       <span class="radio-label">最大播放 <span style="font-size:10px;font-weight:normal;opacity:0.6;">(最热)</span></span>
+                   </label>
+                   <label class="radio-item" style="padding: 12px 12px; justify-content: flex-start;">
+                       <input type="radio" name="voice-strategy" value="random">
+                       <span class="radio-label">随机抽选 <span style="font-size:10px;font-weight:normal;opacity:0.6;">(盲盒)</span></span>
+                   </label>
+               </div>
+           </div>
 
            <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--text-sub);">播放自动化</div>
            <div class="setting-group">
@@ -2065,7 +2140,7 @@
     /* ==========================================
      * 1. 核心配置与全局状态
      * ========================================== */
-    const APP_VERSION = 'v1.7.2';
+    const APP_VERSION = 'v1.7.3';
     const APP_LOGO = document.getElementById('app-logo')?.content || '';
     const LX_PLATFORMS_MAP = { 'tx': 'QQ', 'wy': '网易云', 'kg': '酷狗', 'kw': '酷我', 'mg': '咪咕' };
     const LX_BACKEND_NAMES = { 'tx': '小秋音乐', 'wy': '小芸音乐', 'kg': '小枸音乐', 'kw': '小蜗音乐', 'mg': '小蜜音乐' };
@@ -4014,13 +4089,25 @@
         });
     }
 
+    const updateVoiceSaveBtnState = () => {
+        const isEnabled = document.getElementById('voice-online-search-toggle')?.checked;
+        const btn = document.getElementById('voice-keywords-save');
+        if (btn) {
+            btn.disabled = !isEnabled;
+            btn.style.opacity = isEnabled ? '1' : '0.4';
+            btn.style.cursor = isEnabled ? 'pointer' : 'not-allowed';
+        }
+    };
+
     const voiceOnlineSearchToggle = document.getElementById('voice-online-search-toggle');
     if (voiceOnlineSearchToggle) {
         voiceOnlineSearchToggle.addEventListener('change', async (e) => {
             const newState = e.target.checked;
+            // 🌟 实时联动按钮状态
+            updateVoiceSaveBtnState();
+
             showToast(`⏳ 正在${newState ? '注入' : '移除'}全网搜索指令...`);
             try {
-
                 const res = await fetch(API.setting + '?t=' + Date.now());
                 const data = await res.json();
                 let cmdStr = data.active_cmd || '';
@@ -4029,8 +4116,9 @@
                 if (newState) {
                     if (!cmds.includes('online_play')) cmds.push('online_play');
                     if (!cmds.includes('singer_play')) cmds.push('singer_play');
+                    if (!cmds.includes('online_playlist_play')) cmds.push('online_playlist_play');
                 } else {
-                    cmds = cmds.filter(c => c !== 'online_play' && c !== 'singer_play');
+                    cmds = cmds.filter(c => c !== 'online_play' && c !== 'singer_play' && c !== 'online_playlist_play');
                 }
                 const newCmdStr = cmds.join(',');
 
@@ -4041,6 +4129,7 @@
                 showToast(`✅ 全网搜索支持已${newState ? '开启' : '关闭'}`);
             } catch(err) {
                 e.target.checked = !newState;
+                updateVoiceSaveBtnState();
                 showToast("❌ 设置失败，请检查网络");
             }
         });
@@ -4068,32 +4157,38 @@
     const voiceKeywordsSaveBtn = document.getElementById('voice-keywords-save');
     if (voiceKeywordsSaveBtn) {
         voiceKeywordsSaveBtn.addEventListener('click', async () => {
-            const inputEl = document.getElementById('voice-keywords-input');
-            if (!inputEl) return;
+            const inputOnline = document.getElementById('voice-keywords-online');
+            const inputPlaylist = document.getElementById('voice-keywords-playlist');
+            const inputSinger = document.getElementById('voice-keywords-singer');
+            if (!inputOnline || !inputPlaylist || !inputSinger) return;
 
-            let val = inputEl.value.replace(/，/g, ',').trim();
-            inputEl.value = val;
+            // 🌟 核心改进：如果为空则默认填入占位符 placeholder 的内容
+            const valOnline = (inputOnline.value.trim() || inputOnline.placeholder).replace(/，/g, ',');
+            const valPlaylist = (inputPlaylist.value.trim() || inputPlaylist.placeholder).replace(/，/g, ',');
+            const valSinger = (inputSinger.value.trim() || inputSinger.placeholder).replace(/，/g, ',');
 
-            if (!val) {
-                showToast("⚠️ 口令不能为空");
-                return;
-            }
+            // 同步回界面显示
+            inputOnline.value = valOnline;
+            inputPlaylist.value = valPlaylist;
+            inputSinger.value = valSinger;
 
             voiceKeywordsSaveBtn.disabled = true;
             voiceKeywordsSaveBtn.style.opacity = '0.5';
             voiceKeywordsSaveBtn.innerText = '保存中';
 
             try {
-
                 const res = await fetch('/savesetting', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keywords_online_play: val })
+                    body: JSON.stringify({
+                        keywords_online_play: valOnline,
+                        keywords_online_playlist_play: valPlaylist,
+                        keywords_singer_play: valSinger
+                    })
                 });
                 const data = await res.json();
 
                 if (data === "save success" || data === "success" || data.ret === "OK") {
-                    window.globalVoiceKeywords = val;
                     showToast("✅ 语音搜索口令已保存！");
                 } else {
                     showToast("❌ 保存失败：" + (data.error || "未知错误"));
@@ -4102,7 +4197,7 @@
                 showToast("❌ 网络异常，保存失败");
             } finally {
                 voiceKeywordsSaveBtn.disabled = false;
-                voiceKeywordsSaveBtn.style.opacity = '1';
+                updateVoiceSaveBtnState(); // 恢复根据开关的状态
                 voiceKeywordsSaveBtn.innerText = '保存';
             }
         });
@@ -4128,6 +4223,34 @@
                     if (data.success) {
                         window.currentEngineType = apiType;
                         showToast(`✅ 默认搜索引擎已切换为 ${engineValue === 'lx' ? 'LX Server接口' : 'MusicFree插件'}`);
+                    } else {
+                        showToast(`❌ 同步失败`);
+                    }
+                } catch (err) {
+                    showToast(`❌ 网络请求异常`);
+                }
+            }
+        });
+    });
+
+    // 监听所有网格单选按钮，点击后立即同步到后端
+    const strategyRadios = document.querySelectorAll('input[name="voice-strategy"]');
+    strategyRadios.forEach(radio => {
+        radio.addEventListener('change', async (e) => {
+            if (e.target.checked) {
+                const val = e.target.value;
+                showToast(`⏳ 正在同步搜单优选策略...`);
+                try {
+                    const res = await fetch('/api/advanced-config/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ voice_playlist_strategy: val })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        // 提取 span 里括号前的文字作为提示
+                        const textName = e.target.nextElementSibling.textContent.split('(')[0].trim();
+                        showToast(`✅ 策略已切换为: ${textName}`);
                     } else {
                         showToast(`❌ 同步失败`);
                     }
@@ -5801,17 +5924,31 @@
                 const onlineToggle = document.getElementById('voice-online-search-toggle');
                 fetch(API.setting + '?t=' + Date.now()).then(r=>r.json()).then(data => {
                     const cmd = data.active_cmd || '';
-                    if (onlineToggle) onlineToggle.checked = cmd.includes('online_play') && cmd.includes('singer_play');
+                    if (onlineToggle) {
+                        onlineToggle.checked = cmd.includes('online_play') && cmd.includes('singer_play') && cmd.includes('online_playlist_play');
+                        updateVoiceSaveBtnState();
+                    }
 
-                    window.globalVoiceKeywords = data.keywords_online_play || '在线播放,在线搜索';
-                    const keywordsInput = document.getElementById('voice-keywords-input');
-                    if (keywordsInput) keywordsInput.value = window.globalVoiceKeywords;
+                    const inputOnline = document.getElementById('voice-keywords-online');
+                    if (inputOnline) inputOnline.value = data.keywords_online_play || '';
+
+                    const inputPlaylist = document.getElementById('voice-keywords-playlist');
+                    if (inputPlaylist) inputPlaylist.value = data.keywords_online_playlist_play || '';
+
+                    const inputSinger = document.getElementById('voice-keywords-singer');
+                    if (inputSinger) inputSinger.value = data.keywords_singer_play || '';
                 }).catch(()=>{});
 
                 const autoAddToggle = document.getElementById('voice-auto-add-toggle');
                 fetch('/api/advanced-config/load').then(r=>r.json()).then(data => {
-                    if (data.success && data.data && autoAddToggle) {
-                        autoAddToggle.checked = !!data.data.auto_add_song;
+                    if (data.success && data.data) {
+                        const autoAddToggle = document.getElementById('voice-auto-add-toggle');
+                        if (autoAddToggle) autoAddToggle.checked = !!data.data.auto_add_song;
+
+                        // 🌟 核心修改：从下拉框赋值改为勾选对应的单选按钮
+                        const strategyVal = data.data.voice_playlist_strategy || 'default';
+                        const strategyRadio = document.querySelector(`input[name="voice-strategy"][value="${strategyVal}"]`);
+                        if (strategyRadio) strategyRadio.checked = true;
                     }
                 }).catch(()=>{});
 
