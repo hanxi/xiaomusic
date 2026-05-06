@@ -9,11 +9,11 @@ import base64
 import json
 import logging
 import os
+import random
 import shutil
 import subprocess
 import threading
 import time
-import random
 from typing import Any
 
 
@@ -2719,7 +2719,6 @@ class JSPluginManager:
 
     def pick_best_playlist(self, playlists: list):
         """根据系统配置的策略从歌单列表中挑选一个最优歌单"""
-        import random
         if not playlists:
             return None
         strategy = self.get_voice_playlist_strategy()
