@@ -431,8 +431,9 @@ async def update_advanced_config(request: Request):
         auto_add_song = request_json.get("auto_add_song")
         auto_convert = request_json.get("auto_convert")
         aiapi_info = request_json.get("aiapi_info")
+        voice_playlist_strategy = request_json.get("voice_playlist_strategy")
         return xiaomusic.js_plugin_manager.update_advanced_config(
-            auto_add_song, auto_convert, aiapi_info
+            auto_add_song, auto_convert, aiapi_info, voice_playlist_strategy
         )
     except Exception as e:
         return {"success": False, "error": str(e)}
