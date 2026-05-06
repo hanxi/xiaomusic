@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import threading
 import time
+import random
 from typing import Any
 
 
@@ -293,12 +294,14 @@ class JSPluginManager:
                     "auto_add_song": config_data.get("auto_add_song", False),
                     "auto_convert": config_data.get("auto_convert", False),
                     "aiapi_info": config_data.get("aiapi_info", {}),
+                    "voice_playlist_strategy": self.get_voice_playlist_strategy(),
                 }
             else:
                 return {
                     "auto_add_song": False,
                     "auto_convert": False,
                     "aiapi_info": {"enabled": False, "api_key": ""},
+                    "voice_playlist_strategy": "default",
                 }
         except Exception as e:
             self.log.error(f"Failed to read advanced config: {e}")
@@ -306,6 +309,7 @@ class JSPluginManager:
                 "auto_add_song": False,
                 "auto_convert": False,
                 "aiapi_info": {"enabled": False, "api_key": ""},
+                "voice_playlist_strategy": "default",
             }
 
     def update_advanced_config(
@@ -313,12 +317,14 @@ class JSPluginManager:
         auto_add_song: bool = None,
         auto_convert: bool = None,
         aiapi_info: dict = None,
+        voice_playlist_strategy: str = None,
     ) -> dict[str, Any]:
         """更新高级配置信息
         Args:
             auto_add_song: 自动添加歌曲开关
             auto_convert: 自动转换洛雪歌单开关
             aiapi_info: AI接口配置信息
+            voice_playlist_strategy: 语音搜索歌单获取策略
         Returns:
             更新结果字典
         """
@@ -335,6 +341,12 @@ class JSPluginManager:
 
                 if aiapi_info is not None:
                     config_data["aiapi_info"] = aiapi_info
+
+                if voice_playlist_strategy is not None:
+                    config_data["voice_playlist_strategy"] = {
+                        "desc": "语音搜单策略: default(首条), max_songs(歌曲最多), max_plays(播放最多), random(随机)",
+                        "value": voice_playlist_strategy
+                    }
 
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
@@ -2693,6 +2705,44 @@ class JSPluginManager:
         except Exception as e:
             self.log.error(f"插件 {plugin_name} 歌单详情解析执行失败: {e}")
             raise
+
+    def get_voice_playlist_strategy(self) -> str:
+        """获取语音搜单的选择策略"""
+        try:
+            config_data = self._get_config_data()
+            strategy_conf = config_data.get("voice_playlist_strategy", "default")
+            if isinstance(strategy_conf, dict):
+                return strategy_conf.get("value", "default")
+            return str(strategy_conf)
+        except Exception:
+            return "default"
+
+    def pick_best_playlist(self, playlists: list):
+        """根据系统配置的策略从歌单列表中挑选一个最优歌单"""
+        import random
+        if not playlists:
+            return None
+        strategy = self.get_voice_playlist_strategy()
+        if strategy == "default" or len(playlists) == 1:
+            return playlists[0]
+        if strategy == "random":
+            return random.choice(playlists)
+        # 定义提取权重的辅助闭包
+        def get_count(item, keys):
+            for k in keys:
+                val = item.get(k)
+                if val is not None:
+                    try:
+                        return int(val)
+                    except:
+                        continue
+            return 0
+        if strategy == "max_songs":
+            return max(playlists,
+                       key=lambda x: get_count(x, ["worksNum", "worksNums", "songCount", "song_count", "total"]))
+        if strategy == "max_plays":
+            return max(playlists, key=lambda x: get_count(x, ["playCount", "play_count"]))
+        return playlists[0]
 
     def reset_restart_limit(self):
         """重置重启限制计数器，允许重新开始重启尝试"""

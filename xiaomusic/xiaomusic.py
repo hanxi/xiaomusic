@@ -382,7 +382,7 @@ class XiaoMusic:
 
     # 在线获取歌单列表
     async def get_playlist_online(
-        self, plugin="all", keyword="", page=1, limit=20, **kwargs
+            self, plugin="all", keyword="", page=1, limit=20, **kwargs
     ):
         """委托给 online_music_service"""
         return await self.online_music_service.get_playlist_online(
@@ -436,6 +436,11 @@ class XiaoMusic:
     async def online_play(self, did="", arg1="", **kwargs):
         """委托给 online_music_service"""
         return await self.online_music_service.online_play(did, arg1, **kwargs)
+
+    # 口令：搜索歌单
+    async def online_playlist_play(self, did="", arg1="", **kwargs):
+        """委托给 online_music_service"""
+        return await self.online_music_service.online_playlist_play(did, arg1, **kwargs)
 
     # 口令:播放歌手：在线搜索歌手并存为列表播放
     async def singer_play(self, did="", arg1="", **kwargs):

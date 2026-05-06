@@ -615,6 +615,63 @@ class OnlineMusicService:
         self.log.info(f"搜索关键字{search_key},提取的歌名{name}")
         await self.search_top_one_play(did, search_key, name)
 
+    async def online_playlist_play(self, did="", arg1="", **kwargs):
+        """执行语音搜歌单并播放"""
+        await self._before_play()
+        search_key = arg1.strip()
+        if not search_key:
+            return await self.xiaomusic.do_tts(did, "你想搜什么歌单呢？")
+        self.log.info(f"语音搜索歌单: {search_key}")
+
+        try:
+            # 确定搜索平台 (如果是 all，自动取引擎的第一个可用插件)
+            pref = self.js_plugin_manager.get_box_play_platform_preference()
+            if pref == "all":
+                if self.js_plugin_manager.is_lx_server():
+                    lx_info = self.js_plugin_manager.get_lx_server_info()
+                    platforms = lx_info.get("platforms", {})
+                    pref = list(platforms.keys())[0] if platforms else "tx"
+                else:
+                    enabled = self.js_plugin_manager.get_enabled_plugins()
+                    pref = enabled[0] if enabled else "qq"
+            # 发起搜索 (拿第 1 页)
+            search_res = await self.get_playlist_online(plugin=pref, keyword=search_key, page=1)
+
+            # 极致柔性脱壳，对齐前端的 "dataObj = resJson.data || resJson" 兜底逻辑
+            data_obj = search_res.get("data") or search_res
+
+            if isinstance(data_obj, list):
+                playlists = data_obj
+            elif isinstance(data_obj, dict):
+                playlists = data_obj.get("list", [])
+            else:
+                playlists = []
+
+            if not playlists:
+                return await self.xiaomusic.do_tts(did, f"没找到关于{search_key}的歌单")
+                # 直接要一个最优歌单，完全不操心底下用了什么策略
+            best_playlist = self.js_plugin_manager.pick_best_playlist(playlists)
+            pl_name = best_playlist.get("title") or best_playlist.get("name") or "未知歌单"
+            pl_id = best_playlist.get("id")
+            # 准备详情请求参数 (MF 歌单需要特殊处理)
+            api_type = 2 if self.js_plugin_manager.is_lx_server() else 1
+            target_id = pl_id
+            if api_type == 1:
+                # MF 详情需要 Base64 包装对象
+                target_id = base64.b64encode(json.dumps(best_playlist).encode("utf-8")).decode("utf-8")
+
+            # 获取歌单内部全量歌曲
+            detail_res = await self.get_playlist_detail_online(id=target_id, plugin=pref, api_type=api_type)
+            songs = detail_res.get("data", [])
+            if not songs:
+                return await self.xiaomusic.do_tts(did, f"歌单{pl_name}里一首歌都没有")
+            # 推送到音箱 (归并到 _online_iwebplayer_search)
+            self.log.info(f"成功选中歌单【{pl_name}】，共 {len(songs)} 首歌")
+            return await self.push_music_list_play(did, songs, "_online_iwebplayer_search")
+        except Exception as e:
+            self.log.error(f"语音搜歌单失败: {e}")
+            return await self.xiaomusic.do_tts(did, "搜单过程中出了点小故障")
+
     async def singer_play(self, did="", arg1="", **kwargs):
         await self._before_play()
         parts = arg1.split("|")

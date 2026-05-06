@@ -29,5 +29,9 @@
     "plugin_source": {"source_url": ""},
     "plugins_info": [],
     "box_play_platform": "all"
+  },
+  "voice_playlist_strategy": {
+    "desc": "语音搜单策略: default(首条), max_songs(歌曲最多), max_plays(播放最多), random(随机)",
+    "value": "default"
   }
 }
