@@ -73,6 +73,7 @@ class MusicLibrary:
 
         # 音乐库数据
         self.all_music = {}  # 所有音乐 {name: filepath/url}
+        self.playlist_music_urls = {}  # 精准隔离字典 { "歌单名::歌曲名": url }
         self.music_list = {}  # 播放列表 {list_name: [music_names]}
         self.default_music_list_names = []  # 非自定义歌单名称列表
         self.custom_play_list = None  # 自定义播放列表缓存
@@ -98,6 +99,7 @@ class MusicLibrary:
         扫描音乐目录，生成本地音乐列表和播放列表。
         """
         self.all_music = {}
+        self.playlist_music_urls = {}  # 同步清空
         all_music_by_dir = {}
 
         # 扫描本地音乐目录
@@ -215,6 +217,8 @@ class MusicLibrary:
                         continue
 
                     self.all_music[name] = url
+                    # 存入带歌单名的专属链接，防止被同名覆盖！
+                    self.playlist_music_urls[f"{list_name}::{name}"] = url
                     one_music_list.append(name)
 
                     # 处理电台列表
@@ -801,7 +805,8 @@ class MusicLibrary:
         self.try_save_tag_cache()
         return "OK"
 
-    async def get_music_duration(self, name: str) -> float:
+    # 🌟 修改参数，增加 playlist_name
+    async def get_music_duration(self, name: str, playlist_name: str = None) -> float:
         """获取歌曲时长
 
         优先从缓存中读取，如果缓存中没有则获取并缓存
@@ -833,7 +838,7 @@ class MusicLibrary:
 
             # 缓存中没有，获取时长
             try:
-                url, _ = await self._get_web_music_url(name)
+                url, _ = await self._get_web_music_url(name, playlist_name)  # 传参
                 duration, _ = await get_web_music_duration(url, self.config)
                 self.log.info(f"网络音乐 {name} 时长: {duration} 秒")
 
@@ -1060,7 +1065,8 @@ class MusicLibrary:
 
     # ==================== URL处理方法 ====================
 
-    async def get_music_url(self, name):
+    # 接收 playlist_name
+    async def get_music_url(self, name, playlist_name=None):
         """获取音乐播放地址
 
         Args:
@@ -1071,10 +1077,11 @@ class MusicLibrary:
         """
         self.log.info(f"get_music_url name:{name}")
         if self.is_web_music(name):
-            return await self._get_web_music_url(name)
+            return await self._get_web_music_url(name, playlist_name)
         return self._get_local_music_url(name), None
 
-    async def _get_web_music_url(self, name):
+    # 接收 playlist_name
+    async def _get_web_music_url(self, name, playlist_name=None):
         """获取网络音乐播放地址
 
         Args:
@@ -1084,7 +1091,14 @@ class MusicLibrary:
             tuple: (播放地址, 原始地址)
         """
         self.log.info("in _get_web_music_url")
-        url = self.all_music[name]
+
+        # 优先从专属歌单字典拿，拿不到再走原来的大字典
+        url = None
+        if playlist_name:
+            url = self.playlist_music_urls.get(f"{playlist_name}::{name}")
+        if not url:
+            url = self.all_music.get(name)
+
         self.log.info(f"get_music_url web music. name:{name}, url:{url}")
 
         # 需要通过API获取真实播放地址
@@ -1095,14 +1109,14 @@ class MusicLibrary:
 
         # 是否需要代理
         # 对 bilibili 页面 URL，优先解析为真实音频/CDN URL；成功后再走 proxy，避免 /proxy 只拿到 HTML 页面。
-        is_bilibili_page = isinstance(url, str) and (
-            "bilibili.com/video/" in url or "b23.tv/" in url
+        is_bilibili_page = (
+            isinstance(url, str)
+            and ("bilibili.com/video/" in url or "b23.tv/" in url)
         )
         resolved_origin_url = url
         if is_bilibili_page:
             try:
                 import asyncio
-
                 cmd = [
                     "yt-dlp",
                     "-f",
@@ -1121,11 +1135,7 @@ class MusicLibrary:
                     stderr=asyncio.subprocess.PIPE,
                 )
                 stdout, stderr = await proc.communicate()
-                lines = [
-                    line.strip()
-                    for line in stdout.decode(errors="replace").splitlines()
-                    if line.strip()
-                ]
+                lines = [line.strip() for line in stdout.decode(errors="replace").splitlines() if line.strip()]
                 resolved = lines[0] if lines else ""
                 if proc.returncode == 0 and resolved:
                     self.log.info(

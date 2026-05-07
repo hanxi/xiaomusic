@@ -348,7 +348,8 @@ class XiaoMusicDevice:
         self.device.playlist2music[self.device.cur_playlist] = name
         cur_playlist = self.device.cur_playlist
         self.log.info(f"cur_music {self.get_cur_music()}")
-        url, _ = await self.xiaomusic.music_library.get_music_url(name)
+        # 把 cur_playlist 传过去，要求拿该歌单下的专属 URL！
+        url, _ = await self.xiaomusic.music_library.get_music_url(name, cur_playlist)
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
 
@@ -373,7 +374,8 @@ class XiaoMusicDevice:
         self._start_time = time.time()
         self._paused_time = 0
 
-        sec = await self.xiaomusic.music_library.get_music_duration(name)
+        # e获取时长也传 cur_playlist
+        sec = await self.xiaomusic.music_library.get_music_duration(name, cur_playlist)
         # 存储真实歌曲时长
         self._duration = sec
         await self.xiaomusic.analytics.send_play_event(name, sec, self.hardware)
