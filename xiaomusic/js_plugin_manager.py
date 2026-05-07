@@ -2246,6 +2246,7 @@ class JSPluginManager:
                 "action": "getMusicSheetInfo",
                 "pluginName": plugin_name,
                 "playlistInfo": playlist_info,
+                "page": page,
             }
         )
 
@@ -2684,18 +2685,41 @@ class JSPluginManager:
             json_str = base64.b64decode(b64_id).decode("utf-8")
             playlist_info = json.loads(json_str)
 
-            # 3. 调用插件获取歌曲列表
-            result = self.get_music_sheet_info(plugin_name, playlist_info, page=1)
+            data_list = []
+            current_page = 1
+            max_pages = 50  # 设置安全阈值，防止插件Bug导致死循环（最多拿1000~1500首歌）
 
-            if not result or not result.get("musicList"):
+            # 3. 循环翻页，直到拿完所有歌曲
+            while current_page <= max_pages:
+                self.log.info(f"正在获取 {plugin_name} 歌单详情，第 {current_page} 页...")
+
+                result = self.get_music_sheet_info(plugin_name, playlist_info, page=current_page)
+
+                if not result or not result.get("musicList"):
+                    break
+
+                page_data = result.get("musicList", [])
+                if not page_data:
+                    break
+
+                data_list.extend(page_data)
+
+                # 判断插件是否返回了结束标志
+                is_end = result.get("isEnd", True)
+                if is_end:
+                    break
+
+                current_page += 1
+
+            if not data_list:
                 return {"success": False, "error": "歌单解析为空或格式不支持", "data": []}
-
-            data_list = result.get("musicList", [])
 
             # 4. 补齐平台字段，确保后端播歌逻辑能识别来源
             for item in data_list:
                 if "platform" not in item:
                     item["platform"] = plugin_name
+
+            self.log.info(f"歌单全量拉取完成，共 {len(data_list)} 首歌。")
 
             return {
                 "success": True,

@@ -78,7 +78,7 @@ class PluginRunner {
                     result = await this.getAlbum(message.pluginName, message.albumInfo);
                     break;
                 case 'getMusicSheetInfo':
-                    result = await this.getPlaylist(message.pluginName, message.playlistInfo);
+                    result = await this.getPlaylist(message.pluginName, message.playlistInfo, message.page);
                     break;
                 case 'getArtistWorks':
                     result = await this.getArtistWorks(message.pluginName, message.artistItem, message.page, message.type);
@@ -412,7 +412,7 @@ class PluginRunner {
         }
     }
 
-    async getPlaylist(pluginName, playlistInfo) {
+    async getPlaylist(pluginName, playlistInfo, page = 1) {
         const plugin = this.plugins.get(pluginName);
         if (!plugin) {
             throw new Error(`Plugin ${pluginName} not found`);
@@ -425,8 +425,8 @@ class PluginRunner {
         }
 
         try {
-            // 使用默认页码 1（从MusicFree官方文档得知默认为1）
-            const result = await plugin.getMusicSheetInfo(playlistInfo, 1);
+            // 换成动态的 page 变量
+            const result = await plugin.getMusicSheetInfo(playlistInfo, page);
             // 参考 MusicFree 实现，验证结果
             if (result === null || result === undefined) {
                 return null;
