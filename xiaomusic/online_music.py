@@ -607,20 +607,33 @@ class OnlineMusicService:
     async def online_play(self, did="", arg1="", **kwargs):
         await self._before_play()
         parts = arg1.split("|")
-        search_key = parts[0]
-        name = parts[1] if len(parts) > 1 else search_key
+        search_key = parts[0].strip() if parts[0] else ""
+        name = parts[1].strip() if len(parts) > 1 else search_key
         if not name:
             name = search_key
+        # 没有歌名
+        if not name:
+            return await self.xiaomusic.handle_fatal_error(did, "小Music没有听到搜索歌名哦，请重试。")
         self.reset_singer_add_page()
         self.log.info(f"搜索关键字{search_key},提取的歌名{name}")
-        await self.search_top_one_play(did, search_key, name)
+
+        try:
+            res = await self.search_top_one_play(did, search_key, name)
+            # 接口明确返回了失败或者没找到歌曲
+            if res and isinstance(res, dict) and not res.get("success"):
+                return await self.xiaomusic.handle_fatal_error(did, f"小Music没找到关于{name}的歌曲")
+            return res
+
+        except Exception:
+            # 异常兜底，代码崩溃
+            return await self.xiaomusic.handle_fatal_error(did, "小Music搜歌过程中出了点小故障")
 
     async def online_playlist_play(self, did="", arg1="", **kwargs):
         """执行语音搜歌单并播放"""
         await self._before_play()
-        search_key = arg1.strip()
+        search_key = str(arg1).strip() if arg1 else ""
         if not search_key:
-            return await self.xiaomusic.do_tts(did, "你想搜什么歌单呢？")
+            return await self.xiaomusic.handle_fatal_error(did, "小Music没有听到搜索歌单内容，请重试。")
         self.log.info(f"语音搜索歌单: {search_key}")
 
         try:
@@ -648,8 +661,8 @@ class OnlineMusicService:
                 playlists = []
 
             if not playlists:
-                return await self.xiaomusic.do_tts(did, f"没找到关于{search_key}的歌单")
-                # 直接要一个最优歌单，完全不操心底下用了什么策略
+                return await self.xiaomusic.handle_fatal_error(did, f"小Music没找到关于{search_key}的歌单")
+            # 选出最优歌单
             best_playlist = self.js_plugin_manager.pick_best_playlist(playlists)
             pl_name = best_playlist.get("title") or best_playlist.get("name") or "未知歌单"
             pl_id = best_playlist.get("id")
@@ -664,24 +677,36 @@ class OnlineMusicService:
             detail_res = await self.get_playlist_detail_online(id=target_id, plugin=pref, api_type=api_type)
             songs = detail_res.get("data", [])
             if not songs:
-                return await self.xiaomusic.do_tts(did, f"歌单{pl_name}里一首歌都没有")
+                return await self.xiaomusic.handle_fatal_error(did, f"小Music获取歌单{pl_name}，里面一首歌都没有")
             # 推送到音箱 (归并到 _online_iwebplayer_search)
             self.log.info(f"成功选中歌单【{pl_name}】，共 {len(songs)} 首歌")
             return await self.push_music_list_play(did, songs, "_online_iwebplayer_search")
         except Exception as e:
             self.log.error(f"语音搜歌单失败: {e}")
-            return await self.xiaomusic.do_tts(did, "搜单过程中出了点小故障")
+            return await self.xiaomusic.handle_fatal_error(did, "小Music搜索歌单过程中出了点小故障")
 
     async def singer_play(self, did="", arg1="", **kwargs):
         await self._before_play()
         parts = arg1.split("|")
-        search_key = parts[0]
-        name = parts[1] if len(parts) > 1 else search_key
+        search_key = parts[0].strip() if parts[0] else ""
+        name = parts[1].strip() if len(parts) > 1 else search_key
         if not name:
             name = search_key
+        if not name:
+            return await self.xiaomusic.handle_fatal_error(did, "小Music没有听到歌手名哦，请重试。")
         self.reset_singer_add_page()
         self.log.info(f"搜索关键字{search_key},搜索歌手名{name}")
-        await self.search_singer_play(did, search_key, name)
+        try:
+            res = await self.search_singer_play(did, search_key, name)
+            # 没搜到这位歌手的歌
+            if res and isinstance(res, dict) and not res.get("success"):
+                return await self.xiaomusic.handle_fatal_error(did, f"小Music没找到歌手{name}的歌曲")
+            return res
+
+        except Exception as e:
+            self.log.error(f"语音搜歌手失败: {e}")
+            # 异常兜底：代码崩溃
+            return await self.xiaomusic.handle_fatal_error(did, "小Music搜歌手时出了点小故障")
 
     # 处理推送的歌单并播放
     async def push_music_list_play(
@@ -756,19 +781,19 @@ class OnlineMusicService:
             self.log.error(f"searchKey {search_key} get media source failed: {e}")
             return {"success": False, "error": str(e)}
 
-    def default_url(self):
-        # 先推送默认【搜索中】音频，搜索到播放url后推送给小爱
+    def default_url(self, name="silence.mp3"):
+        """获取静态音频文件的完整 URL"""
         config = self.xiaomusic.config
         if config and hasattr(config, "hostname") and hasattr(config, "public_port"):
             proxy_base = f"{config.hostname}:{config.public_port}"
         else:
-            proxy_base = "http://192.168.31.241:8090"
+            proxy_base = "http://192.168.31.241:8090"  # 之前代码中就有的ip，我保留。
         # return proxy_base + "/static/search.mp3"
-        return proxy_base + "/static/silence.mp3"
+        return f"{proxy_base}/static/{name}"
 
-    async def _before_play(self):
+    async def _before_play(self, prompt_audio="xiaomusic_ok.mp3"):
         # 先推送默认【搜索中】音频，搜索到播放url后推送给小爱
-        before_url = self.default_url()
+        before_url = self.default_url(prompt_audio)
         await self.xiaomusic.play_url(self.xiaomusic.get_cur_did(), before_url)
 
     def _convert_song_list_to_music_items(self, song_list):
@@ -1116,7 +1141,6 @@ class OnlineMusicService:
         enabled_plugins = self.js_plugin_manager.get_enabled_plugins()
         if plugin_name not in enabled_plugins:
             return {"success": False, "error": f"Plugin {plugin_name} not enabled"}
-
         try:
             # 调用插件方法，传递额外参数
             result = getattr(self.js_plugin_manager, method_name)(

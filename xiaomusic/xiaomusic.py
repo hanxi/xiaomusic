@@ -367,9 +367,9 @@ class XiaoMusic:
 
     # ===========================在线搜索函数================================
 
-    def default_url(self):
+    def default_url(self, name="silence.mp3"):
         """委托给 online_music_service"""
-        return self.online_music_service.default_url()
+        return self.online_music_service.default_url(name)
 
     # 在线获取歌曲列表（委托给 online_music_service）
     async def get_music_list_online(
@@ -700,3 +700,22 @@ class XiaoMusic:
 
     async def do_tts(self, did, value):
         return await self.device_manager.devices[did].do_tts(value)
+
+    async def handle_fatal_error(self, did, tts_msg="小music发生错误，请重试。"):
+        """全局异常报错处理：支持 TTS 或 xiaomusic_error.mp3 音效"""
+        # 1. 如果开启了 TTS，优先使用语音交互
+        if getattr(self.config, "edge_tts_voice", "disable") != "disable":
+            self.log.info(f"触发全局 TTS 报错: {tts_msg}")
+            await self.do_tts(did, tts_msg)
+            return
+
+        # 2. 如果关闭了 TTS，触发 error.mp3 报错音效
+        self.log.info("TTS 已关闭，触发全局 xiaomusic_error.mp3 报错音效")
+        error_url = self.default_url("xiaomusic_error.mp3")
+        # 播放报错音效
+        await self.play_url(did, error_url)
+        # 在第 3 秒时提前下发 stop，把硬件断流的咔声藏在静音里
+        import asyncio
+        await asyncio.sleep(3)
+        # 停止
+        await self.stop(did, "notts")
