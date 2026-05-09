@@ -11,6 +11,7 @@ import random
 import time
 from typing import TYPE_CHECKING
 
+import aiohttp
 from miservice import miio_command
 
 from xiaomusic.config import Device
@@ -69,6 +70,7 @@ class XiaoMusicDevice:
         self._duration = 0
         self._paused_time = 0
         self._play_failed_cnt = 0
+        self._url_failed_cnt = 0  # 新增：URL探路失败专属计数器
 
         self._play_list = []
 
@@ -348,25 +350,67 @@ class XiaoMusicDevice:
         self.device.playlist2music[self.device.cur_playlist] = name
         cur_playlist = self.device.cur_playlist
         self.log.info(f"cur_music {self.get_cur_music()}")
+
         # 把 cur_playlist 传过去，要求拿该歌单下的专属 URL！
         url, _ = await self.xiaomusic.music_library.get_music_url(name, cur_playlist)
+
+        # 代理 URL 极速探路与 5 次死链熔断
+        if url and url.startswith("http") and "/proxy/" in url:
+            self.log.info(f"极速探路启动，触发后端代理解析: {url}")
+            is_url_ok = False
+            try:
+                # 给了 3.0 秒，因为触发 JS 插件去目标平台请求真实 URL 需要一点时间
+                timeout = aiohttp.ClientTimeout(total=3.0)
+                async with aiohttp.ClientSession(timeout=timeout) as session:
+                    # 只要拿到 200/206 状态码，瞬间挂断不下载！
+                    async with session.get(url) as resp:
+                        # 200是正常，206是部分内容(也是正常)
+                        if resp.status in (200, 206):
+                            is_url_ok = True
+                            self.log.info(f"探路成功！代理服务器存活，状态码: {resp.status}")
+                        else:
+                            self.log.warning(f"探路发现死链！代理服务器报错，状态码: {resp.status}")
+            except Exception as e:
+                self.log.warning(f"探路超时或网络异常(插件解析失败): {e}")
+
+            # --- 探路失败处理逻辑 ---
+            if not is_url_ok:
+                self._url_failed_cnt += 1
+                self.log.warning(f"当前连续死链次数: {self._url_failed_cnt}")
+
+                if self._url_failed_cnt >= 5:
+                    self.log.error("连续 5 次获取歌曲死链，触发第一层终极熔断！")
+                    self._url_failed_cnt = 0
+                    # 调用大管家的万能报错机制！
+                    await self.xiaomusic.handle_fatal_error(self.did, "连续多次获取歌曲失败，已为您停止")
+                    return
+
+                # 没到 5 次，静默切下一首
+                if self.is_playing and self._last_cmd != "stop":
+                    await asyncio.sleep(0.5)
+                    await self._play_next()
+                return
+
         await self.group_force_stop_xiaoai()
         self.log.info(f"播放 {url}")
 
+        # 设备指令异常拦截 (完全保持原样)
         results = await self.group_player_play(url, name)
         if all(ele is None for ele in results):
             self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
             await asyncio.sleep(1)
             if (
-                self.is_playing
-                and self._last_cmd != "stop"
-                and self._play_failed_cnt < 10
+                    self.is_playing
+                    and self._last_cmd != "stop"
+                    and self._play_failed_cnt < 10
             ):
                 self._play_failed_cnt = self._play_failed_cnt + 1
                 await self._play_next()
             return
+
         # 重置播放失败次数
         self._play_failed_cnt = 0
+        self._url_failed_cnt = 0
 
         self.log.info(f"【{name}】已经开始播放了")
 
@@ -374,7 +418,7 @@ class XiaoMusicDevice:
         self._start_time = time.time()
         self._paused_time = 0
 
-        # e获取时长也传 cur_playlist
+        # 获取时长也传 cur_playlist
         sec = await self.xiaomusic.music_library.get_music_duration(name, cur_playlist)
         # 存储真实歌曲时长
         self._duration = sec
