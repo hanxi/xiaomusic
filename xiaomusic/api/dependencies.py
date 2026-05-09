@@ -2,18 +2,18 @@
 
 import hashlib
 import secrets
-import time  # 🚀 新增：用于生成 7 天免密 Cookie 的过期时间（exp）
+import time  # 用于生成 7 天免密 Cookie 的过期时间（exp）
 from typing import (
     TYPE_CHECKING,
     Annotated,
 )
 
-import jwt  # 🚀 新增：用于生成和验证 JWT Token
+import jwt  # 用于生成和验证 JWT Token
 from fastapi import (
     Depends,
     HTTPException,
     Request,
-    Response,  # 🚀 新增：引入 Response 用于写入 Cookie
+    Response,  # 引入 Response 用于写入 Cookie
     status,
 )
 from fastapi.security import (
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from xiaomusic.config import Config
     from xiaomusic.xiaomusic import XiaoMusic
 
-# 🚀 修改：关闭基础认证的自动抛错，让我们接管验证流程
+# 关闭基础认证的自动抛错，让我们接管验证流程
 security = HTTPBasic(auto_error=False)
 
 
@@ -104,7 +104,7 @@ config: "Config" = _LazyProxy("_config")  # type: ignore
 log: "logging.Logger" = _LazyProxy("_log")  # type: ignore
 
 
-# 🚀 修改：增加了 request 和 response 参数以操作 Cookie，并将 credentials 设为 Optional
+# 增加了 request 和 response 参数以操作 Cookie，并将 credentials 设为 Optional
 def verification(
     request: Request,
     response: Response,
@@ -112,7 +112,7 @@ def verification(
 ):
     """HTTP Basic 认证"""
     # ========================================================
-    # 🚀 新增：7天免密模块 开始 (API拦截层)
+    # 7天免密模块 开始 (API拦截层)
     # ========================================================
     if config.disable_httpauth:
         return True
@@ -154,7 +154,7 @@ def verification(
         )
 
     # ========================================================
-    # 🚀 新增：验证成功后，在此处派发持久化 Cookie
+    # 验证成功后，在此处派发持久化 Cookie
     # ========================================================
     expire_time = time.time() + 60 * 60 * 24 * 7
     payload = {"sub": credentials.username, "exp": expire_time}
@@ -216,9 +216,13 @@ class AuthStaticFiles(StaticFiles):
 
     async def __call__(self, scope, receive, send) -> None:
         request = Request(scope, receive)
+        # 系统提示音，不走任何校验，直接允许访问(修复启用安全验证后，无法播放系统提示音的问题)
+        if request.url.path.endswith(("/xiaomusic_ok.mp3", "/xiaomusic_error.mp3", "/silence.mp3", "/search.mp3")):
+            await super().__call__(scope, receive, send)
+            return
         if not config.disable_httpauth:
             # ========================================================
-            # 🚀 新增：7天免密模块 开始 (网页静态文件拦截层)
+            # 7天免密模块 开始 (网页静态文件拦截层)
             # ========================================================
             session_secret = hashlib.sha256(
                 config.httpauth_password.encode()
