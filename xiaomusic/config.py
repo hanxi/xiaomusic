@@ -220,6 +220,9 @@ class Config:
     play_type_seq_tts_msg: str = os.getenv(
         "XIAOMUSIC_PLAY_TYPE_SEQ_TTS_MSG", "已经设置为顺序播放"
     )
+    search_prompt_audio: str = os.getenv(
+        "XIAOMUSIC_SEARCH_PROMPT_AUDIO", "xiaomusic_ok.mp3"
+    )
     recently_added_playlist_len: int = int(
         os.getenv("XIAOMUSIC_RECENTLY_ADDED_PLAYLIST_LEN", "50")
     )

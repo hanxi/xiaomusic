@@ -820,8 +820,12 @@ class OnlineMusicService:
         # return proxy_base + "/static/search.mp3"
         return f"{proxy_base}/static/{name}"
 
-    async def _before_play(self, prompt_audio="xiaomusic_ok.mp3"):
-        # 先推送默认【搜索中】音频，搜索到播放url后推送给小爱
+    async def _before_play(self, prompt_audio=None):
+        """播放搜歌前的提示音或静默音（核心作用：打断小爱的原生语音）"""
+        if prompt_audio is None:
+            prompt_audio = getattr(
+                self.xiaomusic.config, "search_prompt_audio", "xiaomusic_ok.mp3"
+            )
         before_url = self.default_url(prompt_audio)
         await self.xiaomusic.play_url(self.xiaomusic.get_cur_did(), before_url)
 
