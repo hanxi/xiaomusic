@@ -817,6 +817,7 @@ class XiaoMusicDevice:
         audio_id = self.config.use_music_audio_id or "1582971365183456177"
         if not (self.config.use_music_api or self.config.continue_play):
             return str(audio_id)
+
         try:
             params = {
                 "query": name,
@@ -828,16 +829,38 @@ class XiaoMusicDevice:
             response = await self.auth_manager.mina_service.mina_request(
                 "/music/search", params
             )
-            for song in response["data"]["songList"]:
-                if song["originName"] == "QQ音乐":
-                    audio_id = song["audioID"]
-                    break
-            # 没找到QQ音乐的歌曲，取第一个
-            if audio_id == 1582971365183456177:
-                audio_id = response["data"]["songList"][0]["audioID"]
-            self.log.debug(f"_get_audio_id. name: {name} songId:{audio_id}")
+            song_list = response.get("data", {}).get("songList", [])
+
+            if song_list:
+                # 先默认拿匹配到的第一首的id垫底（容错兜底）
+                audio_id = song_list[0].get("audioID")
+                # 把传进来的 "歌名-歌手" 拆开
+                target_song = name
+                target_artist = ""
+                if "-" in name:
+                    parts = name.split("-", 1)
+                    target_song = parts[0].strip()
+                    target_artist = parts[1].strip()
+                # 歌手如果有多个只取第一个去匹配
+                first_artist = target_artist
+                if first_artist:
+                    for sep in [";", "；", ",", "，", "&", "、", "/"]:
+                        first_artist = first_artist.replace(sep, "|")
+                    first_artist = first_artist.split("|")[0].strip()
+                # 歌名完全相等，歌手 in 包含
+                for song in song_list:
+                    s_name = song.get("name", "")
+                    s_artist = song.get("artist", {}).get("name", "")
+                    if target_song.lower() == s_name.lower():
+                        if not first_artist or first_artist.lower() in s_artist.lower():
+                            audio_id = song.get("audioID")
+                            break
+
+            self.log.debug(f"_get_audio_id. name: {name} 最终使用的 songId:{audio_id}")
+
         except Exception as e:
-            self.log.error(f"_get_audio_id {e}")
+            self.log.error(f"_get_audio_id 获取失败: {e}")
+
         return str(audio_id)
 
     async def reset_timer_when_answer(self, answer_length):
