@@ -330,7 +330,7 @@
                             <option value="zh-TW-HsiaoYuNeural">曉雨 (女声,台湾)</option>
                         </select>
 
-                        <label for="stop_tts_msg">停止提示音:</label>
+                        <label for="stop_tts_msg">停止提示音 (触屏音箱建议留空):</label>
                         <input id="stop_tts_msg" type="text" value="收到,再见" />
 
                         <label for="play_type_one_tts_msg">单曲循环提示音:</label>
@@ -347,6 +347,12 @@
 
                         <label for="play_type_seq_tts_msg">顺序播放提示音:</label>
                         <input id="play_type_seq_tts_msg" type="text" value="已经设置为顺序播放" />
+
+                        <label for="search_prompt_audio">搜索成功，语音提示:</label>
+                        <select id="search_prompt_audio">
+                            <option value="xiaomusic_ok.mp3" selected>xiaomusic_ok.mp3 ("小Music收到")</option>
+                            <option value="silence.mp3">silence.mp3 (静默)</option>
+                        </select>
                     </div>
                     </div>
                 </div>
