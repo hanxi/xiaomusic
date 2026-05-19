@@ -687,21 +687,11 @@ class XiaoMusic:
         device_list = []
         try:
             if self.auth_manager.mina_service is None:
-                self.log.warning("mina_service 为空，尝试重新初始化")
-                await self.reinit()
-                if self.auth_manager.mina_service is None:
-                    self.log.warning("重新初始化后 mina_service 仍为空")
-                    return device_list
+                self.log.warning("mina_service 为空，返回空设备列表")
+                return device_list
             device_list = await self.auth_manager.mina_service.device_list()
         except Exception as e:
-            self.log.warning(f"Execption {e}")
-            if not self.auth_manager._last_login_ok:
-                await self.reinit()
-                try:
-                    if self.auth_manager.mina_service is not None:
-                        device_list = await self.auth_manager.mina_service.device_list()
-                except Exception as e2:
-                    self.log.warning(f"重新初始化后获取设备列表仍然失败: {e2}")
+            self.log.warning(f"getalldevices Execption: {e}")
         return device_list
 
     async def debug_play_by_music_url(self, arg1=None):
