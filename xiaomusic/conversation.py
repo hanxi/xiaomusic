@@ -238,7 +238,15 @@ class ConversationPoller:
                 }
                 self._check_last_query(last_record)
         except Exception as e:
-            self.log.warning(f"get_latest_ask_by_mina {e}")
+            error_str = str(e)
+            if (
+                "Login failed" in error_str
+                or "70016" in error_str
+                or "401" in error_str
+            ):
+                await self._try_reinit(f"mina API失败: {e}")
+            else:
+                self.log.warning(f"get_latest_ask_by_mina {e}")
         return
 
     def _get_last_query(self, device_id, data):

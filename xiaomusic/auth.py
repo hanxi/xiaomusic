@@ -51,15 +51,15 @@ class AuthManager:
         self.mi_session = ClientSession()
         self.device_manager = device_manager
 
-    async def init_all_data(self):
+    async def init_all_data(self, force_login=False):
         try:
             async with asyncio.timeout(INIT_LOCK_TIMEOUT_SEC):
                 async with self._init_lock:
-                    await self._init_all_data_impl()
+                    await self._init_all_data_impl(force_login)
         except asyncio.TimeoutError:
             self.log.warning("init_all_data 超时，可能被其他调用持有锁")
 
-    async def _init_all_data_impl(self):
+    async def _init_all_data_impl(self, force_login=False):
         self.mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
         self.log.info(
             f"[AUTH] init_all_data 开始, "
@@ -68,9 +68,14 @@ class AuthManager:
             f"config.account={self.config.account}, "
             f"config.password={'***' if self.config.password else '(空)'}, "
             f"auth.json存在={os.path.isfile(os.path.join(self.config.conf_path, 'auth.json'))}, "
-            f".mi.token存在={os.path.isfile(self.mi_token_home)}"
+            f".mi.token存在={os.path.isfile(self.mi_token_home)}, "
+            f"force_login={force_login}"
         )
-        is_need_login = await self.need_login()
+        if force_login:
+            is_need_login = True
+            self.log.info("[AUTH] force_login=True，强制重新登录")
+        else:
+            is_need_login = await self.need_login()
         is_can_login = await self.can_login()
         self.log.info(f"[AUTH] need_login={is_need_login}, can_login={is_can_login}")
         if is_need_login and is_can_login:
@@ -181,14 +186,15 @@ class AuthManager:
                 refreshed = await self._try_fresh_session_and_relogin(mi_account)
                 if refreshed:
                     self.log.info("[AUTH-LOGIN] 使用全新 session 重新登录后成功")
-                    login_result = True
+                    return True
                 else:
                     self.mina_service = None
                     self.miio_service = None
                     self._last_login_ok = False
                     self._last_login_time = time.time()
                     self.log.warning(
-                        "[AUTH-LOGIN] 最终登录失败，passToken 可能已过期或被吊销，"
+                        "[AUTH-LOGIN] 最终登录失败，"
+                        "passToken 可能已过期或被吊销，"
                         "建议重新扫码登录或检查网络"
                     )
                     return False
@@ -196,6 +202,7 @@ class AuthManager:
             self._consecutive_failures = 0
             self.mina_service = MiNAService(mi_account)
             self.miio_service = MiIOService(mi_account)
+            self._patch_account(mi_account)
             self.login_acount = self.config.account
             self.login_password = self.config.password
             self._last_login_ok = True
@@ -262,6 +269,7 @@ class AuthManager:
                 self.mi_session = new_session
                 self.mina_service = MiNAService(new_account)
                 self.miio_service = MiIOService(new_account)
+                self._patch_account(new_account)
                 self.login_acount = self.config.account
                 self.login_password = self.config.password
                 self._last_login_ok = True
@@ -288,42 +296,37 @@ class AuthManager:
                 if not relogin:
                     raise
                 error_msg = str(exc)
-                is_70016 = "70016" in error_msg or "登录验证失败" in error_msg
-                is_401 = "401" in error_msg or "Login failed" in error_msg
+                auth_manager.log.warning(
+                    f"[PATCH-mi_request] mi_request 失败: {error_msg}, "
+                    f"尝试从 auth.json 恢复 passToken 后重试..."
+                )
 
-                if is_70016:
-                    auth_manager.log.warning(
-                        "[PATCH-mi_request] 检测到 70016(登录验证失败)，"
-                        f"url={url}, 尝试使用全新 session 恢复..."
-                    )
-                    refreshed = await auth_manager._try_fresh_session_and_relogin(
-                        mi_account
-                    )
-                    if refreshed:
-                        auth_manager.log.info(
-                            "[PATCH-mi_request] 70016 恢复成功，重试原始请求"
-                        )
-                        return await auth_manager.mina_service.mina_request(
-                            sid, url, data, headers, False
-                        )
-                    raise
+                mi_account.session.cookie_jar.clear()
+                auth_manager.log.info("[PATCH-mi_request] 已清理 session cookie jar")
 
-                if is_401:
-                    auth_manager.set_token(mi_account)
-                    if mi_account.token and "passToken" in mi_account.token:
-                        try:
-                            login_ok = await mi_account.login(sid)
-                            if login_ok:
-                                auth_manager.log.info(
-                                    "[PATCH-mi_request] 从 auth.json 恢复 passToken 后重新登录成功"
-                                )
-                                return await original_mi_request(
-                                    sid, url, data, headers, False
-                                )
-                        except Exception as e2:
-                            auth_manager.log.warning(
-                                f"[PATCH-mi_request] 恢复 passToken 后重新登录仍然失败: {e2}"
+                auth_manager.set_token(mi_account)
+                if mi_account.token and "passToken" in mi_account.token:
+                    try:
+                        login_ok = await mi_account.login(sid)
+                        if login_ok:
+                            auth_manager.log.info(
+                                "[PATCH-mi_request] 恢复 passToken 后重新登录成功，重试原始请求"
                             )
+                            return await original_mi_request(
+                                sid, url, data, headers, False
+                            )
+                        else:
+                            auth_manager.log.warning(
+                                "[PATCH-mi_request] 恢复 passToken 后 login 仍返回 False"
+                            )
+                    except Exception as e2:
+                        auth_manager.log.warning(
+                            f"[PATCH-mi_request] 恢复 passToken 后重新登录异常: {e2}"
+                        )
+                else:
+                    auth_manager.log.warning(
+                        "[PATCH-mi_request] auth.json 中无有效 passToken，无法恢复"
+                    )
                 raise
 
         mi_account.mi_request = patched_mi_request

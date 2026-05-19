@@ -243,6 +243,43 @@ def downloadlog():
         return {"message": "File not found."}
 
 
+@router.get("/api/debug/simulate_token_expire")
+async def simulate_token_expire():
+    """模拟 token 过期（调试用）
+
+    访问 http://IP:PORT/api/debug/simulate_token_expire 即可触发，
+    模拟小米服务器端 serviceToken 过期后 mi_request 内部的行为：
+    1. 清空内存 token (self.token = None)
+    2. 删除 .mi.token 文件
+    """
+    auth = xiaomusic.auth_manager
+
+    if auth.mina_service is None:
+        return {"ret": "FAIL", "msg": "mina_service 为空，请先正常启动并登录"}
+
+    if auth.mina_service.account and auth.mina_service.account.token:
+        old_keys = list(auth.mina_service.account.token.keys())
+    else:
+        old_keys = []
+
+    auth.mina_service.account.token = None
+
+    token_file = os.path.join(auth.config.conf_path, ".mi.token")
+    token_deleted = False
+    if os.path.exists(token_file):
+        os.remove(token_file)
+        token_deleted = True
+
+    return {
+        "ret": "OK",
+        "msg": "已模拟 token 过期",
+        "old_token_keys": old_keys,
+        "token_now": "None",
+        "mi_token_file_deleted": token_deleted,
+        "hint": "现在去网页看设备列表，观察日志中的 [AUTH] 输出",
+    }
+
+
 @router.get("/latestversion")
 async def latest_version():
     """获取最新版本"""
