@@ -29,7 +29,11 @@ from xiaomusic.const import (
 )
 from xiaomusic.events import DEVICE_CONFIG_CHANGED
 from xiaomusic.utils.file_utils import chmodfile
-from xiaomusic.utils.text_utils import custom_sort_key, list2str
+from xiaomusic.utils.text_utils import (
+    custom_sort_key,
+    list2str,
+    parse_ordinal_suffix,
+)
 
 
 class XiaoMusicDevice:
@@ -314,15 +318,49 @@ class XiaoMusicDevice:
             self.log.info(f"没有歌曲播放了 name:{name} search_key:{search_key}")
             return
 
-        # 模糊搜索（支持多结果选择）
         max_results = self.config.fuzzy_match_max_results
-        names = self.xiaomusic.music_library.find_real_music_name(name, n=max_results)
-        self.log.info(f"play_internal. 搜索关键词:{name} 匹配数量:{len(names)}")
+        auto_index = None
+
+        parsed_name, parsed_index = parse_ordinal_suffix(name)
+        if parsed_index is not None:
+            full_names = self.xiaomusic.music_library.find_real_music_name(
+                name, n=max_results
+            )
+            if full_names:
+                self.log.info(
+                    f"完整名称'{name}'有{len(full_names)}条匹配，优先使用完整名称搜索"
+                )
+                names = full_names
+            else:
+                self.log.info(
+                    f"完整名称'{name}'无匹配，使用'{parsed_name}'搜索并自动选择第{parsed_index}个"
+                )
+                name = parsed_name
+                search_key = parsed_name
+                auto_index = parsed_index
+                names = self.xiaomusic.music_library.find_real_music_name(
+                    name, n=max_results
+                )
+        else:
+            names = self.xiaomusic.music_library.find_real_music_name(
+                name, n=max_results
+            )
+
+        self.log.info(
+            f"play_internal. 搜索关键词:{name} 匹配数量:{len(names)} auto_index:{auto_index}"
+        )
         if len(names) > 1:
             for idx, music_name in enumerate(names, 1):
                 self.log.info(f"  第{idx}个: {music_name}")
 
         if len(names) > 1:
+            if auto_index is not None and 1 <= auto_index <= len(names):
+                self._pending_selection = names
+                self._pending_selection_count = len(names)
+                self.log.info(f"自动选择第{auto_index}个: {names[auto_index - 1]}")
+                await self.handle_selection(auto_index)
+                return
+
             self._pending_selection = names
             self._pending_selection_count = len(names)
             selection_text = (

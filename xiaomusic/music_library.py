@@ -611,7 +611,9 @@ class MusicLibrary:
                 extra_search_index=self._extra_index_search,
             )
             real_names.sort(key=custom_sort_key)
-        self.log.info(f"没找到歌曲【{name}】")
+        if not real_names:
+            self.log.info(f"没找到歌曲【{name}】")
+            return []
         return real_names[:n]
 
     def find_real_music_list_name(self, list_name):

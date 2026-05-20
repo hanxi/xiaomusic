@@ -220,6 +220,43 @@ def chinese_to_number(chinese: str) -> int:
     return result
 
 
+_ORDINAL_SUFFIX_RE = re.compile(
+    r"^(.+?)(第[零一二三四五六七八九十百千万亿]+[个首条集部曲期版])$"
+)
+
+
+def parse_ordinal_suffix(text):
+    """从文本末尾解析序号后缀
+
+    例如："爸爸的头不见了第二个" → ("爸爸的头不见了", 2)
+         "爸爸的头不见了第三集" → ("爸爸的头不见了", 3)
+
+    Args:
+        text: 待解析的文本
+
+    Returns:
+        tuple: (基础文本, 序号) 或 (原始文本, None)
+    """
+    if not text:
+        return text, None
+
+    match = _ORDINAL_SUFFIX_RE.match(text)
+    if not match:
+        return text, None
+
+    base_text = match.group(1)
+    ordinal_part = match.group(2)
+    num_match = re.match(r"第([零一二三四五六七八九十百千万亿]+)", ordinal_part)
+    if not num_match:
+        return text, None
+
+    index = chinese_to_number(num_match.group(1))
+    if index < 1:
+        return text, None
+
+    return base_text, index
+
+
 def parse_str_to_dict(s: str, d1: str = ",", d2: str = ":") -> dict:
     """
     解析字符串为字典
