@@ -361,6 +361,21 @@ class XiaoMusicDevice:
                 await self.handle_selection(auto_index)
                 return
 
+            if not self.config.enable_multi_result_selection:
+                action = self.config.multi_result_action
+                if action == "first":
+                    selected_index = 1
+                else:
+                    selected_index = random.randint(1, len(names))
+                selected_name = names[selected_index - 1]
+                self.log.info(
+                    f"多结果选择已关闭，按'{action}'处理，选择第{selected_index}个: {selected_name}"
+                )
+                self._pending_selection = names
+                self._pending_selection_count = len(names)
+                await self._playmusic(selected_name)
+                return
+
             self._pending_selection = names
             self._pending_selection_count = len(names)
             selection_text = (

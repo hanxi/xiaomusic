@@ -268,6 +268,20 @@
                             <option value="true" selected>true</option>
                             <option value="false">false</option>
                         </select>
+
+                        <label for="enable_multi_result_selection">开启多结果选择功能:</label>
+                        <select id="enable_multi_result_selection" onchange="toggleMultiResultAction()">
+                            <option value="true" selected>开启</option>
+                            <option value="false">关闭</option>
+                        </select>
+
+                        <div id="multi_result_action_row" style="display:none;">
+                            <label for="multi_result_action">多结果处理:</label>
+                            <select id="multi_result_action">
+                                <option value="random" selected>随机播放</option>
+                                <option value="first">从第一首开始播放</option>
+                            </select>
+                        </div>
                     </div>
                     </div>
                 </div>

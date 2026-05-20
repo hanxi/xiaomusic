@@ -88,6 +88,9 @@ $(function () {
     }
 
     autoSelectOne();
+    if (typeof toggleMultiResultAction === "function") {
+      toggleMultiResultAction();
+    }
   });
 
   $(".save-button").on("click", () => {
@@ -118,6 +121,15 @@ $(function () {
       }
     });
   });
+
+  window.toggleMultiResultAction = function () {
+    var val = $("#enable_multi_result_selection").val();
+    if (val === "false") {
+      $("#multi_result_action_row").show();
+    } else {
+      $("#multi_result_action_row").hide();
+    }
+  };
 
   $("#get_music_list").on("click", () => {
     var music_list_url = $("#music_list_url").val();
