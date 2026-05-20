@@ -70,7 +70,6 @@ class XiaoMusicDevice:
         self._duration = 0
         self._paused_time = 0
         self._play_failed_cnt = 0
-        self._url_failed_cnt = 0  # 新增：URL探路失败专属计数器
 
         self._play_list = []
 
@@ -85,6 +84,8 @@ class XiaoMusicDevice:
         self._add_song_timer = None
         # TTS 播放定时器
         self._tts_timer = None
+        # 用于预缓存下一首的定时器
+        self._prefetch_timer = None
 
     @property
     def did(self):
@@ -167,31 +168,83 @@ class XiaoMusicDevice:
         """播放音乐（外部接口）"""
         return await self._playmusic(name)
 
-    def update_playlist(self):
-        """初始化/更新播放列表"""
-        # 没有重置 list 且非初始化
+    def update_playlist(self, force_reshuffle=False):
+        """
+        初始化或更新播放列表。
+
+        【核心架构特点】：
+        1. 状态保持 (Stateful Shuffle)：随机模式下，生成一次乱序列表后永久保持，避免反复洗牌导致预缓存断链和歌曲无限循环。
+        2. 洗牌置顶 (Pin-to-Top)：当发生全量重洗时，将当前正在播放的歌曲强行“钉”在列表最顶端(index 0)，完美闭环预缓存机制。
+        3. 增量更新 (Incremental Update)：歌单发生变化（如自动追加了歌手新歌）时，不打乱原有播放顺序，仅将新歌洗牌后追加到队尾。
+
+        Args:
+            force_reshuffle (bool): 是否强制彻底重新洗牌（用于切换模式、切换歌单、或一轮播放触底时）
+        """
+        # 1. 兜底保护：如果没有重置 list 且当前歌单在系统里不存在，默认切到"全部"
         if self.device.cur_playlist not in self.xiaomusic.music_library.music_list:
             self.device.cur_playlist = "全部"
 
         list_name = self.device.cur_playlist
-        self._play_list = copy.copy(self.xiaomusic.music_library.music_list[list_name])
+        # 获取大管家（Library）里最新鲜的歌单数据
+        latest_list = self.xiaomusic.music_library.music_list[list_name]
 
+        # ==========================================
+        # 随机播放模式 (PLAY_TYPE_RND) 的调度
+        # ==========================================
         if self.device.play_type == PLAY_TYPE_RND:
-            random.shuffle(self._play_list)
-            self.log.info(
-                f"随机打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
-            )
+            # 判断是否需要【全量重洗牌】的三个条件：
+            # A. 外部明确要求强洗 (force_reshuffle=True)
+            # B. 当前播放列表是空的 (系统刚启动)
+            # C. 当前播放列表和最新的歌单毫无交集 (说明用户切了全新的歌单)
+            if (
+                force_reshuffle
+                or not self._play_list
+                or not set(self._play_list).intersection(set(latest_list))
+            ):
+                self._play_list = copy.copy(latest_list)
+                random.shuffle(self._play_list)
+
+                # 2：洗牌置顶 (Pin-to-Top)
+                # 防止洗牌后当前歌曲位置丢失，导致下一首乱跳和预缓存错位
+                cur_music = self.get_cur_music()
+                if cur_music and cur_music in self._play_list:
+                    self._play_list.remove(cur_music)
+                    self._play_list.insert(0, cur_music)
+
+                self.log.info(f"彻底重新洗牌 {list_name}，并将当前歌曲置顶")
+
+            # 【增量更新牌库】
+            else:
+                # 3：增量更新 (Incremental Update)
+                old_list = self._play_list
+                # A. 剔除云端已经被删除的歌，保留依然存在的歌（绝对不改变它们的相对顺序！）
+                self._play_list = [s for s in old_list if s in latest_list]
+
+                # B. 找出最新歌单里多出来的新歌（比如 auto_add_song 追加进来的）
+                new_songs = [s for s in latest_list if s not in old_list]
+                if new_songs:
+                    # 把新来的歌单独洗乱，然后悄悄垫在牌堆的最底下
+                    random.shuffle(new_songs)
+                    self._play_list.extend(new_songs)
+                    self.log.info(
+                        f"歌单有更新，保持原顺序并追加了 {len(new_songs)} 首新歌"
+                    )
+
+        # ==========================================
+        # 顺序/循环模式的处理
+        # ==========================================
         else:
+            self._play_list = copy.copy(latest_list)
             is_online = self.xiaomusic.music_library.is_online_music(list_name)
+
+            # 如果是本地目录歌单，且列表都是纯字符串，执行本地特定的字母自然排序
             if not is_online and len(self._play_list) > 0:
                 has_non_str_item = any(
                     not isinstance(item, str) for item in self._play_list
                 )
                 if not has_non_str_item:
                     self._play_list.sort(key=custom_sort_key)
-            self.log.info(
-                f"没打乱 {list_name} {list2str(self._play_list, self.config.verbose)}"
-            )
+            self.log.info(f"顺序模式更新，不打乱 {list_name}")
 
     async def play(self, name="", search_key=""):
         """播放歌曲（外部接口）"""
@@ -362,6 +415,36 @@ class XiaoMusicDevice:
         self._last_cmd = "playlocal"
         return await self._play_internal(name=name, search_key="", allow_download=False)
 
+    async def prefetch_next_song(self, sleep_sec):
+        """延时后台预加载（缓存）下一首歌曲"""
+        if self._prefetch_timer:
+            self._prefetch_timer.cancel()
+
+        async def _do_prefetch():
+            try:
+                await asyncio.sleep(sleep_sec)
+
+                # 拿下一首歌的名字
+                next_music = self.get_next_music()
+                if not next_music:
+                    return
+
+                # 如果是网络音乐，触发预下载
+                if self.xiaomusic.music_library.is_web_music(next_music):
+                    self.log.info(f"开始后台预先缓存下一首: {next_music}")
+                    cur_playlist = self.device.cur_playlist
+                    # 巧妙利用我们重构过的时长函数，底层会自动走：没缓存 -> 去下载 -> 存硬盘 的闭环
+                    await self.xiaomusic.music_library.get_music_duration(
+                        next_music, cur_playlist
+                    )
+                    self.log.info(f"后台预先缓存完成: {next_music}")
+            except asyncio.CancelledError:
+                pass
+            except Exception as e:
+                self.log.error(f"预加载下一首歌曲失败: {e}")
+
+        self._prefetch_timer = asyncio.create_task(_do_prefetch())
+
     async def _playmusic(self, name):
         """播放音乐的核心实现"""
         # 取消组内所有的下一首歌曲的定时器
@@ -373,72 +456,87 @@ class XiaoMusicDevice:
         cur_playlist = self.device.cur_playlist
         self.log.info(f"cur_music {self.get_cur_music()}")
 
-        # 把 cur_playlist 传过去，要求拿该歌单下的专属 URL！
+        # 获取该歌单下的播放 URL
         url, _ = await self.xiaomusic.music_library.get_music_url(name, cur_playlist)
 
-        # 代理 URL 极速探路与 5 次死链熔断
-        if url and url.startswith("http") and "/proxy/" in url:
+        # 1. 命中硬盘级负向缓存墓碑（url为空）的秒切拦截
+        if not url:
+            self._play_failed_cnt = getattr(self, "_play_failed_cnt", 0) + 1
+            self.log.warning(
+                f"【{name}】命中了死链墓碑标记，立刻拦截跳过！连续失败次数: {self._play_failed_cnt}"
+            )
+
+            if self._play_failed_cnt >= 5:
+                self.log.error("连续获取歌曲失败达到5次，触发系统第一层熔断保护！")
+                self._play_failed_cnt = 0
+                await self.xiaomusic.handle_fatal_error(
+                    self.did, "连续多次获取歌曲失败，已为您停止播放。"
+                )
+            else:
+                await self.set_next_music_timeout(0.5)
+            return
+
+        # 2. 统一系统提示音/TTS 的白名单免探路、免墓碑机制
+        is_system_or_tts = (
+            "/music/tmp/" in url or "silence.mp3" in url or "xiaomusic_" in url
+        )
+
+        # 3. 极速探路器：帮小爱吃下所有的 404/401 炸弹
+        if not is_system_or_tts and url and url.startswith("http") and "/proxy/" in url:
             self.log.info(f"极速探路启动，触发后端代理解析: {url}")
             is_url_ok = False
             try:
-                # 给了 3.0 秒，因为触发 JS 插件去目标平台请求真实 URL 需要一点时间
+                # 给了 3.0 秒超时，让本地解析服务有足够时间反应
                 timeout = aiohttp.ClientTimeout(total=3.0)
                 async with aiohttp.ClientSession(timeout=timeout) as session:
-                    # 只要拿到 200/206 状态码，瞬间挂断不下载！
                     async with session.get(url) as resp:
-                        # 200是正常，206是部分内容(也是正常)
+                        # 如果 music.py 报了 404，在这里会直接被抓个正着！
                         if resp.status in (200, 206):
                             is_url_ok = True
-                            self.log.info(
-                                f"探路成功！代理服务器存活，状态码: {resp.status}"
-                            )
+                            self.log.info(f"探路成功！接口畅通，状态码: {resp.status}")
                         else:
                             self.log.warning(
-                                f"探路发现死链！代理服务器报错，状态码: {resp.status}"
+                                f"探路发现死链！接口报错，状态码: {resp.status}"
                             )
             except Exception as e:
                 self.log.warning(f"探路超时或网络异常(插件解析失败): {e}")
 
-            # --- 探路失败处理逻辑 ---
+            # --- 探路失败（吃下404）处理逻辑 ---
             if not is_url_ok:
-                self._url_failed_cnt += 1
-                self.log.warning(f"当前连续死链次数: {self._url_failed_cnt}")
+                # 统一步调！所有的失败全部使用全局唯一的 _play_failed_cnt 累计！
+                self._play_failed_cnt = getattr(self, "_play_failed_cnt", 0) + 1
+                self.log.warning(f"当前连续失败次数: {self._play_failed_cnt}")
 
-                if self._url_failed_cnt >= 5:
-                    self.log.error("连续 5 次获取歌曲死链，触发第一层终极熔断！")
-                    self._url_failed_cnt = 0
-                    # 调用大管家的万能报错机制！
+                if self._play_failed_cnt >= 5:
+                    self.log.error("连续 5 次获取歌曲死链，触发系统第二层熔断保护！")
+                    self._play_failed_cnt = 0
                     await self.xiaomusic.handle_fatal_error(
-                        self.did, "连续多次获取歌曲失败，已为您停止"
+                        self.did, "连续多次获取歌曲失败，已为您停止播放。"
                     )
                     return
 
-                # 没到 5 次，静默切下一首
+                # 没到 5 次，静默 0.5 秒直接切下一首。小爱甚至都不知道发生过什么！
                 if self.is_playing and self._last_cmd != "stop":
                     await asyncio.sleep(0.5)
                     await self._play_next()
                 return
 
+        # 4. 真正安全的下发播放阶段
         await self.group_force_stop_xiaoai()
-        self.log.info(f"播放 {url}")
+        self.log.info(f"发送指令给小爱，开始播放: {url}")
 
-        # 设备指令异常拦截 (完全保持原样)
         results = await self.group_player_play(url, name)
         if all(ele is None for ele in results):
-            self.log.info(f"播放 {name} 失败. 失败次数: {self._play_failed_cnt}")
+            self._play_failed_cnt = getattr(self, "_play_failed_cnt", 0) + 1
+            self.log.info(f"播放指令发送失败. 连续失败次数: {self._play_failed_cnt}")
             await asyncio.sleep(1)
             if (
                 self.is_playing
                 and self._last_cmd != "stop"
-                and self._play_failed_cnt < 10
+                and self._play_failed_cnt < 5
             ):
-                self._play_failed_cnt = self._play_failed_cnt + 1
                 await self._play_next()
             return
-
-        # 重置播放失败次数
-        self._play_failed_cnt = 0
-        self._url_failed_cnt = 0
 
         self.log.info(f"【{name}】已经开始播放了")
 
@@ -446,18 +544,42 @@ class XiaoMusicDevice:
         self._start_time = time.time()
         self._paused_time = 0
 
-        # 获取时长也传 cur_playlist
+        # 获取音频时长
         sec = await self.xiaomusic.music_library.get_music_duration(name, cur_playlist)
-        # 存储真实歌曲时长
         self._duration = sec
         await self.xiaomusic.analytics.send_play_event(name, sec, self.hardware)
 
-        # 设置下一首歌曲的播放定时器
+        is_radio = self.xiaomusic.music_library.is_web_radio_music(name)
+
+        # 5. 时长质检阶段：拦截下载回来的残次品
         if sec <= 0.1:
-            self.log.info(f"【{name}】不会设置下一首歌的定时器")
+            if is_radio:
+                self.log.info(f"【{name}】是电台流，无限时长，免跳过")
+                self._play_failed_cnt = 0
+            else:
+                self._play_failed_cnt = getattr(self, "_play_failed_cnt", 0) + 1
+                self.log.warning(
+                    f"【{name}】资源无效(获取时长为 {sec})，触发自动跳过。连续失败次数: {self._play_failed_cnt}"
+                )
+
+                if self._play_failed_cnt >= 5:
+                    self.log.error(
+                        "连续获取歌曲失败达到 5 次，触发第一层终极熔断保护！"
+                    )
+                    self._play_failed_cnt = 0
+                    asyncio.ensure_future(
+                        self.xiaomusic.handle_fatal_error(
+                            self.did, "连续多次获取歌曲失败，已为您停止播放。"
+                        )
+                    )
+                else:
+                    await self.set_next_music_timeout(0.5)
             return
 
-        # 计算自动添加歌曲的延迟时间，为当前歌曲时长的一半，但不超过60秒
+        # 只有通过了 404 探路存活 -> 发送指令成功 -> 质检测出时长正常，才允许重置清零！
+        self._play_failed_cnt = 0
+
+        # 计算自动添加歌曲的延迟时间
         if sec > 30:
             sleep_sec = min(sec / 2, 60)
             await self.auto_add_song(cur_playlist, sleep_sec)
@@ -476,6 +598,11 @@ class XiaoMusicDevice:
         # 发布设备配置变更事件
         if self.event_bus:
             self.event_bus.publish(DEVICE_CONFIG_CHANGED)
+
+        # --- 🌟 新增：触发预缓存下一首 🌟 ---
+        # 如果当前歌曲大于 2 秒，则在播放 20 秒后悄悄去下载下一首歌
+        if sec > 20:
+            await self.prefetch_next_song(20)
 
     async def do_tts(self, value):
         """执行TTS（文字转语音）"""
@@ -637,7 +764,13 @@ class XiaoMusicDevice:
                     self.log.info("顺序播放结束")
                     return ""
                 if new_index >= play_list_len:
-                    new_index = 0
+                    if self.device.play_type == PLAY_TYPE_RND:
+                        self.log.info("当前随机列表已播放一轮，触发重新洗牌！")
+                        self.update_playlist(force_reshuffle=True)
+                        # 洗完牌后，当前歌曲被强行置顶在了 0，下一首必定是 1
+                        new_index = 1
+                    else:
+                        new_index = 0
             elif direction == "prev":
                 new_index = index - 1
                 if new_index < 0:
@@ -818,6 +951,15 @@ class XiaoMusicDevice:
         if not (self.config.use_music_api or self.config.continue_play):
             return str(audio_id)
 
+        # 如果 name 为空（如播放 TTS 时），坚决不请求小米接口，会导致小米账号报错。
+        name = name.strip() if name else ""
+        if not name:
+            self.log.debug(
+                "歌名为空(可能是TTS播报)，直接使用默认 audio_id，跳过小米接口查询。"
+            )
+            return str(audio_id)
+        # 修复结束
+
         try:
             params = {
                 "query": name,
@@ -959,12 +1101,15 @@ class XiaoMusicDevice:
             tts = self.config.get_play_type_tts(play_type)
             await self.do_tts(tts)
         self.update_playlist()
+        # 切换模式，强制重新洗牌
+        self.update_playlist(force_reshuffle=True)
 
     async def play_music_list(self, list_name, music_name):
         """播放指定播放列表"""
         self._last_cmd = "play_music_list"
         self.device.cur_playlist = list_name
-        self.update_playlist()
+        # 切换歌单，强制重新洗牌
+        self.update_playlist(force_reshuffle=True)
         if not music_name:
             music_name = self.device.playlist2music.get(list_name, "")
         self.log.info(f"开始播放列表{list_name} {music_name}")
@@ -1052,6 +1197,11 @@ class XiaoMusicDevice:
             self._tts_timer.cancel()
             self._tts_timer = None
             self.log.info("cancel_all_timer _tts_timer.cancel")
+
+        if self._prefetch_timer:
+            self._prefetch_timer.cancel()
+            self._prefetch_timer = None
+            self.log.info("cancel_all_timer _prefetch_timer.cancel")
 
     @classmethod
     def dict_clear(cls, d):

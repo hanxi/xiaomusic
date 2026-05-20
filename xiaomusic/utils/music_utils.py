@@ -45,6 +45,8 @@ from mutagen.wavpack import WavPack
 from PIL import Image
 
 from xiaomusic.const import SUPPORT_MUSIC_TYPE
+from xiaomusic.utils.file_utils import mark_audio_as_failed
+from xiaomusic.utils.network_utils import download_plugin_audio
 
 log = logging.getLogger(__package__)
 
@@ -85,9 +87,12 @@ def is_m4a(url: str) -> bool:
     return url.endswith(".m4a")
 
 
-async def _get_web_music_duration(session, url: str, config) -> float:
+async def _get_web_music_duration(
+    session, url: str, config, cache_path: str = None
+) -> float:
     """
-    异步获取网络音乐文件的完整内容并获取其时长
+    异步获取网络音乐文件的完整内容并获取其时长。
+    实现：下载 -> 测速 -> 质检 -> 失败物理清理
 
     下载完整文件，写入临时文件后调用本地工具（如 ffprobe）获取音频时长
 
@@ -99,30 +104,74 @@ async def _get_web_music_duration(session, url: str, config) -> float:
     Returns:
         返回音频的持续时间（秒），如果失败则返回 0
     """
-    duration = 0
+    target_path = cache_path
+    is_temp = False
 
-    # 使用 aiohttp 异步发起 GET 请求，下载完整音频文件
-    async with session.get(url) as response:
-        array_buffer = await response.read()  # 读取响应的完整二进制内容
+    # 免疫机制。如果是本地 TTS、静音文件、系统提示音，绝对不建墓碑，直接测本地时长
+    is_system_or_tts = (
+        "music/tmp/" in url or "silence.mp3" in url or "xiaomusic_" in url
+    )
+    if is_system_or_tts:
+        from urllib.parse import urlparse
 
-    # 创建一个命名的临时文件，并禁用自动删除（以便后续读取）
-    with tempfile.NamedTemporaryFile(delete=False) as tmp:
-        tmp.write(array_buffer)  # 将下载的完整内容写入临时文件
-        tmp_path = tmp.name  # 获取该临时文件的真实路径
+        parsed_url = urlparse(url)
+        # parsed_url.path 拿到的直接就是 "/music/tmp/xxx.mp3" 或 "/static/silence.mp3"
+        local_path = parsed_url.path.lstrip("/")
+
+        if os.path.exists(local_path):
+            return await get_local_music_duration(local_path, config)
+        return 0
+
+    # 如果没有开启缓存或未传递缓存路径，使用用完即焚的临时文件
+    if not target_path:
+        tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".tmp")
+        target_path = tmp_file.name
+        tmp_file.close()
+        is_temp = True
+    else:
+        # 确保父目录一定存在
+        os.makedirs(os.path.dirname(target_path), exist_ok=True)
 
     try:
-        # 调用 get_local_music_duration 并传入文件路径，而不是文件对象
-        duration = await get_local_music_duration(tmp_path, config)
+        # 调用 network_utils 的流式下载工具 (这里最耗时)
+        success = await download_plugin_audio(session, url, target_path)
+        if not success:
+            # 如果是由于网络 404/401 导致的下载失败，不在这里立物理墓碑！
+            # 留给它未来网络恢复后改过自新的机会，仅返回 0 时长让前线去切歌
+            log.warning(f"网络音频流下载失败(可能是临时故障): {url[:100]}")
+            return 0
+
+        # 测量本地文件时长
+        duration = await get_local_music_duration(target_path, config)
+
+        # 业务质检逻辑：防盗链和残次品拦截 (仅针对持久化缓存)
+        if not is_temp and cache_path:
+            # 只有网络畅通、文件成功下到本地，但确诊时长小于10秒（版权到期给的假静音音频）
+            # 这才是真正的永久性下架，必须立下 .failed 墓碑。
+            if duration < 10:
+                log.warning(
+                    f"检测到高仿无效资源（时长 {duration}s < 10s），确诊版权下架，触发负向缓存立碑"
+                )
+                mark_audio_as_failed(target_path)
+                return 0
+
+        return duration
+
     except Exception as e:
         log.error(f"Error _get_web_music_duration: {e}")
+        return 0
     finally:
-        # 手动删除临时文件，避免残留
-        os.unlink(tmp_path)
+        # 无论成功失败，只要是临时文件，立刻销毁现场
+        if is_temp and os.path.exists(target_path):
+            try:
+                os.unlink(target_path)
+            except Exception as e:
+                log.error(f"清理临时文件失败: {e}")
 
-    return duration
 
-
-async def get_web_music_duration(url: str, config) -> tuple[float, str]:
+async def get_web_music_duration(
+    url: str, config, cache_path: str = None
+) -> tuple[float, str]:
     """
     获取网络音乐时长
 
@@ -152,9 +201,9 @@ async def get_web_music_duration(url: str, config) -> tuple[float, str]:
         # 设置总超时时间为60秒
         timeout = aiohttp.ClientTimeout(total=60)
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            duration = await _get_web_music_duration(session, url, config)
+            duration = await _get_web_music_duration(session, url, config, cache_path)
     except Exception as e:
-        log.error(f"Error get_web_music_duration: {e}")
+        log.error(f"获取网络音乐时长失败: {e}")
     return duration, url
 
 
@@ -744,3 +793,54 @@ def set_music_tag_to_file(file_path: str, info: Metadata) -> str:
     except Exception as e:
         log.exception(f"Error saving tags: {e}")
         return "Error saving tags"
+
+
+def get_real_audio_format(file_path: str) -> str:
+    """通过读取文件头 Magic Number 瞬间嗅探真实音频格式"""
+    try:
+        with open(file_path, "rb") as f:
+            header = f.read(32)
+
+        if header.startswith(b"fLaC"):
+            return "flac"
+        if header.startswith(b"OggS"):
+            return "ogg"
+        if b"ftypM4A" in header or b"ftypm4a" in header or b"m4a" in header:
+            return "m4a"
+        if header.startswith(b"\xff\xf1") or header.startswith(b"\xff\xf9"):
+            return "aac"
+        if header.startswith(b"ID3") or header.startswith(b"\xff\xfb"):
+            return "mp3"
+
+        return "mp3"  # 兜底
+    except Exception:
+        return "mp3"
+
+
+def build_cache_file_path(datab64: str, name: str, cache_dir: str) -> str:
+    """
+    根据核心字段生成唯一缓存路径，彻底免疫一切前端和插件附加的动态干扰字段。
+    """
+    if not datab64 or not cache_dir:
+        return ""
+
+    try:
+        # 1. 解开 Base64
+        raw_data = json.loads(base64.b64decode(datab64).decode("utf-8"))
+
+        # 2. 提取全系统统一的“身份证号”
+        platform = str(raw_data.get("platform", ""))
+        song_id = str(raw_data.get("id", ""))
+
+        if platform and song_id:
+            fingerprint = f"{platform}_{song_id}"
+            short_hash = hashlib.md5(fingerprint.encode()).hexdigest()[:8]
+        else:
+            short_hash = hashlib.md5(name.strip().encode()).hexdigest()[:8]
+
+    except Exception:
+        short_hash = hashlib.md5(datab64.encode()).hexdigest()[:8]
+
+    safe_name = re.sub(r"[^\w\-_.\s()（）\[\]【】]", "_", name)
+    filename = f"{short_hash}_{safe_name}.mp3"
+    return os.path.join(cache_dir, "songs", filename)

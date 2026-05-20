@@ -133,16 +133,20 @@ async def get_plugin_source_url(
         )
         if media_source and media_source.get("url"):
             source_url = media_source.get("url")
+            log.info(f"plugin-url 成功解析: {json_data} -> {source_url}")
+            return RedirectResponse(url=source_url)
         else:
-            source_url = xiaomusic.default_url()
-        log.info(f"plugin-url {json_data} {source_url}")
-        # 直接重定向到真实URL
-        return RedirectResponse(url=source_url)
+            # 没有有效链接时，直接抛出 404 错误！
+            log.warning(f"plugin-url 解析失败(链接为空): {json_data}")
+            raise HTTPException(status_code=404, detail="获取真实音频链接为空")
+
+    except HTTPException:
+        # 允许 HTTPException 继续向上传递，确保 404 能被前线捕获
+        raise
     except Exception as e:
         log.error(f"获取真实音乐URL失败: {e}")
-        # 如果代理获取失败，重定向到原始URL
-        source_url = xiaomusic.default_url()
-        return RedirectResponse(url=source_url)
+        # 发生其他未知异常时，同样抛出错误
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.post("/api/play/getMediaSource")

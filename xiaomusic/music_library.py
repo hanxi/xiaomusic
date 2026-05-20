@@ -12,13 +12,19 @@ import time
 import urllib.parse
 from collections import OrderedDict
 from dataclasses import asdict
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from xiaomusic.const import SUPPORT_MUSIC_TYPE
 from xiaomusic.events import CONFIG_CHANGED
-from xiaomusic.utils.file_utils import not_in_dirs, traverse_music_directory
+from xiaomusic.utils.file_utils import (
+    clean_old_caches,
+    is_cache_valid,
+    not_in_dirs,
+    traverse_music_directory,
+)
 from xiaomusic.utils.music_utils import (
     Metadata,
+    build_cache_file_path,
     extract_audio_metadata,
     get_local_music_duration,
     get_web_music_duration,
@@ -804,7 +810,28 @@ class MusicLibrary:
         self.try_save_tag_cache()
         return "OK"
 
-    # 🌟 修改参数，增加 playlist_name
+    def _extract_cache_path_from_url(self, url: str, name: str) -> str:
+        """从代理 URL 中提取 datab64 并计算物理缓存路径"""
+        if not url or not url.startswith("self:///api/proxy/plugin-url"):
+            return ""
+        try:
+            query = urlparse(url).query
+            params = parse_qs(query)
+            datab64 = params.get("data", [""])[0]
+
+            if datab64:
+                actual_cache_dir = self.config.cache_dir
+                if not actual_cache_dir.startswith(self.config.music_path):
+                    actual_cache_dir = os.path.join(
+                        self.config.music_path, actual_cache_dir.lstrip("\\/")
+                    )
+
+                # 将纠正后的 actual_cache_dir 传给底层
+                return build_cache_file_path(datab64, name, actual_cache_dir)
+        except Exception as e:
+            self.log.debug(f"提取缓存路径失败: {e}")
+        return ""
+
     async def get_music_duration(self, name: str, playlist_name: str = None) -> float:
         """获取歌曲时长
 
@@ -827,26 +854,79 @@ class MusicLibrary:
             self.log.info(f"电台 {name} 不会有播放时长")
             return 0
 
-        # 网络音乐：使用内存缓存
+        # --- 优化后的网络音乐时长获取及持久化缓存 ---
         if self.is_web_music(name):
-            # 先检查内存缓存
-            if name in self._web_music_duration_cache:
-                duration = self._web_music_duration_cache[name]
-                self.log.debug(f"从内存缓存读取网络音乐 {name} 时长: {duration} 秒")
-                return duration
-
-            # 缓存中没有，获取时长
             try:
-                url, _ = await self._get_web_music_url(name, playlist_name)  # 传参
-                duration, _ = await get_web_music_duration(url, self.config)
-                self.log.info(f"网络音乐 {name} 时长: {duration} 秒")
+                # 直接从字典里拿原始带 base64 的数据，防止被下层函数截胡
+                raw_url = None
+                if playlist_name:
+                    raw_url = self.playlist_music_urls.get(f"{playlist_name}::{name}")
+                if not raw_url:
+                    raw_url = self.all_music.get(name)
 
-                # 存入内存缓存（不持久化）
+                # 尝试计算缓存路径 (利用最原始的 URL)
+                cache_path = None
+                if getattr(self.config, "cache_max_size_mb", 0) > 0 and raw_url:
+                    cache_path = self._extract_cache_path_from_url(raw_url, name)
+
+                # 分支判断：检查物理缓存
+                # 如果物理文件在，直接测
+                if cache_path:
+                    cache_status = is_cache_valid(cache_path)
+
+                    if cache_status == -1:
+                        self.log.warning(
+                            f"获取时长时命中负向缓存(死链)，直接返回0: {name}"
+                        )
+                        return 0
+                    elif cache_status == 1:
+                        os.utime(cache_path, None)
+
+                        if name in self._web_music_duration_cache:
+                            self.log.debug(f"物理文件存在，命中内存时长: {name}")
+                            return self._web_music_duration_cache[name]
+
+                        duration = await get_local_music_duration(
+                            cache_path, self.config
+                        )
+                        self.log.info(
+                            f"命中物理缓存: {cache_path}, 测得时长: {duration}"
+                        )
+                        if duration > 0:
+                            self._web_music_duration_cache[name] = duration
+                        return duration
+
+                # 4. 如果走到这里，说明【没开启缓存】或者【文件不存在/预下载失败】
+                # 此时我们才需要真正去拿能够下载的最终 URL
+                url, origin_url = await self._get_web_music_url(name, playlist_name)
+
+                # 【情况 A】没开缓存功能，走兜底临时文件下载
+                if not cache_path:
+                    if name in self._web_music_duration_cache:
+                        return self._web_music_duration_cache[name]
+                    duration, _ = await get_web_music_duration(url, self.config, None)
+                    if duration > 0:
+                        self._web_music_duration_cache[name] = duration
+                    return duration
+
+                # 【情况 B】开启了缓存，但物理文件缺失，强制下载并缓存
+                self.log.info(f"缓存文件缺失，强制触发重新下载: {name}")
+                duration, _ = await get_web_music_duration(url, self.config, cache_path)
+
+                # 下载完后后台清理与记账
                 if duration > 0:
                     self._web_music_duration_cache[name] = duration
-                    self.log.info(f"已缓存网络音乐 {name} 时长到内存: {duration} 秒")
+                    cleanup_task = asyncio.create_task(
+                        asyncio.to_thread(
+                            clean_old_caches,
+                            self.config.cache_dir,
+                            getattr(self.config, "cache_max_size_mb", 0),
+                        )
+                    )
+                    cleanup_task.add_done_callback(lambda t: t.exception())
 
                 return duration
+
             except Exception as e:
                 self.log.exception(f"获取网络音乐 {name} 时长失败: {e}")
                 return 0
@@ -1099,6 +1179,26 @@ class MusicLibrary:
             url = self.all_music.get(name)
 
         self.log.info(f"get_music_url web music. name:{name}, url:{url}")
+
+        # --- 小爱音箱端缓存截胡逻辑 ---
+        if getattr(self.config, "cache_max_size_mb", 0) > 0:
+            cache_path = self._extract_cache_path_from_url(url, name)
+            if cache_path:
+                cache_status = is_cache_valid(cache_path)
+                if cache_status == -1:
+                    # 确诊死链，直接打回空链接，触发秒切
+                    self.log.warning(
+                        f"命中负向缓存(死链墓碑)，拒绝网络请求，直接跳过: {name}"
+                    )
+                    return "", None
+
+                if cache_status == 1:
+                    # 正常命中缓存
+                    os.utime(cache_path, None)  # 刷新保命时间
+                    local_url = self._get_file_url(cache_path)
+                    self.log.info(f"音箱端命中本地缓存，直链下发: {local_url}")
+                    return local_url, None
+        # --- 音箱截胡逻辑结束 ---
 
         # 需要通过API获取真实播放地址
         if self.is_need_use_play_music_api(name):
