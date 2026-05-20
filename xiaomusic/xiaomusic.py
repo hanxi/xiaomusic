@@ -5,6 +5,8 @@ import os
 import re
 from logging.handlers import RotatingFileHandler
 
+import aiohttp
+
 from xiaomusic import __version__
 from xiaomusic.analytics import Analytics
 from xiaomusic.auth import AuthManager
@@ -26,7 +28,7 @@ from xiaomusic.file_watcher import FileWatcherManager
 from xiaomusic.music_library import MusicLibrary
 from xiaomusic.online_music import OnlineMusicService
 from xiaomusic.plugin import PluginManager
-from xiaomusic.utils.network_utils import downloadfile
+from xiaomusic.utils.network_utils import download_plugin_audio, downloadfile
 from xiaomusic.utils.system_utils import deepcopy_data_no_sensitive_info
 from xiaomusic.utils.text_utils import chinese_to_number
 
@@ -172,6 +174,12 @@ class XiaoMusic:
 
         if not os.path.exists(self.config.download_path):
             os.makedirs(self.config.download_path)
+
+        songs_cache_dir = os.path.join(self.config.cache_dir, "songs")
+        if getattr(self.config, "cache_max_size_mb", 0) > 0 and not os.path.exists(
+            songs_cache_dir
+        ):
+            os.makedirs(songs_cache_dir, exist_ok=True)
 
         self.continue_play = self.config.continue_play
 
@@ -453,6 +461,16 @@ class XiaoMusic:
         return await self.online_music_service.push_music_list_play(
             did, song_list, list_name
         )
+
+    async def download_plugin_audio(self, url: str, save_path: str) -> bool:
+        """提供给插件或外部调用的独立流式音频下载接口"""
+        try:
+            # 独立开个 session，防止影响全局连接池
+            async with aiohttp.ClientSession() as session:
+                return await download_plugin_audio(session, url, save_path)
+        except Exception as e:
+            self.log.error(f"XiaoMusic.download_plugin_audio failed: {e}")
+            return False
 
     # ===========================================================
 

@@ -96,6 +96,7 @@ class Config:
     download_path: str = os.getenv("XIAOMUSIC_DOWNLOAD_PATH", "music/download")
     conf_path: str = os.getenv("XIAOMUSIC_CONF_PATH", "conf")
     cache_dir: str = os.getenv("XIAOMUSIC_CACHE_DIR", "music/cache")
+    cache_max_size_mb: int = int(os.getenv("XIAOMUSIC_CACHE_MAX_SIZE_MB", "500"))
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "http://192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))  # 监听端口
     public_port: int = int(os.getenv("XIAOMUSIC_PUBLIC_PORT", 58090))  # 歌曲访问端口
