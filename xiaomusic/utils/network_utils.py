@@ -454,3 +454,42 @@ async def text_to_mp3(
         raise RuntimeError(f"生成语音文件失败: {e}") from e
 
     return mp3_path
+
+
+async def download_plugin_audio(
+    session: aiohttp.ClientSession, url: str, save_path: str
+) -> bool:
+    """
+    基于插件的流式下载函数
+    """
+    try:
+        # 设置300秒总超时，防止死链挂起
+        async with session.get(
+            url, timeout=aiohttp.ClientTimeout(total=300)
+        ) as response:
+            if response.status not in (200, 206):
+                log.warning(
+                    f"download_plugin_audio HTTP status {response.status} for url: {url[:100]}"
+                )
+                return False
+
+            # 使用 .downloading 临时后缀，确保下载完整后再重命名
+            tmp_save_path = save_path + ".downloading"
+            with open(tmp_save_path, "wb") as f:
+                async for chunk in response.content.iter_chunked(8192):
+                    f.write(chunk)
+
+            if os.path.exists(save_path):
+                os.remove(save_path)
+            os.rename(tmp_save_path, save_path)
+            log.info(f"download_plugin_audio success: {save_path}")
+            return True
+    except Exception as e:
+        log.error(f"download_plugin_audio failed for {url[:100]}: {e}")
+        # 清理残缺的临时文件
+        if os.path.exists(save_path + ".downloading"):
+            try:
+                os.remove(save_path + ".downloading")
+            except Exception:
+                pass
+        return False

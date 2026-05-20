@@ -213,3 +213,106 @@ async def clean_temp_dir(config):
         log.info("定时清理临时文件完成，已删除并重建临时目录")
     except Exception as e:
         log.exception(f"清理临时文件异常: {e}")
+
+
+def mark_audio_as_failed(file_path: str) -> None:
+    """
+    物理处理小于10秒的音频文件：追加 .failed 后缀
+    """
+    if not file_path or not os.path.exists(file_path):
+        return
+        # 如果文件已经带了 .failed 后缀，不再重复处理
+    if file_path.endswith(".failed"):
+        return
+    try:
+        failed_path = file_path + ".failed"
+        # 如果已经存在 failed 文件，先删掉防止 replace 报错
+        if os.path.exists(failed_path):
+            os.remove(failed_path)
+
+        # 直接改名加后缀，完全保留里面下载下来的数据
+        os.replace(file_path, failed_path)
+
+        log.info(f"已物理追加失效后缀保留现场: {failed_path}")
+    except Exception as e:
+        log.error(f"处理失效音频文件时出错: {e}")
+
+
+def is_cache_valid(path: str) -> int:
+    """
+    验证缓存文件状态 (重构为 3 态返回值)。
+    返回:
+       1 : 缓存有效 (存在且非0字节，且无 .failed)
+      -1 : 确诊死链 (存在 .failed 墓碑标记)
+       0 : 无有效缓存 (文件不存在或为0字节，需要重新下载)
+    """
+    if not path:
+        return 0
+
+    # 优先判断死链墓碑
+    if os.path.exists(path + ".failed"):
+        return -1
+
+    # 判断有效缓存
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        return 1
+
+    return 0
+
+
+def clean_old_caches(cache_dir: str, max_size_mb: int) -> None:
+    """
+    LRU 清理逻辑：当缓存目录总大小超过设定阈值（MB）时，删除最旧的文件。
+    """
+    if max_size_mb <= 0 or not cache_dir:
+        return
+
+    max_size_bytes = max_size_mb * 1024 * 1024
+    songs_dir = os.path.join(cache_dir, "songs")
+    if not os.path.exists(songs_dir):
+        return
+
+    try:
+        # 遍历目录获取文件列表及其最后访问时间
+        files = []
+        for f in os.listdir(songs_dir):
+            p = os.path.join(songs_dir, f)
+            if os.path.isfile(p):
+                files.append(
+                    {
+                        "path": p,
+                        "atime": os.path.getatime(p),
+                        "size": os.path.getsize(p),
+                    }
+                )
+
+        # 按最后访问时间排序（由旧到新）
+        files.sort(key=lambda x: x["atime"])
+        current_total_size = sum(f["size"] for f in files)
+
+        # 如果超出容量，开始清理
+        if current_total_size > max_size_bytes:
+            log.info(
+                f"缓存容量当前为 {current_total_size / 1024 / 1024:.1f}MB，超过限制 {max_size_mb}MB，启动清理..."
+            )
+            target_size = max_size_bytes * 0.8  # 清理到 80% 的水位线
+
+            for file_info in files:
+                try:
+                    os.remove(file_info["path"])
+                    # 如果有对应的 .failed 文件也一并清理
+                    failed_marker = file_info["path"] + ".failed"
+                    if os.path.exists(failed_marker):
+                        os.remove(failed_marker)
+                    current_total_size -= file_info["size"]
+                    log.debug(f"已清理旧缓存: {file_info['path']}")
+                except Exception as e:
+                    log.error(f"清理文件失败 {file_info['path']}: {e}")
+
+                if current_total_size <= target_size:
+                    break
+            log.info(
+                f"清理完成，当前缓存容量: {current_total_size / 1024 / 1024:.1f}MB"
+            )
+    except Exception as e:
+        log.error(f"清理缓存目录时发生异常: {e}")
