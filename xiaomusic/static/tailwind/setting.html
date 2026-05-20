@@ -437,6 +437,26 @@
                   </label>
                   <input id="fuzzy_match_cutoff" type="number" value="0.6" step="0.1" min="0.1" max="0.9" class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400" />
                 </div>
+                <div class="mb-4">
+                  <label for="enable_multi_result_selection" class="block text-sm font-medium text-gray-700">
+                    多结果选择功能
+                  </label>
+                  <select id="enable_multi_result_selection" onchange="toggleMultiResultAction()"
+                    class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400 bg-white py-2 px-3 text-gray-900 cursor-pointer hover:bg-gray-50">
+                    <option value="true" selected>开启</option>
+                    <option value="false">关闭</option>
+                  </select>
+                </div>
+                <div class="mb-4" id="multi_result_action_row" style="display:none;">
+                  <label for="multi_result_action" class="block text-sm font-medium text-gray-700">
+                    多结果处理
+                  </label>
+                  <select id="multi_result_action"
+                    class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:border-gray-400 bg-white py-2 px-3 text-gray-900 cursor-pointer hover:bg-gray-50">
+                    <option value="random" selected>随机播放</option>
+                    <option value="first">从第一首开始播放</option>
+                  </select>
+                </div>
               </div>
             </div>
 

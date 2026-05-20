@@ -147,6 +147,12 @@ class Config:
     fuzzy_match_max_results: int = int(
         os.getenv("XIAOMUSIC_FUZZY_MATCH_MAX_RESULTS", "100")
     )
+    # 是否开启多结果选择功能（关闭后按 multi_result_action 配置处理）
+    enable_multi_result_selection: bool = (
+        os.getenv("XIAOMUSIC_ENABLE_MULTI_RESULT_SELECTION", "true").lower() == "true"
+    )
+    # 多结果处理方式: random=随机播放, first=从第一个开始播放
+    multi_result_action: str = os.getenv("XIAOMUSIC_MULTI_RESULT_ACTION", "random")
     stop_tts_msg: str = os.getenv("XIAOMUSIC_STOP_TTS_MSG", "收到,再见")
     enable_config_example: bool = False
 

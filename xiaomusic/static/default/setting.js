@@ -201,6 +201,9 @@ $(function () {
     }
 
     autoSelectOne();
+    if (typeof toggleMultiResultAction === "function") {
+      toggleMultiResultAction();
+    }
   });
 
     $("#update-devices").on("click", function () {
@@ -641,4 +644,13 @@ $(function () {
       e.preventDefault();
     }
   });
+
+  window.toggleMultiResultAction = function () {
+    var val = $("#enable_multi_result_selection").val();
+    if (val === "false") {
+      $("#multi_result_action_row").show();
+    } else {
+      $("#multi_result_action_row").hide();
+    }
+  };
 });
