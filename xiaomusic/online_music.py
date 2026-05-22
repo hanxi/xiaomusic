@@ -604,7 +604,7 @@ class OnlineMusicService:
 
     # 在线播放：在线搜索、播放
     async def online_play(self, did="", arg1="", **kwargs):
-        await self._before_play()
+        await self._before_play(did)
         parts = arg1.split("|")
         search_key = parts[0].strip() if parts[0] else ""
         name = parts[1].strip() if len(parts) > 1 else search_key
@@ -635,7 +635,7 @@ class OnlineMusicService:
 
     async def online_playlist_play(self, did="", arg1="", **kwargs):
         """执行语音搜歌单并播放"""
-        await self._before_play()
+        await self._before_play(did)
         search_key = str(arg1).strip() if arg1 else ""
         if not search_key:
             return await self.xiaomusic.handle_fatal_error(
@@ -709,7 +709,7 @@ class OnlineMusicService:
             )
 
     async def singer_play(self, did="", arg1="", **kwargs):
-        await self._before_play()
+        await self._before_play(did)
         parts = arg1.split("|")
         search_key = parts[0].strip() if parts[0] else ""
         name = parts[1].strip() if len(parts) > 1 else search_key
@@ -820,14 +820,14 @@ class OnlineMusicService:
         # return proxy_base + "/static/search.mp3"
         return f"{proxy_base}/static/{name}"
 
-    async def _before_play(self, prompt_audio=None):
+    async def _before_play(self, did, prompt_audio=None):
         """播放搜歌前的提示音或静默音（核心作用：打断小爱的原生语音）"""
         if prompt_audio is None:
             prompt_audio = getattr(
                 self.xiaomusic.config, "search_prompt_audio", "xiaomusic_ok.mp3"
             )
         before_url = self.default_url(prompt_audio)
-        await self.xiaomusic.play_url(self.xiaomusic.get_cur_did(), before_url)
+        await self.xiaomusic.play_url(did, before_url)
 
     def _convert_song_list_to_music_items(self, song_list):
         """
