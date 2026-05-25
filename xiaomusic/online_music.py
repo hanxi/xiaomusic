@@ -382,7 +382,11 @@ class OnlineMusicService:
             self.log.warning("LX Server歌曲无音质信息，使用默认 128k")
             return "128k"
 
-        start_index = LX_QUALITY_PRIORITY.index(user_preference) if user_preference in LX_QUALITY_PRIORITY else -1
+        start_index = (
+            LX_QUALITY_PRIORITY.index(user_preference)
+            if user_preference in LX_QUALITY_PRIORITY
+            else -1
+        )
         if start_index == -1:
             self.log.warning(f"LX Server无效的音质偏好: {user_preference}")
             return available_qualities[0] or "128k"
@@ -392,7 +396,9 @@ class OnlineMusicService:
                 self.log.info(f"LX Server选择音质: {quality} (偏好: {user_preference})")
                 return quality
 
-        self.log.warning(f"LX Server无匹配音质，使用第一个可用: {available_qualities[0]}")
+        self.log.warning(
+            f"LX Server无匹配音质，使用第一个可用: {available_qualities[0]}"
+        )
         return available_qualities[0] or "128k"
 
     def _get_lx_server_next_lower_quality(self, current_quality, song_info):
@@ -461,8 +467,7 @@ class OnlineMusicService:
 
     def _is_lx_platform_not_supported_error(self, error_msg):
         return bool(
-            error_msg
-            and ("未找到支持" in error_msg or "not supported" in error_msg)
+            error_msg and ("未找到支持" in error_msg or "not supported" in error_msg)
         )
 
     async def _find_lx_server_other_source_match(
@@ -577,8 +582,7 @@ class OnlineMusicService:
         candidate_singer = self._get_lx_song_singer(candidate).lower()
         if target_singer and candidate_singer:
             return (
-                target_singer in candidate_singer
-                or candidate_singer in target_singer
+                target_singer in candidate_singer or candidate_singer in target_singer
             )
         return True
 
@@ -640,8 +644,7 @@ class OnlineMusicService:
             )
         else:
             self.log.info(
-                "LX Server缓存检查: "
-                f"{song_name} - {singer} ({quality}) 命中缓存: 否"
+                f"LX Server缓存检查: {song_name} - {singer} ({quality}) 命中缓存: 否"
             )
 
     async def _execute_lx_server_music_lyric(self, song_info):

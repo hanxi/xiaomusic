@@ -1490,10 +1490,7 @@ class JSPluginManager:
             meta = {}
 
         songmid = (
-            song_info.get("songmid")
-            or meta.get("songmid")
-            or meta.get("songId")
-            or ""
+            song_info.get("songmid") or meta.get("songmid") or meta.get("songId") or ""
         )
         song_id = song_info.get("songId") or meta.get("songId") or song_info.get("id")
 
