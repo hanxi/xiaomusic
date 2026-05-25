@@ -53,11 +53,16 @@ class AuthManager:
 
     async def init_all_data(self, force_login=False):
         try:
-            async with asyncio.timeout(INIT_LOCK_TIMEOUT_SEC):
-                async with self._init_lock:
-                    await self._init_all_data_impl(force_login)
+            await asyncio.wait_for(
+                self._init_all_data_with_lock(force_login),
+                timeout=INIT_LOCK_TIMEOUT_SEC,
+            )
         except asyncio.TimeoutError:
             self.log.warning("init_all_data 超时，可能被其他调用持有锁")
+
+    async def _init_all_data_with_lock(self, force_login=False):
+        async with self._init_lock:
+            await self._init_all_data_impl(force_login)
 
     async def _init_all_data_impl(self, force_login=False):
         self.mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
