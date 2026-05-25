@@ -1434,6 +1434,7 @@ class JSPluginManager:
         url: str,
         song_info: dict[str, Any],
         quality: str = "320k",
+        req_id: str | None = None,
         lx_server_info: dict[str, Any] | None = None,
     ):
         """直接调用LX Server接口获取音乐URL
@@ -1442,6 +1443,7 @@ class JSPluginManager:
             url (str): 在线搜索接口地址
             song_info (dict[str, Any]): 歌曲信息
             quality (str): 音质，默认为320k
+            req_id (str): SSE进度订阅请求ID
             lx_server_info (dict): LX Server 配置信息
 
         Returns:
@@ -1451,6 +1453,12 @@ class JSPluginManager:
         headers = (
             self._build_lx_server_headers(lx_server_info) if lx_server_info else None
         )
+        if headers:
+            headers = dict(headers)
+        else:
+            headers = {}
+        if req_id:
+            headers["x-req-id"] = req_id
         result = await self._http_request(
             "POST", url, json_data=json_data, headers=headers
         )
@@ -1468,6 +1476,150 @@ class JSPluginManager:
                 "data": {},
             }
         return raw_data
+
+    def _build_lx_server_cache_check_params(
+        self,
+        song_info: dict[str, Any],
+        quality: str = "320k",
+        exact_quality: bool = False,
+    ) -> dict[str, str]:
+        if not isinstance(song_info, dict):
+            song_info = {}
+        meta = song_info.get("meta")
+        if not isinstance(meta, dict):
+            meta = {}
+
+        songmid = (
+            song_info.get("songmid")
+            or meta.get("songmid")
+            or meta.get("songId")
+            or ""
+        )
+        song_id = song_info.get("songId") or meta.get("songId") or song_info.get("id")
+
+        params = {
+            "name": str(song_info.get("name") or ""),
+            "singer": str(song_info.get("singer") or ""),
+            "source": str(song_info.get("source") or ""),
+            "songmid": str(songmid or ""),
+            "songId": str(song_id or songmid or ""),
+            "quality": str(quality or ""),
+        }
+        if exact_quality:
+            params["exactQuality"] = "1"
+        return params
+
+    async def lx_server_music_cache_check(
+        self,
+        url: str,
+        song_info: dict[str, Any],
+        quality: str = "320k",
+        exact_quality: bool = False,
+        lx_server_info: dict[str, Any] | None = None,
+    ):
+        """检查 LX Server 是否已有服务端音乐缓存。"""
+        params = self._build_lx_server_cache_check_params(
+            song_info=song_info,
+            quality=quality,
+            exact_quality=exact_quality,
+        )
+        headers = (
+            self._build_lx_server_headers(lx_server_info) if lx_server_info else None
+        )
+        result = await self._http_request("GET", url, params=params, headers=headers)
+        if not result["success"]:
+            self.log.warning(f"LX Server缓存检查失败: {result['error']}")
+            return {"exists": False, "success": False, "error": result["error"]}
+
+        raw_data = result["data"]
+        self.log.info(f"LX Server缓存检查返回原始Json: {raw_data}")
+        if isinstance(raw_data, dict):
+            return raw_data
+        return {
+            "exists": False,
+            "success": False,
+            "error": f"API request failed: {raw_data}",
+        }
+
+    async def lx_server_music_progress(
+        self,
+        url: str,
+        req_id: str,
+        lx_server_info: dict[str, Any] | None = None,
+        timeout: int = 15,
+    ):
+        """订阅 LX Server 音乐解析进度，直到收到 status=success。"""
+        import aiohttp
+
+        headers = (
+            self._build_lx_server_headers(lx_server_info) if lx_server_info else None
+        )
+        connector = aiohttp.TCPConnector(ssl=False)
+        client_timeout = aiohttp.ClientTimeout(total=timeout)
+        attempts = []
+        last_error = ""
+
+        try:
+            async with aiohttp.ClientSession(connector=connector) as session:
+                async with session.get(
+                    url,
+                    params={"reqId": req_id},
+                    timeout=client_timeout,
+                    headers=headers,
+                ) as response:
+                    response.raise_for_status()
+                    async for raw_line in response.content:
+                        line = raw_line.decode("utf-8", errors="ignore").strip()
+                        if not line or not line.startswith("data:"):
+                            continue
+
+                        payload = line.removeprefix("data:").strip()
+                        try:
+                            attempt = json.loads(payload)
+                        except json.JSONDecodeError:
+                            self.log.warning(
+                                f"LX Server解析进度返回非JSON数据: {payload}"
+                            )
+                            continue
+
+                        attempts.append(attempt)
+                        status = attempt.get("status")
+                        if status == "success":
+                            return {
+                                "success": True,
+                                "data": attempt,
+                                "attempts": attempts,
+                            }
+                        if status in ("fail", "failed", "error"):
+                            last_error = (
+                                attempt.get("message")
+                                or attempt.get("error")
+                                or "LX Server解析音乐直链失败"
+                            )
+
+        except aiohttp.ClientResponseError as e:
+            self.log.error(f"LX Server解析进度HTTP错误: {e.status} {e.message}")
+            return {
+                "success": False,
+                "error": f"HTTP {e.status}: {e.message}",
+                "attempts": attempts,
+            }
+        except asyncio.TimeoutError:
+            self.log.error(f"LX Server解析进度等待超时: {url}")
+            return {
+                "success": False,
+                "error": last_error or "等待LX Server解析进度超时",
+                "attempts": attempts,
+            }
+        except Exception as e:
+            self.log.error(f"LX Server解析进度请求失败: {e}")
+            return {"success": False, "error": str(e), "attempts": attempts}
+
+        return {
+            "success": False,
+            "error": last_error or "未收到LX Server解析成功进度",
+            "attempts": attempts,
+        }
 
     async def lx_server_music_lyric(
         self,
@@ -1491,7 +1643,7 @@ class JSPluginManager:
         params = {
             k: v
             for k, v in params.items()
-            if v is not None and not (isinstance(v, (dict, list)) and not v)
+            if v is not None and not (isinstance(v, dict | list) and not v)
         }
 
         self.log.info(f"LX Server 歌词接口请求参数：{params}")
