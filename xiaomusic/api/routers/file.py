@@ -965,14 +965,14 @@ async def music_file(request: Request, file_path: str, key: str = "", code: str 
         else:
             temp_base = os.path.abspath(config.temp_path)
         absolute_file_path = os.path.normpath(os.path.join(temp_base, temp_file_name))
-        if not absolute_file_path.startswith(temp_base):
+        if not absolute_file_path.startswith(temp_base + os.sep):
             raise HTTPException(status_code=404, detail="File not found")
         if not os.path.exists(absolute_file_path):
             raise HTTPException(status_code=404, detail="File not found")
     else:
         absolute_path = os.path.abspath(config.music_path)
         absolute_file_path = os.path.normpath(os.path.join(absolute_path, file_path))
-        if not absolute_file_path.startswith(absolute_path):
+        if not absolute_file_path.startswith(absolute_path + os.sep):
             raise HTTPException(status_code=404, detail="File not found")
         if not os.path.exists(absolute_file_path):
             raise HTTPException(status_code=404, detail="File not found")
@@ -1019,7 +1019,7 @@ async def get_picture(request: Request, file_path: str, key: str = "", code: str
 
     absolute_path = os.path.abspath(config.picture_cache_path)
     absolute_file_path = os.path.normpath(os.path.join(absolute_path, file_path))
-    if not absolute_file_path.startswith(absolute_path):
+    if not absolute_file_path.startswith(absolute_path + os.sep):
         raise HTTPException(status_code=404, detail="File not found")
     if not os.path.exists(absolute_file_path):
         raise HTTPException(status_code=404, detail="File not found")
