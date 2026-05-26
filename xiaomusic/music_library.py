@@ -829,7 +829,9 @@ class MusicLibrary:
                     )
 
                 # 将纠正后的 actual_cache_dir 传给底层
-                return build_cache_file_path(datab64, name, actual_cache_dir)
+                return build_cache_file_path(
+                    datab64, name, actual_cache_dir, self.config.cache_song_name
+                )
         except Exception as e:
             self.log.debug(f"提取缓存路径失败: {e}")
         return ""
@@ -945,6 +947,7 @@ class MusicLibrary:
                             clean_old_caches,
                             self.config.cache_dir,
                             getattr(self.config, "cache_max_size_mb", 0),
+                            self.config.cache_song_name,
                         )
                     )
                     cleanup_task.add_done_callback(lambda t: t.exception())
