@@ -950,7 +950,8 @@ class XiaoMusicDevice:
             if duration > 0:
 
                 async def _tts_timeout():
-                    await asyncio.sleep(duration)
+                    # 增加2秒，确保小爱音箱缓存完毕后，触发后续stop
+                    await asyncio.sleep(duration + 2)
                     try:
                         self.log.info("TTS 播放定时器时间到")
                         current_timer = self._tts_timer
