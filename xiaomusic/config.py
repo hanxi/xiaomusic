@@ -97,6 +97,7 @@ class Config:
     conf_path: str = os.getenv("XIAOMUSIC_CONF_PATH", "conf")
     cache_dir: str = os.getenv("XIAOMUSIC_CACHE_DIR", "music/cache")
     cache_max_size_mb: int = int(os.getenv("XIAOMUSIC_CACHE_MAX_SIZE_MB", "500"))
+    cache_song_name: str = os.getenv("XIAOMUSIC_CACHE_SONG_NAME", "cache_songs")
     hostname: str = os.getenv("XIAOMUSIC_HOSTNAME", "http://192.168.2.5")
     port: int = int(os.getenv("XIAOMUSIC_PORT", "8090"))  # 监听端口
     public_port: int = int(os.getenv("XIAOMUSIC_PUBLIC_PORT", 58090))  # 歌曲访问端口
@@ -133,7 +134,7 @@ class Config:
         os.getenv("XIAOMUSIC_USE_MUSIC_API", "false").lower() == "true"
     )
     use_music_audio_id: str = os.getenv(
-        "XIAOMUSIC_USE_MUSIC_AUDIO_ID", "1582971365183456177"
+        "XIAOMUSIC_USE_MUSIC_AUDIO_ID", "436490277987655"
     )
     use_music_id: str = os.getenv("XIAOMUSIC_USE_MUSIC_ID", "355454500")
     log_file: str = os.getenv("XIAOMUSIC_LOG_FILE", "xiaomusic.log.txt")
@@ -153,19 +154,25 @@ class Config:
     )
     # 多结果处理方式: random=随机播放, first=从第一个开始播放
     multi_result_action: str = os.getenv("XIAOMUSIC_MULTI_RESULT_ACTION", "random")
-    stop_tts_msg: str = os.getenv("XIAOMUSIC_STOP_TTS_MSG", "收到,再见")
+    stop_tts_msg: str = os.getenv("XIAOMUSIC_STOP_TTS_MSG", "")
     enable_config_example: bool = False
 
     keywords_playlocal: str = os.getenv(
         "XIAOMUSIC_KEYWORDS_PLAYLOCAL", "播放本地歌曲,本地播放歌曲"
     )
     keywords_play: str = os.getenv("XIAOMUSIC_KEYWORDS_PLAY", "播放歌曲,放歌曲")
-    keywords_online_play: str = os.getenv("XIAOMUSIC_KEYWORDS_ONLINE_PLAY", "在线播放")
+    keywords_online_play: str = os.getenv(
+        "XIAOMUSIC_KEYWORDS_ONLINE_PLAY", "在线播放,搜索歌曲"
+    )
     keywords_online_playlist_play: str = os.getenv(
         "XIAOMUSIC_KEYWORDS_ONLINE_PLAYLIST", "在线歌单,搜索歌单"
     )
-    keywords_singer_play: str = os.getenv("XIAOMUSIC_KEYWORDS_SINGER_PLAY", "播放歌手")
-    keywords_stop: str = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止,停止播放")
+    keywords_singer_play: str = os.getenv(
+        "XIAOMUSIC_KEYWORDS_SINGER_PLAY", "播放歌手,搜索歌手"
+    )
+    keywords_stop: str = os.getenv(
+        "XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止,停止播放,关闭,退出,关掉音乐"
+    )
     keywords_playlist: str = os.getenv(
         "XIAOMUSIC_KEYWORDS_PLAYLIST", "播放列表,播放歌单"
     )
@@ -184,9 +191,7 @@ class Config:
     )
     convert_to_mp3: bool = os.getenv("CONVERT_TO_MP3", "false").lower() == "true"
     delay_sec: int = int(os.getenv("XIAOMUSIC_DELAY_SEC", 0))  # 下一首歌延迟播放秒数
-    continue_play: bool = (
-        os.getenv("XIAOMUSIC_CONTINUE_PLAY", "false").lower() == "true"
-    )
+    continue_play: bool = os.getenv("XIAOMUSIC_CONTINUE_PLAY", "true").lower() == "true"
     # 目录监控配置
     enable_file_watch: bool = (
         os.getenv("XIAOMUSIC_ENABLE_FILE_WATCH", "false").lower() == "true"

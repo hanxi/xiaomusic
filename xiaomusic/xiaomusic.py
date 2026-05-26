@@ -175,7 +175,9 @@ class XiaoMusic:
         if not os.path.exists(self.config.download_path):
             os.makedirs(self.config.download_path)
 
-        songs_cache_dir = os.path.join(self.config.cache_dir, "songs")
+        songs_cache_dir = os.path.join(
+            self.config.cache_dir, self.config.cache_song_name
+        )
         if getattr(self.config, "cache_max_size_mb", 0) > 0 and not os.path.exists(
             songs_cache_dir
         ):

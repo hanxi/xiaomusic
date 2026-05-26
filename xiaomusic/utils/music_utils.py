@@ -817,7 +817,9 @@ def get_real_audio_format(file_path: str) -> str:
         return "mp3"
 
 
-def build_cache_file_path(datab64: str, name: str, cache_dir: str) -> str:
+def build_cache_file_path(
+    datab64: str, name: str, cache_dir: str, cache_song_name: str = "cache_songs"
+) -> str:
     """
     根据核心字段生成唯一缓存路径，彻底免疫一切前端和插件附加的动态干扰字段。
     """
@@ -843,4 +845,4 @@ def build_cache_file_path(datab64: str, name: str, cache_dir: str) -> str:
 
     safe_name = re.sub(r"[^\w\-_.\s()（）\[\]【】]", "_", name)
     filename = f"{short_hash}_{safe_name}.mp3"
-    return os.path.join(cache_dir, "songs", filename)
+    return os.path.join(cache_dir, cache_song_name, filename)

@@ -260,7 +260,9 @@ def is_cache_valid(path: str) -> int:
     return 0
 
 
-def clean_old_caches(cache_dir: str, max_size_mb: int) -> None:
+def clean_old_caches(
+    cache_dir: str, max_size_mb: int, cache_song_name: str = "cache_songs"
+) -> None:
     """
     LRU 清理逻辑：当缓存目录总大小超过设定阈值（MB）时，删除最旧的文件。
     """
@@ -268,7 +270,7 @@ def clean_old_caches(cache_dir: str, max_size_mb: int) -> None:
         return
 
     max_size_bytes = max_size_mb * 1024 * 1024
-    songs_dir = os.path.join(cache_dir, "songs")
+    songs_dir = os.path.join(cache_dir, cache_song_name)
     if not os.path.exists(songs_dir):
         return
 

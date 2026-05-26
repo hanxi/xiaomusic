@@ -204,6 +204,14 @@ $(function () {
     if (typeof toggleMultiResultAction === "function") {
       toggleMultiResultAction();
     }
+    if (typeof toggleCoverSelect === "function") {
+      toggleCoverSelect();
+    }
+    var $audioIdSel = $("#use_music_audio_id");
+    if (!$audioIdSel.val()) {
+      $audioIdSel.prop("selectedIndex", 0);
+    }
+    $audioIdSel.trigger("change");
   });
 
     $("#update-devices").on("click", function () {
@@ -653,4 +661,49 @@ $(function () {
       $("#multi_result_action_row").hide();
     }
   };
+
+  // 联动启用封面和封面选择
+  window.toggleCoverSelect = function () {
+    var isContinuePlay = $("#continue_play").val() === "true";
+    var $coverSelect = $("#use_music_audio_id");
+    var $coverLabel = $('label[for="use_music_audio_id"]');
+    var $coverPreview = $("#cover_preview");
+    if (isContinuePlay) {
+      $coverSelect.prop("disabled", false);
+      $coverLabel.css("color", "");
+      $coverSelect.css("color", "");
+
+      // 恢复正常状态
+      $coverPreview.css("opacity", "1");
+      $coverSelect.trigger("change");
+    } else {
+      $coverSelect.prop("disabled", true);
+      $coverLabel.css("color", "#999");
+      $coverSelect.css("color", "transparent");
+
+      // 变成默认占位图
+      $coverPreview.attr("src", "https://y.gtimg.cn/music/photo_new/T001R500x500M000000s13WK28L1rN.jpg");
+      $coverPreview.css("display", "block");
+      $coverPreview.css("opacity", "0.4");
+    }
+  };
+
+  $("#continue_play").on("change", window.toggleCoverSelect);
+
+  // 封面下拉框的图片切换逻辑
+  $("#use_music_audio_id").on("change", function() {
+    // 只有在 continue_play 为 true（开启状态）时，才允许切换图片
+    if ($("#continue_play").val() === "true") {
+      var imgSrc = $(this).find("option:selected").attr("data-img");
+      var $preview = $("#cover_preview");
+      if (imgSrc) {
+        $preview.attr("src", imgSrc).css("display", "block");
+      } else {
+        $preview.css("display", "none");
+      }
+    }
+  });
+
+  $("#use_music_audio_id").trigger("change");
+
 });
