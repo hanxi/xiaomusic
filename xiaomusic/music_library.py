@@ -834,6 +834,28 @@ class MusicLibrary:
             self.log.debug(f"提取缓存路径失败: {e}")
         return ""
 
+    def is_lx_server_proxy_url(self, origin_url: str) -> bool:
+        """判断原始 plugin-url 是否来自 LX Server 搜索结果。"""
+        if not origin_url or not origin_url.startswith("self:///api/proxy/plugin-url"):
+            return False
+
+        try:
+            query = urlparse(origin_url).query
+            params = parse_qs(query)
+            datab64 = params.get("data", [""])[0].replace(" ", "+")
+            if not datab64:
+                return False
+
+            missing_padding = len(datab64) % 4
+            if missing_padding:
+                datab64 += "=" * (4 - missing_padding)
+
+            payload = json.loads(base64.b64decode(datab64).decode("utf-8"))
+            return isinstance(payload, dict) and isinstance(payload.get("_raw"), dict)
+        except Exception as e:
+            self.log.debug(f"判断 LX Server 代理 URL 失败: {e}")
+            return False
+
     async def get_music_duration(self, name: str, playlist_name: str = None) -> float:
         """获取歌曲时长
 

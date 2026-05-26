@@ -35,6 +35,9 @@ from xiaomusic.utils.text_utils import (
     parse_ordinal_suffix,
 )
 
+DEFAULT_PROXY_PROBE_TIMEOUT = 3.0
+LX_SERVER_PROXY_PROBE_TIMEOUT = 8.0
+
 
 class XiaoMusicDevice:
     """设备播放控制类
@@ -510,7 +513,9 @@ class XiaoMusicDevice:
         self.log.info(f"cur_music {self.get_cur_music()}")
 
         # 获取该歌单下的播放 URL
-        url, _ = await self.xiaomusic.music_library.get_music_url(name, cur_playlist)
+        url, origin_url = await self.xiaomusic.music_library.get_music_url(
+            name, cur_playlist
+        )
 
         # 1. 命中硬盘级负向缓存墓碑（url为空）的秒切拦截
         if not url:
@@ -536,11 +541,15 @@ class XiaoMusicDevice:
 
         # 3. 极速探路器：帮小爱吃下所有的 404/401 炸弹
         if not is_system_or_tts and url and url.startswith("http") and "/proxy/" in url:
-            self.log.info(f"极速探路启动，触发后端代理解析: {url}")
+            probe_timeout = self._get_proxy_probe_timeout(origin_url)
+            is_lx_server_music = probe_timeout == LX_SERVER_PROXY_PROBE_TIMEOUT
+            self.log.info(
+                "极速探路启动，触发后端代理解析: "
+                f"timeout={probe_timeout}s lx_server={is_lx_server_music} url={url}"
+            )
             is_url_ok = False
             try:
-                # 给了 3.0 秒超时，让本地解析服务有足够时间反应
-                timeout = aiohttp.ClientTimeout(total=3.0)
+                timeout = aiohttp.ClientTimeout(total=probe_timeout)
                 async with aiohttp.ClientSession(timeout=timeout) as session:
                     async with session.get(url) as resp:
                         # 如果 music.py 报了 404，在这里会直接被抓个正着！
@@ -656,6 +665,14 @@ class XiaoMusicDevice:
         # 如果当前歌曲大于 2 秒，则在播放 20 秒后悄悄去下载下一首歌
         if sec > 20:
             await self.prefetch_next_song(20)
+
+    def _get_proxy_probe_timeout(self, origin_url):
+        try:
+            if self.xiaomusic.music_library.is_lx_server_proxy_url(origin_url):
+                return LX_SERVER_PROXY_PROBE_TIMEOUT
+        except Exception as e:
+            self.log.debug(f"判断 LX Server 探路超时失败: {e}")
+        return DEFAULT_PROXY_PROBE_TIMEOUT
 
     async def do_tts(self, value):
         """执行TTS（文字转语音）"""
