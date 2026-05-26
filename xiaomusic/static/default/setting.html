@@ -232,23 +232,44 @@
                         <label for="delay_sec">下一首歌延迟播放秒数(支持负数):</label>
                         <input id="delay_sec" type="number" value="0" />
 
-                        <label for="continue_play">启用继续播放，启用触屏音箱歌曲封面及歌词(可能导致兼容性问题):</label>
-                        <select id="continue_play">
-                            <option value="true">true</option>
-                            <option value="false" selected>false</option>
-                        </select>
-
                         <label for="use_music_api">型号兼容模式:</label>
                         <select id="use_music_api">
                             <option value="true">true</option>
                             <option value="false" selected>false</option>
                         </select>
 
-                        <label for="use_music_audio_id">触屏版显示歌曲ID:</label>
-                        <input id="use_music_audio_id" type="text" value="1582971365183456177" />
+                        <label for="continue_play">启用触屏版歌曲封面及歌词，启用继续播放(可能导致兼容性问题):</label>
+                        <select id="continue_play">
+                            <option value="true">true</option>
+                            <option value="false" selected>false</option>
+                        </select>
 
-                        <label for="use_music_id">触屏版显示歌曲分段ID:</label>
-                        <input id="use_music_id" type="text" value="355454500" />
+                        <div style="display: flex; gap: 15px; align-items: flex-end; width: 100%;">
+
+                            <div style="flex: 1; display: flex; flex-direction: column;">
+                                <label for="use_music_audio_id" style="margin-bottom: 6px; display: block;">触屏版默认封面选择(触屏版歌曲封面设为true，才能选择):</label>
+                                <select id="use_music_audio_id" style="width: 100%;">
+                                    <option value="436490277987655" data-img="https://y.gtimg.cn/music/photo_new/T001R500x500M000000XFSu32aHi5w_7.jpg" selected>星河雀影</option>
+                                    <option value="2284848025338642973" data-img="https://y.gtimg.cn/music/photo_new/T002R500x500M000003MUXTN0hp00B_1.jpg">鲸落</option>
+                                    <option value="3032977774822294038" data-img="https://y.gtimg.cn/music/photo_new/T002R500x500M000000P52RF0ePrMh_1.jpg">仲夏涟漪</option>
+                                    <option value="3573885250148762567" data-img="https://y.gtimg.cn/music/photo_new/T002R500x500M000001XSQmy0sbGRe_1.jpg">星辰妙漫</option>
+                                    <option value="2821554561643067278" data-img="https://y.gtimg.cn/music/photo_new/T002R500x500M000003mtKhW0DFTMt_3.jpg">所念皆星河</option>
+                                    <option value="1949968393125757902" data-img="https://y.gtimg.cn/music/photo_new/T002R500x500M000003zlK2H16UvnY_2.jpg">柳岸泊舟</option>
+                                    <option value="1963040443250771008" data-img="https://y.gtimg.cn/music/photo_new/T002R500x500M000004HWTo41EPK3L_2.jpg">花冠少女</option>
+                                    <option value="703059981413384476" data-img="https://y.gtimg.cn/music/photo_new/T002R500x500M000002OGzkK12zb2D_1.jpg">月夜</option>
+                                    <option value="2182123779048604035" data-img="https://y.gtimg.cn/music/photo_new/T002R500x500M000001wIZl83iCjqo_1.jpg">橘子海</option>
+                                    <option value="1299407089048748519" data-img="https://y.gtimg.cn/music/photo_new/T001R500x500M000002knSQ01Ts1vS_0.jpg">拾音者</option>
+                                    <option value="2234266363446166675" data-img="https://y.gtimg.cn/music/photo_new/T002R500x500M000003TkJYk3nWUoB_2.jpg">唱片</option>
+                                    <option value="224322594261696542" data-img="https://y.gtimg.cn/music/photo_new/T002R500x500M000003k0x5s4Ale28_1.jpg">音符</option>
+
+                                </select>
+                            </div>
+
+                            <img id="cover_preview" src="" style="width: 64px; height: 64px; border-radius: 6px; object-fit: cover; border: 1px solid #ddd; display: none;" alt="预览" />
+                        </div>
+
+                        <label for="use_music_id" style="display: none">触屏版显示歌曲分段ID:</label>
+                        <input id="use_music_id" type="text" value="355454500" style="display: none"/>
 
                         <label for="active_cmd">允许唤醒的命令:</label>
                         <input id="active_cmd" type="text"
