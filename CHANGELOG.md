@@ -1,3 +1,18 @@
+## v0.5.8 (2026-05-27)
+
+### Feat
+
+- 增加触屏版封面选择，修改部分默认设置 (#889)
+- 完善 LX Server 播放链接解析流程 (#886)
+
+### Fix
+
+- add trailing separator to path containment checks (CWE-22) (#891)
+- 修复循环播放tts语音的问题之一 (#888)
+- 修复LX在未换源解析完成的情况跳歌 (#887)
+- 修复 Python 3.10 环境下 asyncio.timeout 导致的 AttributeError (#885)
+- 修复同一账号下多台小爱，其中一台会莫名“小music收到”，或静音但指示灯不停闪烁 (#883)
+
 ## v0.5.7 (2026-05-21)
 
 ### Feat
