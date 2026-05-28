@@ -1,5 +1,14 @@
 # XiaoMusic: 无限听歌，解放小爱音箱
 
+> [!IMPORTANT]
+> **📢 项目停止维护通知**
+>
+> 因个人精力有限，需将重心转移到其他项目，本项目将停止维护，不再接受新功能开发与 bug 修复，已有 issue 与 PR 也不再处理。
+>
+> 后续推荐使用社区接力项目：**[mimusic-org/mimusic](https://github.com/mimusic-org/mimusic)**，欢迎大家迁移、参与共建。
+>
+> 衷心感谢一路以来所有用户的支持与陪伴 ❤️
+
 [![GitHub License](https://img.shields.io/github/license/hanxi/xiaomusic)](https://github.com/hanxi/xiaomusic)
 [![Docker Image Version](https://img.shields.io/docker/v/hanxi/xiaomusic?sort=semver&label=docker%20image)](https://hub.docker.com/r/hanxi/xiaomusic)
 [![Docker Pulls](https://img.shields.io/docker/pulls/hanxi/xiaomusic)](https://hub.docker.com/r/hanxi/xiaomusic)
