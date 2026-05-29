@@ -5,7 +5,7 @@
 >
 > 因个人精力有限，需将重心转移到其他项目，本项目将停止维护，不再接受新功能开发与 bug 修复，已有 issue 与 PR 也不再处理。
 >
-> 后续推荐使用社区接力项目：**[mimusic-org/mimusic](https://github.com/mimusic-org/mimusic)**，欢迎大家迁移、参与共建。
+> 后续推荐使用社区接力项目：**[songloft-org/songloft](https://github.com/songloft-org/songloft)**，欢迎大家迁移、参与共建。
 >
 > 衷心感谢一路以来所有用户的支持与陪伴 ❤️
 
