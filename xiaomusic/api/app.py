@@ -6,7 +6,6 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
 from xiaomusic import __version__
@@ -54,15 +53,6 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
-)
-
-# 添加 CORS 中间件
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 允许访问的源
-    allow_credentials=False,  # 支持 cookie
-    allow_methods=["*"],  # 允许使用的请求方法
-    allow_headers=["*"],  # 允许携带的 Headers
 )
 
 # 添加 GZip 中间件
