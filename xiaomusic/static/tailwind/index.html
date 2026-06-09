@@ -118,11 +118,6 @@
                                 <span class="material-icons icon">refresh</span>
                             </button>
 
-                            <div class="divider divider-horizontal my-1"></div>
-                            <button class="btn btn-circle tooltip tooltip-right active" data-tip="请我喝杯咖啡"
-                                @click="showQRCode">
-                                <span class="material-icons icon">qr_code_scanner</span>
-                            </button>
                         </div>
                     </div>
 
@@ -328,20 +323,6 @@
             </div>
         </div>
     </div>
-
-    <!-- 二维码对话框 -->
-    <dialog id="qrcode_dialog" class="modal">
-        <div class="modal-box">
-            <div class="flex justify-center">
-                <img src="./qrcode.png" alt="QR Code" class="w-100 h-100">
-            </div>
-            <div class="modal-action">
-                <form method="dialog">
-                    <button class="btn">关闭</button>
-                </form>
-            </div>
-        </div>
-    </dialog>
 
     <script>
         const { createApp, ref, onMounted, watch, onUnmounted, nextTick, defineExpose, computed } = Vue;
@@ -1373,11 +1354,6 @@
                     sendCommand("刷新列表");
                 };
 
-                // 在 setup 函数中添加 showQRCode 方法
-                const showQRCode = () => {
-                    document.getElementById('qrcode_dialog').showModal();
-                };
-
                 // 添加停止播放方法
                 const stopPlay = async () => {
                     try {
@@ -1539,7 +1515,6 @@
                     sendCommand,
                     startPlayingStatusUpdate,
                     stopPlayingStatusUpdate,
-                    showQRCode,
                     showToast,
                     toastMessage,
                     toastType,

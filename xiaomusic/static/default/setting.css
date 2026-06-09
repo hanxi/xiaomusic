@@ -858,14 +858,6 @@ textarea:focus {
   line-height: 1.4;
 }
 
-.btn-sponsor {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%) !important;
-  color: white;
-}
-
-.btn-sponsor:hover {
-  background: linear-gradient(135deg, #ff5252 0%, #ff7043 100%) !important;
-}
 
 .btn-github {
   background-color: #24292e !important;
@@ -976,39 +968,6 @@ footer a:hover {
   justify-content: center;
 }
 
-.qrcode-container {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.qrcode {
-  max-width: 280px;
-  width: auto;
-  height: auto;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
-}
-
-.qrcode:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-@media (max-width: 640px) {
-  .community-buttons-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .qrcode {
-    max-width: 240px;
-  }
-}
 
 /* 链接样式（面板内与卡片内统一） */
 .setting-panel a,
