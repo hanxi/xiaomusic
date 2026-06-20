@@ -35,18 +35,54 @@ from xiaomusic.utils.network_utils import MusicUrlCache
 from xiaomusic.utils.system_utils import try_add_access_control_param
 from xiaomusic.utils.text_utils import custom_sort_key, find_best_match, fuzzyfinder
 
-# 短 token 缓存，避免长 URL 超出小爱音箱固件限制
-_proxy_token_cache: dict = {}  # token -> (origin_url, is_radio)
+# 短 token 缓存，避免长 URL 超出小爱音箱固件限制。
+# 只保存在当前进程内；加 TTL 和容量上限，避免长时间运行后无界增长。
+_PROXY_TOKEN_TTL_SECONDS = 6 * 60 * 60
+_PROXY_TOKEN_MAX_SIZE = 2048
+_proxy_token_cache: OrderedDict[str, tuple[str, bool, float]] = OrderedDict()
+
+
+def _prune_proxy_token_cache(now: float | None = None) -> None:
+    now = now or time.monotonic()
+    expired_tokens = [
+        token
+        for token, (_, _, expires_at) in _proxy_token_cache.items()
+        if expires_at <= now
+    ]
+    for token in expired_tokens:
+        _proxy_token_cache.pop(token, None)
+
+    while len(_proxy_token_cache) > _PROXY_TOKEN_MAX_SIZE:
+        _proxy_token_cache.popitem(last=False)
 
 
 def set_proxy_token(token: str, origin_url: str, is_radio: bool) -> None:
     """存储 token -> (origin_url, is_radio) 映射"""
-    _proxy_token_cache[token] = (origin_url, bool(is_radio))
+    now = time.monotonic()
+    _prune_proxy_token_cache(now)
+    _proxy_token_cache[token] = (
+        origin_url,
+        bool(is_radio),
+        now + _PROXY_TOKEN_TTL_SECONDS,
+    )
+    _proxy_token_cache.move_to_end(token)
+    _prune_proxy_token_cache(now)
 
 
 def get_proxy_token(token: str):
     """查询 token 对应的 (origin_url, is_radio)，不存在返回 None"""
-    return _proxy_token_cache.get(token)
+    now = time.monotonic()
+    cached = _proxy_token_cache.get(token)
+    if cached is None:
+        return None
+
+    origin_url, is_radio, expires_at = cached
+    if expires_at <= now:
+        _proxy_token_cache.pop(token, None)
+        return None
+
+    _proxy_token_cache.move_to_end(token)
+    return origin_url, is_radio
 
 
 class MusicLibrary:

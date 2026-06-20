@@ -21,18 +21,19 @@ LOGO = r"""
           {}
 """
 
-
-sentry_sdk.init(
-    dsn="https://ffe4962642d04b29afe62ebd1a065231@glitchtip.hanxi.cc/1",
-    integrations=[
-        AsyncioIntegration(),
-        LoggingIntegration(
-            level=logging.WARNING,
-            event_level=logging.ERROR,
-        ),
-    ],
-    # debug=True,
-)
+if os.getenv("XIAOMUSIC_ENABLE_SENTRY", "false").lower() == "true":
+    sentry_dsn = os.getenv("XIAOMUSIC_SENTRY_DSN", "")
+    if sentry_dsn:
+        sentry_sdk.init(
+            dsn=sentry_dsn,
+            integrations=[
+                AsyncioIntegration(),
+                LoggingIntegration(
+                    level=logging.WARNING,
+                    event_level=logging.ERROR,
+                ),
+            ],
+        )
 ignore_logger("miservice")
 
 
@@ -176,12 +177,12 @@ def main():
 
     try:
         filename = config.getsettingfile()
-        if not os.path.exists(filename):
+        if os.path.exists(filename):
             with open(filename, encoding="utf-8") as f:
                 data = json.loads(f.read())
                 config.update_config(data)
     except Exception as e:
-        print(f"Execption {e}")
+        print(f"Exception {e}")
 
     import asyncio
 

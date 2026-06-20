@@ -94,3 +94,8 @@ major_version_zero = true
 version_files = [
     "xiaomusic/__init__.py",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

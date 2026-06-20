@@ -132,7 +132,7 @@ class XiaoMusicDevice:
         cur_playlist = self._play_list
         cur_music = self.get_cur_music()
         play_list_len = len(cur_playlist)
-        if play_list_len != 0:
+        if play_list_len != 0 and cur_music in cur_playlist:
             index = self._play_list.index(cur_music)
             is_last_song = index == play_list_len - 1
         # 四个条件都满足，才自动添加下一首
@@ -144,7 +144,11 @@ class XiaoMusicDevice:
         # 取消之前的定时器（如果存在）
         # self.cancel_add_song_timer()
         # 以 '-' 分割，获取歌手名称
-        singer_name = cur_music.split("-")[1]
+        parts = cur_music.split("-", 1)
+        if len(parts) < 2 or not parts[1].strip():
+            self.log.info(f"歌曲名无法解析歌手，跳过自动添加: {cur_music}")
+            return
+        singer_name = parts[1].strip()
         # 创建新的定时器，20秒后执行
         self._add_song_timer = asyncio.create_task(
             self._delayed_add_singer_song(list_name, singer_name, sleep_sec)
@@ -199,6 +203,7 @@ class XiaoMusicDevice:
         # 随机播放模式 (PLAY_TYPE_RND) 的调度
         # ==========================================
         if self.device.play_type == PLAY_TYPE_RND:
+            latest_set = set(latest_list)
             # 判断是否需要【全量重洗牌】的三个条件：
             # A. 外部明确要求强洗 (force_reshuffle=True)
             # B. 当前播放列表是空的 (系统刚启动)
@@ -206,7 +211,7 @@ class XiaoMusicDevice:
             if (
                 force_reshuffle
                 or not self._play_list
-                or not set(self._play_list).intersection(set(latest_list))
+                or not any(song in latest_set for song in self._play_list)
             ):
                 self._play_list = copy.copy(latest_list)
                 random.shuffle(self._play_list)
@@ -224,11 +229,12 @@ class XiaoMusicDevice:
             else:
                 # 3：增量更新 (Incremental Update)
                 old_list = self._play_list
+                old_set = set(old_list)
                 # A. 剔除云端已经被删除的歌，保留依然存在的歌（绝对不改变它们的相对顺序！）
-                self._play_list = [s for s in old_list if s in latest_list]
+                self._play_list = [s for s in old_list if s in latest_set]
 
                 # B. 找出最新歌单里多出来的新歌（比如 auto_add_song 追加进来的）
-                new_songs = [s for s in latest_list if s not in old_list]
+                new_songs = [s for s in latest_list if s not in old_set]
                 if new_songs:
                     # 把新来的歌单独洗乱，然后悄悄垫在牌堆的最底下
                     random.shuffle(new_songs)
@@ -286,7 +292,10 @@ class XiaoMusicDevice:
             return False
 
         # 下载歌曲
-        await self.download(search_key, name)
+        download_ok = await self.download(search_key, name)
+        if not download_ok:
+            return False
+
         # 把文件插入到播放列表里
         await self.add_download_music(name)
         return True
@@ -774,13 +783,27 @@ class XiaoMusicDevice:
 
         cmd = " ".join(sbp_args)
         self.log.info(f"download cmd: {cmd}")
-        self._download_proc = await asyncio.create_subprocess_exec(*sbp_args)
+        self._download_proc = await asyncio.create_subprocess_exec(
+            *sbp_args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
         await self.do_tts(f"正在下载歌曲{search_key}")
         self.log.info(f"正在下载中 {search_key} {name}")
-        await self._download_proc.wait()
+        stdout, stderr = await self._download_proc.communicate()
+        if self._download_proc.returncode != 0:
+            self.log.error(
+                "download failed returncode:%s stderr:%s stdout:%s",
+                self._download_proc.returncode,
+                stderr.decode(errors="ignore") if stderr else "",
+                stdout.decode(errors="ignore") if stdout else "",
+            )
+            return False
+
         # 下载完成后，修改文件权限
         file_path = os.path.join(self.config.download_path, f"{name}.mp3")
         chmodfile(file_path)
+        return True
 
     async def check_replay(self):
         """检查是否需要继续播放被打断的歌曲"""
@@ -954,15 +977,7 @@ class XiaoMusicDevice:
                     await asyncio.sleep(duration + 2)
                     try:
                         self.log.info("TTS 播放定时器时间到")
-                        current_timer = self._tts_timer
-                        if current_timer:
-                            # 取消任务（防止任务被重复触发，即使sleep已结束）
-                            current_timer.cancel()
-                            try:
-                                await current_timer  # 等待任务取消完成，避免警告
-                            except asyncio.CancelledError:
-                                pass
-                            # 再置空引用
+                        if self._tts_timer is asyncio.current_task():
                             self._tts_timer = None
                             await self.stop(arg1="notts")
                     except Exception as e:

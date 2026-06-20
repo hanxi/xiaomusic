@@ -73,15 +73,31 @@ class XiaoMusicPathWatch(FileSystemEventHandler):
         使用防抖机制，在延迟时间内如果有新的事件，会取消之前的调度。
         """
 
-        def _execute_callback():
-            self._debounce_handle = None
-            self.callback()
+        def _schedule_on_loop():
+            def _execute_callback():
+                self._debounce_handle = None
+                self.callback()
 
-        if self._debounce_handle:
-            self._debounce_handle.cancel()
-        self._debounce_handle = self.loop.call_later(
-            self.debounce_delay, _execute_callback
-        )
+            if self._debounce_handle:
+                self._debounce_handle.cancel()
+            self._debounce_handle = self.loop.call_later(
+                self.debounce_delay, _execute_callback
+            )
+
+        self.loop.call_soon_threadsafe(_schedule_on_loop)
+
+    def cancel_pending(self):
+        """取消尚未触发的防抖回调。"""
+
+        def _cancel_on_loop():
+            if self._debounce_handle:
+                self._debounce_handle.cancel()
+                self._debounce_handle = None
+
+        try:
+            self.loop.call_soon_threadsafe(_cancel_on_loop)
+        except RuntimeError:
+            self._debounce_handle = None
 
 
 class FileWatcherManager:
@@ -144,6 +160,8 @@ class FileWatcherManager:
 
         如果监控器未运行，不做任何操作。
         """
+        if self._file_watch_handler:
+            self._file_watch_handler.cancel_pending()
         if self._observer:
             self._observer.stop()
             self._observer.join()

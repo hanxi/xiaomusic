@@ -8,7 +8,6 @@ import os
 import time
 from collections import OrderedDict
 from pathlib import Path
-from time import sleep
 from urllib.parse import (
     parse_qs,
     urlparse,
@@ -77,20 +76,25 @@ async def check_bili_fav_list(url: str) -> dict:
     query_params = parse_qs(parsed_url.query)
 
     if parsed_url.hostname == "space.bilibili.com":
+        lid = None
+        fav_type = None
         if "/favlist" in path:
             lid = query_params.get("fid", [None])[0]
-            type = query_params.get("ctype", [None])[0]
-            if type == "11":
-                type = "create"
-            elif type == "21":
-                type = "collect"
+            fav_type = query_params.get("ctype", [None])[0]
+            if fav_type == "11":
+                fav_type = "create"
+            elif fav_type == "21":
+                fav_type = "collect"
             else:
                 raise ValueError("当前只支持合集和收藏夹")
         elif "/lists/" in path:
             parts = path.split("/")
             if len(parts) >= 4 and "?" in url:
                 lid = parts[3]  # 提取 lid
-                type = query_params.get("type", [None])[0]
+                fav_type = query_params.get("type", [None])[0]
+
+        if not lid or not fav_type:
+            raise ValueError("当前只支持合集和收藏夹")
 
         # https://api.bilibili.com/x/polymer/web-space/seasons_archives_list?season_id={lid}&page_size=30&page_num=1
         page_size = 100
@@ -102,7 +106,7 @@ async def check_bili_fav_list(url: str) -> dict:
             "Origin": "https://space.bilibili.com",
         }
         async with aiohttp.ClientSession(headers=headers) as session:
-            if type == "season" or type == "collect":
+            if fav_type == "season" or fav_type == "collect":
                 while True:
                     list_url = f"https://api.bilibili.com/x/polymer/web-space/seasons_archives_list?season_id={lid}&page_size={page_size}&page_num={page_num}"
                     async with session.get(list_url) as response:
@@ -120,8 +124,8 @@ async def check_bili_fav_list(url: str) -> dict:
                         if len(archives) < page_size:
                             break
                         page_num += 1
-                        sleep(1)
-            elif type == "create":
+                        await asyncio.sleep(1)
+            elif fav_type == "create":
                 while True:
                     list_url = f"https://api.bilibili.com/x/v3/fav/resource/list?media_id={lid}&pn={page_num}&ps={page_size}&order=mtime"
                     async with session.get(list_url) as response:

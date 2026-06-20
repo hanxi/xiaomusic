@@ -6,6 +6,7 @@ import json
 import os
 from dataclasses import asdict, dataclass, field
 from typing import get_type_hints
+from urllib.parse import urlparse
 
 from xiaomusic.const import (
     PLAY_TYPE_ALL,
@@ -122,6 +123,7 @@ class Config:
     )
     httpauth_username: str = os.getenv("XIAOMUSIC_HTTPAUTH_USERNAME", "")
     httpauth_password: str = os.getenv("XIAOMUSIC_HTTPAUTH_PASSWORD", "")
+    cors_allow_origins: str = os.getenv("XIAOMUSIC_CORS_ALLOW_ORIGINS", "*")
     music_list_url: str = os.getenv("XIAOMUSIC_MUSIC_LIST_URL", "")
     music_list_json: str = os.getenv("XIAOMUSIC_MUSIC_LIST_JSON", "")
     custom_play_list_json: str = os.getenv("XIAOMUSIC_CUSTOM_PLAY_LIST_JSON", "")
@@ -245,6 +247,9 @@ class Config:
     # 网络歌曲使用proxy
     web_music_proxy: bool = (
         os.getenv("XIAOMUSIC_WEB_MUSIC_PROXY", "true").lower() == "true"
+    )
+    proxy_allow_private_hosts: bool = (
+        os.getenv("XIAOMUSIC_PROXY_ALLOW_PRIVATE_HOSTS", "false").lower() == "true"
     )
     # edge-tts 语音角色
     edge_tts_voice: str = os.getenv("XIAOMUSIC_EDGE_TTS_VOICE", "zh-CN-XiaoyiNeural")
@@ -440,8 +445,17 @@ class Config:
             "httpauth_password",
             "port",
             "hostname",
+            "cors_allow_origins",
         }
         return key in http_server_keys
+
+    def get_cors_allow_origins(self) -> list[str]:
+        origins = [
+            origin.strip()
+            for origin in self.cors_allow_origins.split(",")
+            if origin.strip()
+        ]
+        return origins or ["*"]
 
     def get_basic_auth(self):
         credentials = f"{self.httpauth_username}:{self.httpauth_password}"
@@ -450,5 +464,6 @@ class Config:
 
     def get_self_netloc(self):
         """获取网络地址"""
-        host = self.hostname.split("//", 1)[1]
+        parsed = urlparse(self.hostname)
+        host = parsed.netloc or parsed.path
         return f"{host}:{self.public_port}"

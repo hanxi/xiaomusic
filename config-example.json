@@ -24,6 +24,7 @@
   "disable_httpauth": true,
   "httpauth_username": "",
   "httpauth_password": "",
+  "cors_allow_origins": "*",
   "music_list_url": "",
   "music_list_json": "",
   "custom_play_list_json": "",
@@ -130,6 +131,7 @@
   "recently_added_playlist_len": 50,
   "enable_cmd_del_music": false,
   "web_music_proxy": true,
+  "proxy_allow_private_hosts": false,
   "edge_tts_voice": "zh-CN-XiaoyiNeural",
   "enable_auto_clean_temp": true
 }

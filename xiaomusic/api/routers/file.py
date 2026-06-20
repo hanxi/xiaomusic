@@ -1,9 +1,11 @@
 import asyncio
 import base64
+import ipaddress
 import os
 import shutil
+import socket
 import uuid
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import aiohttp
 from fastapi import (
@@ -311,16 +313,25 @@ async def downloadplaylist(data: DownloadPlayList, Verifcation=Depends(verificat
             download_tasks[task_id]["status"] = "downloading"
 
             for idx, (bvid, title) in enumerate(bili_fav_list.items(), 1):
-                bvurl = f"https://www.bilibili.com/video/{bvid}"
+                bvurl = (
+                    bvid
+                    if bvid.startswith(("http://", "https://"))
+                    else f"https://www.bilibili.com/video/{bvid}"
+                )
                 download_tasks[task_id]["current_song"] = (
                     f"{title} ({idx}/{total_songs})"
                 )
-                download_proc_list[title] = await download_one_music(
-                    config, bvurl, os.path.join(data.dirname, title)
+                download_proc_list.append(
+                    (
+                        title,
+                        await download_one_music(
+                            config, bvurl, os.path.join(data.dirname, title)
+                        ),
+                    )
                 )
 
-            for title, download_proc_sigle in download_proc_list.items():
-                exit_code = await download_proc_sigle.wait()
+            for title, download_proc_single in download_proc_list:
+                exit_code = await download_proc_single.wait()
                 log.info(f"Download completed {title} with exit code {exit_code}")
                 download_tasks[task_id]["completed"] += 1
 
@@ -1029,6 +1040,23 @@ async def get_picture(request: Request, file_path: str, key: str = "", code: str
 
 # bilibili CDN 精确域名后缀列表，避免 mcdn 等子串误伤其他插件
 _BILI_CDN_SUFFIXES = ("bilivideo.com", "bilivideo.cn", "hdslb.com")
+_SENSITIVE_QUERY_KEYS = {
+    "access_token",
+    "auth",
+    "authorization",
+    "code",
+    "cookie",
+    "expires",
+    "expires_in",
+    "hash",
+    "key",
+    "password",
+    "secret",
+    "sign",
+    "signature",
+    "sig",
+    "token",
+}
 
 
 def _is_bili_cdn(netloc: str) -> bool:
@@ -1038,6 +1066,73 @@ def _is_bili_cdn(netloc: str) -> bool:
     """
     host = (netloc or "").split(":", 1)[0].lower()
     return any(host == s or host.endswith("." + s) for s in _BILI_CDN_SUFFIXES)
+
+
+def _redact_url_for_log(url: str, max_len: int = 500) -> str:
+    try:
+        parsed = urlparse(url)
+        query = urlencode(
+            [
+                (key, "***" if key.lower() in _SENSITIVE_QUERY_KEYS else value)
+                for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+            ],
+            doseq=True,
+        )
+        redacted = urlunparse(parsed._replace(query=query))
+    except Exception:
+        redacted = url
+    return redacted[:max_len]
+
+
+async def _is_private_proxy_host(parsed_url) -> bool:
+    host = (parsed_url.hostname or "").strip().lower()
+    if not host:
+        return True
+
+    if parsed_url.netloc == config.get_self_netloc():
+        return False
+
+    try:
+        addresses = [ipaddress.ip_address(host)]
+    except ValueError:
+        try:
+            infos = await asyncio.to_thread(
+                socket.getaddrinfo,
+                host,
+                parsed_url.port or 80,
+                type=socket.SOCK_STREAM,
+            )
+        except socket.gaierror:
+            return True
+        addresses = []
+        for info in infos:
+            address = info[4][0]
+            try:
+                addresses.append(ipaddress.ip_address(address))
+            except ValueError:
+                return True
+
+    return any(
+        address.is_private
+        or address.is_loopback
+        or address.is_link_local
+        or address.is_multicast
+        or address.is_reserved
+        or address.is_unspecified
+        for address in addresses
+    )
+
+
+async def _validate_proxy_target(parsed_url) -> None:
+    if parsed_url.scheme not in ("http", "https"):
+        raise HTTPException(status_code=400, detail="仅支持 HTTP/HTTPS URL")
+    if not parsed_url.netloc:
+        raise HTTPException(status_code=400, detail="无效的URL格式")
+    if (
+        not getattr(config, "proxy_allow_private_hosts", False)
+        and await _is_private_proxy_host(parsed_url)
+    ):
+        raise HTTPException(status_code=403, detail="禁止代理内网或本机地址")
 
 
 async def _ffmpeg_mp3_stream(url: str, extra_headers: dict = None):
@@ -1139,26 +1234,29 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
         )
         raise HTTPException(status_code=400, detail=f"Base64解码失败: {str(e)}") from e
 
-    log.info(f"[proxy:{request_id}] start is_radio={is_radio} url={url[:500]}")
+    log.info(
+        f"[proxy:{request_id}] start is_radio={is_radio} url={_redact_url_for_log(url)}"
+    )
 
     parsed_url, url = xiaomusic.music_library.expand_self_url(url)
     log.info(
-        f"[proxy:{request_id}] expand_self_url parsed={parsed_url} final_url={url[:500]}"
+        f"[proxy:{request_id}] expand_self_url scheme={parsed_url.scheme} netloc={parsed_url.netloc} final_url={_redact_url_for_log(url)}"
     )
     if not parsed_url.scheme or not parsed_url.netloc:
         invalid_url_exc = ValueError("URL缺少协议或域名")
         log.warning(
-            f"[proxy:{request_id}] invalid url parsed={parsed_url} final_url={url[:500]}"
+            f"[proxy:{request_id}] invalid url parsed={parsed_url} final_url={_redact_url_for_log(url)}"
         )
         raise HTTPException(
             status_code=400, detail="无效的URL格式"
         ) from invalid_url_exc
+    await _validate_proxy_target(parsed_url)
 
     # bilibili CDN URL → FFmpeg 转码为 MP3，避免 LX06 固件格式不兼容
     # 使用精确域名后缀匹配，避免 mcdn 等子串误伤其他插件；电台流不走 FFmpeg
     if not is_radio and _is_bili_cdn(parsed_url.netloc):
         log.info(
-            f"[proxy:{request_id}] direct bili cdn detected netloc={parsed_url.netloc} -> ffmpeg url={url[:500]}"
+            f"[proxy:{request_id}] direct bili cdn detected netloc={parsed_url.netloc} -> ffmpeg url={_redact_url_for_log(url)}"
         )
         return await _ffmpeg_mp3_stream(
             url,
@@ -1217,7 +1315,7 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
             for k, v in headers.items()
         }
         log.info(
-            f"[proxy:{request_id}] initial GET url={url[:500]} headers={safe_headers}"
+            f"[proxy:{request_id}] initial GET url={_redact_url_for_log(url)} headers={safe_headers}"
         )
         # 手动处理重定向，确保 bilibili CDN 重定向后仍携带 Referer
         resp = await session.get(url, headers=headers, allow_redirects=False)
@@ -1228,29 +1326,30 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
         ):
             redirect_url = resp.headers.get("Location", "")
             log.info(
-                f"[proxy:{request_id}] redirect#{redirect_count + 1} status={resp.status} from={resp.url} to={redirect_url[:500]}"
+                f"[proxy:{request_id}] redirect#{redirect_count + 1} status={resp.status} from={_redact_url_for_log(str(resp.url))} to={_redact_url_for_log(redirect_url)}"
             )
             if not redirect_url:
                 break
-            await resp.release()
+            resp.release()
             redirect_count += 1
             import urllib.parse as _urlparse
 
             resolved_redirect_url = _urlparse.urljoin(str(resp.url), redirect_url)
             redirect_parsed = _urlparse.urlparse(resolved_redirect_url)
+            await _validate_proxy_target(redirect_parsed)
             redirect_headers = gen_headers(redirect_parsed)
             safe_redirect_headers = {
                 k: ("***" if k.lower() == "authorization" else v)
                 for k, v in redirect_headers.items()
             }
             log.info(
-                f"[proxy:{request_id}] redirect target resolved={resolved_redirect_url[:500]} netloc={redirect_parsed.netloc} headers={safe_redirect_headers}"
+                f"[proxy:{request_id}] redirect target resolved={_redact_url_for_log(resolved_redirect_url)} netloc={redirect_parsed.netloc} headers={safe_redirect_headers}"
             )
             # bilibili CDN 防盗链；LX06 固件不兼容 MP4/AAC，切换 FFmpeg 转码
             # 精确匹配域名后缀，电台流不走 FFmpeg
             if not is_radio and _is_bili_cdn(redirect_parsed.netloc):
                 log.info(
-                    f"[proxy:{request_id}] redirect to bili cdn detected -> ffmpeg redirect_url={resolved_redirect_url[:500]}"
+                    f"[proxy:{request_id}] redirect to bili cdn detected -> ffmpeg redirect_url={_redact_url_for_log(resolved_redirect_url)}"
                 )
                 await close_session()
                 return await _ffmpeg_mp3_stream(
@@ -1265,7 +1364,7 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
             )
 
         log.info(
-            f"[proxy:{request_id}] final response status={resp.status} resp_url={str(resp.url)[:500]} content_type={resp.headers.get('Content-Type', '')} content_length={resp.headers.get('Content-Length', '')}"
+            f"[proxy:{request_id}] final response status={resp.status} resp_url={_redact_url_for_log(str(resp.url))} content_type={resp.headers.get('Content-Type', '')} content_length={resp.headers.get('Content-Length', '')}"
         )
         if resp.status not in (200, 206):
             await close_session()
@@ -1278,6 +1377,7 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
         import urllib.parse
 
         parsed_url = urllib.parse.urlparse(str(resp.url))
+        await _validate_proxy_target(parsed_url)
         url = str(resp.url)
 
         # 提取文件名，根据URL扩展名智能判断
@@ -1293,7 +1393,7 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
                 final_url = str(resp.url)
                 await close_session()
                 log.info(
-                    f"[proxy:{request_id}] content-type fallback -> ffmpeg content_type={content_type} final_url={final_url[:500]}"
+                    f"[proxy:{request_id}] content-type fallback -> ffmpeg content_type={content_type} final_url={_redact_url_for_log(final_url)}"
                 )
                 return await _ffmpeg_mp3_stream(final_url)
 
@@ -1324,7 +1424,7 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
                 m3u8_content = await resp.text()
                 await close_session()
                 log.info(
-                    f"[proxy:{request_id}] processing m3u8 len={len(m3u8_content)} base_url={url[:500]}"
+                    f"[proxy:{request_id}] processing m3u8 len={len(m3u8_content)} base_url={_redact_url_for_log(url)}"
                 )
 
                 # 处理 m3u8 内容，替换资源 URL
@@ -1349,7 +1449,7 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
         async def stream_generator():
             total_bytes = 0
             try:
-                async for data in resp.content.iter_chunked(4096):
+                async for data in resp.content.iter_chunked(65536):
                     total_bytes += len(data)
                     yield data
             except Exception as e:
@@ -1359,7 +1459,7 @@ async def _proxy_handler(urlb64: str, is_radio: bool):
                 raise
             finally:
                 log.info(
-                    f"[proxy:{request_id}] stream finished total_bytes={total_bytes} resp_url={str(resp.url)[:500]}"
+                    f"[proxy:{request_id}] stream finished total_bytes={total_bytes} resp_url={_redact_url_for_log(str(resp.url))}"
                 )
                 await close_session()
 

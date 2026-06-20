@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware import Middleware
 from starlette.middleware.gzip import GZipMiddleware
 
 from xiaomusic import __version__
@@ -56,14 +57,28 @@ app = FastAPI(
     openapi_url=None,
 )
 
-# 添加 CORS 中间件
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 允许访问的源
-    allow_credentials=False,  # 支持 cookie
-    allow_methods=["*"],  # 允许使用的请求方法
-    allow_headers=["*"],  # 允许携带的 Headers
-)
+
+def configure_cors(allow_origins: list[str]):
+    """配置 CORS 中间件。"""
+    app.user_middleware = [
+        middleware
+        for middleware in app.user_middleware
+        if middleware.cls is not CORSMiddleware
+    ]
+    app.user_middleware.append(
+        Middleware(
+            CORSMiddleware,
+            allow_origins=allow_origins,
+            allow_credentials=False,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        ),
+    )
+    app.middleware_stack = None
+
+
+# 添加默认 CORS 中间件，HttpInit 后会按配置重设
+configure_cors(["*"])
 
 # 添加 GZip 中间件
 app.add_middleware(GZipMiddleware, minimum_size=500)
@@ -77,6 +92,7 @@ def HttpInit(_xiaomusic: "XiaoMusic"):
     """
     # 初始化应用状态
     _state.initialize(_xiaomusic)
+    configure_cors(_xiaomusic.config.get_cors_allow_origins())
 
     # 挂载静态文件
     folder = os.path.dirname(os.path.dirname(__file__))  # xiaomusic 目录
